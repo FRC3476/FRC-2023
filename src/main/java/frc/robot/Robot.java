@@ -5,6 +5,8 @@
 
 package frc.robot;
 
+import com.dacubeking.AutoBuilder.robot.robotinterface.AutonomousContainer;
+import com.dacubeking.AutoBuilder.robot.robotinterface.CommandTranslator;
 import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
@@ -19,10 +21,6 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
  */
 public class Robot extends TimedRobot
 {
-    private static final String DEFAULT_AUTO = "Default";
-    private static final String CUSTOM_AUTO = "My Auto";
-    private String autoSelected;
-    private final SendableChooser<String> chooser = new SendableChooser<>();
     
     
     /**
@@ -32,9 +30,7 @@ public class Robot extends TimedRobot
     @Override
     public void robotInit()
     {
-        chooser.setDefaultOption("Default Auto", DEFAULT_AUTO);
-        chooser.addOption("My Auto", CUSTOM_AUTO);
-        SmartDashboard.putData("Auto choices", chooser);
+
     }
     
     
@@ -62,9 +58,6 @@ public class Robot extends TimedRobot
     @Override
     public void autonomousInit()
     {
-        autoSelected = chooser.getSelected();
-        // autoSelected = SmartDashboard.getString("Auto Selector", DEFAULT_AUTO);
-        System.out.println("Auto selected: " + autoSelected);
     }
     
     
@@ -72,16 +65,7 @@ public class Robot extends TimedRobot
     @Override
     public void autonomousPeriodic()
     {
-        switch (autoSelected)
-        {
-            case CUSTOM_AUTO:
-                // Put custom auto code here
-                break;
-            case DEFAULT_AUTO:
-            default:
-                // Put default auto code here
-                break;
-        }
+
     }
     
     

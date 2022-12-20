@@ -36,5 +36,25 @@
       <option name="name" value="maven" />
       <option name="url" value="https://maven.dacubeking.com/snapshots/" />
     </remote-repository>
+    <remote-repository>
+      <option name="id" value="WPIFRCMavenVendorCacheRelease" />
+      <option name="name" value="WPIFRCMavenVendorCacheRelease" />
+      <option name="url" value="https://frcmaven.wpi.edu/artifactory/vendor-mvn-release" />
+    </remote-repository>
+    <remote-repository>
+      <option name="id" value="WPIab676553-b602-441f-a38d-f1296eff6537_0Release" />
+      <option name="name" value="WPIab676553-b602-441f-a38d-f1296eff6537_0Release" />
+      <option name="url" value="https://maven.ctr-electronics.com/release/" />
+    </remote-repository>
+    <remote-repository>
+      <option name="id" value="WPI3f48eb8c-50fe-43a6-9cb7-44c86353c4cb_0Release" />
+      <option name="name" value="WPI3f48eb8c-50fe-43a6-9cb7-44c86353c4cb_0Release" />
+      <option name="url" value="https://maven.revrobotics.com/" />
+    </remote-repository>
+    <remote-repository>
+      <option name="id" value="WPIcb311d09-36e9-4143-a032-55bb2b94443b_0Release" />
+      <option name="name" value="WPIcb311d09-36e9-4143-a032-55bb2b94443b_0Release" />
+      <option name="url" value="https://repo1.maven.org/maven2/" />
+    </remote-repository>
   </component>
 </project>
