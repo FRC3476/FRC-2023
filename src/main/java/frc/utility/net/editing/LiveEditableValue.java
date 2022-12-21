@@ -17,8 +17,8 @@ public class LiveEditableValue<T> {
     /**
      * @param defaultValue The default value to use if the entry is not changed / the initial value set to the table
      * @param entry        The entry to listen to
-     * @param onNTChange   The function to call when the entry is changed through the network table to convert the value to {@link
-     *                     T}
+     * @param onNTChange   The function to call when the entry is changed through the network table to convert the value to
+     *                     {@link T}
      * @param onWrite      The function to convert to a NT object when {@link #set(T)} is called
      */
     public LiveEditableValue(@NotNull T defaultValue, @NotNull NetworkTableEntry entry, @NotNull Function<Object, T> onNTChange,

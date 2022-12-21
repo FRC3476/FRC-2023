@@ -64,7 +64,7 @@ public class Controller extends Joystick {
     public boolean getFallingEdge(int button) {
         boolean oldVal = getButtonState(button, oldButtons);
         boolean currentVal = getButtonState(button, currentButtons);
-		return oldVal && !currentVal;
+        return oldVal && !currentVal;
     }
 
     /**
@@ -77,7 +77,7 @@ public class Controller extends Joystick {
     public boolean getRisingEdge(int button) {
         boolean oldVal = getButtonState(button, oldButtons);
         boolean currentVal = getButtonState(button, currentButtons);
-		return !oldVal && currentVal;
+        return !oldVal && currentVal;
     }
 
     @Contract(pure = true)
