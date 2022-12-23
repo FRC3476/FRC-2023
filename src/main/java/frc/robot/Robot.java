@@ -5,7 +5,21 @@
 
 package frc.robot;
 
+import com.dacubeking.AutoBuilder.robot.robotinterface.AutonomousContainer;
+import com.dacubeking.AutoBuilder.robot.robotinterface.CommandTranslator;
 import edu.wpi.first.wpilibj.TimedRobot;
+import edu.wpi.first.wpilibj.Timer;
+import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
+import frc.subsytem.Drive;
+import frc.subsytem.Drive.DriveState;
+import frc.subsytem.RobotTracker;
+import frc.utility.Controller;
+import frc.utility.Controller.XboxButtons;
+import frc.utility.ControllerDriveInputs;
+import org.jetbrains.annotations.NotNull;
+
+import static frc.robot.Constants.IS_PRACTICE;
 
 
 /**
@@ -15,13 +29,60 @@ import edu.wpi.first.wpilibj.TimedRobot;
  */
 public class Robot extends TimedRobot {
 
+    private double disabledTime = 0;
+
+    private @NotNull Drive drive;
+    private @NotNull RobotTracker robotTracker;
+
+    private @NotNull Controller xbox;
+
+
+    // Autonomous
+    private final SendableChooser<String> autoChooser = new SendableChooser<>();
+
+    public static final SendableChooser<String> sideChooser = new SendableChooser<>();
 
     /**
      * This method is run when the robot is first started up and should be used for any initialization code.
      */
     @Override
     public void robotInit() {
+        drive = Drive.getInstance();
+        robotTracker = RobotTracker.getInstance();
+        xbox = new Controller(0);
 
+        startSubsystems();
+        AutonomousContainer.getInstance().setDebugPrints(true);
+        AutonomousContainer.getInstance().initialize(
+                true,
+                new CommandTranslator(
+                        drive::setAutoPath,
+                        drive::stopMovement,
+                        drive::setAutoRotation,
+                        drive::isFinished,
+                        drive::getAutoElapsedTime,
+                        robotTracker::resetPose,
+                        false
+
+                ),
+                false,
+                null
+        );
+        AutonomousContainer.getInstance().getAutonomousNames().forEach(name -> autoChooser.addOption(name, name));
+
+        sideChooser.setDefaultOption("Blue", "blue");
+        sideChooser.addOption("Red", "red");
+
+        SmartDashboard.putData("Auto choices", autoChooser);
+        SmartDashboard.putData("Red or Blue", sideChooser);
+
+        startSubsystems();
+
+        if (IS_PRACTICE) {
+            for (int i = 0; i < 10; i++) {
+                System.out.println("USING PRACTICE BOT CONFIG");
+            }
+        }
     }
 
 
@@ -46,6 +107,14 @@ public class Robot extends TimedRobot {
      */
     @Override
     public void autonomousInit() {
+
+        drive.configBrake();
+
+        String autoName = autoChooser.getSelected();
+        if (autoName == null) {
+            autoName = "1ball"; //Default auto if none is selected
+        }
+        AutonomousContainer.getInstance().runAutonomous(autoName, sideChooser.getSelected(), true);
     }
 
 
@@ -62,40 +131,75 @@ public class Robot extends TimedRobot {
      * This method is called once when teleop is enabled.
      */
     @Override
-    public void teleopInit() {}
+    public void teleopInit() {
+        drive.configBrake();
+    }
 
 
     /**
      * This method is called periodically during operator control.
      */
     @Override
-    public void teleopPeriodic() {}
+    public void teleopPeriodic() {
+        xbox.update();
+        drive.swerveDrive(getControllerDriveInputs());
+    }
 
 
     /**
      * This method is called once when the robot is disabled.
      */
     @Override
-    public void disabledInit() {}
+    public void disabledInit() {
+        AutonomousContainer.getInstance().killAuto();
+        disabledTime = Timer.getFPGATimestamp();
+    }
 
 
     /**
      * This method is called periodically when disabled.
      */
     @Override
-    public void disabledPeriodic() {}
+    public void disabledPeriodic() {
+        if (Timer.getFPGATimestamp() - disabledTime > 0.5) {
+            drive.configCoast();
+        }
+    }
 
 
     /**
      * This method is called once when test mode is enabled.
      */
     @Override
-    public void testInit() {}
+    public void testInit() {
+        drive.setDriveState(DriveState.TELEOP);
+    }
 
 
     /**
      * This method is called periodically during test mode.
      */
     @Override
-    public void testPeriodic() {}
+    public void testPeriodic() {
+        xbox.update();
+        if (xbox.getRawButton(XboxButtons.X) && xbox.getRawButton(XboxButtons.B)
+                && xbox.getRisingEdge(XboxButtons.X) && xbox.getRisingEdge(XboxButtons.B)) {
+            drive.setAbsoluteZeros();
+        }
+    }
+
+    public void startSubsystems() {
+        drive.start();
+        robotTracker.start();
+    }
+
+    private ControllerDriveInputs getControllerDriveInputs() {
+        if (xbox.getRawButton(Controller.XboxButtons.X)) {
+            return new ControllerDriveInputs(-xbox.getRawAxis(1), -xbox.getRawAxis(0), -xbox.getRawAxis(4))
+                    .applyDeadZone(0.2, 0.2, 0.2, 0.2).squareInputs();
+        } else {
+            return new ControllerDriveInputs(-xbox.getRawAxis(1), -xbox.getRawAxis(0), -xbox.getRawAxis(4))
+                    .applyDeadZone(0.05, 0.05, 0.2, 0.2).squareInputs();
+        }
+    }
 }

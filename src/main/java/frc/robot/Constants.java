@@ -168,4 +168,6 @@ public final class Constants {
      * Acceleration due to gravity in meters per second squared. (9.80665 m/s^2)
      */
     public static final double GRAVITY = 9.80665;
+
+    public static final int PIGEON_CAN_ID = 30;
 }
