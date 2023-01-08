@@ -83,11 +83,6 @@ public final class Limelight extends AbstractSubsystem {
 
     }
 
-    @Override
-    public void close() throws Exception {
-
-    }
-
 
     /**
      * Limelight’s LED states
