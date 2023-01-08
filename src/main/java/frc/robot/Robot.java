@@ -7,6 +7,8 @@ package frc.robot;
 
 import com.dacubeking.AutoBuilder.robot.robotinterface.AutonomousContainer;
 import com.dacubeking.AutoBuilder.robot.robotinterface.CommandTranslator;
+import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
@@ -143,6 +145,10 @@ public class Robot extends TimedRobot {
     public void teleopPeriodic() {
         xbox.update();
         drive.swerveDrive(getControllerDriveInputs());
+
+        if (xbox.getRisingEdge(XboxButtons.A)) {
+            robotTracker.resetPose(new Pose2d(robotTracker.getLatestPose().getTranslation(), new Rotation2d()));
+        }
     }
 
 
@@ -195,10 +201,10 @@ public class Robot extends TimedRobot {
 
     private ControllerDriveInputs getControllerDriveInputs() {
         if (xbox.getRawButton(Controller.XboxButtons.X)) {
-            return new ControllerDriveInputs(-xbox.getRawAxis(1), -xbox.getRawAxis(0), -xbox.getRawAxis(4))
+            return new ControllerDriveInputs(xbox.getRawAxis(1), xbox.getRawAxis(0), -xbox.getRawAxis(4))
                     .applyDeadZone(0.2, 0.2, 0.2, 0.2).squareInputs();
         } else {
-            return new ControllerDriveInputs(-xbox.getRawAxis(1), -xbox.getRawAxis(0), -xbox.getRawAxis(4))
+            return new ControllerDriveInputs(xbox.getRawAxis(1), xbox.getRawAxis(0), -xbox.getRawAxis(4))
                     .applyDeadZone(0.05, 0.05, 0.2, 0.2).squareInputs();
         }
     }

@@ -269,8 +269,8 @@ public final class RobotTracker extends AbstractSubsystem {
         lock.writeLock().lock();
         try {
             swerveDriveOdometry.resetPosition(gyroSensor.getRotation2d(), Drive.getInstance().getModulePositions(), pose);
-            noVisionOdometry.resetPosition(gyroSensor.getRotation2d(), Drive.getInstance().getModulePositions(), pose);
             noVisionOdometryOffset = pose.getTranslation().minus(noVisionPose.getTranslation());
+            gyroOffset = pose.getRotation().minus(gyroSensor.getRotation2d());
         } finally {
             lock.writeLock().unlock();
         }
@@ -284,6 +284,6 @@ public final class RobotTracker extends AbstractSubsystem {
 
     @Override
     public void logData() {
-
+        logData("rotation", getGyroAngle().getDegrees());
     }
 }

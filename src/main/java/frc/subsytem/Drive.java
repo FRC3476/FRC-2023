@@ -251,9 +251,11 @@ public final class Drive extends AbstractSubsystem {
         setDriveState(DriveState.TELEOP);
 
 
-        ChassisSpeeds chassisSpeeds = new ChassisSpeeds(DRIVE_HIGH_SPEED_M * inputs.getX(),
+        ChassisSpeeds chassisSpeeds = ChassisSpeeds.fromFieldRelativeSpeeds(DRIVE_HIGH_SPEED_M * inputs.getX(),
                 DRIVE_HIGH_SPEED_M * inputs.getY(),
-                inputs.getRotation() * 7);
+                inputs.getRotation() * 7,
+                RobotTracker.getInstance().getGyroAngle()
+                        .plus(new Rotation2d(RobotTracker.getInstance().getAngularVelocity() * .01)));
         swerveDrive(chassisSpeeds);
     }
 
@@ -574,10 +576,15 @@ public final class Drive extends AbstractSubsystem {
         }
 
         switch (snapDriveState) {
-            case TURN -> updateTurn();
-            case HOLD -> doHold();
-            case RAMSETE -> updateRamsete();
-            case STOP -> swerveDrive(new ChassisSpeeds(0, 0, 0));
+            case TURN:
+                updateTurn();
+                break;
+            case HOLD:
+                doHold();
+                break;
+            case STOP:
+                swerveDrive(new ChassisSpeeds(0, 0, 0));
+                break;
         }
     }
 

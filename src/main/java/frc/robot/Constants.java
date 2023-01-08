@@ -133,7 +133,7 @@ public final class Constants {
         /**
          * Normal acceleration limit while driving. This ensures that the driver can't tip the robot.
          */
-        NORMAL_DRIVING(24),
+        NORMAL_DRIVING(100),
         /**
          * Acceleration limit when we're trying to shoot and move. This is very low to prevent the driver from making sudden
          * movements that would mess up the shot
