@@ -360,7 +360,7 @@ public final class Drive extends AbstractSubsystem {
         if ((Timer.getFPGATimestamp() - lastLoopTime) > ((double) Constants.DRIVE_PERIOD / 1000) * 20) {
             // If the dt is a lot greater than our nominal dt reset the acceleration limiting
             // (ex. we've been disabled for a while)
-            lastRequestedVelocity = RobotTracker.getInstance().getVelocity();
+            lastRequestedVelocity = new Translation2d();
 
             lastRequestedRotation = RobotTracker.getInstance().getAngularVelocity();
             dt = (double) Constants.DRIVE_PERIOD / 1000;
