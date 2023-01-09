@@ -1,28 +1,22 @@
 ## License: Apache 2.0. See LICENSE file in root directory.
 ## Copyright(c) 2015-2017 Intel Corporation. All Rights Reserved.
 
+# Import OpenCV for easy image rendering
+import cv2
+# Import Numpy for easy array manipulation
+import numpy as np
 ###############################################
 ##      Open CV and Numpy integration        ##
 ###############################################
 # First import the library
-import random
-import time
-
-import pyrealsense2 as rs
-# Import Numpy for easy array manipulation
-import numpy as np
-# Import OpenCV for easy image rendering
-import cv2
-
+from math import atan, cos, pi, sin, sqrt
 from networktables import NetworkTables
+import pyrealsense2 as rs
 
 # Initialize Network Tables
 # As a client to connect to a robot
 NetworkTables.initialize(server='127.0.0.1')
 
-red_pos_entry = NetworkTables.getEntry('/realsense/pos_red')
-blue_pos_entry = NetworkTables.getEntry('/realsense/pos_blue')
-latency_entry = NetworkTables.getEntry('/realsense/latency')
 
 # Create a pipeline
 pipeline = rs.pipeline()
@@ -56,9 +50,9 @@ else:
 # Start streaming
 profile = pipeline.start(config)
 color_sensor = profile.get_device().query_sensors()[1]
-color_sensor.set_option(rs.option.enable_auto_exposure, False)
-color_sensor.set_option(rs.option.enable_auto_white_balance, False)
-color_sensor.set_option(rs.option.exposure, 400)
+color_sensor.set_option(rs.option.enable_auto_exposure, True)
+color_sensor.set_option(rs.option.enable_auto_white_balance, True)
+# color_sensor.set_option(rs.option.exposure, 400)
 color_sensor.set_option(rs.option.white_balance, 3500)
 
 # Getting the depth sensor's depth scale (see rs-align example for explanation)
@@ -81,10 +75,83 @@ align = rs.align(align_to)
 hole_filling = rs.hole_filling_filter(1)
 
 
+def getSemiMajorAxis(moment):
+    E = Ellipse()
+
+    # --- Get the Moments
+    E.m00 = moment['m00']
+    E.m10 = moment['m10']
+    E.m01 = moment['m01']
+    E.m11 = moment['m11']
+    E.m02 = moment['m02']
+    E.m20 = moment['m20']
+
+    # --- Ellipse properties
+
+    # Barycenter
+    E.x = E.m10 / E.m00;
+    E.y = E.m01 / E.m00;
+
+    # Central moments (intermediary step)
+    a = E.m20 / E.m00 - E.x * E.x;
+    b = 2 * (E.m11 / E.m00 - E.x * E.y);
+    c = E.m02 / E.m00 - E.y * E.y;
+
+    # Orientation (radians)
+    E.theta = 1 / 2 * atan(b / (a - c)) + (a < c) * pi / 2;
+
+    # Minor and major axis
+    E.w = sqrt(8 * (a + c - sqrt((b * b) + (a - c) * (a - c)))) / 2;
+    E.l = sqrt(8 * (a + c + sqrt((b * b) + (a - c) * (a - c)))) / 2;
+
+    # Ellipse focal points
+    d = sqrt((E.l * E.l) - (E.w * E.w));
+    E.x1 = E.x + d * cos(E.theta);
+    E.y1 = E.y + d * sin(E.theta);
+    E.x2 = E.x - d * cos(E.theta);
+    E.y2 = E.y - d * sin(E.theta);
+
+    # # Ellipse direction
+    # if direct:
+    #     tmp = [i-mean(i) j-mean(j)]*[cos(E.theta) -sin(E.theta) ; sin(E.theta) cos(E.theta)];
+    #     if skewness(tmp(:,1))>0
+
+    #         # Fix direction
+    #         E.theta = mod(E.theta + pi, 2*pi);
+    #         tmp = [E.x1 E.y1];
+
+    #         # Swap F1 and F2
+    #         E.x1 = E.x2;
+    #         E.y1 = E.y2;
+    #         E.x2 = tmp(1);
+    #         E.y2 = tmp(2);
+    #     end
+    # end
+
+    return E
+
+
+class Ellipse:
+    x = 0
+    y = 0
+    m00 = 0
+    m10 = 0
+    m01 = 0
+    m11 = 0
+    m02 = 0
+    m20 = 0
+    theta = 0
+    w = 0
+    l = 0
+    x1 = 0
+    y1 = 0
+    x2 = 0
+    y2 = 0
+
 
 try:
     while True:
-        # Get frameset of color and depth
+# Get frameset of color and depth
         frames = pipeline.wait_for_frames()
         # frames.get_depth_frame() is a 640x360 depth image
 
@@ -123,7 +190,9 @@ try:
         edge = cv2.dilate(edge, None, iterations=1)
         edge = cv2.bitwise_not(edge)  # Invert the edges so that we can use it as a mask
 
-        color_image = cv2.imread("C:/Users/varun/Pictures/Camera Roll/WIN_20230108_15_07_21_Pro.jpg")
+        # color_image = None
+
+        # color_image = cv2.imread("C:/Users/varun/Pictures/Camera Roll/WIN_20230108_15_07_21_Pro.jpg")
 
         blurred = cv2.GaussianBlur(color_image, (11, 11), 0)
         # blurred = cv2.bitwise_and(blurred, blurred, mask=edge)  # ensure that there is at least a 1 pixel gap between objects of different depths
@@ -141,8 +210,7 @@ try:
         min_1 = np.array([h_min_1, s_min_1, v_min_1], np.uint8)
         max_1 = np.array([h_max_1, s_max_1, v_max_1], np.uint8)
 
-
-        h_min_2 = 30 * 255 / 360
+        h_min_2 = 20 * 255 / 360
         h_max_2 = 75 * 255 / 360
         s_min_2 = 0 * 255 / 100
         s_max_2 = 50 * 255 / 100
@@ -161,53 +229,46 @@ try:
         img_threshold_yellow = cv2.dilate(img_threshold_yellow, None, iterations=4)
         img_threshold_yellow = cv2.erode(img_threshold_yellow, None, iterations=2)
 
-
         contours, hierarchy = cv2.findContours(img_threshold_yellow, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
-        cv2.drawContours(img_threshold_yellow, contours, -1, (0,255,0), 3)
-        cv2.drawContours(color_image, contours, -1, (0,255,0), 3)
+        #cv2.drawContours(img_threshold_yellow, contours, -1, (0, 255, 0), 3)
+        #cv2.drawContours(color_image, contours, -1, (0, 255, 0), -1)
 
+        # print("latency: {}".format(latency))
 
-        latency = time.time() * 1000 - frames.get_timestamp()
-        latency_entry.setValue([latency])
-        #print("latency: {}".format(latency))
-
-        #NetworkTables.flush()
+        # NetworkTables.flush()
 
         for cnt in contours:
             area = cv2.contourArea(cnt)
-            if area > 5000:
-                cnt = cv2.convexHull(cnt)
-                M = cv2.moments(cnt)
+            if area > 1000:
+                tmp = np.zeros(color_image.shape[:2], dtype="uint8")
+
+
+                cv2.drawContours(tmp, [cnt], -1, 255, -1)
+                cv2.drawContours(color_image, [cnt], -1, (0, 255,0 ), -1)
+                M = cv2.moments(tmp)
                 cx = int(M['m10'] / M['m00'])
                 cy = int(M['m01'] / M['m00'])
                 cv2.circle(color_image, (cx, cy), 7, (255, 255, 255), -1)
                 cv2.putText(color_image, "center", (cx - 20, cy - 20),
                             cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 2)
-                
-                # Draw the semi-major and semi-minor axes
-                ellipse = cv2.fitEllipse(cnt)
-                cv2.ellipse(color_image, ellipse, (0, 255, 0), 2)
-                
+
+                data = getSemiMajorAxis(M)
+                cv2.line(color_image, (int(data.x1), int(data.y1)), (int(data.x2), int(data.y2)), (255, 0, 0), 2)
 
                 # Draw the minimum area rectangle
                 rect = cv2.minAreaRect(cnt)
                 box = cv2.boxPoints(rect)
                 box = np.int0(box)
-                cv2.drawContours(color_image, [box], 0, (0, 0, 255), 2)
-
-
-                        
-                
-
-
+                cv2.drawContours(color_image, [box], 0, (0, 255, 255), 2)
 
 
         cv2.imshow('Contours', color_image)
-        cv2.imshow('depth', depth_colormap)
         cv2.imshow('img_threshold_yellow', img_threshold_yellow)
         # cv2.namedWindow('RealSense', cv2.WINDOW_AUTOSIZE)
         # cv2.imshow('RealSense', images)
         cv2.waitKey(1)
+
+
 
 
 
