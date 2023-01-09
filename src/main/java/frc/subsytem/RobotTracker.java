@@ -72,7 +72,7 @@ public final class RobotTracker extends AbstractSubsystem {
 
 
     private final TimeInterpolatableBuffer<Pose2d> poseBufferForVelocity = TimeInterpolatableBuffer.createBuffer(
-            Pose2d::interpolate, 0.5);
+            Pose2d::interpolate, 1.5);
 
 
     private @NotNull Translation2d acceleration = new Translation2d();
@@ -138,43 +138,36 @@ public final class RobotTracker extends AbstractSubsystem {
                 var averageVelocity = avgVelocity.div(VELOCITY_MEASUREMENT_WINDOW);
 
                 // Create mutable objects to avoid creating new objects
-                final MutableTranslation2d totalAccel = new MutableTranslation2d();
-                final MutableTranslation2d tempAccel = new MutableTranslation2d();
+                final var mutDeltaVelocity = new MutableTranslation2d();
+                final var tempAccel = new MutableTranslation2d();
                 double lastTime = timestamp - VELOCITY_MEASUREMENT_WINDOW;
 
-
-                // Calculate the average acceleration over the last 0.5 seconds
+                // Calculate the average deltaVelocity over the last 0.5 seconds
                 for (var entry : accelerationHistory.getInternalBuffer().tailMap(lastTime, false).entrySet()) {
                     double time = Math.max(entry.getKey(), timestamp); // Don't go into the future
-                    if (time < lastTime) {
+                    if (time < lastTime) { // if for some reason the times are out of order
                         continue;
                     }
                     tempAccel.set(entry.getValue()).times(time - lastTime);
-                    totalAccel.plus(entry.getValue());
+                    mutDeltaVelocity.plus(entry.getValue());
                     lastTime = time;
                 }
 
                 if (lastTime < timestamp) {
-                    // Add the last bit of acceleration (assume it's constant from the last sample to now)
+                    // Add the last bit of deltaVelocity (assume it's constant from the last sample to now)
                     tempAccel.set(acceleration);
 
                     tempAccel.times(timestamp - lastTime);
-                    totalAccel.plus(tempAccel);
+                    mutDeltaVelocity.plus(tempAccel);
                 }
 
 
-                // The average acceleration over our measurement window
-                var acceleration = totalAccel.div(VELOCITY_MEASUREMENT_WINDOW).getTranslation2d();
+                // The average deltaVelocity over our measurement window
+                var deltaVelocity = mutDeltaVelocity.getTranslation2d();
 
-                // Start with V_i = V_f - at
-                // v_avg = (v_i + v_f) / 2
-                // v_avg = (v_f - at + v_f) / 2
-                // v_avg = v_f - (at / 2)
-                // v_avg + (at / 2) = v_f
+                // https://www.desmos.com/calculator/szqs5g5d6i
 
-                // Calculate the velocity of the robot
-
-                velocity = averageVelocity.plus(acceleration.times(VELOCITY_MEASUREMENT_WINDOW / 2));
+                velocity = averageVelocity.plus(deltaVelocity.times(VELOCITY_MEASUREMENT_WINDOW / 2));
             }
         } finally {
             lock.readLock().unlock();
