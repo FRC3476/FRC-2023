@@ -173,4 +173,6 @@ public final class Constants {
 
     // Elevator
     public static final int ELEVATOR_P = 5;
+    public static final int ELEVATOR_I = 5;
+    public static final int ELEVATOR_D = 5;
 }

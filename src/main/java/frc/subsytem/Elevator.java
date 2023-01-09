@@ -17,6 +17,12 @@ public class Elevator extends AbstractSubsystem{
         sparkMax = new CANSparkMax(0, CANSparkMaxLowLevel.MotorType.kBrushless);
         sparkMaxPIDController = sparkMax.getPIDController();
         sparkMaxPIDController.setP(Constants.ELEVATOR_P);
+        sparkMaxPIDController.setI(Constants.ELEVATOR_I);
+        sparkMaxPIDController.setD(Constants.ELEVATOR_D);
+    }
+
+    public void turnMotor(double position) {
+        sparkMax.getEncoder().setPosition(position);    
     }
 
     @Override
