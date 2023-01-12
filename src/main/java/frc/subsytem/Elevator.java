@@ -3,9 +3,7 @@ package frc.subsytem;
 import com.revrobotics.CANSparkMax;
 import com.revrobotics.CANSparkMaxLowLevel;
 import com.revrobotics.SparkMaxPIDController;
-import frc.robot.Constants; 
-import org.checkerframework.checker.units.qual.C;
-
+import frc.robot.Constants;
 public class Elevator extends AbstractSubsystem{
     Elevator elevator;
     CANSparkMax sparkMax;
