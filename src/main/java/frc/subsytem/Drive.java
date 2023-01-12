@@ -63,8 +63,8 @@ public final class Drive extends AbstractSubsystem {
             autoTurnPIDController.setTolerance(Math.toRadians(10));
 
             swerveAutoController = new HolonomicDriveController(
-                    new edu.wpi.first.math.controller.PIDController(3, 0, 0),
-                    new edu.wpi.first.math.controller.PIDController(3, 0, 0),
+                    new PIDController(3, 0, 0),
+                    new PIDController(3, 0, 0),
                     autoTurnPIDController);
             swerveAutoController.setTolerance(new Pose2d(0.5, 0.5, Rotation2d.fromDegrees(10))); //TODO: Tune
         } finally {
@@ -87,15 +87,13 @@ public final class Drive extends AbstractSubsystem {
     private final @NotNull PIDController turnPID;
 
     {
-        turnPID = new PIDController(turnP.get(), turnI.get(), turnD.get()); //P=1.0
-        // OR 0.8
+        turnPID = new PIDController(turnP.get(), turnI.get(), turnD.get());
         turnPID.enableContinuousInput(-Math.PI, Math.PI);
         turnPID.setIntegratorRange(-Math.PI * 2 * 4, Math.PI * 2 * 4);
     }
 
     private @NotNull DriveState driveState = DriveState.TELEOP;
     private volatile @NotNull Rotation2d wantedHeading = new Rotation2d();
-    private boolean rotateAuto = false;
 
     private boolean isAiming = false;
 
@@ -399,9 +397,7 @@ public final class Drive extends AbstractSubsystem {
             }
 
             Trajectory.State goal = currentAutoTrajectory.sample(Timer.getFPGATimestamp() - autoStartTime);
-
             Rotation2d targetHeading = autoTargetHeading;
-
 
             try {
                 if (swerveAutoController == null) {
@@ -415,7 +411,8 @@ public final class Drive extends AbstractSubsystem {
                         targetHeading);
 
                 swerveDrive(adjustedSpeeds, KinematicLimits.NORMAL_DRIVING.kinematicLimit, EXPECTED_AUTO_DRIVE_DT);
-                if (swerveAutoController.atReference() && (Timer.getFPGATimestamp() - autoStartTime) >= currentAutoTrajectory.getTotalTimeSeconds()) {
+                if (swerveAutoController.atReference()
+                        && (Timer.getFPGATimestamp() - autoStartTime) >= currentAutoTrajectory.getTotalTimeSeconds()) {
                     setDriveState(DriveState.DONE);
                     stopMovement();
                 }
@@ -461,7 +458,7 @@ public final class Drive extends AbstractSubsystem {
         } finally {
             currentAutoTrajectoryLock.unlock();
         }
-        System.out.println("new rotation" + rotation.getDegrees());
+        System.out.println("New Auto Rotation" + rotation.getDegrees());
     }
 
     public double getAutoElapsedTime() {
@@ -493,7 +490,6 @@ public final class Drive extends AbstractSubsystem {
     public void setRotation(Rotation2d angle) {
         wantedHeading = angle;
         driveState = DriveState.TURN;
-        rotateAuto = true;
         isAiming = !isTurningDone();
     }
 
@@ -515,7 +511,6 @@ public final class Drive extends AbstractSubsystem {
      */
     private void updateTurn() {
         updateTurn(new ControllerDriveInputs(0, 0, 0), wantedHeading, Math.toRadians(Constants.MAX_TURN_ERROR));
-        // Field relative flag won't do anything since we're not moving
     }
 
     double lastTurnUpdate = 0;
@@ -567,7 +562,7 @@ public final class Drive extends AbstractSubsystem {
         if (Math.abs(goal.position - RobotTracker.getInstance().getGyroAngle().getRadians()) < turnErrorRadians) {
             synchronized (this) {
                 isAiming = false;
-                if (rotateAuto) {
+                if (this.driveState == DriveState.TURN) {
                     this.driveState = DriveState.DONE;
                 }
             }
