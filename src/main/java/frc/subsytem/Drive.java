@@ -116,39 +116,39 @@ public final class Drive extends AbstractSubsystem {
     private Drive() {
         super(Constants.DRIVE_PERIOD, 5);
 
-        final @NotNull CANSparkMax leftFrontTalon, leftBackTalon, rightFrontTalon, rightBackTalon;
+        final @NotNull CANSparkMax leftFrontSpark, leftBackSpark, rightFrontSpark, rightBackSpark;
         final @NotNull CANCoder leftFrontCanCoder, leftBackCanCoder, rightFrontCanCoder, rightBackCanCoder;
-        final @NotNull CANSparkMax leftFrontTalonSwerve, leftBackTalonSwerve, rightFrontTalonSwerve, rightBackTalonSwerve;
+        final @NotNull CANSparkMax leftFrontSparkSwerve, leftBackSparkSwerve, rightFrontSparkSwerve, rightBackSparkSwerve;
         // Swerve Drive Motors
-        leftFrontTalon = new CANSparkMax(Constants.DRIVE_LEFT_FRONT_ID, MotorType.kBrushless);
-        leftBackTalon = new CANSparkMax(Constants.DRIVE_LEFT_BACK_ID, MotorType.kBrushless);
-        rightFrontTalon = new CANSparkMax(Constants.DRIVE_RIGHT_FRONT_ID, MotorType.kBrushless);
-        rightBackTalon = new CANSparkMax(Constants.DRIVE_RIGHT_BACK_ID, MotorType.kBrushless);
+        leftFrontSpark = new CANSparkMax(Constants.DRIVE_LEFT_FRONT_ID, MotorType.kBrushless);
+        leftBackSpark = new CANSparkMax(Constants.DRIVE_LEFT_BACK_ID, MotorType.kBrushless);
+        rightFrontSpark = new CANSparkMax(Constants.DRIVE_RIGHT_FRONT_ID, MotorType.kBrushless);
+        rightBackSpark = new CANSparkMax(Constants.DRIVE_RIGHT_BACK_ID, MotorType.kBrushless);
 
-        leftFrontTalon.setInverted(false);
-        rightFrontTalon.setInverted(false);
-        leftBackTalon.setInverted(false);
-        rightBackTalon.setInverted(false);
+        leftFrontSpark.setInverted(false);
+        rightFrontSpark.setInverted(false);
+        leftBackSpark.setInverted(false);
+        rightBackSpark.setInverted(false);
 
-        leftFrontTalonSwerve = new CANSparkMax(Constants.DRIVE_LEFT_FRONT_SWERVE_ID, MotorType.kBrushless);
-        leftBackTalonSwerve = new CANSparkMax(Constants.DRIVE_LEFT_BACK_SWERVE_ID, MotorType.kBrushless);
-        rightFrontTalonSwerve = new CANSparkMax(Constants.DRIVE_RIGHT_FRONT_SWERVE_ID, MotorType.kBrushless);
-        rightBackTalonSwerve = new CANSparkMax(Constants.DRIVE_RIGHT_BACK_SWERVE_ID, MotorType.kBrushless);
+        leftFrontSparkSwerve = new CANSparkMax(Constants.DRIVE_LEFT_FRONT_SWERVE_ID, MotorType.kBrushless);
+        leftBackSparkSwerve = new CANSparkMax(Constants.DRIVE_LEFT_BACK_SWERVE_ID, MotorType.kBrushless);
+        rightFrontSparkSwerve = new CANSparkMax(Constants.DRIVE_RIGHT_FRONT_SWERVE_ID, MotorType.kBrushless);
+        rightBackSparkSwerve = new CANSparkMax(Constants.DRIVE_RIGHT_BACK_SWERVE_ID, MotorType.kBrushless);
 
         leftFrontCanCoder = new CANCoder(Constants.CAN_LEFT_FRONT_ID);
         leftBackCanCoder = new CANCoder(Constants.CAN_LEFT_BACK_ID);
         rightFrontCanCoder = new CANCoder(Constants.CAN_RIGHT_FRONT_ID);
         rightBackCanCoder = new CANCoder(Constants.CAN_RIGHT_BACK_ID);
 
-        swerveMotors[0] = leftFrontTalonSwerve;
-        swerveMotors[1] = leftBackTalonSwerve;
-        swerveMotors[2] = rightFrontTalonSwerve;
-        swerveMotors[3] = rightBackTalonSwerve;
+        swerveMotors[0] = leftFrontSparkSwerve;
+        swerveMotors[1] = leftBackSparkSwerve;
+        swerveMotors[2] = rightFrontSparkSwerve;
+        swerveMotors[3] = rightBackSparkSwerve;
 
-        swerveDriveMotors[0] = leftFrontTalon;
-        swerveDriveMotors[1] = leftBackTalon;
-        swerveDriveMotors[2] = rightFrontTalon;
-        swerveDriveMotors[3] = rightBackTalon;
+        swerveDriveMotors[0] = leftFrontSpark;
+        swerveDriveMotors[1] = leftBackSpark;
+        swerveDriveMotors[2] = rightFrontSpark;
+        swerveDriveMotors[3] = rightBackSpark;
 
         swerveCanCoders[0] = leftFrontCanCoder;
         swerveCanCoders[1] = leftBackCanCoder;
@@ -253,7 +253,7 @@ public final class Drive extends AbstractSubsystem {
         ChassisSpeeds chassisSpeeds = new ChassisSpeeds(
                 DRIVE_HIGH_SPEED_M * inputs.getX(),
                 DRIVE_HIGH_SPEED_M * inputs.getY(),
-                inputs.getRotation() * 7);
+                inputs.getRotation() * MAX_TELEOP_TURN_SPEED);
         swerveDrive(chassisSpeeds, KinematicLimits.NORMAL_DRIVING.kinematicLimit, EXPECTED_TELEOP_DRIVE_DT);
     }
 
@@ -265,7 +265,7 @@ public final class Drive extends AbstractSubsystem {
         ChassisSpeeds chassisSpeeds = ChassisSpeeds.fromFieldRelativeSpeeds(
                 DRIVE_HIGH_SPEED_M * inputs.getX(),
                 DRIVE_HIGH_SPEED_M * inputs.getY(),
-                inputs.getRotation() * 7,
+                inputs.getRotation() * MAX_TELEOP_TURN_SPEED,
                 RobotTracker.getInstance().getGyroAngle());
         swerveDrive(chassisSpeeds, KinematicLimits.NORMAL_DRIVING.kinematicLimit, EXPECTED_TELEOP_DRIVE_DT);
     }
@@ -436,7 +436,7 @@ public final class Drive extends AbstractSubsystem {
 
         if (Timer.getFPGATimestamp() - 0.2 > lastTurnUpdate) {
             turnPID.reset();
-        } else if (turnPID.getPositionError() > Math.toRadians(7)) {
+        } else if (turnPID.getPositionError() > Math.toRadians(MAX_TELEOP_TURN_SPEED)) {
             // This is basically an I-Zone
             turnPID.resetI();
         }

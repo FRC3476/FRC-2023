@@ -141,6 +141,8 @@ public final class Constants {
         }
     }
 
+    public static final int MAX_TELEOP_TURN_SPEED = 7;
+
 
     //Robot Tracker
     public static final int ROBOT_TRACKER_PERIOD = 20;
