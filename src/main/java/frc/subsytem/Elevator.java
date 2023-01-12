@@ -22,7 +22,7 @@ public class Elevator extends AbstractSubsystem{
     }
 
     public void turnMotor(double position) {
-        sparkMax.getEncoder().setPosition(position);    
+        sparkMax.getEncoder().setPosition(position);
     }
 
     @Override
@@ -32,6 +32,6 @@ public class Elevator extends AbstractSubsystem{
 
     @Override
     public void logData() {
-
+        logData("Motor Position", sparkMax.getEncoder().getPosition());
     }
 }
