@@ -108,11 +108,6 @@ public final class Constants {
     );
 
     public static final double DRIVE_HIGH_SPEED_M = 4.2;
-    public static final double SWERVE_ACCELERATION =
-            ((360 * 10 * FALCON_ENCODER_TICKS_PER_ROTATIONS) / SWERVE_MOTOR_POSITION_CONVERSION_FACTOR) / 360; //5 rot/s^2
-
-    public static final double SWERVE_CRUISE_VELOCITY =
-            ((360 * 7 * FALCON_ENCODER_TICKS_PER_ROTATIONS) / SWERVE_MOTOR_POSITION_CONVERSION_FACTOR) / 360; //6.5 rot/s
     /**
      * Allowed Turn Error in degrees.
      */
@@ -146,16 +141,6 @@ public final class Constants {
         }
     }
 
-    /**
-     * Units are in Radians per Second Squared
-     */
-    public static final double MAX_ANGULAR_ACCELERATION = Math.toRadians(360 * 22);
-    /**
-     * Conversion from Falcon Sensor Units / 100ms to RPM 2048 is Sensor Units Per Revolution 600 Converts From Time of 100ms to 1
-     * minute
-     */
-    public static final double FALCON_UNIT_CONVERSION_FOR_RELATIVE_ENCODER = 600.0d / 2048.0d;
-
 
     //Robot Tracker
     public static final int ROBOT_TRACKER_PERIOD = 20;
@@ -165,4 +150,6 @@ public final class Constants {
     public static final double GRAVITY = 9.80665;
 
     public static final int PIGEON_CAN_ID = 30;
+
+    public static final double COAST_AFTER_DISABLE_TIME = 0.5;
 }

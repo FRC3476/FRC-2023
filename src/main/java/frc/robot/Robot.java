@@ -99,24 +99,13 @@ public class Robot extends TimedRobot {
     public void robotPeriodic() {}
 
 
-    /**
-     * This autonomous (along with the chooser code above) shows how to select between different autonomous modes using the
-     * dashboard. The sendable chooser code works with the Java SmartDashboard. If you prefer the LabVIEW Dashboard, remove all of
-     * the chooser code and uncomment the getString line to get the auto name from the text box below the Gyro
-     *
-     * <p>You can add additional auto modes by adding additional comparisons to the switch structure
-     * below with additional strings. If using the SendableChooser make sure to add them to the chooser code above as well.
-     */
     @Override
     public void autonomousInit() {
-
         drive.configBrake();
-
         String autoName = autoChooser.getSelected();
-        if (autoName == null) {
-            autoName = "1ball"; //Default auto if none is selected
+        if (autoName != null) {
+            AutonomousContainer.getInstance().runAutonomous(autoName, sideChooser.getSelected(), true);
         }
-        AutonomousContainer.getInstance().runAutonomous(autoName, sideChooser.getSelected(), true);
     }
 
 
@@ -167,7 +156,7 @@ public class Robot extends TimedRobot {
      */
     @Override
     public void disabledPeriodic() {
-        if (Timer.getFPGATimestamp() - disabledTime > 0.5) {
+        if (Timer.getFPGATimestamp() - disabledTime > Constants.COAST_AFTER_DISABLE_TIME) {
             drive.configCoast();
         }
     }
