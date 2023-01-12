@@ -6,8 +6,8 @@ import com.revrobotics.SparkMaxPIDController;
 import frc.robot.Constants;
 public class Elevator extends AbstractSubsystem{
     Elevator elevator;
-    CANSparkMax sparkMax;
-    SparkMaxPIDController sparkMaxPIDController;
+    static CANSparkMax sparkMax;
+    static SparkMaxPIDController sparkMaxPIDController;
 
     public Elevator() {
         super(20, 5);
@@ -31,5 +31,10 @@ public class Elevator extends AbstractSubsystem{
     @Override
     public void logData() {
         logData("Motor Position", sparkMax.getEncoder().getPosition());
+    }
+
+    public static int convert(double rotations) {
+        int inches = 0;
+        return inches;
     }
 }
