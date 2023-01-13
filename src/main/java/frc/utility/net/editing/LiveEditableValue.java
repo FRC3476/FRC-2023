@@ -12,7 +12,7 @@ public class LiveEditableValue<T> {
     private volatile T value;
     private final @NotNull NetworkTableEntry entry;
 
-    private final @NotNull Function<T, Object> onWrite;
+    private final @NotNull Function<? super T, Object> onWrite;
 
     /**
      * @param defaultValue The default value to use if the entry is not changed / the initial value set to the table
@@ -21,8 +21,9 @@ public class LiveEditableValue<T> {
      *                     {@link T}
      * @param onWrite      The function to convert to a NT object when {@link #set(T)} is called
      */
-    public LiveEditableValue(@NotNull T defaultValue, @NotNull NetworkTableEntry entry, @NotNull Function<Object, T> onNTChange,
-                             @NotNull Function<T, Object> onWrite) {
+    public LiveEditableValue(@NotNull T defaultValue, @NotNull NetworkTableEntry entry,
+                             @NotNull Function<Object, ? extends T> onNTChange,
+                             @NotNull Function<? super T, Object> onWrite) {
         this.onWrite = onWrite;
         this.value = defaultValue;
         this.entry = entry;

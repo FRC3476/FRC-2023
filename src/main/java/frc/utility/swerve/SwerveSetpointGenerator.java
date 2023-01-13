@@ -7,14 +7,13 @@ import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
 import frc.robot.Constants;
-import frc.utility.OrangeUtility;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
-import static frc.utility.OrangeUtility.*;
+import static frc.utility.MathUtil.*;
 
 /**
  * Takes a prior setpoint (ChassisSpeeds), a desired setpoint (from a driver, or from a path follower), and outputs a new setpoint
@@ -63,7 +62,7 @@ public class SwerveSetpointGenerator {
 
     @FunctionalInterface
     private interface Function2d {
-        public double f(double x, double y);
+        double f(double x, double y);
     }
 
     /**
@@ -83,7 +82,7 @@ public class SwerveSetpointGenerator {
      */
     private double findRoot(Function2d func, double x0, double y0, double f0, double x1, double y1, double f1,
                             int iterations_left) {
-        if (iterations_left < 0 || OrangeUtility.epsilonEquals(f0, f1)) {
+        if (iterations_left < 0 || epsilonEquals(f0, f1)) {
             return 1.0;
         }
         var s_guess = Math.max(0.0, Math.min(1.0, -f0 / (f1 - f0)));
@@ -108,9 +107,7 @@ public class SwerveSetpointGenerator {
             return 1.0;
         }
         double offset = f0 + Math.signum(diff) * maxDeviation;
-        Function2d func = (x, y) -> {
-            return unwrapAngle(f0, Math.atan2(y, x)) - offset;
-        };
+        Function2d func = (x, y) -> unwrapAngle(f0, Math.atan2(y, x)) - offset;
         return findRoot(func, x0, y0, f0 - offset, x1, y1, f1 - offset, maxIterations);
     }
 
@@ -122,9 +119,7 @@ public class SwerveSetpointGenerator {
             return 1.0;
         }
         double offset = f0 + Math.signum(diff) * maxVelStep;
-        Function2d func = (x, y) -> {
-            return Math.hypot(x, y) - offset;
-        };
+        Function2d func = (x, y) -> Math.hypot(x, y) - offset;
         return findRoot(func, x0, y0, f0 - offset, x1, y1, f1 - offset, max_iterations);
     }
 
@@ -156,7 +151,7 @@ public class SwerveSetpointGenerator {
      *                     actual measured/estimated kinematic state.
      * @param desiredState The desired state of motion, such as from the driver sticks or a path following algorithm.
      * @param dt           The loop time.
-     * @return A Setpoint object that satisfies all of the KinematicLimit while converging to desiredState quickly.
+     * @return A Setpoint object that satisfies all the KinematicLimit while converging to desiredState quickly.
      */
     public SwerveSetpoint generateSetpoint(final @NotNull SwerveSetpointGenerator.KinematicLimit limits,
                                            final @NotNull SwerveSetpoint prevSetpoint,
