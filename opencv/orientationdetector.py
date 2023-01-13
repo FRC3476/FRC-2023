@@ -3,21 +3,20 @@
 
 # Import OpenCV for easy image rendering
 import math
-import cv2 
-# Import Numpy for easy array manipulation
-import numpy as np
 ###############################################
 ##      Open CV and Numpy integration        ##
 ###############################################
 # First import the library
-from math import atan, cos, pi, sin, sqrt, tan
+from math import atan, cos, pi, sin, sqrt
+
+import cv2
+# Import Numpy for easy array manipulation
+import numpy as np
 from networktables import NetworkTables
-import pyrealsense2 as rs
 
 # Initialize Network Tables
 # As a client to connect to a robot
 NetworkTables.initialize(server='127.0.0.1')
-
 
 # # Create a pipeline
 # pipeline = rs.pipeline()
@@ -78,60 +77,60 @@ NetworkTables.initialize(server='127.0.0.1')
 cap = cv2.VideoCapture("C:/Users/varun/Pictures/Camera Roll/WIN_20230108_20_16_07_Pro.mp4")
 
 
-def getSemiMajorAxis(moment):
-    E = Ellipse()
+def get_semi_major_axis(moment):
+    e = Ellipse()
 
     # --- Get the Moments
-    E.m00 = moment['m00']
-    E.m10 = moment['m10']
-    E.m01 = moment['m01']
-    E.m11 = moment['m11']
-    E.m02 = moment['m02']
-    E.m20 = moment['m20']
+    e.m00 = moment['m00']
+    e.m10 = moment['m10']
+    e.m01 = moment['m01']
+    e.m11 = moment['m11']
+    e.m02 = moment['m02']
+    e.m20 = moment['m20']
 
     # --- Ellipse properties
 
     # Barycenter
-    E.x = E.m10 / E.m00;
-    E.y = E.m01 / E.m00;
+    e.x = e.m10 / e.m00
+    e.y = e.m01 / e.m00
 
     # Central moments (intermediary step)
-    a = E.m20 / E.m00 - E.x * E.x;
-    b = 2 * (E.m11 / E.m00 - E.x * E.y);
-    c = E.m02 / E.m00 - E.y * E.y;
+    a = e.m20 / e.m00 - e.x * e.x
+    b = 2 * (e.m11 / e.m00 - e.x * e.y)
+    c = e.m02 / e.m00 - e.y * e.y
 
     # Orientation (radians)
-    E.theta = 1 / 2 * atan(b / (a - c)) + (a < c) * pi / 2;
+    e.theta = 1 / 2 * atan(b / (a - c)) + (a < c) * pi / 2
 
     # Minor and major axis
-    E.w = sqrt(8 * (a + c - sqrt((b * b) + (a - c) * (a - c)))) / 2;
-    E.l = sqrt(8 * (a + c + sqrt((b * b) + (a - c) * (a - c)))) / 2;
+    e.w = sqrt(8 * (a + c - sqrt((b * b) + (a - c) * (a - c)))) / 2
+    e.l = sqrt(8 * (a + c + sqrt((b * b) + (a - c) * (a - c)))) / 2
 
     # Ellipse focal points
-    d = sqrt((E.l * E.l) - (E.w * E.w));
-    E.x1 = E.x + d * cos(E.theta);
-    E.y1 = E.y + d * sin(E.theta);
-    E.x2 = E.x - d * cos(E.theta);
-    E.y2 = E.y - d * sin(E.theta);
+    d = sqrt((e.l * e.l) - (e.w * e.w))
+    e.x1 = e.x + d * cos(e.theta)
+    e.y1 = e.y + d * sin(e.theta)
+    e.x2 = e.x - d * cos(e.theta)
+    e.y2 = e.y - d * sin(e.theta)
 
     # # Ellipse direction
     # if direct:
-    #     tmp = [i-mean(i) j-mean(j)]*[cos(E.theta) -sin(E.theta) ; sin(E.theta) cos(E.theta)];
+    #     tmp = [i-mean(i) j-mean(j)]*[cos(e.theta) -sin(e.theta) ; sin(e.theta) cos(e.theta)];
     #     if skewness(tmp(:,1))>0
 
     #         # Fix direction
-    #         E.theta = mod(E.theta + pi, 2*pi);
-    #         tmp = [E.x1 E.y1];
+    #         e.theta = mod(e.theta + pi, 2*pi);
+    #         tmp = [e.x1 e.y1];
 
     #         # Swap F1 and F2
-    #         E.x1 = E.x2;
-    #         E.y1 = E.y2;
-    #         E.x2 = tmp(1);
-    #         E.y2 = tmp(2);
+    #         e.x1 = e.x2;
+    #         e.y1 = e.y2;
+    #         e.x2 = tmp(1);
+    #         e.y2 = tmp(2);
     #     end
     # end
 
-    return E
+    return e
 
 
 class Ellipse:
@@ -150,51 +149,52 @@ class Ellipse:
     y1 = 0
     x2 = 0
     y2 = 0
-    
-    
-def getLength(x1, y1, x2, y2):
+
+
+def get_length(x1, y1, x2, y2):
     return sqrt((x1 - x2) ** 2 + (y1 - y2) ** 2)
+
 
 try:
     while True:
-# # Get frameset of color and depth
-#         frames = pipeline.wait_for_frames()
-#         # frames.get_depth_frame() is a 640x360 depth image
+        # # Get frameset of color and depth
+        #         frames = pipeline.wait_for_frames()
+        #         # frames.get_depth_frame() is a 640x360 depth image
 
-#         # Align the depth frame to color frame
-#         aligned_frames = align.process(frames)
+        #         # Align the depth frame to color frame
+        #         aligned_frames = align.process(frames)
 
-#         # Get aligned frames
-#         depth_frame = aligned_frames.get_depth_frame()  # aligned_depth_frame is a 640x480 depth image
-#         color_frame = aligned_frames.get_color_frame()
+        #         # Get aligned frames
+        #         depth_frame = aligned_frames.get_depth_frame()  # aligned_depth_frame is a 640x480 depth image
+        #         color_frame = aligned_frames.get_color_frame()
 
-#         # Validate that both frames are valid
-#         if not depth_frame or not color_frame:
-#             continue
+        #         # Validate that both frames are valid
+        #         if not depth_frame or not color_frame:
+        #             continue
 
-#         filled_depth = hole_filling.process(depth_frame)
+        #         filled_depth = hole_filling.process(depth_frame)
 
-#         aligned_depth_intrinsics = rs.video_stream_profile(depth_frame.profile).get_intrinsics()
+        #         aligned_depth_intrinsics = rs.video_stream_profile(depth_frame.profile).get_intrinsics()
 
-#         depth_image = np.asanyarray(depth_frame.get_data())
-#         filled_depth_image = np.asanyarray(filled_depth.get_data())
-#         color_image = np.asanyarray(color_frame.get_data())
+        #         depth_image = np.asanyarray(depth_frame.get_data())
+        #         filled_depth_image = np.asanyarray(filled_depth.get_data())
+        #         color_image = np.asanyarray(color_frame.get_data())
 
-#         # Remove background - Set pixels further than clipping_distance to grey
-#         back_color = 0
-#         depth_image_3d = np.dstack((depth_image, depth_image, depth_image))  # depth image is 1 channel, color is 3 channels
-#         bg_removed = np.where((depth_image_3d > clipping_distance) | (depth_image_3d <= 0), back_color, color_image)
+        #         # Remove background - Set pixels further than clipping_distance to grey
+        #         back_color = 0
+        #         depth_image_3d = np.dstack((depth_image, depth_image, depth_image))  # depth image is 1 channel, color is 3 channels
+        #         bg_removed = np.where((depth_image_3d > clipping_distance) | (depth_image_3d <= 0), back_color, color_image)
 
-#         # Render images:
-#         #   depth align to color on left
-#         #   depth on right
-#         depth_colormap = cv2.applyColorMap(cv2.convertScaleAbs(depth_image, alpha=0.03), cv2.COLORMAP_HSV)
+        #         # Render images:
+        #         #   depth align to color on left
+        #         #   depth on right
+        #         depth_colormap = cv2.applyColorMap(cv2.convertScaleAbs(depth_image, alpha=0.03), cv2.COLORMAP_HSV)
 
-#         depth_gray = cv2.convertScaleAbs(filled_depth_image, alpha=0.05)
-#         edge = cv2.Canny(depth_gray, 10, 200, apertureSize=5, L2gradient=False)  # Use the depth to determine the edges between objects
-#         cv2.imshow('depth edges', cv2.bitwise_or(depth_gray, edge))
-#         edge = cv2.dilate(edge, None, iterations=1)
-#         edge = cv2.bitwise_not(edge)  # Invert the edges so that we can use it as a mask
+        #         depth_gray = cv2.convertScaleAbs(filled_depth_image, alpha=0.05)
+        #         edge = cv2.Canny(depth_gray, 10, 200, apertureSize=5, L2gradient=False)  # Use the depth to determine the edges between objects
+        #         cv2.imshow('depth edges', cv2.bitwise_or(depth_gray, edge))
+        #         edge = cv2.dilate(edge, None, iterations=1)
+        #         edge = cv2.bitwise_not(edge)  # Invert the edges so that we can use it as a mask
 
         # color_image = None
 
@@ -236,8 +236,8 @@ try:
         img_threshold_yellow = cv2.erode(img_threshold_yellow, None, iterations=2)
 
         contours, hierarchy = cv2.findContours(img_threshold_yellow, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
-        #cv2.drawContours(img_threshold_yellow, contours, -1, (0, 255, 0), 3)
-        #cv2.drawContours(color_image, contours, -1, (0, 255, 0), -1)
+        # cv2.drawContours(img_threshold_yellow, contours, -1, (0, 255, 0), 3)
+        # cv2.drawContours(color_image, contours, -1, (0, 255, 0), -1)
 
         # print("latency: {}".format(latency))
 
@@ -248,9 +248,8 @@ try:
             if area > 1000:
                 tmp = np.zeros(color_image.shape[:2], dtype="uint8")
 
-
                 cv2.drawContours(tmp, [cnt], -1, 255, -1)
-                cv2.drawContours(color_image, [cnt], -1, (0, 255,0 ), -1)
+                cv2.drawContours(color_image, [cnt], -1, (0, 255, 0), -1)
                 M = cv2.moments(tmp)
                 cx = int(M['m10'] / M['m00'])
                 cy = int(M['m01'] / M['m00'])
@@ -258,87 +257,76 @@ try:
                 cv2.putText(color_image, "center", (cx - 20, cy - 20),
                             cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 2)
 
-                data = getSemiMajorAxis(M)
+                data = get_semi_major_axis(M)
                 shape = tmp.shape
 
                 invalid = True
                 reverse = False
-            
-               
-                
+
                 length = 1
                 cos_slope = math.cos(data.theta)
                 sin_slope = math.sin(data.theta)
 
-                while (invalid):
+                while invalid:
                     x1 = data.x1 + length * cos_slope
                     y1 = data.y1 + length * sin_slope
                     x2 = data.x2 - length * cos_slope
                     y2 = data.y2 - length * sin_slope
-                    
-                    if (x1 <= tmp.shape[1] and y1 <= tmp.shape[0] and x1 >= 0 and y1 >= 0 and x2 <= tmp.shape[1] and y2 <= tmp.shape[0] and x2 >= 0 and y2 >= 0):
-                        #print("x1: {}, y1: {}, x2: {}, y2: {}".format(x1, y1, x2, y2))
-                        if (tmp[int(y1)][int(x1)] == 0):
+
+                    if (tmp.shape[1] >= x1 >= 0 and tmp.shape[0] >= y1 >= 0
+                            and tmp.shape[1] >= x2 >= 0 and tmp.shape[0] >= y2 >= 0):
+                        # print("x1: {}, y1: {}, x2: {}, y2: {}".format(x1, y1, x2, y2))
+                        if tmp[int(y1)][int(x1)] == 0:
                             reverse = True
                             invalid = False
-                            #print("reversed")
+                            # print("reversed")
                             break
-                        elif (tmp[int(y2)][int(x2)] == 0):
+                        elif tmp[int(y2)][int(x2)] == 0:
                             reverse = False
                             invalid = False
-                           # print("not reversed")
+                            # print("not reversed")
                             break
                     else:
-                        #print("invalid")
+                        # print("invalid")
                         break
                     length += 1
 
-                #print (length)
+                # print (length)
 
                 color = None
-                if (invalid):
+                if invalid:
                     color = (0, 0, 255)
                 else:
                     color = (255, 255, 255)
                 # draw a point on the top side
-                if reverse:      
+                if reverse:
                     cv2.circle(color_image, (int(data.x2), int(data.y2)), 7, color, -1)
                 else:
                     cv2.circle(color_image, (int(data.x1), int(data.y1)), 7, color, -1)
                 cv2.line(color_image, (int(data.x1), int(data.y1)), (int(data.x2), int(data.y2)), color, 2)
 
-
-
-
                 # Draw the minimum area rectangle
                 rect = cv2.minAreaRect(cnt)
                 box = cv2.boxPoints(rect)
                 box = np.int0(box)
-                
-                squareness = min(data.l, data.w) / max(data.l, data.w)  
+
+                squareness = min(data.l, data.w) / max(data.l, data.w)
 
                 # print ("sqareness: {}".format(squareness))
 
                 minAreaRectColor = None
-                if ( squareness > 0.80):
+                if squareness > 0.80:
                     minAreaRectColor = (0, 0, 255)
                 else:
                     minAreaRectColor = (0, 255, 255)
                 cv2.drawContours(color_image, [box], 0, minAreaRectColor, 2)
 
-                
-
-
         cv2.imshow('Contours', color_image)
         cv2.imshow('img_threshold_yellow', img_threshold_yellow)
         # cv2.namedWindow('RealSense', cv2.WINDOW_AUTOSIZE)
         # cv2.imshow('RealSense', images)
-        print("{} ms".format((cv2.getTickCount() - time)/cv2.getTickFrequency() * 1000))
+        print("{} ms".format((cv2.getTickCount() - time) / cv2.getTickFrequency() * 1000))
         cv2.waitKey(30)
-
-
-
-
 
 finally:
 
