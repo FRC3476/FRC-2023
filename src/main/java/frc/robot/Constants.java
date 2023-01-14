@@ -170,4 +170,7 @@ public final class Constants {
     public static final double GRAVITY = 9.80665;
 
     public static final int PIGEON_CAN_ID = 30;
+
+    // Vision constants
+    public static final int VISION_HANDLER_PERIOD = 20;
 }
