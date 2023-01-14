@@ -15,6 +15,8 @@ public class VisionHandler extends AbstractSubsystem {
     // Network tables
     private final @NotNull NetworkTableInstance networkTableInstance;
     private NetworkTable visionTable;
+    private NetworkTable visionMiscTable;
+    private NetworkTable configTable;
 
     private static VisionHandler instance;
 
@@ -31,6 +33,18 @@ public class VisionHandler extends AbstractSubsystem {
         // Network table init
         networkTableInstance = NetworkTableInstance.getDefault();
         visionTable = networkTableInstance.getTable("Vision");
+        visionMiscTable = networkTableInstance.getTable("Vision Misc");
+        configTable = networkTableInstance.getTable("Vision Config");
+
+        // Send out connection flag to april tags processor
+        visionMiscTable.getEntry("Connection Flag").setBoolean(true);
+
+        configTable.getEntry("Exposure").setDouble(100);
+        configTable.getEntry("Camera Type").setDouble(0);
+        configTable.getEntry("X Resolution").setDouble(1280);
+        configTable.getEntry("Y Resolution").setDouble(800);
+        configTable.getEntry("Framerate").setDouble(30);
+        configTable.getEntry("Threads").setDouble(4);
     }
 
     @Override
