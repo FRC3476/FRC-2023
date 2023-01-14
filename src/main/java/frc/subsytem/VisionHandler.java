@@ -1,11 +1,10 @@
 package frc.subsytem;
 
-import edu.wpi.first.networktables.NetworkTable;
-import edu.wpi.first.networktables.NetworkTableEntry;
-import edu.wpi.first.networktables.NetworkTableInstance;
-import edu.wpi.first.networktables.NetworkTablesJNI;
+import edu.wpi.first.networktables.*;
 import frc.robot.Constants;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.EnumSet;
 
 /**
  * Gives pose estimates based on april tag vision
@@ -45,6 +44,11 @@ public class VisionHandler extends AbstractSubsystem {
         configTable.getEntry("Y Resolution").setDouble(800);
         configTable.getEntry("Framerate").setDouble(30);
         configTable.getEntry("Threads").setDouble(4);
+        configTable.getEntry("Do Stream").setBoolean(false);
+
+        visionTable.addListener(EnumSet.of(NetworkTableEvent.Kind.kValueAll), (table, key, event) -> {
+
+        });
     }
 
     @Override
