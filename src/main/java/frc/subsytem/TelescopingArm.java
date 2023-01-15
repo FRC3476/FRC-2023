@@ -23,11 +23,11 @@ public class TelescopingArm extends AbstractSubsystem{
         sparkMaxPIDController.setD(Constants.TELESCOPING_ARM_D);
     }
 
-    TrapezoidProfile trapezoidProfile =
+    static TrapezoidProfile trapezoidProfile =
             new TrapezoidProfile(new TrapezoidProfile.Constraints(Constants.TELESCOPING_ARM_MAX_VELOCITY, Constants.TELESCOPING_ARM_MAX_ACCELERATION),
                     new TrapezoidProfile.State());
-    double setPositionPastTime = 0;
-    public void setPosition(double position) {
+    static double setPositionPastTime = 0;
+    public static void setPosition(double position) {
         TrapezoidProfile.Constraints constraints = new TrapezoidProfile.Constraints(Constants.TELESCOPING_ARM_MAX_VELOCITY, Constants.TELESCOPING_ARM_MAX_ACCELERATION);
 
         trapezoidProfile = new TrapezoidProfile(constraints, new TrapezoidProfile.State(position, 0),

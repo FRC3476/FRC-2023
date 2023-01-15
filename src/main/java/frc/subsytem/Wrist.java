@@ -23,11 +23,11 @@ public class Wrist extends AbstractSubsystem{
         sparkMaxPIDController.setD(Constants.WRIST_D);
     }
 
-    TrapezoidProfile trapezoidProfile =
+    static TrapezoidProfile trapezoidProfile =
             new TrapezoidProfile(new TrapezoidProfile.Constraints(Constants.WRIST_MAX_VELOCITY, Constants.WRIST_MAX_ACCELERATION),
                     new TrapezoidProfile.State());
-    double setPositionPastTime = 0;
-    public void setPosition(double position) {
+    static double setPositionPastTime = 0;
+    public static void setPosition(double position) {
         TrapezoidProfile.Constraints constraints = new TrapezoidProfile.Constraints(Constants.WRIST_MAX_VELOCITY, Constants.WRIST_MAX_ACCELERATION);
 
         trapezoidProfile = new TrapezoidProfile(constraints, new TrapezoidProfile.State(position, 0),
