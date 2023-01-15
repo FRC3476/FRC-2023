@@ -2,11 +2,18 @@
   "NTProvider": {
     "types": {
       "/FMSInfo": "FMSInfo",
-      "/SmartDashboard/Auto choices": "String Chooser"
+      "/SmartDashboard/Auto choices": "String Chooser",
+      "/SmartDashboard/Red or Blue": "String Chooser"
     }
   },
   "NetworkTables": {
     "retained": {
+      "Vision": {
+        "open": true
+      },
+      "Vision Misc": {
+        "open": true
+      },
       "autodata": {
         "open": true
       }

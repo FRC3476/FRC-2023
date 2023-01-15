@@ -2,11 +2,13 @@ package frc.subsytem;
 
 import com.ctre.phoenix.sensors.WPI_Pigeon2;
 import edu.wpi.first.math.VecBuilder;
+import edu.wpi.first.math.Vector;
 import edu.wpi.first.math.estimator.SwerveDrivePoseEstimator;
 import edu.wpi.first.math.geometry.*;
 import edu.wpi.first.math.interpolation.TimeInterpolatableBuffer;
 import edu.wpi.first.math.kinematics.SwerveDriveOdometry;
 import edu.wpi.first.math.kinematics.SwerveModulePosition;
+import edu.wpi.first.math.numbers.N3;
 import edu.wpi.first.wpilibj.Timer;
 import frc.robot.Constants;
 import frc.utility.geometry.MutableTranslation2d;
@@ -23,6 +25,7 @@ public final class RobotTracker extends AbstractSubsystem {
 
     private final ReentrantReadWriteLock lock = new ReentrantReadWriteLock();
     private final @NotNull WPI_Pigeon2 gyroSensor = new WPI_Pigeon2(PIGEON_CAN_ID, "rio");
+    private final @NotNull Rotation3d ROTATION_IDENTITY = new Rotation3d();
 
     private static final @NotNull RobotTracker instance = new RobotTracker();
 
@@ -248,6 +251,19 @@ public final class RobotTracker extends AbstractSubsystem {
             lock.readLock().unlock();
         }
     }
+
+    private Vector<N3> POSITIVE_Z = VecBuilder.fill(0, 0, 1);
+
+    public @NotNull Rotation3d getGyroAngleAtTime(double time) {
+        lock.readLock().lock();
+        try {
+            return gyroHistory.getSample(time).orElse(ROTATION_IDENTITY)
+                    .plus(new Rotation3d(POSITIVE_Z, gyroOffset.getRadians()));
+        } finally {
+            lock.readLock().unlock();
+        }
+    }
+
 
     public @NotNull Translation3d getAcceleration() {
         lock.readLock().lock();
