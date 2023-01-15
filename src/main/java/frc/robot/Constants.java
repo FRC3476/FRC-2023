@@ -21,7 +21,7 @@ public final class Constants {
     // 2048 sensor units per revolution
     public static final double FALCON_ENCODER_TICKS_PER_ROTATIONS = 2048;
     public static final double FALCON_ENCODER_TICKS_PER_100_MS_TO_RPM = 600 / 2048.0d;
-    public static final double SWERVE_MOTOR_POSITION_CONVERSION_FACTOR = 1 / 12.8;
+    public static final double SWERVE_ROTATIONS_PER_MOTOR_ROTATION = 7.0 / 150;
 
     // Logging Period
     /**
@@ -49,11 +49,11 @@ public final class Constants {
 
     public static final double SWERVE_INCHES_PER_ROTATION = 12.5 * 0.976;
     public static final double SWERVE_METER_PER_ROTATION = Units.inchesToMeters(SWERVE_INCHES_PER_ROTATION);
-    public static final double SWERVE_DRIVE_P = 0.1;
-    public static final double SWERVE_DRIVE_D = 0.00;
-    public static final double SWERVE_DRIVE_I = 0.00;
-    public static final double SWERVE_DRIVE_F = 0.00;
-    public static final double SWERVE_DRIVE_INTEGRAL_ZONE = 0.00;
+    public static final double SWERVE_P = 0.01;
+    public static final double SWERVE_D = 0.00;
+    public static final double SWERVE_I = 0.00;
+    public static final double SWERVE_F = 0.00;
+    public static final double SWERVE_INTEGRAL_ZONE = 0.00;
 
     /**
      * Feed forward constants for the drivetrain.
@@ -117,7 +117,7 @@ public final class Constants {
     public static final int SWERVE_DRIVE_MOTOR_CURRENT_LIMIT = 15;
     public static final int SWERVE_DRIVE_VOLTAGE_LIMIT = 12;
 
-    public static final double SWERVE_DRIVE_MOTOR_REDUCTION = 1 / 8.14;
+    public static final double SWERVE_DRIVE_MOTOR_REDUCTION = 1 / 6.75;
     // TurnPID
 
     public static final double DEFAULT_TURN_P = 10.0;
@@ -133,7 +133,7 @@ public final class Constants {
         /**
          * Normal acceleration limit while driving. This ensures that the driver can't tip the robot.
          */
-        NORMAL_DRIVING(new KinematicLimit(4.2, 5, Math.PI * 2 * 6));
+        NORMAL_DRIVING(new KinematicLimit(4.2, 5, Math.PI * 2 * 12));
         public final KinematicLimit kinematicLimit;
 
         KinematicLimits(KinematicLimit kinematicLimit) {

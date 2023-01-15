@@ -9,6 +9,7 @@ import com.dacubeking.AutoBuilder.robot.robotinterface.AutonomousContainer;
 import com.dacubeking.AutoBuilder.robot.robotinterface.CommandTranslator;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.wpilibj.Solenoid;
 import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
@@ -19,6 +20,7 @@ import frc.subsytem.RobotTracker;
 import frc.utility.Controller;
 import frc.utility.Controller.XboxButtons;
 import frc.utility.ControllerDriveInputs;
+import frc.utility.Pneumatics;
 import org.jetbrains.annotations.NotNull;
 
 import static frc.robot.Constants.IS_PRACTICE;
@@ -127,8 +129,10 @@ public class Robot extends TimedRobot {
     }
 
 
+    Solenoid claw = Pneumatics.getPneumaticsHub().makeSolenoid(15);
+
     /**
-     * This method is called periodically during operator control.
+     * \ This method is called periodically during operator control.
      */
     @Override
     public void teleopPeriodic() {
@@ -137,6 +141,10 @@ public class Robot extends TimedRobot {
 
         if (xbox.getRisingEdge(XboxButtons.A)) {
             robotTracker.resetPose(new Pose2d(robotTracker.getLatestPose().getTranslation(), new Rotation2d()));
+        }
+
+        if (xbox.getRisingEdge(XboxButtons.B)) {
+            claw.toggle();
         }
     }
 

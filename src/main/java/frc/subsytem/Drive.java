@@ -6,6 +6,7 @@ import com.ctre.phoenix.sensors.AbsoluteSensorRange;
 import com.ctre.phoenix.sensors.CANCoder;
 import com.ctre.phoenix.sensors.CANCoderStatusFrame;
 import com.revrobotics.CANSparkMax;
+import com.revrobotics.CANSparkMax.ControlType;
 import com.revrobotics.CANSparkMax.IdleMode;
 import com.revrobotics.CANSparkMaxLowLevel.MotorType;
 import edu.wpi.first.math.controller.HolonomicDriveController;
@@ -157,11 +158,11 @@ public final class Drive extends AbstractSubsystem {
 
         for (int i = 0; i < 4; i++) {
             // Sets swerveMotors PID
-            swerveMotors[i].getPIDController().setP(Constants.SWERVE_DRIVE_P);
-            swerveMotors[i].getPIDController().setD(Constants.SWERVE_DRIVE_D);
-            swerveMotors[i].getPIDController().setI(Constants.SWERVE_DRIVE_I);
-            swerveMotors[i].getPIDController().setFF(Constants.SWERVE_DRIVE_F);
-            swerveMotors[i].getPIDController().setIZone(Constants.SWERVE_DRIVE_INTEGRAL_ZONE);
+            swerveMotors[i].getPIDController().setP(Constants.SWERVE_P);
+            swerveMotors[i].getPIDController().setD(Constants.SWERVE_D);
+            swerveMotors[i].getPIDController().setI(Constants.SWERVE_I);
+            swerveMotors[i].getPIDController().setFF(Constants.SWERVE_F);
+            swerveMotors[i].getPIDController().setIZone(Constants.SWERVE_INTEGRAL_ZONE);
 
             // Sets current limits for motors
             swerveMotors[i].setSmartCurrentLimit(SWERVE_MOTOR_CURRENT_LIMIT);
@@ -170,34 +171,51 @@ public final class Drive extends AbstractSubsystem {
             swerveDriveMotors[i].setSmartCurrentLimit(SWERVE_DRIVE_MOTOR_CURRENT_LIMIT);
             swerveDriveMotors[i].enableVoltageCompensation(Constants.SWERVE_DRIVE_VOLTAGE_LIMIT);
 
-            // This makes motors brake when no RPM is set
             swerveDriveMotors[i].setIdleMode(IdleMode.kCoast);
             swerveMotors[i].setIdleMode(IdleMode.kCoast);
+            coastMode = true;
             swerveMotors[i].setInverted(true);
 
             swerveCanCoders[i].setStatusFramePeriod(CANCoderStatusFrame.VbatAndFaults, 200);
             swerveCanCoders[i].setStatusFramePeriod(CANCoderStatusFrame.SensorData, 20);
+
+            swerveMotors[i].getEncoder().setPositionConversionFactor(1);
+            swerveMotors[i].getEncoder().setVelocityConversionFactor(1);
+
+            swerveDriveMotors[i].getEncoder().setPositionConversionFactor(1);
+            swerveDriveMotors[i].getEncoder().setVelocityConversionFactor(1);
+
+            swerveMotors[i].burnFlash();
+            swerveDriveMotors[i].burnFlash();
         }
         setDriveState(DriveState.TELEOP);
     }
 
-    public void configCoast() {
-        for (CANSparkMax swerveMotor : swerveMotors) {
-            swerveMotor.setIdleMode(IdleMode.kCoast);
-        }
+    boolean coastMode;
 
-        for (CANSparkMax swerveDriveMotor : swerveDriveMotors) {
-            swerveDriveMotor.setIdleMode(IdleMode.kCoast);
+    public void configCoast() {
+        if (!coastMode) {
+            for (CANSparkMax swerveMotor : swerveMotors) {
+                swerveMotor.setIdleMode(IdleMode.kCoast);
+            }
+
+            for (CANSparkMax swerveDriveMotor : swerveDriveMotors) {
+                swerveDriveMotor.setIdleMode(IdleMode.kCoast);
+            }
+            coastMode = true;
         }
     }
 
     public void configBrake() {
-        for (CANSparkMax swerveMotor : swerveMotors) {
-            swerveMotor.setIdleMode(IdleMode.kBrake);
-        }
+        if (coastMode) {
+            for (CANSparkMax swerveMotor : swerveMotors) {
+                swerveMotor.setIdleMode(IdleMode.kBrake);
+            }
 
-        for (CANSparkMax swerveDriveMotor : swerveDriveMotors) {
-            swerveDriveMotor.setIdleMode(IdleMode.kBrake);
+            for (CANSparkMax swerveDriveMotor : swerveDriveMotors) {
+                swerveDriveMotor.setIdleMode(IdleMode.kBrake);
+            }
+            coastMode = false;
         }
     }
 
@@ -205,8 +223,7 @@ public final class Drive extends AbstractSubsystem {
      * @return the relative position of the selected swerve motor in degrees
      */
     private double getRelativeSwervePosition(int motorNum) {
-        return swerveMotors[motorNum].getEncoder().getPosition() *
-                Constants.SWERVE_MOTOR_POSITION_CONVERSION_FACTOR * 360;
+        return (swerveMotors[motorNum].getEncoder().getPosition() * SWERVE_ROTATIONS_PER_MOTOR_ROTATION) * 360;
     }
 
     /**
@@ -216,7 +233,8 @@ public final class Drive extends AbstractSubsystem {
      * @param position the target position in degrees (0-360)
      */
     private void setSwerveMotorPosition(int motorNum, double position) {
-        swerveMotors[motorNum].getEncoder().setPosition((position / Constants.SWERVE_MOTOR_POSITION_CONVERSION_FACTOR) / 360);
+        swerveMotors[motorNum].getPIDController().setReference(
+                (position / 360.0) / SWERVE_ROTATIONS_PER_MOTOR_ROTATION, ControlType.kPosition);
     }
 
 
@@ -287,11 +305,17 @@ public final class Drive extends AbstractSubsystem {
         Twist2d twist_vel = IDENTITY_POSE.log(robot_pose_vel);
         ChassisSpeeds updated_chassis_speeds = new ChassisSpeeds(
                 twist_vel.dx / dt, twist_vel.dy / dt, twist_vel.dtheta / dt);
+
+        SwerveSetpoint lastSwerveSetpoint;
+        synchronized (this) {
+            lastSwerveSetpoint = this.lastSwerveSetpoint;
+        }
+
         var newSwerveSetpoint =
                 setpointGenerator.generateSetpoint(kinematicLimit, lastSwerveSetpoint, updated_chassis_speeds, dt);
 
         synchronized (this) {
-            lastSwerveSetpoint = newSwerveSetpoint;
+            this.lastSwerveSetpoint = newSwerveSetpoint;
         }
 
         setSwerveModuleStates(newSwerveSetpoint);
@@ -300,18 +324,18 @@ public final class Drive extends AbstractSubsystem {
 
     public synchronized void setSwerveModuleStates(SwerveSetpoint setpoint) {
         for (int i = 0; i < 4; i++) {
-            var moduleState = setpoint.moduleStates()[i];
+            var wantedModuleState = setpoint.moduleStates()[i];
             double currentAngle = getWheelRotation(i);
 
-            double angleDiff = getAngleDiff(moduleState.angle.getDegrees(), currentAngle);
+            double angleDiff = getAngleDiff(wantedModuleState.angle.getDegrees(), currentAngle);
 
             setSwerveMotorPosition(i, getRelativeSwervePosition(i) + angleDiff);
 
-            setMotorSpeed(i, moduleState.speedMetersPerSecond, setpoint.wheelAccelerations()[i]);
+            setMotorSpeed(i, wantedModuleState.speedMetersPerSecond, setpoint.wheelAccelerations()[i]);
 
-            logData("SwerveModule " + i + " Angle", moduleState.angle.getDegrees());
-            logData("SwerveModule " + i + " Speed", moduleState.speedMetersPerSecond);
-            logData("SwerveModule " + i + " Acceleration", setpoint.wheelAccelerations()[i]);
+            logData("SwerveModule " + i + " Wanted Angle", wantedModuleState.angle.getDegrees());
+            logData("SwerveModule " + i + " Wanted Speed", wantedModuleState.speedMetersPerSecond);
+            logData("SwerveModule " + i + " Wanted Acceleration", setpoint.wheelAccelerations()[i]);
             logData("SwerveModule " + i + " Angle Error", angleDiff);
         }
     }
