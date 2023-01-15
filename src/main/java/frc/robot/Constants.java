@@ -178,4 +178,20 @@ public final class Constants {
     public static final int ELEVATOR_POSITION_MULTIPLIER = 5;
     public static final double ELEVATOR_MAX_VELOCITY = 3;
     public static final double ELEVATOR_MAX_ACCELERATION = 3;
+
+    // Telescoping Arm
+    public static final int TELESCOPING_ARM_P = 5;
+    public static final int TELESCOPING_ARM_I = 5;
+    public static final int TELESCOPING_ARM_D = 5;
+    public static final int TELESCOPING_ARM_POSITION_MULTIPLIER = 5;
+    public static final double TELESCOPING_ARM_MAX_VELOCITY = 3;
+    public static final double TELESCOPING_ARM_MAX_ACCELERATION = 3;
+
+    // Telescoping Arm
+    public static final int WRIST_P = 5;
+    public static final int WRIST_I = 5;
+    public static final int WRIST_D = 5;
+    public static final int WRIST_POSITION_MULTIPLIER = 5;
+    public static final double WRIST_MAX_VELOCITY = 3;
+    public static final double WRIST_MAX_ACCELERATION = 3;
 }
