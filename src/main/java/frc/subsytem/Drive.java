@@ -8,12 +8,12 @@ import com.ctre.phoenix.sensors.CANCoderStatusFrame;
 import com.revrobotics.CANSparkMax;
 import com.revrobotics.CANSparkMax.IdleMode;
 import com.revrobotics.CANSparkMaxLowLevel.MotorType;
+import edu.wpi.first.math.controller.HolonomicDriveController;
 import edu.wpi.first.math.controller.ProfiledPIDController;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
-import edu.wpi.first.math.geometry.Translation2d;
+import edu.wpi.first.math.geometry.Twist2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
-import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
 import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
 import edu.wpi.first.math.trajectory.Trajectory;
@@ -25,7 +25,9 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import frc.robot.Constants;
 import frc.utility.ControllerDriveInputs;
 import frc.utility.net.editing.LiveEditableValue;
-import frc.utility.wpimodified.HolonomicDriveController;
+import frc.utility.swerve.SwerveSetpointGenerator;
+import frc.utility.swerve.SwerveSetpointGenerator.KinematicLimit;
+import frc.utility.swerve.SwerveSetpointGenerator.SwerveSetpoint;
 import frc.utility.wpimodified.PIDController;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -39,14 +41,16 @@ import static frc.robot.Constants.*;
 
 public final class Drive extends AbstractSubsystem {
 
-    /**
-     * Last requested field relative acceleration
-     */
-    public @NotNull volatile Translation2d lastAcceleration = new Translation2d();
+    private static final Pose2d IDENTITY_POSE = new Pose2d();
 
-    final @NotNull LiveEditableValue<Double> turnP = new LiveEditableValue<>(DEFAULT_TURN_P, SmartDashboard.getEntry("TurnPIDP"));
-    final @NotNull LiveEditableValue<Double> turnI = new LiveEditableValue<>(DEFAULT_TURN_I, SmartDashboard.getEntry("TurnPIDI"));
-    final @NotNull LiveEditableValue<Double> turnD = new LiveEditableValue<>(DEFAULT_TURN_D, SmartDashboard.getEntry("TurnPIDD"));
+    private final SwerveSetpointGenerator setpointGenerator = new SwerveSetpointGenerator(SWERVE_DRIVE_KINEMATICS);
+
+    private final @NotNull LiveEditableValue<Double> turnP = new LiveEditableValue<>(DEFAULT_TURN_P, SmartDashboard.getEntry(
+            "TurnPIDP"));
+    private final @NotNull LiveEditableValue<Double> turnI = new LiveEditableValue<>(DEFAULT_TURN_I, SmartDashboard.getEntry(
+            "TurnPIDI"));
+    private final @NotNull LiveEditableValue<Double> turnD = new LiveEditableValue<>(DEFAULT_TURN_D, SmartDashboard.getEntry(
+            "TurnPIDD"));
 
 
     public void resetAuto() {
@@ -59,8 +63,8 @@ public final class Drive extends AbstractSubsystem {
             autoTurnPIDController.setTolerance(Math.toRadians(10));
 
             swerveAutoController = new HolonomicDriveController(
-                    new edu.wpi.first.math.controller.PIDController(3, 0, 0),
-                    new edu.wpi.first.math.controller.PIDController(3, 0, 0),
+                    new PIDController(3, 0, 0),
+                    new PIDController(3, 0, 0),
                     autoTurnPIDController);
             swerveAutoController.setTolerance(new Pose2d(0.5, 0.5, Rotation2d.fromDegrees(10))); //TODO: Tune
         } finally {
@@ -72,7 +76,7 @@ public final class Drive extends AbstractSubsystem {
         TELEOP, TURN, HOLD, DONE, RAMSETE, STOP
     }
 
-    public boolean useRelativeEncoderPosition = false;
+    private boolean useRelativeEncoderPosition = false;
 
     private static final @NotNull Drive INSTANCE = new Drive();
 
@@ -83,76 +87,68 @@ public final class Drive extends AbstractSubsystem {
     private final @NotNull PIDController turnPID;
 
     {
-        turnPID = new PIDController(turnP.get(), turnI.get(), turnD.get()); //P=1.0
-        // OR 0.8
+        turnPID = new PIDController(turnP.get(), turnI.get(), turnD.get());
         turnPID.enableContinuousInput(-Math.PI, Math.PI);
         turnPID.setIntegratorRange(-Math.PI * 2 * 4, Math.PI * 2 * 4);
     }
 
-    private @NotNull DriveState driveState;
-    private volatile Rotation2d wantedHeading = new Rotation2d();
-    private boolean rotateAuto = false;
-
-    {
-        logData("Drive Field Relative Allowed", true);
-    }
+    private @NotNull DriveState driveState = DriveState.TELEOP;
+    private volatile @NotNull Rotation2d wantedHeading = new Rotation2d();
 
     private boolean isAiming = false;
 
     /**
      * Motors that turn the wheels around. Uses Falcon500s
      */
-    final @NotNull CANSparkMax[] swerveMotors = new CANSparkMax[4];
+    private final @NotNull CANSparkMax[] swerveMotors = new CANSparkMax[4];
 
     /**
      * Motors that are driving the robot around and causing it to move
      */
-    final @NotNull CANSparkMax[] swerveDriveMotors = new CANSparkMax[4];
+    private final @NotNull CANSparkMax[] swerveDriveMotors = new CANSparkMax[4];
 
     /**
      * Absolute Encoders for the motors that turn the wheel
      */
 
-    final @NotNull CANCoder[] swerveCanCoders = new CANCoder[4];
-
-    public volatile @NotNull Constants.AccelerationLimits accelerationLimit = AccelerationLimits.NORMAL_DRIVING;
+    private final @NotNull CANCoder[] swerveCanCoders = new CANCoder[4];
 
     private Drive() {
         super(Constants.DRIVE_PERIOD, 5);
 
-        final @NotNull CANSparkMax leftFrontTalon, leftBackTalon, rightFrontTalon, rightBackTalon;
+        final @NotNull CANSparkMax leftFrontSpark, leftBackSpark, rightFrontSpark, rightBackSpark;
         final @NotNull CANCoder leftFrontCanCoder, leftBackCanCoder, rightFrontCanCoder, rightBackCanCoder;
-        final @NotNull CANSparkMax leftFrontTalonSwerve, leftBackTalonSwerve, rightFrontTalonSwerve, rightBackTalonSwerve;
+        final @NotNull CANSparkMax leftFrontSparkSwerve, leftBackSparkSwerve, rightFrontSparkSwerve, rightBackSparkSwerve;
         // Swerve Drive Motors
-        leftFrontTalon = new CANSparkMax(Constants.DRIVE_LEFT_FRONT_ID, MotorType.kBrushless);
-        leftBackTalon = new CANSparkMax(Constants.DRIVE_LEFT_BACK_ID, MotorType.kBrushless);
-        rightFrontTalon = new CANSparkMax(Constants.DRIVE_RIGHT_FRONT_ID, MotorType.kBrushless);
-        rightBackTalon = new CANSparkMax(Constants.DRIVE_RIGHT_BACK_ID, MotorType.kBrushless);
+        leftFrontSpark = new CANSparkMax(Constants.DRIVE_LEFT_FRONT_ID, MotorType.kBrushless);
+        leftBackSpark = new CANSparkMax(Constants.DRIVE_LEFT_BACK_ID, MotorType.kBrushless);
+        rightFrontSpark = new CANSparkMax(Constants.DRIVE_RIGHT_FRONT_ID, MotorType.kBrushless);
+        rightBackSpark = new CANSparkMax(Constants.DRIVE_RIGHT_BACK_ID, MotorType.kBrushless);
 
-        leftFrontTalon.setInverted(false);
-        rightFrontTalon.setInverted(false);
-        leftBackTalon.setInverted(false);
-        rightBackTalon.setInverted(false);
+        leftFrontSpark.setInverted(false);
+        rightFrontSpark.setInverted(false);
+        leftBackSpark.setInverted(false);
+        rightBackSpark.setInverted(false);
 
-        leftFrontTalonSwerve = new CANSparkMax(Constants.DRIVE_LEFT_FRONT_SWERVE_ID, MotorType.kBrushless);
-        leftBackTalonSwerve = new CANSparkMax(Constants.DRIVE_LEFT_BACK_SWERVE_ID, MotorType.kBrushless);
-        rightFrontTalonSwerve = new CANSparkMax(Constants.DRIVE_RIGHT_FRONT_SWERVE_ID, MotorType.kBrushless);
-        rightBackTalonSwerve = new CANSparkMax(Constants.DRIVE_RIGHT_BACK_SWERVE_ID, MotorType.kBrushless);
+        leftFrontSparkSwerve = new CANSparkMax(Constants.DRIVE_LEFT_FRONT_SWERVE_ID, MotorType.kBrushless);
+        leftBackSparkSwerve = new CANSparkMax(Constants.DRIVE_LEFT_BACK_SWERVE_ID, MotorType.kBrushless);
+        rightFrontSparkSwerve = new CANSparkMax(Constants.DRIVE_RIGHT_FRONT_SWERVE_ID, MotorType.kBrushless);
+        rightBackSparkSwerve = new CANSparkMax(Constants.DRIVE_RIGHT_BACK_SWERVE_ID, MotorType.kBrushless);
 
         leftFrontCanCoder = new CANCoder(Constants.CAN_LEFT_FRONT_ID);
         leftBackCanCoder = new CANCoder(Constants.CAN_LEFT_BACK_ID);
         rightFrontCanCoder = new CANCoder(Constants.CAN_RIGHT_FRONT_ID);
         rightBackCanCoder = new CANCoder(Constants.CAN_RIGHT_BACK_ID);
 
-        swerveMotors[0] = leftFrontTalonSwerve;
-        swerveMotors[1] = leftBackTalonSwerve;
-        swerveMotors[2] = rightFrontTalonSwerve;
-        swerveMotors[3] = rightBackTalonSwerve;
+        swerveMotors[0] = leftFrontSparkSwerve;
+        swerveMotors[1] = leftBackSparkSwerve;
+        swerveMotors[2] = rightFrontSparkSwerve;
+        swerveMotors[3] = rightBackSparkSwerve;
 
-        swerveDriveMotors[0] = leftFrontTalon;
-        swerveDriveMotors[1] = leftBackTalon;
-        swerveDriveMotors[2] = rightFrontTalon;
-        swerveDriveMotors[3] = rightBackTalon;
+        swerveDriveMotors[0] = leftFrontSpark;
+        swerveDriveMotors[1] = leftBackSpark;
+        swerveDriveMotors[2] = rightFrontSpark;
+        swerveDriveMotors[3] = rightBackSpark;
 
         swerveCanCoders[0] = leftFrontCanCoder;
         swerveCanCoders[1] = leftBackCanCoder;
@@ -224,9 +220,12 @@ public final class Drive extends AbstractSubsystem {
     }
 
 
-    @SuppressWarnings("unused")
+    /**
+     * @return the relative position of the selected swerve motor in degrees
+     */
     private double getSwerveDrivePosition(int motorNum) {
-        return swerveDriveMotors[motorNum].getEncoder().getPosition() * Constants.SWERVE_DRIVE_MOTOR_REDUCTION;
+        return swerveDriveMotors[motorNum].getEncoder().getPosition()
+                * Constants.SWERVE_DRIVE_MOTOR_REDUCTION * SWERVE_METER_PER_ROTATION;
     }
 
     /**
@@ -243,7 +242,7 @@ public final class Drive extends AbstractSubsystem {
     }
 
     public void doHold() {
-        setSwerveModuleStates(Constants.HOLD_MODULE_STATES, true);
+        setSwerveModuleStates(Constants.HOLD_MODULE_STATES);
     }
 
     public void swerveDrive(@NotNull ControllerDriveInputs inputs) {
@@ -251,75 +250,69 @@ public final class Drive extends AbstractSubsystem {
         setDriveState(DriveState.TELEOP);
 
 
-        ChassisSpeeds chassisSpeeds = ChassisSpeeds.fromFieldRelativeSpeeds(DRIVE_HIGH_SPEED_M * inputs.getX(),
+        ChassisSpeeds chassisSpeeds = new ChassisSpeeds(
+                DRIVE_HIGH_SPEED_M * inputs.getX(),
                 DRIVE_HIGH_SPEED_M * inputs.getY(),
-                inputs.getRotation() * 7,
-                RobotTracker.getInstance().getGyroAngle()
-                        .plus(new Rotation2d(RobotTracker.getInstance().getAngularVelocity() * .01)));
-        swerveDrive(chassisSpeeds);
+                inputs.getRotation() * MAX_TELEOP_TURN_SPEED);
+        swerveDrive(chassisSpeeds, KinematicLimits.NORMAL_DRIVING.kinematicLimit, EXPECTED_TELEOP_DRIVE_DT);
     }
 
     public void swerveDriveFieldRelative(@NotNull ControllerDriveInputs inputs) {
+
         setDriveState(DriveState.TELEOP);
 
-        ChassisSpeeds chassisSpeeds = ChassisSpeeds.fromFieldRelativeSpeeds(DRIVE_HIGH_SPEED_M * inputs.getX(),
+
+        ChassisSpeeds chassisSpeeds = ChassisSpeeds.fromFieldRelativeSpeeds(
+                DRIVE_HIGH_SPEED_M * inputs.getX(),
                 DRIVE_HIGH_SPEED_M * inputs.getY(),
-                inputs.getRotation() * 7,
+                inputs.getRotation() * MAX_TELEOP_TURN_SPEED,
                 RobotTracker.getInstance().getGyroAngle());
-
-
-        swerveDrive(chassisSpeeds);
+        swerveDrive(chassisSpeeds, KinematicLimits.NORMAL_DRIVING.kinematicLimit, EXPECTED_TELEOP_DRIVE_DT);
     }
 
-    public void swerveDrive(ChassisSpeeds chassisSpeeds) {
+    private SwerveSetpoint lastSwerveSetpoint = new SwerveSetpoint(
+            new ChassisSpeeds(0, 0, 0),
+            new SwerveModuleState[]{
+                    new SwerveModuleState(0, new Rotation2d(0)),
+                    new SwerveModuleState(0, new Rotation2d(0)),
+                    new SwerveModuleState(0, new Rotation2d(0)),
+                    new SwerveModuleState(0, new Rotation2d(0))
+            },
+            new double[]{0, 0, 0, 0});
 
-        Translation2d accelerationFR = limitAcceleration(chassisSpeeds);
+    public void swerveDrive(@NotNull ChassisSpeeds desiredRobotRelativeSpeeds, KinematicLimit kinematicLimit, double dt) {
+        Pose2d robot_pose_vel = new Pose2d(desiredRobotRelativeSpeeds.vxMetersPerSecond * dt,
+                desiredRobotRelativeSpeeds.vyMetersPerSecond * dt,
+                Rotation2d.fromRadians(desiredRobotRelativeSpeeds.omegaRadiansPerSecond * dt));
+        Twist2d twist_vel = IDENTITY_POSE.log(robot_pose_vel);
+        ChassisSpeeds updated_chassis_speeds = new ChassisSpeeds(
+                twist_vel.dx / dt, twist_vel.dy / dt, twist_vel.dtheta / dt);
+        var newSwerveSetpoint =
+                setpointGenerator.generateSetpoint(kinematicLimit, lastSwerveSetpoint, updated_chassis_speeds, dt);
 
+        synchronized (this) {
+            lastSwerveSetpoint = newSwerveSetpoint;
+        }
 
-        SmartDashboard.putNumber("Drive Command X Velocity", chassisSpeeds.vxMetersPerSecond);
-        SmartDashboard.putNumber("Drive Command Y Velocity", chassisSpeeds.vyMetersPerSecond);
-        SmartDashboard.putNumber("Drive Command Rotation", chassisSpeeds.omegaRadiansPerSecond);
-
-        SwerveModuleState[] moduleStates = SWERVE_DRIVE_KINEMATICS.toSwerveModuleStates(chassisSpeeds);
-
-        boolean rotate = chassisSpeeds.vxMetersPerSecond != 0 ||
-                chassisSpeeds.vyMetersPerSecond != 0 ||
-                chassisSpeeds.omegaRadiansPerSecond != 0;
-
-        SwerveDriveKinematics.desaturateWheelSpeeds(moduleStates, DRIVE_HIGH_SPEED_M);
-        setSwerveModuleStates(moduleStates, rotate, accelerationFR);
-
-        lastAcceleration = accelerationFR;
+        setSwerveModuleStates(newSwerveSetpoint);
     }
 
-    public void setSwerveModuleStates(SwerveModuleState[] moduleStates, boolean rotate) {
-        setSwerveModuleStates(moduleStates, rotate, new Translation2d());
-    }
 
-    public void setSwerveModuleStates(SwerveModuleState[] moduleStates, boolean rotate, Translation2d acceleration) {
+    public synchronized void setSwerveModuleStates(SwerveSetpoint setpoint) {
         for (int i = 0; i < 4; i++) {
-            SwerveModuleState targetState = SwerveModuleState.optimize(moduleStates[i],
-                    Rotation2d.fromDegrees(getWheelRotation(i)));
-
-            double targetAngle = targetState.angle.getDegrees() % 360;
-            if (targetAngle < 0) { // Make sure the angle is positive
-                targetAngle += 360;
-            }
+            var moduleState = setpoint.moduleStates()[i];
             double currentAngle = getWheelRotation(i);
 
-            double angleDiff = getAngleDiff(targetAngle, currentAngle);
+            double angleDiff = getAngleDiff(moduleState.angle.getDegrees(), currentAngle);
 
-            if (Math.abs(angleDiff) > 0.1 && rotate) { // Only  update the setpoint if we're already there and moving
-                setSwerveMotorPosition(i, getRelativeSwervePosition(i) + angleDiff);
-            }
+            setSwerveMotorPosition(i, getRelativeSwervePosition(i) + angleDiff);
 
-            double speedModifier = 1; //= 1 - (OrangeUtility.coercedNormalize(Math.abs(angleDiff), 5, 180, 0, 180) / 180);
+            setMotorSpeed(i, moduleState.speedMetersPerSecond, setpoint.wheelAccelerations()[i]);
 
-            setMotorSpeed(i, targetState.speedMetersPerSecond * speedModifier, 0);
-
-            logData("Swerve Motor " + i + " Speed Modifier", speedModifier);
-            logData("Swerve Motor " + i + " Target Position", getRelativeSwervePosition(i) + angleDiff);
-            logData("Swerve Motor " + i + " Error", angleDiff);
+            logData("SwerveModule " + i + " Angle", moduleState.angle.getDegrees());
+            logData("SwerveModule " + i + " Speed", moduleState.speedMetersPerSecond);
+            logData("SwerveModule " + i + " Acceleration", setpoint.wheelAccelerations()[i]);
+            logData("SwerveModule " + i + " Angle Error", angleDiff);
         }
     }
 
@@ -340,101 +333,6 @@ public final class Drive extends AbstractSubsystem {
         return angleDiff;
     }
 
-    @NotNull Translation2d lastRequestedVelocity = new Translation2d();
-    double lastRequestedRotation = 0;
-
-    private double lastLoopTime = 0;
-
-    /**
-     * Puts a limit on the acceleration. This method should be called before setting a chassis speeds to the robot drivebase.
-     * <p>
-     * Limits the acceleration by ensuring that the difference between the command and previous velocity doesn't exceed a set
-     * value
-     *
-     * @param commandedVelocity Desired velocity (The chassis speeds is mutated to the limited acceleration) (robot centric)
-     * @return The requested acceleration of the robot (field centric)
-     */
-    @Contract(mutates = "param")
-    @NotNull Translation2d limitAcceleration(@NotNull ChassisSpeeds commandedVelocity) {
-        double dt;
-        if ((Timer.getFPGATimestamp() - lastLoopTime) > ((double) Constants.DRIVE_PERIOD / 1000) * 20) {
-            // If the dt is a lot greater than our nominal dt reset the acceleration limiting
-            // (ex. we've been disabled for a while)
-            lastRequestedVelocity = new Translation2d();
-
-            lastRequestedRotation = RobotTracker.getInstance().getAngularVelocity();
-            dt = (double) Constants.DRIVE_PERIOD / 1000;
-        } else {
-            dt = Timer.getFPGATimestamp() - lastLoopTime;
-        }
-        lastLoopTime = Timer.getFPGATimestamp();
-
-        double maxVelocityChange = accelerationLimit.acceleration * dt;
-        double maxAngularVelocityChange = Constants.MAX_ANGULAR_ACCELERATION * dt;
-
-        //field relative
-        Translation2d velocityCommand = toFieldRelative(
-                new Translation2d(commandedVelocity.vxMetersPerSecond, commandedVelocity.vyMetersPerSecond
-                ));
-
-        Translation2d velocityChange = velocityCommand.minus(lastRequestedVelocity);
-        double velocityChangeAngle = Math.atan2(velocityChange.getY(), velocityChange.getX()); //Radians
-
-        Translation2d limitedVelocityVectorChange = velocityChange;
-        Translation2d limitedVelocityVector = velocityCommand;
-        // Check if velocity change exceeds max limit
-        if (velocityChange.getNorm() > maxVelocityChange) {
-            // Get limited velocity vector difference in cartesian coordinate system
-            limitedVelocityVectorChange = new Translation2d(maxVelocityChange, new Rotation2d(velocityChangeAngle));
-            limitedVelocityVector = lastRequestedVelocity.plus(limitedVelocityVectorChange);
-
-            //robot relative
-            Translation2d limitedVelocityVectorRotated = toRobotRelative(limitedVelocityVector);
-
-            commandedVelocity.vxMetersPerSecond = limitedVelocityVectorRotated.getX();
-            commandedVelocity.vyMetersPerSecond = limitedVelocityVectorRotated.getY();
-        }
-
-        // Checks if requested change in Angular Velocity is greater than allowed
-        if (Math.abs(commandedVelocity.omegaRadiansPerSecond - lastRequestedRotation)
-                > maxAngularVelocityChange && accelerationLimit != AccelerationLimits.SHOOT_AND_MOVE) {
-            // Add the lastCommandVelocity and the maxAngularVelocityChange (changed to have the same sign as the actual change)
-            commandedVelocity.omegaRadiansPerSecond = lastRequestedRotation +
-                    Math.copySign(maxAngularVelocityChange,
-                            commandedVelocity.omegaRadiansPerSecond - lastRequestedRotation);
-        }
-
-
-        // save our current commanded velocity to be used in next iteration
-        lastRequestedRotation = commandedVelocity.omegaRadiansPerSecond;
-        lastRequestedVelocity = limitedVelocityVector;//field
-
-        return limitedVelocityVectorChange;//field
-    }
-
-    /**
-     * Converts a field relative velocity to be robot relative
-     *
-     * @param fieldRelativeTranslation a field relative velocity
-     * @return a robot relative velocity
-     */
-    private Translation2d toRobotRelative(Translation2d fieldRelativeTranslation) {
-        return fieldRelativeTranslation.rotateBy(RobotTracker.getInstance().getGyroAngle().unaryMinus());
-    }
-
-    /**
-     * Converts a robot relative velocity to be field relative
-     *
-     * @param robotRelativeTranslation a field relative velocity
-     * @return a field relative velocity
-     */
-    private Translation2d toFieldRelative(Translation2d robotRelativeTranslation) {
-        return robotRelativeTranslation.rotateBy(RobotTracker.getInstance().getGyroAngle());
-    }
-
-    private final double[] lastWheelSpeeds = new double[4];
-    private final double[] lastWheelSpeedsTime = new double[4];
-
     /**
      * Sets the motor voltage
      *
@@ -442,15 +340,15 @@ public final class Drive extends AbstractSubsystem {
      * @param velocity The target velocity
      */
     public void setMotorSpeed(int module, double velocity, double acceleration) {
-        if (module < 0 || module > 3) {
+        if (module < 0 || module > DRIVE_FEEDFORWARD.length) {
             throw new IllegalArgumentException("Module must be between 0 and 3");
         }
 
 
-        double ffv = Constants.DRIVE_FEEDFORWARD[module].calculate(velocity, acceleration);
+        double ffv = DRIVE_FEEDFORWARD[module].calculate(velocity, acceleration);
         // Converts ffv voltage to percent output and sets it to motor
         swerveDriveMotors[module].setVoltage(ffv);
-        SmartDashboard.putNumber("Out Volts " + module, ffv);
+        logData("Out Volts " + module, ffv);
         //swerveDriveMotors[module].setVoltage(10 * velocity/Constants.SWERVE_METER_PER_ROTATION);
     }
 
@@ -499,9 +397,7 @@ public final class Drive extends AbstractSubsystem {
             }
 
             Trajectory.State goal = currentAutoTrajectory.sample(Timer.getFPGATimestamp() - autoStartTime);
-
             Rotation2d targetHeading = autoTargetHeading;
-
 
             try {
                 if (swerveAutoController == null) {
@@ -514,8 +410,9 @@ public final class Drive extends AbstractSubsystem {
                         goal,
                         targetHeading);
 
-                swerveDrive(adjustedSpeeds);
-                if (swerveAutoController.atReference() && (Timer.getFPGATimestamp() - autoStartTime) >= currentAutoTrajectory.getTotalTimeSeconds()) {
+                swerveDrive(adjustedSpeeds, KinematicLimits.NORMAL_DRIVING.kinematicLimit, EXPECTED_AUTO_DRIVE_DT);
+                if (swerveAutoController.atReference()
+                        && (Timer.getFPGATimestamp() - autoStartTime) >= currentAutoTrajectory.getTotalTimeSeconds()) {
                     setDriveState(DriveState.DONE);
                     stopMovement();
                 }
@@ -539,7 +436,7 @@ public final class Drive extends AbstractSubsystem {
 
         if (Timer.getFPGATimestamp() - 0.2 > lastTurnUpdate) {
             turnPID.reset();
-        } else if (turnPID.getPositionError() > Math.toRadians(7)) {
+        } else if (turnPID.getPositionError() > Math.toRadians(MAX_TELEOP_TURN_SPEED)) {
             // This is basically an I-Zone
             turnPID.resetI();
         }
@@ -561,7 +458,7 @@ public final class Drive extends AbstractSubsystem {
         } finally {
             currentAutoTrajectoryLock.unlock();
         }
-        System.out.println("new rotation" + rotation.getDegrees());
+        System.out.println("New Auto Rotation" + rotation.getDegrees());
     }
 
     public double getAutoElapsedTime() {
@@ -576,15 +473,13 @@ public final class Drive extends AbstractSubsystem {
         }
 
         switch (snapDriveState) {
-            case TURN:
-                updateTurn();
-                break;
-            case HOLD:
-                doHold();
-                break;
-            case STOP:
-                swerveDrive(new ChassisSpeeds(0, 0, 0));
-                break;
+            case TURN -> updateTurn();
+            case HOLD -> doHold();
+            case STOP -> swerveDrive(
+                    new ChassisSpeeds(0, 0, 0),
+                    KinematicLimits.NORMAL_DRIVING.kinematicLimit, EXPECTED_AUTO_DRIVE_DT
+            );
+            case RAMSETE -> updateRamsete();
         }
     }
 
@@ -595,7 +490,6 @@ public final class Drive extends AbstractSubsystem {
     public void setRotation(Rotation2d angle) {
         wantedHeading = angle;
         driveState = DriveState.TURN;
-        rotateAuto = true;
         isAiming = !isTurningDone();
     }
 
@@ -616,8 +510,7 @@ public final class Drive extends AbstractSubsystem {
      * Default method when the x and y velocity and the target heading are not passed
      */
     private void updateTurn() {
-        updateTurn(new ControllerDriveInputs(0, 0, 0), wantedHeading, false, Math.toRadians(Constants.MAX_TURN_ERROR));
-        // Field relative flag won't do anything since we're not moving
+        updateTurn(new ControllerDriveInputs(0, 0, 0), wantedHeading, Math.toRadians(Constants.MAX_TURN_ERROR));
     }
 
     double lastTurnUpdate = 0;
@@ -630,11 +523,10 @@ public final class Drive extends AbstractSubsystem {
      *
      * @param controllerDriveInputs The x and y velocity of the robot (rotation is ignored)
      * @param targetHeading         The target heading the robot should face
-     * @param useFieldRelative      Whether the target heading is field relative or robot relative
      */
     public void updateTurn(ControllerDriveInputs controllerDriveInputs, @NotNull Rotation2d targetHeading,
-                           boolean useFieldRelative, double turnErrorRadians) {
-        updateTurn(controllerDriveInputs, new State(targetHeading.getRadians(), 0), useFieldRelative, turnErrorRadians);
+                           double turnErrorRadians) {
+        updateTurn(controllerDriveInputs, new State(targetHeading.getRadians(), 0), turnErrorRadians);
     }
 
     /**
@@ -645,10 +537,8 @@ public final class Drive extends AbstractSubsystem {
      *
      * @param controllerDriveInputs The x and y velocity of the robot (rotation is ignored)
      * @param goal                  The target state at the end of the turn (in radians, radians/s)
-     * @param useFieldRelative      Whether the target heading is field relative or robot relative
      */
-    public void updateTurn(ControllerDriveInputs controllerDriveInputs, State goal,
-                           boolean useFieldRelative, double turnErrorRadians) {
+    public void updateTurn(ControllerDriveInputs controllerDriveInputs, State goal, double turnErrorRadians) {
         synchronized (this) {
             if (driveState != DriveState.TURN) setDriveState(DriveState.TELEOP);
         }
@@ -660,23 +550,19 @@ public final class Drive extends AbstractSubsystem {
 //        System.out.println(
 //                "turn error: " + Math.toDegrees(turnPID.getPositionError()) + " delta speed: " + Math.toDegrees(pidDeltaSpeed));
 
-        if (useFieldRelative) {
-            swerveDrive(ChassisSpeeds.fromFieldRelativeSpeeds(
-                    controllerDriveInputs.getX() * DRIVE_HIGH_SPEED_M * 0.45,
-                    controllerDriveInputs.getY() * DRIVE_HIGH_SPEED_M * 0.45,
-                    pidDeltaSpeed,
-                    RobotTracker.getInstance().getGyroAngle()));
-        } else {
-            swerveDrive(new ChassisSpeeds(
-                    controllerDriveInputs.getX() * DRIVE_HIGH_SPEED_M * 0.45,
-                    controllerDriveInputs.getY() * DRIVE_HIGH_SPEED_M * 0.45,
-                    pidDeltaSpeed));
-        }
+
+        swerveDrive(ChassisSpeeds.fromFieldRelativeSpeeds(
+                        controllerDriveInputs.getX() * DRIVE_HIGH_SPEED_M * 0.45,
+                        controllerDriveInputs.getY() * DRIVE_HIGH_SPEED_M * 0.45,
+                        pidDeltaSpeed,
+                        RobotTracker.getInstance().getGyroAngle()),
+                KinematicLimits.NORMAL_DRIVING.kinematicLimit,
+                EXPECTED_TELEOP_DRIVE_DT);
 
         if (Math.abs(goal.position - RobotTracker.getInstance().getGyroAngle().getRadians()) < turnErrorRadians) {
             synchronized (this) {
                 isAiming = false;
-                if (rotateAuto) {
+                if (this.driveState == DriveState.TURN) {
                     this.driveState = DriveState.DONE;
                 }
             }

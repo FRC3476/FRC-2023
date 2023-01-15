@@ -7,7 +7,6 @@ import frc.robot.Constants;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-@SuppressWarnings("unused")
 public abstract class AbstractSubsystem implements Runnable {
     private final int period;
     private final int loggingInterval;
@@ -66,8 +65,6 @@ public abstract class AbstractSubsystem implements Runnable {
     public void update() {
 
     }
-
-    int lastLength = 20;
 
     @Override
     @SuppressWarnings("BusyWait")

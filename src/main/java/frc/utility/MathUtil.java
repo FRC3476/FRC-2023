@@ -1,61 +1,48 @@
 package frc.utility;
 
-import edu.wpi.first.math.geometry.Translation2d;
-import frc.utility.geometry.MutableTranslation2d;
+import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.geometry.Twist2d;
+import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import org.jetbrains.annotations.NotNull;
 
 public final class MathUtil {
-    /**
-     * Returns the squared distance between two points.
-     *
-     * @param first  The first point.
-     * @param second The second point.
-     * @return The squared distance between the two points.
-     */
-    @SuppressWarnings("ParameterName")
-    public static double dist2(@NotNull Translation2d first, @NotNull Translation2d second) {
-        return Math.pow(first.getX() - second.getX(), 2) + Math.pow(first.getY() - second.getY(), 2);
+    public static final double epsilon = 1e-12;
+
+    public static boolean epsilonEquals(double a, double b, double epsilon) {
+        return (a - epsilon <= b) && (a + epsilon >= b);
+    }
+
+    public static boolean epsilonEquals(double a, double b) {
+        return epsilonEquals(a, b, epsilon);
+    }
+
+    public static boolean epsilonEquals(int a, int b, int epsilon) {
+        return (a - epsilon <= b) && (a + epsilon >= b);
+    }
+
+
+    public static Twist2d toTwist2d(ChassisSpeeds chassisSpeeds) {
+        return new Twist2d(chassisSpeeds.vxMetersPerSecond, chassisSpeeds.vyMetersPerSecond, chassisSpeeds.omegaRadiansPerSecond);
+    }
+
+    public static boolean epsilonEquals(@NotNull Twist2d a, @NotNull Twist2d b, double epsilon) {
+        return epsilonEquals(a.dx, b.dx, epsilon) && epsilonEquals(a.dy, b.dy, epsilon) && epsilonEquals(a.dtheta, b.dtheta,
+                epsilon);
+    }
+
+    public static boolean epsilonEquals(@NotNull Twist2d a, @NotNull Twist2d b) {
+        return epsilonEquals(a, b, epsilon);
     }
 
     /**
-     * Returns the squared distance between two points.
+     * Returns the rotation in radians between (-pi, pi]
      *
-     * @param first  The first point.
-     * @param second The second point.
-     * @return The squared distance between the two points.
+     * @return the rotation in radians between (-pi, pi]
      */
-    @SuppressWarnings("ParameterName")
-    public static double dist2(@NotNull Translation2d first, @NotNull MutableTranslation2d second) {
-        return Math.pow(first.getX() - second.getX(), 2) + Math.pow(first.getY() - second.getY(), 2);
-    }
+    public static double getRadians(Rotation2d rotation2d) {
+        // The radian value can be anything
+        double radians = rotation2d.getRadians();
 
-    /**
-     * Returns the squared distance between two points.
-     *
-     * @param first  The first point.
-     * @param second The second point.
-     * @return The squared distance between the two points.
-     */
-    @SuppressWarnings("ParameterName")
-    public static double dist2(@NotNull MutableTranslation2d first, @NotNull Translation2d second) {
-        return Math.pow(first.getX() - second.getX(), 2) + Math.pow(first.getY() - second.getY(), 2);
-    }
-
-    /**
-     * Returns the squared distance between two points.
-     *
-     * @param first  The first point.
-     * @param second The second point.
-     * @return The squared distance between the two points.
-     */
-    @SuppressWarnings("ParameterName")
-    public static double dist2(@NotNull MutableTranslation2d first, @NotNull MutableTranslation2d second) {
-        return Math.pow(first.getX() - second.getX(), 2) + Math.pow(first.getY() - second.getY(), 2);
-    }
-
-    public static double dist2(@NotNull Translation2d translation2d) {
-        double x = translation2d.getX();
-        double y = translation2d.getY();
-        return x * x + y * y;
+        return (radians + Math.PI) % (2 * Math.PI) - Math.PI;
     }
 }

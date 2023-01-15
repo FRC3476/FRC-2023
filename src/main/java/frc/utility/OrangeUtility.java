@@ -260,7 +260,8 @@ public final class OrangeUtility {
 
 
     public static void waitTillTeleopStart() throws InterruptedException {
-        while (DriverStation.isAutonomous()) {
+        while (DriverStation.isTeleop() && DriverStation.isEnabled()) {
+            //noinspection BusyWait
             Thread.sleep(10);
         }
     }
