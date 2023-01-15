@@ -1,6 +1,9 @@
 package frc.subsytem;
 
 import com.ctre.phoenix.sensors.WPI_Pigeon2;
+import com.dacubeking.AutoBuilder.robot.sender.pathpreview.RobotPositionSender;
+import com.dacubeking.AutoBuilder.robot.sender.pathpreview.RobotState;
+import edu.wpi.first.math.Matrix;
 import edu.wpi.first.math.VecBuilder;
 import edu.wpi.first.math.Vector;
 import edu.wpi.first.math.estimator.SwerveDrivePoseEstimator;
@@ -8,6 +11,7 @@ import edu.wpi.first.math.geometry.*;
 import edu.wpi.first.math.interpolation.TimeInterpolatableBuffer;
 import edu.wpi.first.math.kinematics.SwerveDriveOdometry;
 import edu.wpi.first.math.kinematics.SwerveModulePosition;
+import edu.wpi.first.math.numbers.N1;
 import edu.wpi.first.math.numbers.N3;
 import edu.wpi.first.wpilibj.Timer;
 import frc.robot.Constants;
@@ -15,6 +19,10 @@ import frc.utility.geometry.MutableTranslation2d;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
@@ -47,13 +55,15 @@ public final class RobotTracker extends AbstractSubsystem {
     private double lastGyroRoll = 0;
 
 
+    private final Matrix<N3, N1> defaultVisionMeasurementStdDevs = VecBuilder.fill(0.9, 0.9, 0.9);
+
     private final SwerveDrivePoseEstimator swerveDriveOdometry = new SwerveDrivePoseEstimator(
             SWERVE_DRIVE_KINEMATICS,
             gyroSensor.getRotation2d(),
             Drive.getInstance().getModulePositions(),
             new Pose2d(),
             VecBuilder.fill(0.1, 0.1, 0.1),
-            VecBuilder.fill(0.9, 0.9, 0.9)
+            defaultVisionMeasurementStdDevs
     );
 
     private final SwerveDriveOdometry noVisionOdometry = new SwerveDriveOdometry(
@@ -77,6 +87,8 @@ public final class RobotTracker extends AbstractSubsystem {
      * Velocity of the robot in field relative coordinates
      */
     private @NotNull Translation2d velocity = new Translation2d();
+
+    private double lastTimestamp = 0;
     private final @NotNull TimeInterpolatableBuffer<Rotation3d> gyroHistory
             = TimeInterpolatableBuffer.createBuffer(Rotation3d::interpolate, 1.5); //abt 1.5 seconds (ms * 300)
 
@@ -93,8 +105,21 @@ public final class RobotTracker extends AbstractSubsystem {
     short[] ba_xyz = new short[3];
     double[] quaternion = new double[4];
 
-    private void updateGyroHistory() {
 
+    private record VisionMeasurement(Pose2d pose, double timestamp, Optional<Matrix<N3, N1>> visionMeasurementStds) {
+    }
+
+    private final List<VisionMeasurement> visionMeasurements = Collections.synchronizedList(new ArrayList<>());
+
+    public void addVisionMeasurement(@NotNull Pose2d visionMeasurement, double timestamp) {
+        visionMeasurements.add(new VisionMeasurement(visionMeasurement, timestamp, Optional.empty()));
+    }
+
+    public void addVisionMeasurement(@NotNull Pose2d visionMeasurement, double timestamp, Matrix<N3, N1> visionMeasurementStds) {
+        visionMeasurements.add(new VisionMeasurement(visionMeasurement, timestamp, Optional.of(visionMeasurementStds)));
+    }
+
+    private void updateGyroHistory() {
         lock.writeLock().lock();
         try {
             double time = Timer.getFPGATimestamp();
@@ -133,6 +158,18 @@ public final class RobotTracker extends AbstractSubsystem {
         double timestamp = Timer.getFPGATimestamp();
         SwerveModulePosition[] modulePositions = Drive.getInstance().getModulePositions();
         swerveDriveOdometry.updateWithTime(timestamp, gyroSensor.getRotation2d(), modulePositions);
+
+        // Copy the vision measurements into a local variable so that we don't have to lock the list
+        final VisionMeasurement[] visionMeasurementsCopy;
+        synchronized (visionMeasurements) {
+            visionMeasurementsCopy = visionMeasurements.toArray(new VisionMeasurement[0]);
+            visionMeasurements.clear();
+        }
+
+        for (VisionMeasurement visionMeasurement : visionMeasurementsCopy) {
+            swerveDriveOdometry.addVisionMeasurement(visionMeasurement.pose(), visionMeasurement.timestamp(),
+                    visionMeasurement.visionMeasurementStds().orElse(defaultVisionMeasurementStdDevs));
+        }
 
         @Nullable Translation2d velocity = null;
 
@@ -200,6 +237,7 @@ public final class RobotTracker extends AbstractSubsystem {
             }
             Pose2d noVisionPose = noVisionOdometry.getPoseMeters();
             poseBufferForVelocity.addSample(timestamp, noVisionPose);
+            this.lastTimestamp = timestamp;
         } finally {
             lock.writeLock().unlock();
         }
@@ -315,5 +353,8 @@ public final class RobotTracker extends AbstractSubsystem {
         logData("accelerationX", getAcceleration().getX());
         logData("accelerationY", getAcceleration().getY());
         logData("accelerationZ", getAcceleration().getZ());
+
+        RobotPositionSender.addRobotPosition(new RobotState(getLatestPose(), getVelocity().getX(),
+                getVelocity().getY(), getAngularVelocity(), lastTimestamp));
     }
 }

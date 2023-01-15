@@ -1,14 +1,13 @@
 package frc.subsytem;
 
+import com.dacubeking.AutoBuilder.robot.sender.pathpreview.RobotPositionSender;
+import com.dacubeking.AutoBuilder.robot.sender.pathpreview.RobotState;
 import edu.wpi.first.apriltag.AprilTag;
 import edu.wpi.first.apriltag.AprilTagFieldLayout;
 import edu.wpi.first.apriltag.AprilTagFields;
 import edu.wpi.first.math.VecBuilder;
 import edu.wpi.first.math.Vector;
-import edu.wpi.first.math.geometry.Pose3d;
-import edu.wpi.first.math.geometry.Quaternion;
-import edu.wpi.first.math.geometry.Rotation3d;
-import edu.wpi.first.math.geometry.Translation3d;
+import edu.wpi.first.math.geometry.*;
 import edu.wpi.first.math.numbers.N3;
 import edu.wpi.first.networktables.NetworkTable;
 import edu.wpi.first.networktables.NetworkTableEvent.Kind;
@@ -94,42 +93,82 @@ public class VisionHandler extends AbstractSubsystem {
     Vector<N3> POSITIVE_Z = VecBuilder.fill(0, 0, 1);
 
     private void processNewTagPosition(NetworkTableValue value, int tagId) {
+        final var expectedTagPosition = fieldLayout.getTagPose(tagId).orElseThrow();
         // pos:
         // x,y,z
         // rot:
         // w, x, y, z
         // time
-        var data = value.getDoubleArray();
-        var posX = data[0];
-        var posY = data[1];
-        var posZ = data[2];
+        final var data = value.getDoubleArray();
+        final var posX = data[0];
+        final var posY = data[1];
+        final var posZ = data[2];
 
-        var rotX = data[3];
-        var rotY = data[4];
-        var rotZ = data[5];
-        var rotW = data[6];
-        var latency = data[7];
+        final var rotX = data[3];
+        final var rotY = data[4];
+        final var rotZ = data[5];
+        final var rotW = data[6];
+        final var latency = data[7];
 
 
-        var translation = new Translation3d(posX, posY, posZ)
+        final var translation = new Translation3d(posX, posY, posZ)
                 .rotateBy(new Rotation3d(POSITIVE_Y, Math.toRadians(90.0)))
                 .rotateBy(new Rotation3d(POSITIVE_X, Math.toRadians(-90.0)));
-        var rotation =
-                toQuaternion(Math.toRadians(-90.0), 0, 0).times(
-                        toQuaternion(0, Math.toRadians(-90.0), 0)
-                                .times(new Quaternion(rotW, rotX, rotY, rotZ)));
+        final var rotation = new Rotation3d(new Quaternion(rotW, rotX, rotY, rotZ))
+                .rotateBy(new Rotation3d(POSITIVE_Y, Math.toRadians(90.0)))
+                .rotateBy(new Rotation3d(POSITIVE_X, Math.toRadians(-90.0)));
 
 
-        System.out.println("Tag " + tagId + " pos: " + translation + " rot: " + toEulerAngles(rotation));
-        var timestamp = Timer.getFPGATimestamp() - latency;
+        System.out.println("Tag " + tagId + " pos: " + translation + " rot: " + toEulerAngles(rotation.getQuaternion()));
+        final var timestamp = Timer.getFPGATimestamp() - latency;
 
 
-        translation = translation.plus(cameraOffset);
-        translation = translation.rotateBy(RobotTracker.getInstance().getGyroAngleAtTime(timestamp).unaryMinus());
-        var expectedTagPosition = fieldLayout.getTagPose(tagId).orElseThrow();
+        //The translation is now from the center of the robot to the center of the tag relative to the rotation of the robot
+        final var robotToTagRobotRelative = translation.plus(cameraOffset);
 
-        var calculatedPose = expectedTagPosition.getTranslation().minus(translation);
-//        RobotPositionSender.addRobotPosition(new RobotState());
+
+        Rotation3d gyroAngle = RobotTracker.getInstance().getGyroAngleAtTime(timestamp);
+
+        var calculatedTranslationFromGyro =
+                expectedTagPosition.getTranslation()
+                        .plus(
+                                robotToTagRobotRelative
+                                        // Rotate the translation by the gyro angle (to make it relative to the field)
+                                        .rotateBy(gyroAngle)
+                                        // Make the vector from the tag to the robot (instead of the robot to the tag)
+                                        .unaryMinus()
+                        );
+
+        // TODO: Check if we should add/subtract the rotation of the orientation here
+        var rotationFromTag = expectedTagPosition.getRotation().unaryMinus().rotateBy(rotation);
+
+        var calculatedTranslationFromTagOrientation =
+                expectedTagPosition.getTranslation()
+                        .plus(
+                                robotToTagRobotRelative
+                                        // Rotate the translation by the tag orientation (to make it relative to the field)
+                                        .rotateBy(rotationFromTag)
+                                        // Make the vector from the tag to the robot (instead of the robot to the tag)
+                                        .unaryMinus()
+                        );
+
+
+        // Use position we calculated from the gyro, but use the rotation we calculated from the tag
+        // the position we calculated from the gyro is more accurate,
+        // but still pass the rotation we calculated from the tag, so we can use it to compensate for the gyro drift
+        var poseToFeedToRobotTracker = new Pose2d(
+                calculatedTranslationFromGyro.toTranslation2d(), // 2d pos on the field
+                rotationFromTag.toRotation2d() //Returns the rotation of the robot around the z axis
+        );
+
+        var visionOnlyPose = new Pose2d(
+                calculatedTranslationFromTagOrientation.toTranslation2d(), // 2d pos on the field
+                rotationFromTag.toRotation2d() //Returns the rotation of the robot around the z axis
+        );
+
+        RobotPositionSender.addRobotPosition(new RobotState(poseToFeedToRobotTracker, timestamp, "Fed Vision Pose"));
+        RobotPositionSender.addRobotPosition(new RobotState(visionOnlyPose, timestamp, "Vision Only Pose"));
+        RobotTracker.getInstance().addVisionMeasurement(poseToFeedToRobotTracker, timestamp);
     }
 
 
