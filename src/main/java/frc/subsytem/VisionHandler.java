@@ -12,7 +12,6 @@ import edu.wpi.first.math.VecBuilder;
 import edu.wpi.first.math.Vector;
 import edu.wpi.first.math.geometry.*;
 import edu.wpi.first.math.numbers.N3;
-import edu.wpi.first.math.util.Units;
 import edu.wpi.first.networktables.NetworkTable;
 import edu.wpi.first.networktables.NetworkTableEvent.Kind;
 import edu.wpi.first.networktables.NetworkTableInstance;
@@ -28,7 +27,6 @@ import java.util.EnumSet;
 import static frc.robot.Constants.FIELD_HEIGHT;
 import static frc.robot.Constants.FIELD_WIDTH;
 import static java.lang.Math.cos;
-import static java.lang.Math.sin;
 
 /**
  * Gives pose estimates based on april tag vision
@@ -110,7 +108,7 @@ public class VisionHandler extends AbstractSubsystem {
         // x,y,z
         // rot:
         // w, x, y, z
-        // time
+        // latency
         final var data = value.getDoubleArray();
         final var posX = data[0];
         final var posY = data[1];
@@ -127,9 +125,7 @@ public class VisionHandler extends AbstractSubsystem {
                 .rotateBy(new Rotation3d(POSITIVE_Y, Math.toRadians(90.0)))
                 .rotateBy(new Rotation3d(POSITIVE_X, Math.toRadians(-90.0)));
         final var rotation = new Rotation3d(new Quaternion(rotW, -rotZ, -rotX, rotY));
-
-        System.out.println("Tag " + tagId + " pos: " + translation + " rot: " + toEulerAngles(rotation.getQuaternion()));
-        final var timestamp = Timer.getFPGATimestamp() - latency;
+        final var timestamp = Timer.getFPGATimestamp() - (latency / 1000.0);
 
 
         //The translation is now from the center of the robot to the center of the tag relative to the rotation of the robot
@@ -148,10 +144,10 @@ public class VisionHandler extends AbstractSubsystem {
                                         .unaryMinus()
                         );
 
-        // TODO: Check if we should add/subtract the rotation of the orientation here
         var rotationFromTag = expectedTagPosition.getRotation()
                 .plus(new Rotation3d(POSITIVE_Z, Math.toRadians(180)))
                 .plus(rotation);
+
 
         var calculatedTranslationFromTagOrientation =
                 expectedTagPosition.getTranslation()
@@ -177,7 +173,7 @@ public class VisionHandler extends AbstractSubsystem {
                 rotationFromTag.toRotation2d() //Returns the rotation of the robot around the z axis
         );
 
-        //RobotPositionSender.addRobotPosition(new RobotState(poseToFeedToRobotTracker, timestamp, "Fed Vision Pose"));
+        RobotPositionSender.addRobotPosition(new RobotState(poseToFeedToRobotTracker, timestamp, "Fed Vision Pose"));
         RobotPositionSender.addRobotPosition(new RobotState(visionOnlyPose, timestamp, "Vision Only Pose"));
         RobotTracker.getInstance().addVisionMeasurement(poseToFeedToRobotTracker, timestamp);
 
@@ -193,65 +189,6 @@ public class VisionHandler extends AbstractSubsystem {
                 (float) (expectedTagPosition.getY()),
                 new Color8Bit(255, 255, 0));
         Renderer.render(drawables);
-
-        System.out.println(Units.metersToInches(translation.getDistance(new Translation3d())));
-    }
-
-
-    private @NotNull EulerAngles toEulerAngles(@NotNull Quaternion q) {
-        EulerAngles angles = new EulerAngles();
-
-        double w = q.getW();
-        double x = q.getX();
-        double y = q.getY();
-        double z = q.getZ();
-
-        // roll (x-axis rotation)
-        double sinr_cosp = 2 * (w * x + y * z);
-        double cosr_cosp = 1 - 2 * (x * x + y * y);
-        angles.roll = Math.atan2(sinr_cosp, cosr_cosp);
-
-        // pitch (y-axis rotation)
-        double sinp = Math.sqrt(1 + 2 * (w * y - x * z));
-        double cosp = Math.sqrt(1 - 2 * (w * y - x * z));
-        angles.pitch = 2 * Math.atan2(sinp, cosp) - Math.PI / 2;
-
-        // yaw (z-axis rotation)
-        double siny_cosp = 2 * (w * z + x * y);
-        double cosy_cosp = 1 - 2 * (y * y + z * z);
-        angles.yaw = Math.atan2(siny_cosp, cosy_cosp);
-
-        return angles;
-    }
-
-    Quaternion toQuaternion(double roll, double pitch, double yaw) // roll (x), pitch (Y), yaw (z)
-    {
-        // Abbreviations for the various angular functions
-
-        double cr = cos(roll * 0.5);
-        double sr = sin(roll * 0.5);
-        double cp = cos(pitch * 0.5);
-        double sp = sin(pitch * 0.5);
-        double cy = cos(yaw * 0.5);
-        double sy = sin(yaw * 0.5);
-
-
-        double w = cr * cp * cy + sr * sp * sy;
-        double x = sr * cp * cy - cr * sp * sy;
-        double y = cr * sp * cy + sr * cp * sy;
-        double z = cr * cp * sy - sr * sp * cy;
-        return new Quaternion(w, x, y, z);
-    }
-
-    public static class EulerAngles {
-        public double roll;
-        public double pitch;
-        public double yaw;
-
-        @Override
-        public String toString() {
-            return "x: " + Math.toDegrees(roll) + ", y: " + Math.toDegrees(pitch) + ", z: " + Math.toDegrees(yaw);
-        }
     }
 
     @Override
