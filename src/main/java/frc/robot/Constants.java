@@ -3,9 +3,12 @@ package frc.robot;
 import edu.wpi.first.math.controller.SimpleMotorFeedforward;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
+import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
 import edu.wpi.first.math.util.Units;
+import frc.utility.swerve.SwerveSetpointGenerator.KinematicLimit;
+import frc.utility.swerve.SwerveSetpointGenerator.SwerveSetpoint;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
@@ -52,8 +55,6 @@ public final class Constants {
     public static final double SWERVE_DRIVE_F = 0.00;
     public static final double SWERVE_DRIVE_INTEGRAL_ZONE = 0.00;
 
-    public static final int SWERVE_MOTOR_PID_TIMEOUT_MS = 50;
-
     /**
      * Feed forward constants for the drivetrain.
      * <p>
@@ -83,12 +84,12 @@ public final class Constants {
      * <p>
      * 3 -> Right Back
      */
-    public static final SwerveModuleState[] HOLD_MODULE_STATES = {
+    public static final SwerveSetpoint HOLD_MODULE_STATES = new SwerveSetpoint(new ChassisSpeeds(), new SwerveModuleState[]{
             new SwerveModuleState(0, Rotation2d.fromDegrees(-45)),
             new SwerveModuleState(0, Rotation2d.fromDegrees(-45)),
             new SwerveModuleState(0, Rotation2d.fromDegrees(45)),
             new SwerveModuleState(0, Rotation2d.fromDegrees(45))
-    };
+    }, new double[]{0, 0, 0, 0});
 
     // 0.307975 is 12.125 in inches
     public static final @NotNull Translation2d SWERVE_LEFT_FRONT_LOCATION = new Translation2d(0.307975, 0.307975);
@@ -107,11 +108,6 @@ public final class Constants {
     );
 
     public static final double DRIVE_HIGH_SPEED_M = 4.2;
-    public static final double SWERVE_ACCELERATION =
-            ((360 * 10 * FALCON_ENCODER_TICKS_PER_ROTATIONS) / SWERVE_MOTOR_POSITION_CONVERSION_FACTOR) / 360; //5 rot/s^2
-
-    public static final double SWERVE_CRUISE_VELOCITY =
-            ((360 * 7 * FALCON_ENCODER_TICKS_PER_ROTATIONS) / SWERVE_MOTOR_POSITION_CONVERSION_FACTOR) / 360; //6.5 rot/s
     /**
      * Allowed Turn Error in degrees.
      */
@@ -129,37 +125,24 @@ public final class Constants {
     public static final double DEFAULT_TURN_D = 0.4;
     public static final double TURN_SPEED_LIMIT_WHILE_AIMING = 4.0;
 
-    public enum AccelerationLimits {
+    public static final double EXPECTED_TELEOP_DRIVE_DT = 0.2;
+
+    public static final double EXPECTED_AUTO_DRIVE_DT = DRIVE_PERIOD / 1000.0;
+
+    public enum KinematicLimits {
         /**
          * Normal acceleration limit while driving. This ensures that the driver can't tip the robot.
          */
-        NORMAL_DRIVING(100),
-        /**
-         * Acceleration limit when we're trying to shoot and move. This is very low to prevent the driver from making sudden
-         * movements that would mess up the shot
-         */
-        SHOOT_AND_MOVE(4),
-        /**
-         * Slower acceleration limit to allow the robot to aim while slowing
-         */
-        STOP_AND_SHOOT(12);
+        NORMAL_DRIVING(new KinematicLimit(4.2, 5, Math.PI * 2 * 6));
+        public final KinematicLimit kinematicLimit;
 
-        public double acceleration;
-
-        AccelerationLimits(double acceleration) {
-            this.acceleration = acceleration;
+        KinematicLimits(KinematicLimit kinematicLimit) {
+            this.kinematicLimit = kinematicLimit;
         }
     }
 
-    /**
-     * Units are in Radians per Second Squared
-     */
-    public static final double MAX_ANGULAR_ACCELERATION = Math.toRadians(360 * 22);
-    /**
-     * Conversion from Falcon Sensor Units / 100ms to RPM 2048 is Sensor Units Per Revolution 600 Converts From Time of 100ms to 1
-     * minute
-     */
-    public static final double FALCON_UNIT_CONVERSION_FOR_RELATIVE_ENCODER = 600.0d / 2048.0d;
+    public static final int MAX_TELEOP_TURN_SPEED = 7;
+    public static final double COAST_AFTER_DISABLE_TIME = 0.5;
 
 
     //Robot Tracker
@@ -170,6 +153,7 @@ public final class Constants {
     public static final double GRAVITY = 9.80665;
 
     public static final int PIGEON_CAN_ID = 30;
+
 
     // Elevator
     public static final int ELEVATOR_P = 5;

@@ -7,6 +7,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Objects;
 
@@ -278,9 +279,6 @@ public class MutableTranslation2d extends Translation2d {
         if (obj instanceof Translation2d) {
             return Math.abs(((Translation2d) obj).getX() - m_x) < 1.0E-9
                     && Math.abs(((Translation2d) obj).getY() - m_y) < 1.0E-9;
-        } else if (obj instanceof MutableTranslation2d) {
-            return Math.abs(((MutableTranslation2d) obj).getX() - m_x) < 1.0E-9
-                    && Math.abs(((MutableTranslation2d) obj).getY() - m_y) < 1.0E-9;
         }
         return false;
     }
@@ -291,7 +289,7 @@ public class MutableTranslation2d extends Translation2d {
     }
 
 
-    public MutableTranslation2d interpolate(MutableTranslation2d endValue, double t) {
+    public MutableTranslation2d interpolate(@NotNull MutableTranslation2d endValue, double t) {
         return set(MathUtil.interpolate(this.getX(), endValue.getX(), t),
                 MathUtil.interpolate(this.getY(), endValue.getY(), t));
     }
