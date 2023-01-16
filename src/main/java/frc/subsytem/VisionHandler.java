@@ -22,6 +22,7 @@ import frc.robot.Constants;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.EnumSet;
 
 import static frc.robot.Constants.FIELD_HEIGHT;
@@ -36,15 +37,40 @@ public class VisionHandler extends AbstractSubsystem {
     static final Vector<N3> POSITIVE_X = VecBuilder.fill(1, 0, 0);
     static final Vector<N3> POSITIVE_Y = VecBuilder.fill(0, 1, 0);
     static final Vector<N3> POSITIVE_Z = VecBuilder.fill(0, 0, 1);
+
+    static final Rotation3d POSITIVE_Y_90 = new Rotation3d(POSITIVE_Y, Math.toRadians(90.0));
+    static final Rotation3d POSITIVE_X_NEGATIVE_90 = new Rotation3d(POSITIVE_X, Math.toRadians(-90.0));
+    static final Rotation3d POSITIVE_Z_180 = new Rotation3d(POSITIVE_Z, Math.toRadians(180));
     private static final @NotNull AprilTagFieldLayout fieldLayout;
 
     static {
         try {
-            fieldLayout = AprilTagFieldLayout.loadFromResource(AprilTagFields.k2023ChargedUp.m_resourceFile);
-            for (AprilTag tag : fieldLayout.getTags()) {
-                System.out.println("Pos: " + tag.pose.getTranslation() + " angle: x:" + tag.pose.getRotation().getX()
-                        + ", y:" + tag.pose.getRotation().getY() + ", z:" + tag.pose.getRotation().getZ());
+
+
+            var wpiFieldLayout = AprilTagFieldLayout.loadFromResource(AprilTagFields.k2023ChargedUp.m_resourceFile);
+
+            var adjustedAprilTags = new ArrayList<AprilTag>();
+
+            for (AprilTag tag : wpiFieldLayout.getTags()) {
+                final var tagPos =
+                        new Pose3d(
+                                tag.pose
+                                        .getTranslation().rotateBy(POSITIVE_Z_180)
+                                        .plus(new Translation3d(FIELD_WIDTH, FIELD_HEIGHT / 2, 0)),
+                                tag.pose.getRotation()
+                                        .rotateBy(POSITIVE_Z_180)
+                        );
+                adjustedAprilTags.add(new AprilTag(tag.ID, tagPos));
             }
+
+            fieldLayout = new AprilTagFieldLayout(adjustedAprilTags, FIELD_HEIGHT, FIELD_WIDTH);
+
+//            System.out.println("AprilTag Positions: ");
+//            for (AprilTag tag : fieldLayout.getTags()) {
+//                System.out.println(
+//                        "ID: " + tag.ID + " Pos: " + tag.pose.getTranslation() + " angle: x:" + tag.pose.getRotation().getX()
+//                                + ", y:" + tag.pose.getRotation().getY() + ", z:" + tag.pose.getRotation().getZ());
+//            }
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
@@ -95,14 +121,7 @@ public class VisionHandler extends AbstractSubsystem {
     }
 
     private void processNewTagPosition(NetworkTableValue value, int tagId) {
-        final var expectedTagPosition =
-                new Pose3d(
-                        fieldLayout.getTagPose(tagId).orElseThrow()
-                                .getTranslation().rotateBy(new Rotation3d(POSITIVE_Z, Math.toRadians(180)))
-                                .plus(new Translation3d(FIELD_WIDTH, FIELD_HEIGHT / 2, 0)),
-                        fieldLayout.getTagPose(tagId).orElseThrow().getRotation()
-                                .rotateBy(new Rotation3d(POSITIVE_Z, Math.toRadians(180)))
-                );
+        final var expectedTagPosition = fieldLayout.getTagPose(tagId).orElseThrow(); // We should never get an unknown tag
 
         // pos:
         // x,y,z
@@ -122,8 +141,8 @@ public class VisionHandler extends AbstractSubsystem {
 
 
         final var translation = new Translation3d(posX, posY, posZ)
-                .rotateBy(new Rotation3d(POSITIVE_Y, Math.toRadians(90.0)))
-                .rotateBy(new Rotation3d(POSITIVE_X, Math.toRadians(-90.0)));
+                .rotateBy(POSITIVE_Y_90)
+                .rotateBy(POSITIVE_X_NEGATIVE_90);
         final var rotation = new Rotation3d(new Quaternion(rotW, -rotZ, -rotX, rotY));
         final var timestamp = Timer.getFPGATimestamp() - (latency / 1000.0);
 
@@ -145,7 +164,7 @@ public class VisionHandler extends AbstractSubsystem {
                         );
 
         var rotationFromTag = expectedTagPosition.getRotation()
-                .plus(new Rotation3d(POSITIVE_Z, Math.toRadians(180)))
+                .plus(POSITIVE_Z_180)
                 .plus(rotation);
 
 
@@ -177,6 +196,8 @@ public class VisionHandler extends AbstractSubsystem {
         RobotPositionSender.addRobotPosition(new RobotState(visionOnlyPose, timestamp, "Vision Only Pose"));
         RobotTracker.getInstance().addVisionMeasurement(poseToFeedToRobotTracker, timestamp);
 
+
+        // Draw the tag on the field
         var drawables = new Drawable[2];
         int j = 0;
         drawables[j++] = new Line((float) expectedTagPosition.getX(),
