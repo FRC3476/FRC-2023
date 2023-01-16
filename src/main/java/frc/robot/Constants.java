@@ -49,7 +49,7 @@ public final class Constants {
 
     public static final double SWERVE_INCHES_PER_ROTATION = 12.5 * 0.976;
     public static final double SWERVE_METER_PER_ROTATION = Units.inchesToMeters(SWERVE_INCHES_PER_ROTATION);
-    public static final double SWERVE_P = 0.01;
+    public static final double SWERVE_P = 0.10;
     public static final double SWERVE_D = 0.00;
     public static final double SWERVE_I = 0.00;
     public static final double SWERVE_F = 0.00;
@@ -120,7 +120,7 @@ public final class Constants {
     public static final double SWERVE_DRIVE_MOTOR_REDUCTION = 1 / 6.75;
     // TurnPID
 
-    public static final double DEFAULT_TURN_P = 10.0;
+    public static final double DEFAULT_TURN_P = 20.0;
     public static final double DEFAULT_TURN_I = 0;
     public static final double DEFAULT_TURN_D = 0.4;
     public static final double TURN_SPEED_LIMIT_WHILE_AIMING = 4.0;
