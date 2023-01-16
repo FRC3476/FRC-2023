@@ -9,13 +9,11 @@ import edu.wpi.first.wpilibj.Timer;
 import frc.robot.Constants;
 
 public class Wrist extends AbstractSubsystem{
-    Wrist wrist;
     static CANSparkMax sparkMax;
     static SparkMaxPIDController sparkMaxPIDController;
 
     public Wrist() {
         super(20, 5);
-        wrist = new Wrist();
         sparkMax = new CANSparkMax(0, CANSparkMaxLowLevel.MotorType.kBrushless);
         sparkMaxPIDController = sparkMax.getPIDController();
         sparkMaxPIDController.setP(Constants.WRIST_P);

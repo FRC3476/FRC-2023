@@ -9,13 +9,11 @@ import edu.wpi.first.wpilibj.Timer;
 import frc.robot.Constants;
 
 public class Elevator extends AbstractSubsystem{
-    Elevator elevator;
     static CANSparkMax sparkMax;
     static SparkMaxPIDController sparkMaxPIDController;
 
     public Elevator() {
         super(20, 5);
-        elevator = new Elevator();
         sparkMax = new CANSparkMax(0, CANSparkMaxLowLevel.MotorType.kBrushless);
         sparkMaxPIDController = sparkMax.getPIDController();
         sparkMaxPIDController.setP(Constants.ELEVATOR_P);

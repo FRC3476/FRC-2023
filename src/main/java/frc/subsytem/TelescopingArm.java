@@ -9,13 +9,11 @@ import edu.wpi.first.wpilibj.Timer;
 import frc.robot.Constants;
 
 public class TelescopingArm extends AbstractSubsystem{
-    TelescopingArm telescopingArm;
     static CANSparkMax sparkMax;
     static SparkMaxPIDController sparkMaxPIDController;
 
     public TelescopingArm() {
         super(20, 5);
-        telescopingArm = new TelescopingArm();
         sparkMax = new CANSparkMax(0, CANSparkMaxLowLevel.MotorType.kBrushless);
         sparkMaxPIDController = sparkMax.getPIDController();
         sparkMaxPIDController.setP(Constants.TELESCOPING_ARM_P);
