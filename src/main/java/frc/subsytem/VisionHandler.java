@@ -1,5 +1,8 @@
 package frc.subsytem;
 
+import com.dacubeking.AutoBuilder.robot.drawable.Drawable;
+import com.dacubeking.AutoBuilder.robot.drawable.Line;
+import com.dacubeking.AutoBuilder.robot.drawable.Renderer;
 import com.dacubeking.AutoBuilder.robot.sender.pathpreview.RobotPositionSender;
 import com.dacubeking.AutoBuilder.robot.sender.pathpreview.RobotState;
 import edu.wpi.first.apriltag.AprilTag;
@@ -9,11 +12,13 @@ import edu.wpi.first.math.VecBuilder;
 import edu.wpi.first.math.Vector;
 import edu.wpi.first.math.geometry.*;
 import edu.wpi.first.math.numbers.N3;
+import edu.wpi.first.math.util.Units;
 import edu.wpi.first.networktables.NetworkTable;
 import edu.wpi.first.networktables.NetworkTableEvent.Kind;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.networktables.NetworkTableValue;
 import edu.wpi.first.wpilibj.Timer;
+import edu.wpi.first.wpilibj.util.Color8Bit;
 import frc.robot.Constants;
 import org.jetbrains.annotations.NotNull;
 
@@ -21,6 +26,7 @@ import java.io.IOException;
 import java.util.EnumSet;
 
 import static frc.robot.Constants.FIELD_HEIGHT;
+import static frc.robot.Constants.FIELD_WIDTH;
 import static java.lang.Math.cos;
 import static java.lang.Math.sin;
 
@@ -29,12 +35,14 @@ import static java.lang.Math.sin;
  */
 public class VisionHandler extends AbstractSubsystem {
 
-    private final @NotNull AprilTagFieldLayout fieldLayout;
+    static final Vector<N3> POSITIVE_X = VecBuilder.fill(1, 0, 0);
+    static final Vector<N3> POSITIVE_Y = VecBuilder.fill(0, 1, 0);
+    static final Vector<N3> POSITIVE_Z = VecBuilder.fill(0, 0, 1);
+    private static final @NotNull AprilTagFieldLayout fieldLayout;
 
-    {
+    static {
         try {
             fieldLayout = AprilTagFieldLayout.loadFromResource(AprilTagFields.k2023ChargedUp.m_resourceFile);
-            fieldLayout.setOrigin(new Pose3d(new Translation3d(0, FIELD_HEIGHT / 2, 0), new Rotation3d()));
             for (AprilTag tag : fieldLayout.getTags()) {
                 System.out.println("Pos: " + tag.pose.getTranslation() + " angle: x:" + tag.pose.getRotation().getX()
                         + ", y:" + tag.pose.getRotation().getY() + ", z:" + tag.pose.getRotation().getZ());
@@ -88,12 +96,16 @@ public class VisionHandler extends AbstractSubsystem {
         }
     }
 
-    Vector<N3> POSITIVE_X = VecBuilder.fill(1, 0, 0);
-    Vector<N3> POSITIVE_Y = VecBuilder.fill(0, 1, 0);
-    Vector<N3> POSITIVE_Z = VecBuilder.fill(0, 0, 1);
-
     private void processNewTagPosition(NetworkTableValue value, int tagId) {
-        final var expectedTagPosition = fieldLayout.getTagPose(tagId).orElseThrow();
+        final var expectedTagPosition =
+                new Pose3d(
+                        fieldLayout.getTagPose(tagId).orElseThrow()
+                                .getTranslation().rotateBy(new Rotation3d(POSITIVE_Z, Math.toRadians(180)))
+                                .plus(new Translation3d(FIELD_WIDTH, FIELD_HEIGHT / 2, 0)),
+                        fieldLayout.getTagPose(tagId).orElseThrow().getRotation()
+                                .rotateBy(new Rotation3d(POSITIVE_Z, Math.toRadians(180)))
+                );
+
         // pos:
         // x,y,z
         // rot:
@@ -114,10 +126,7 @@ public class VisionHandler extends AbstractSubsystem {
         final var translation = new Translation3d(posX, posY, posZ)
                 .rotateBy(new Rotation3d(POSITIVE_Y, Math.toRadians(90.0)))
                 .rotateBy(new Rotation3d(POSITIVE_X, Math.toRadians(-90.0)));
-        final var rotation = new Rotation3d(new Quaternion(rotW, rotX, rotY, rotZ))
-                .rotateBy(new Rotation3d(POSITIVE_Y, Math.toRadians(90.0)))
-                .rotateBy(new Rotation3d(POSITIVE_X, Math.toRadians(-90.0)));
-
+        final var rotation = new Rotation3d(new Quaternion(rotW, -rotZ, -rotX, rotY));
 
         System.out.println("Tag " + tagId + " pos: " + translation + " rot: " + toEulerAngles(rotation.getQuaternion()));
         final var timestamp = Timer.getFPGATimestamp() - latency;
@@ -140,7 +149,9 @@ public class VisionHandler extends AbstractSubsystem {
                         );
 
         // TODO: Check if we should add/subtract the rotation of the orientation here
-        var rotationFromTag = expectedTagPosition.getRotation().unaryMinus().rotateBy(rotation);
+        var rotationFromTag = expectedTagPosition.getRotation()
+                .plus(new Rotation3d(POSITIVE_Z, Math.toRadians(180)))
+                .plus(rotation);
 
         var calculatedTranslationFromTagOrientation =
                 expectedTagPosition.getTranslation()
@@ -166,13 +177,28 @@ public class VisionHandler extends AbstractSubsystem {
                 rotationFromTag.toRotation2d() //Returns the rotation of the robot around the z axis
         );
 
-        RobotPositionSender.addRobotPosition(new RobotState(poseToFeedToRobotTracker, timestamp, "Fed Vision Pose"));
+        //RobotPositionSender.addRobotPosition(new RobotState(poseToFeedToRobotTracker, timestamp, "Fed Vision Pose"));
         RobotPositionSender.addRobotPosition(new RobotState(visionOnlyPose, timestamp, "Vision Only Pose"));
         RobotTracker.getInstance().addVisionMeasurement(poseToFeedToRobotTracker, timestamp);
+
+        var drawables = new Drawable[2];
+        int j = 0;
+        drawables[j++] = new Line((float) expectedTagPosition.getX(),
+                (float) (expectedTagPosition.getY() - 0.5),
+                (float) expectedTagPosition.getX(),
+                (float) (expectedTagPosition.getY() + 0.5), new Color8Bit(255, 255, 0));
+        drawables[j++] = new Line((float) expectedTagPosition.getX(),
+                (float) expectedTagPosition.getY(),
+                (float) (expectedTagPosition.getX() + cos(expectedTagPosition.getRotation().getZ()) * 0.1),
+                (float) (expectedTagPosition.getY()),
+                new Color8Bit(255, 255, 0));
+        Renderer.render(drawables);
+
+        System.out.println(Units.metersToInches(translation.getDistance(new Translation3d())));
     }
 
 
-    private EulerAngles toEulerAngles(Quaternion q) {
+    private @NotNull EulerAngles toEulerAngles(@NotNull Quaternion q) {
         EulerAngles angles = new EulerAngles();
 
         double w = q.getW();

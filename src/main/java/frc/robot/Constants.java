@@ -158,5 +158,5 @@ public final class Constants {
     public static final double COAST_AFTER_DISABLE_TIME = 0.5;
 
     public static final double FIELD_HEIGHT = 8.0137;
-    private static final double FIELD_WIDTH = 16.54175;
+    public static final double FIELD_WIDTH = 16.54175;
 }
