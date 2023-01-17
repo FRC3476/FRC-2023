@@ -8,57 +8,73 @@ import edu.wpi.first.math.trajectory.TrapezoidProfile;
 import edu.wpi.first.wpilibj.Timer;
 import frc.robot.Constants;
 
-public class Elevator extends AbstractSubsystem{
-    static CANSparkMax sparkMax;
-    static SparkMaxPIDController sparkMaxPIDController;
+public class Elevator extends AbstractSubsystem {
+    private final CANSparkMax elevatorSparkMax;
+    private final SparkMaxPIDController elevatorSparkMaxPIDController;
+    private final static Elevator instance = new Elevator();
 
     public Elevator() {
         super(20, 5);
-        sparkMax = new CANSparkMax(0, CANSparkMaxLowLevel.MotorType.kBrushless);
-        sparkMaxPIDController = sparkMax.getPIDController();
-        sparkMaxPIDController.setP(Constants.ELEVATOR_P);
-        sparkMaxPIDController.setI(Constants.ELEVATOR_I);
-        sparkMaxPIDController.setD(Constants.ELEVATOR_D);
+        elevatorSparkMax = new CANSparkMax(0, CANSparkMaxLowLevel.MotorType.kBrushless);
+        elevatorSparkMaxPIDController = elevatorSparkMax.getPIDController();
+        elevatorSparkMaxPIDController.setP(Constants.ELEVATOR_P);
+        elevatorSparkMaxPIDController.setI(Constants.ELEVATOR_I);
+        elevatorSparkMaxPIDController.setD(Constants.ELEVATOR_D);
     }
 
     static TrapezoidProfile trapezoidProfile =
-            new TrapezoidProfile(new TrapezoidProfile.Constraints(Constants.ELEVATOR_MAX_VELOCITY, Constants.ELEVATOR_MAX_ACCELERATION),
+            new TrapezoidProfile(new TrapezoidProfile.Constraints(Constants.elevatorConstraints.maxVelocity,
+                    Constants.elevatorConstraints.maxAcceleration),
                     new TrapezoidProfile.State());
     static double setPositionPastTime = 0;
-    public static void setPosition(double position) {
-        TrapezoidProfile.Constraints constraints = new TrapezoidProfile.Constraints(Constants.ELEVATOR_MAX_VELOCITY, Constants.ELEVATOR_MAX_ACCELERATION);
 
-        trapezoidProfile = new TrapezoidProfile(constraints, new TrapezoidProfile.State(position, 0),
-                new TrapezoidProfile.State(sparkMax.getEncoder().getPosition() / Constants.ELEVATOR_POSITION_MULTIPLIER,
-                        sparkMax.getEncoder().getVelocity() / Constants.ELEVATOR_POSITION_MULTIPLIER));
+    /**
+     * This method takes in meters
+     */
+    static double goalPosition = 0;
+
+    public void setPosition(double position) {
+        trapezoidProfile = new TrapezoidProfile(Constants.elevatorConstraints, new TrapezoidProfile.State(position, 0),
+                new TrapezoidProfile.State(elevatorSparkMax.getEncoder().getPosition() / Constants.ELEVATOR_POSITION_MULTIPLIER,
+                        elevatorSparkMax.getEncoder().getVelocity() / Constants.ELEVATOR_POSITION_MULTIPLIER));
         setPositionPastTime = Timer.getFPGATimestamp();
+        goalPosition = position;
+        logData("Goal position", position);
     }
+
     double pastVelocity = 0, pastTime = 0;
+
     @Override
     public void update() {
         TrapezoidProfile.State state = trapezoidProfile.calculate(Timer.getFPGATimestamp() - setPositionPastTime);
         double acceleration = (state.velocity - pastVelocity) / (Timer.getFPGATimestamp() - pastTime);
 
-        sparkMax.getPIDController().setReference(state.position * Constants.ELEVATOR_POSITION_MULTIPLIER,
-                CANSparkMax.ControlType.kPosition, 0, feedForward(state.velocity, acceleration),
+        elevatorSparkMax.getPIDController().setReference(state.position * Constants.ELEVATOR_POSITION_MULTIPLIER,
+                CANSparkMax.ControlType.kPosition, 0, Constants.elevatorFeedforward.calculate(state.velocity, acceleration),
                 SparkMaxPIDController.ArbFFUnits.kVoltage);
 
         pastVelocity = state.velocity;
         pastTime = Timer.getFPGATimestamp();
     }
 
-    public double feedForward(double velocity, double acceleration) {
-        ElevatorFeedforward elevatorFeedforward = new ElevatorFeedforward(0, 0, 0, 0);
-        return elevatorFeedforward.calculate(velocity, acceleration);
-    }
-
     @Override
     public void logData() {
-        logData("Motor Position", sparkMax.getEncoder().getPosition() * Constants.ELEVATOR_POSITION_MULTIPLIER);
+        logData("Motor Position", elevatorSparkMax.getEncoder().getPosition() * Constants.ELEVATOR_POSITION_MULTIPLIER);
+        logData("Goal position for the trapezoidProfile", goalPosition);
+        logData("Motor current", elevatorSparkMax.getOutputCurrent());
+        logData("Motor temperature", elevatorSparkMax.getMotorTemperature());
+        logData("Time in the trapezoidProfile", trapezoidProfile.totalTime());
+        if (trapezoidProfile.isFinished(Timer.getFPGATimestamp())) {
+            logData("Error from the trapezoidProfile", trapezoidProfile.calculate(Timer.getFPGATimestamp()));
+        }
     }
 
     @Override
     public void selfTest() {
 
+    }
+
+    public static Elevator getInstance() {
+        return instance;
     }
 }

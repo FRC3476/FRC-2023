@@ -1,10 +1,13 @@
 package frc.robot;
 
+import edu.wpi.first.math.controller.ArmFeedforward;
+import edu.wpi.first.math.controller.ElevatorFeedforward;
 import edu.wpi.first.math.controller.SimpleMotorFeedforward;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
+import edu.wpi.first.math.trajectory.TrapezoidProfile;
 import edu.wpi.first.math.util.Units;
 import org.jetbrains.annotations.NotNull;
 
@@ -102,7 +105,8 @@ public final class Constants {
             SWERVE_RIGHT_BACK_LOCATION
     };
 
-    @NotNull public static final SwerveDriveKinematics SWERVE_DRIVE_KINEMATICS = new SwerveDriveKinematics(
+    @NotNull
+    public static final SwerveDriveKinematics SWERVE_DRIVE_KINEMATICS = new SwerveDriveKinematics(
             SWERVE_MODULE_LOCATIONS
     );
 
@@ -172,26 +176,28 @@ public final class Constants {
     public static final int PIGEON_CAN_ID = 30;
 
     // Elevator
+    public static final TrapezoidProfile.Constraints elevatorConstraints
+            = new TrapezoidProfile.Constraints(3, 3);
+    public static final ElevatorFeedforward elevatorFeedforward = new ElevatorFeedforward(0, 0, 0, 0);
     public static final int ELEVATOR_P = 5;
     public static final int ELEVATOR_I = 5;
     public static final int ELEVATOR_D = 5;
     public static final int ELEVATOR_POSITION_MULTIPLIER = 5;
-    public static final double ELEVATOR_MAX_VELOCITY = 3;
-    public static final double ELEVATOR_MAX_ACCELERATION = 3;
 
     // Telescoping Arm
+    public static final TrapezoidProfile.Constraints telescopingArmConstraints
+            = new TrapezoidProfile.Constraints(3, 3);
+    public static final ArmFeedforward wristFeedforward = new ArmFeedforward(0, 0, 0, 0);
     public static final int TELESCOPING_ARM_P = 5;
     public static final int TELESCOPING_ARM_I = 5;
     public static final int TELESCOPING_ARM_D = 5;
     public static final int TELESCOPING_ARM_POSITION_MULTIPLIER = 5;
-    public static final double TELESCOPING_ARM_MAX_VELOCITY = 3;
-    public static final double TELESCOPING_ARM_MAX_ACCELERATION = 3;
 
     // Telescoping Arm
+    public static final TrapezoidProfile.Constraints wristConstraints = new TrapezoidProfile.Constraints(3, 3);
+    public static final ElevatorFeedforward telescopingArmFeedforward = new ElevatorFeedforward(0, 0, 0, 0);
     public static final int WRIST_P = 5;
     public static final int WRIST_I = 5;
     public static final int WRIST_D = 5;
     public static final int WRIST_POSITION_MULTIPLIER = 5;
-    public static final double WRIST_MAX_VELOCITY = 3;
-    public static final double WRIST_MAX_ACCELERATION = 3;
 }

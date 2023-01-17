@@ -37,7 +37,6 @@ public class Robot extends TimedRobot {
 
     private @NotNull Controller xbox;
 
-
     // Autonomous
     private final SendableChooser<String> autoChooser = new SendableChooser<>();
 
@@ -95,7 +94,8 @@ public class Robot extends TimedRobot {
      * SmartDashboard integrated updating.
      */
     @Override
-    public void robotPeriodic() {}
+    public void robotPeriodic() {
+    }
 
 
     /**
@@ -209,8 +209,12 @@ public class Robot extends TimedRobot {
     }
 
     public void setPosition(double elevatorPosition, double telescopingArmPosition, double wristPosition) {
-        Elevator.setPosition(elevatorPosition);
-        TelescopingArm.setPosition(telescopingArmPosition);
-        Wrist.setPosition(wristPosition);
+        Elevator elevator = Elevator.getInstance();
+        TelescopingArm telescopingArm = TelescopingArm.getInstance();
+        Wrist wrist = Wrist.getInstance();
+        
+        elevator.setPosition(elevatorPosition);
+        telescopingArm.setPosition(telescopingArmPosition);
+        wrist.setPosition(wristPosition);
     }
 }
