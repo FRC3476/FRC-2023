@@ -31,14 +31,11 @@ public class Elevator extends AbstractSubsystem {
     /**
      * This method takes in meters
      */
-    static double goalPosition = 0;
-
     public void setPosition(double position) {
         trapezoidProfile = new TrapezoidProfile(Constants.elevatorConstraints, new TrapezoidProfile.State(position, 0),
                 new TrapezoidProfile.State(elevatorSparkMax.getEncoder().getPosition() / Constants.ELEVATOR_POSITION_MULTIPLIER,
                         elevatorSparkMax.getEncoder().getVelocity() / Constants.ELEVATOR_POSITION_MULTIPLIER));
         setPositionPastTime = Timer.getFPGATimestamp();
-        goalPosition = position;
         logData("Goal position", position);
     }
 
@@ -60,7 +57,7 @@ public class Elevator extends AbstractSubsystem {
     @Override
     public void logData() {
         logData("Motor Position", elevatorSparkMax.getEncoder().getPosition() * Constants.ELEVATOR_POSITION_MULTIPLIER);
-        logData("Goal position for the trapezoidProfile", goalPosition);
+        logData("Current position of the trapezoidProfile", trapezoidProfile.calculate(Timer.getFPGATimestamp()));
         logData("Motor current", elevatorSparkMax.getOutputCurrent());
         logData("Motor temperature", elevatorSparkMax.getMotorTemperature());
         logData("Time in the trapezoidProfile", trapezoidProfile.totalTime());

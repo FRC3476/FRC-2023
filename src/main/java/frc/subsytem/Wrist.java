@@ -28,7 +28,6 @@ public class Wrist extends AbstractSubsystem {
                     Constants.wristConstraints.maxAcceleration),
                     new TrapezoidProfile.State());
     static double setPositionPastTime = 0;
-    static double goalPosition;
 
     /**
      * This method takes in meters
@@ -38,7 +37,6 @@ public class Wrist extends AbstractSubsystem {
                 new TrapezoidProfile.State(wristSparkMax.getEncoder().getPosition() / Constants.WRIST_POSITION_MULTIPLIER,
                         wristSparkMax.getEncoder().getVelocity() / Constants.WRIST_POSITION_MULTIPLIER));
         setPositionPastTime = Timer.getFPGATimestamp();
-        goalPosition = position;
         logData("Goal position", position);
     }
 
@@ -60,7 +58,7 @@ public class Wrist extends AbstractSubsystem {
     @Override
     public void logData() {
         logData("Motor Position", wristSparkMax.getEncoder().getPosition() * Constants.ELEVATOR_POSITION_MULTIPLIER);
-        logData("Goal position for the trapezoidProfile", goalPosition);
+        logData("Current position of the trapezoidProfile", trapezoidProfile.calculate(Timer.getFPGATimestamp()));
         logData("Motor current", wristSparkMax.getOutputCurrent());
         logData("Motor temperature", wristSparkMax.getMotorTemperature());
         logData("Time in the trapezoidProfile", trapezoidProfile.totalTime());

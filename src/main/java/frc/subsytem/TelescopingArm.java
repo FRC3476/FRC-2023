@@ -32,14 +32,11 @@ public class TelescopingArm extends AbstractSubsystem {
     /**
      * This method takes in meters
      */
-    static double goalPosition = 0;
-
     public void setPosition(double position) {
         trapezoidProfile = new TrapezoidProfile(Constants.telescopingArmConstraints, new TrapezoidProfile.State(position, 0),
                 new TrapezoidProfile.State(telescopingArmSparkMax.getEncoder().getPosition() / Constants.TELESCOPING_ARM_POSITION_MULTIPLIER,
                         telescopingArmSparkMax.getEncoder().getVelocity() / Constants.TELESCOPING_ARM_POSITION_MULTIPLIER));
         setPositionPastTime = Timer.getFPGATimestamp();
-        goalPosition = position;
         logData("Goal position", position);
     }
 
@@ -61,7 +58,7 @@ public class TelescopingArm extends AbstractSubsystem {
     @Override
     public void logData() {
         logData("Motor Position", telescopingArmSparkMax.getEncoder().getPosition() * Constants.ELEVATOR_POSITION_MULTIPLIER);
-        logData("Goal position for the trapezoidProfile", goalPosition);
+        logData("Current position of the trapezoidProfile", trapezoidProfile.calculate(Timer.getFPGATimestamp()));
         logData("Motor current", telescopingArmSparkMax.getOutputCurrent());
         logData("Motor temperature", telescopingArmSparkMax.getMotorTemperature());
         logData("Time in the trapezoidProfile", trapezoidProfile.totalTime());
