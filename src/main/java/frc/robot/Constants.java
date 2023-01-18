@@ -157,6 +157,6 @@ public final class Constants {
     public static final int VISION_HANDLER_PERIOD = 20;
     public static final double COAST_AFTER_DISABLE_TIME = 0.5;
 
-    public static final double FIELD_HEIGHT = 8.0137;
-    public static final double FIELD_WIDTH = 16.54175;
+    public static final double FIELD_HEIGHT_METERS = 8.0137;
+    public static final double FIELD_WIDTH_METERS = 16.54175;
 }

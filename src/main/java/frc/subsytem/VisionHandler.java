@@ -25,8 +25,8 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.EnumSet;
 
-import static frc.robot.Constants.FIELD_HEIGHT;
-import static frc.robot.Constants.FIELD_WIDTH;
+import static frc.robot.Constants.FIELD_HEIGHT_METERS;
+import static frc.robot.Constants.FIELD_WIDTH_METERS;
 import static java.lang.Math.cos;
 
 /**
@@ -45,8 +45,6 @@ public class VisionHandler extends AbstractSubsystem {
 
     static {
         try {
-
-
             var wpiFieldLayout = AprilTagFieldLayout.loadFromResource(AprilTagFields.k2023ChargedUp.m_resourceFile);
 
             var adjustedAprilTags = new ArrayList<AprilTag>();
@@ -56,14 +54,14 @@ public class VisionHandler extends AbstractSubsystem {
                         new Pose3d(
                                 tag.pose
                                         .getTranslation().rotateBy(POSITIVE_Z_180)
-                                        .plus(new Translation3d(FIELD_WIDTH, FIELD_HEIGHT / 2, 0)),
+                                        .plus(new Translation3d(FIELD_WIDTH_METERS, FIELD_HEIGHT_METERS / 2, 0)),
                                 tag.pose.getRotation()
                                         .rotateBy(POSITIVE_Z_180)
                         );
                 adjustedAprilTags.add(new AprilTag(tag.ID, tagPos));
             }
 
-            fieldLayout = new AprilTagFieldLayout(adjustedAprilTags, FIELD_HEIGHT, FIELD_WIDTH);
+            fieldLayout = new AprilTagFieldLayout(adjustedAprilTags, FIELD_HEIGHT_METERS, FIELD_WIDTH_METERS);
 
 //            System.out.println("AprilTag Positions: ");
 //            for (AprilTag tag : fieldLayout.getTags()) {
@@ -210,11 +208,6 @@ public class VisionHandler extends AbstractSubsystem {
                 (float) (expectedTagPosition.getY()),
                 new Color8Bit(255, 255, 0));
         Renderer.render(drawables);
-    }
-
-    @Override
-    public void update() {
-
     }
 
     @Override
