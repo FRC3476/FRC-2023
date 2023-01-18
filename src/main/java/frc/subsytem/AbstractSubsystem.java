@@ -34,9 +34,9 @@ public abstract class AbstractSubsystem implements Runnable {
         this(period, Constants.DEFAULT_PERIODS_PER_LOG);
     }
 
-    public abstract void selfTest();
+    public void selfTest() {}
 
-    public abstract void logData();
+    public void logData() {}
 
     public void logData(@NotNull String key, @NotNull Object value) {
         loggingTable.getEntry(key).setValue(value);
