@@ -190,8 +190,10 @@ public class VisionHandler extends AbstractSubsystem {
                 rotationFromTag.toRotation2d() //Returns the rotation of the robot around the z axis
         );
 
-        RobotPositionSender.addRobotPosition(new RobotState(poseToFeedToRobotTracker, timestamp, "Fed Vision Pose"));
-        RobotPositionSender.addRobotPosition(new RobotState(visionOnlyPose, timestamp, "Vision Only Pose"));
+        RobotPositionSender.addRobotPosition(
+                new RobotState(poseToFeedToRobotTracker, timestamp, "Fed Vision Pose Tag: " + tagId));
+        RobotPositionSender.addRobotPosition(
+                new RobotState(visionOnlyPose, timestamp, "Vision Only Pose Tag: " + tagId));
         RobotTracker.getInstance().addVisionMeasurement(poseToFeedToRobotTracker, timestamp);
 
 
