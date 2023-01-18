@@ -5,6 +5,7 @@
 
 package frc.robot;
 
+import com.dacubeking.AutoBuilder.robot.reflection.ClassInformationSender;
 import com.dacubeking.AutoBuilder.robot.robotinterface.AutonomousContainer;
 import com.dacubeking.AutoBuilder.robot.robotinterface.CommandTranslator;
 import edu.wpi.first.math.geometry.Pose2d;
@@ -200,5 +201,9 @@ public class Robot extends TimedRobot {
             return new ControllerDriveInputs(xbox.getRawAxis(1), xbox.getRawAxis(0), -xbox.getRawAxis(4))
                     .applyDeadZone(0.05, 0.05, 0.2, 0.2).squareInputs();
         }
+    }
+
+    public void simulationInit() {
+        ClassInformationSender.updateReflectionInformation("frc");
     }
 }
