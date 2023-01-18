@@ -16,6 +16,7 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import frc.subsytem.Drive;
 import frc.subsytem.Drive.DriveState;
 import frc.subsytem.RobotTracker;
+import frc.subsytem.VisionHandler;
 import frc.utility.Controller;
 import frc.utility.Controller.XboxButtons;
 import frc.utility.ControllerDriveInputs;
@@ -35,6 +36,7 @@ public class Robot extends TimedRobot {
 
     private @NotNull Drive drive;
     private @NotNull RobotTracker robotTracker;
+    private @NotNull VisionHandler visionHandler;
 
     private @NotNull Controller xbox;
 
@@ -51,6 +53,7 @@ public class Robot extends TimedRobot {
     public void robotInit() {
         drive = Drive.getInstance();
         robotTracker = RobotTracker.getInstance();
+        visionHandler = VisionHandler.getInstance();
         xbox = new Controller(0);
 
         startSubsystems();
@@ -186,6 +189,7 @@ public class Robot extends TimedRobot {
     public void startSubsystems() {
         drive.start();
         robotTracker.start();
+        visionHandler.start();
     }
 
     private ControllerDriveInputs getControllerDriveInputs() {
