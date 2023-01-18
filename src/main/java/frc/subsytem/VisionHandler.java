@@ -82,15 +82,14 @@ public class VisionHandler extends AbstractSubsystem {
     private final @NotNull NetworkTable visionMiscTable;
     private final @NotNull NetworkTable configTable;
 
-    private static VisionHandler instance = new VisionHandler(Constants.VISION_HANDLER_PERIOD, 5);
+    private static final VisionHandler INSTANCE = new VisionHandler();
 
     public static VisionHandler getInstance() {
-
-        return instance;
+        return INSTANCE;
     }
 
-    public VisionHandler(int period, int loggingInterval) {
-        super(period, loggingInterval);
+    private VisionHandler() {
+        super(Constants.VISION_HANDLER_PERIOD);
 
         // Network table init
         networkTableInstance = NetworkTableInstance.getDefault();
