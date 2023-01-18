@@ -211,14 +211,4 @@ public class VisionHandler extends AbstractSubsystem {
                 new Color8Bit(255, 255, 0));
         Renderer.render(drawables);
     }
-
-    @Override
-    public void selfTest() {
-
-    }
-
-    @Override
-    public void logData() {
-
-    }
 }
