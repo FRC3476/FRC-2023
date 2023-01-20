@@ -13,9 +13,8 @@ import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
-import frc.subsytem.Drive;
+import frc.subsytem.*;
 import frc.subsytem.Drive.DriveState;
-import frc.subsytem.RobotTracker;
 import frc.utility.Controller;
 import frc.utility.Controller.XboxButtons;
 import frc.utility.ControllerDriveInputs;
@@ -37,7 +36,6 @@ public class Robot extends TimedRobot {
     private @NotNull RobotTracker robotTracker;
 
     private @NotNull Controller xbox;
-
 
     // Autonomous
     private final SendableChooser<String> autoChooser = new SendableChooser<>();
@@ -96,7 +94,8 @@ public class Robot extends TimedRobot {
      * SmartDashboard integrated updating.
      */
     @Override
-    public void robotPeriodic() {}
+    public void robotPeriodic() {
+    }
 
 
     @Override
@@ -196,5 +195,15 @@ public class Robot extends TimedRobot {
             return new ControllerDriveInputs(xbox.getRawAxis(1), xbox.getRawAxis(0), -xbox.getRawAxis(4))
                     .applyDeadZone(0.05, 0.05, 0.2, 0.2).squareInputs();
         }
+    }
+
+    public void setPosition(double elevatorPosition, double telescopingArmPosition, double wristPosition) {
+        Elevator elevator = Elevator.getInstance();
+        TelescopingArm telescopingArm = TelescopingArm.getInstance();
+        Wrist wrist = Wrist.getInstance();
+        
+        elevator.setPosition(elevatorPosition);
+        telescopingArm.setPosition(telescopingArmPosition);
+        wrist.setPosition(wristPosition);
     }
 }
