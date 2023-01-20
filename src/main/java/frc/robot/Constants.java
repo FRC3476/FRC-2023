@@ -158,7 +158,6 @@ public final class Constants {
 
     public static final int PIGEON_CAN_ID = 30;
 
-
     // Elevator
     public static final TrapezoidProfile.Constraints elevatorConstraints
             = new TrapezoidProfile.Constraints(3, 3);
@@ -184,4 +183,10 @@ public final class Constants {
     public static final int WRIST_I = 5;
     public static final int WRIST_D = 5;
     public static final int WRIST_POSITION_MULTIPLIER = 5;
+
+    // Vision constants
+    public static final int VISION_HANDLER_PERIOD = -1;
+
+    public static final double FIELD_HEIGHT_METERS = 8.0137;
+    public static final double FIELD_WIDTH_METERS = 16.54175;
 }

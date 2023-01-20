@@ -34,6 +34,7 @@ public class Robot extends TimedRobot {
 
     private @NotNull Drive drive;
     private @NotNull RobotTracker robotTracker;
+    private @NotNull VisionHandler visionHandler;
 
     private @NotNull Controller xbox;
 
@@ -49,6 +50,7 @@ public class Robot extends TimedRobot {
     public void robotInit() {
         drive = Drive.getInstance();
         robotTracker = RobotTracker.getInstance();
+        visionHandler = VisionHandler.getInstance();
         xbox = new Controller(0);
 
         startSubsystems();
@@ -185,6 +187,7 @@ public class Robot extends TimedRobot {
     public void startSubsystems() {
         drive.start();
         robotTracker.start();
+        visionHandler.start();
     }
 
     private ControllerDriveInputs getControllerDriveInputs() {
@@ -201,7 +204,7 @@ public class Robot extends TimedRobot {
         Elevator elevator = Elevator.getInstance();
         TelescopingArm telescopingArm = TelescopingArm.getInstance();
         Wrist wrist = Wrist.getInstance();
-        
+
         elevator.setPosition(elevatorPosition);
         telescopingArm.setPosition(telescopingArmPosition);
         wrist.setPosition(wristPosition);
