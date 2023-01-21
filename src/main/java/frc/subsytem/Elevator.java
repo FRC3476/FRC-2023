@@ -61,8 +61,8 @@ public class Elevator extends AbstractSubsystem {
         pastVelocity = state.velocity;
         pastTime = currentTime;
 
-        logData("Wanted pos", state.position / Constants.ELEVATOR_ROTATIONS_PER_METER);
-        logData("Wanted vel", state.velocity / Constants.ELEVATOR_ROTATIONS_PER_METER / 60);
+        logData("Wanted pos", state.position);
+        logData("Wanted vel", state.velocity);
         logData("Wanted accel", acceleration);
         logData("Total trapezoidProfile time", trapezoidProfile.totalTime());
         logData("TrapezoidProfile time", currentTime - trapezoidProfileStartTime);

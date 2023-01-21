@@ -65,8 +65,8 @@ public class Grabber extends AbstractSubsystem {
         pastVelocity = state.velocity;
         pastTime = currentTime;
 
-        logData("Wanted pos", state.position / Constants.GRABBER_ROTATIONS_PER_DEGREE);
-        logData("Wanted vel", state.velocity / Constants.GRABBER_ROTATIONS_PER_DEGREE / 60);
+        logData("Wanted pos", state.position);
+        logData("Wanted vel", state.velocity);
         logData("Wanted accel", acceleration);
         logData("Total trapezoidProfile time", trapezoidProfile.totalTime());
         logData("Profile length", currentTime - trapezoidProfileStartTime);
