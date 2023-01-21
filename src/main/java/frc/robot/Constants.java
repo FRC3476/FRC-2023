@@ -30,6 +30,7 @@ public final class Constants {
     public static final int DEFAULT_PERIODS_PER_LOG = 20;
 
     //Drive Constants
+    public static final int AUTO_BALANCING_VELOCITY = 10;
     public static final int DRIVE_PERIOD = 20;
 
     public static final int DRIVE_LEFT_FRONT_ID = 11;
@@ -103,7 +104,8 @@ public final class Constants {
             SWERVE_RIGHT_BACK_LOCATION
     };
 
-    @NotNull public static final SwerveDriveKinematics SWERVE_DRIVE_KINEMATICS = new SwerveDriveKinematics(
+    @NotNull
+    public static final SwerveDriveKinematics SWERVE_DRIVE_KINEMATICS = new SwerveDriveKinematics(
             SWERVE_MODULE_LOCATIONS
     );
 
