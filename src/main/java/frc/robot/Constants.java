@@ -57,7 +57,7 @@ public final class Constants {
     public static final double SWERVE_DRIVE_I = 0.00;
     public static final double SWERVE_DRIVE_F = 0.00;
     public static final double SWERVE_DRIVE_INTEGRAL_ZONE = 0.00;
-
+    public static final double AUTO_BALANCING_VELOCITY = 10;
     /**
      * Feed forward constants for the drivetrain.
      * <p>
@@ -167,6 +167,8 @@ public final class Constants {
     public static final int ELEVATOR_I = 5;
     public static final int ELEVATOR_D = 5;
     public static final int ELEVATOR_POSITION_MULTIPLIER = 5;
+    public static final int ELEVATOR_NOMINAL_VOLTAGE = 9;
+    public static final int ELEVATOR_SMART_CURRENT_LIMIT = 40;
 
     // Telescoping Arm
     public static final int TELESCOPING_ARM_PERIOD = 20;
@@ -177,6 +179,8 @@ public final class Constants {
     public static final int TELESCOPING_ARM_I = 5;
     public static final int TELESCOPING_ARM_D = 5;
     public static final int TELESCOPING_ARM_POSITION_MULTIPLIER = 5;
+    public static final int TELESCOPING_ARM_NOMINAL_VOLTAGE = 9;
+    public static final int TELESCOPING_ARM_SMART_CURRENT_LIMIT = 40;
 
     // Grabber
     public static final int GRABBER_PERIOD = 20;
@@ -187,6 +191,9 @@ public final class Constants {
     public static final int GRABBER_I = 5;
     public static final int GRABBER_D = 5;
     public static final int GRABBER_POSITION_MULTIPLIER = 5;
+    public static final int GRABBER_NOMINAL_VOLTAGE = 9;
+    public static final int GRABBER_SMART_CURRENT_LIMIT = 40;
+    public static final int PIVOT_SMART_CURRENT_LIMIT = 40;
 
     // Vision constants
     public static final int VISION_HANDLER_PERIOD = -1;

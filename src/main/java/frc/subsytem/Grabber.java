@@ -24,6 +24,10 @@ public class Grabber extends AbstractSubsystem {
         pivotSparkMaxPIDController.setP(Constants.GRABBER_P);
         pivotSparkMaxPIDController.setI(Constants.GRABBER_I);
         pivotSparkMaxPIDController.setD(Constants.GRABBER_D);
+        pivotSparkMax.enableVoltageCompensation(Constants.GRABBER_NOMINAL_VOLTAGE);
+        pivotSparkMax.setSmartCurrentLimit(Constants.PIVOT_SMART_CURRENT_LIMIT);
+        grabberSparkMax.enableVoltageCompensation(Constants.GRABBER_NOMINAL_VOLTAGE);
+        grabberSparkMax.setSmartCurrentLimit(Constants.GRABBER_SMART_CURRENT_LIMIT);
     }
 
     private TrapezoidProfile trapezoidProfile =
@@ -61,8 +65,8 @@ public class Grabber extends AbstractSubsystem {
         pastVelocity = state.velocity;
         pastTime = currentTime;
 
-        logData("Wanted pos", state.position);
-        logData("Wanted vel", state.velocity);
+        logData("Wanted pos", state.position / Constants.GRABBER_POSITION_MULTIPLIER);
+        logData("Wanted vel", state.velocity / Constants.GRABBER_POSITION_MULTIPLIER / 60);
         logData("Wanted accel", acceleration);
         logData("Total trapezoidProfile time", trapezoidProfile.totalTime());
         logData("Profile length", currentTime - trapezoidProfileStartTime);
@@ -72,8 +76,8 @@ public class Grabber extends AbstractSubsystem {
 
     @Override
     public void logData() {
-        logData("Motor Position", pivotSparkMax.getEncoder().getPosition() * Constants.GRABBER_POSITION_MULTIPLIER);
-        logData("Motor Velocity", pivotSparkMax.getEncoder().getVelocity());
+        logData("Motor Position", pivotSparkMax.getEncoder().getPosition() / Constants.GRABBER_POSITION_MULTIPLIER);
+        logData("Motor Velocity", pivotSparkMax.getEncoder().getVelocity() / Constants.GRABBER_POSITION_MULTIPLIER / 60);
         logData("Motor current", pivotSparkMax.getOutputCurrent());
         logData("Motor temperature", pivotSparkMax.getMotorTemperature());
     }
@@ -89,7 +93,7 @@ public class Grabber extends AbstractSubsystem {
         }
     }
 
-    public void setGrabbingState(GrabState grabState) {
+    public void setGrabState(GrabState grabState) {
         grabberSparkMax.setVoltage(grabState.voltage);
     }
 

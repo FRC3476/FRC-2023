@@ -22,6 +22,8 @@ public class Elevator extends AbstractSubsystem {
         elevatorSparkMaxPIDController.setP(Constants.ELEVATOR_P);
         elevatorSparkMaxPIDController.setI(Constants.ELEVATOR_I);
         elevatorSparkMaxPIDController.setD(Constants.ELEVATOR_D);
+        elevatorSparkMax.enableVoltageCompensation(Constants.ELEVATOR_NOMINAL_VOLTAGE);
+        elevatorSparkMax.setSmartCurrentLimit(Constants.ELEVATOR_SMART_CURRENT_LIMIT);
     }
 
     private TrapezoidProfile trapezoidProfile =
@@ -59,8 +61,8 @@ public class Elevator extends AbstractSubsystem {
         pastVelocity = state.velocity;
         pastTime = currentTime;
 
-        logData("Wanted pos", state.position);
-        logData("Wanted vel", state.velocity);
+        logData("Wanted pos", state.position / Constants.ELEVATOR_POSITION_MULTIPLIER);
+        logData("Wanted vel", state.velocity / Constants.ELEVATOR_POSITION_MULTIPLIER / 60);
         logData("Wanted accel", acceleration);
         logData("Total trapezoidProfile time", trapezoidProfile.totalTime());
         logData("TrapezoidProfile time", currentTime - trapezoidProfileStartTime);
@@ -70,8 +72,8 @@ public class Elevator extends AbstractSubsystem {
 
     @Override
     public void logData() {
-        logData("Motor Position", elevatorSparkMax.getEncoder().getPosition() * Constants.ELEVATOR_POSITION_MULTIPLIER);
-        logData("Motor Velocity", elevatorSparkMax.getEncoder().getVelocity());
+        logData("Motor Position", elevatorSparkMax.getEncoder().getPosition() / Constants.ELEVATOR_POSITION_MULTIPLIER);
+        logData("Motor Velocity", elevatorSparkMax.getEncoder().getVelocity() / Constants.ELEVATOR_POSITION_MULTIPLIER / 60);
         logData("Motor current", elevatorSparkMax.getOutputCurrent());
         logData("Motor temperature", elevatorSparkMax.getMotorTemperature());
     }
