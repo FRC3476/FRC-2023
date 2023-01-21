@@ -37,8 +37,8 @@ public class TelescopingArm extends AbstractSubsystem {
      */
     public void setPosition(double position) {
         trapezoidProfile = new TrapezoidProfile(Constants.TELESCOPING_ARM_CONSTRAINTS, new TrapezoidProfile.State(position, 0),
-                new TrapezoidProfile.State(telescopingArmSparkMax.getEncoder().getPosition() / Constants.TELESCOPING_ARM_POSITION_MULTIPLIER,
-                        telescopingArmSparkMax.getEncoder().getVelocity() / Constants.TELESCOPING_ARM_POSITION_MULTIPLIER));
+                new TrapezoidProfile.State(telescopingArmSparkMax.getEncoder().getPosition() / Constants.TELESCOPING_ARM_ROTATIONS_PER_METER,
+                        telescopingArmSparkMax.getEncoder().getVelocity() / Constants.TELESCOPING_ARM_ROTATIONS_PER_METER));
         trapezoidProfileStartTime = -1;
         logData("Goal position", position);
     }
@@ -54,15 +54,15 @@ public class TelescopingArm extends AbstractSubsystem {
         TrapezoidProfile.State state = trapezoidProfile.calculate(currentTime - trapezoidProfileStartTime);
         double acceleration = (state.velocity - pastVelocity) / (currentTime - pastTime);
 
-        telescopingArmSparkMax.getPIDController().setReference(state.position * Constants.TELESCOPING_ARM_POSITION_MULTIPLIER,
+        telescopingArmSparkMax.getPIDController().setReference(state.position * Constants.TELESCOPING_ARM_ROTATIONS_PER_METER,
                 CANSparkMax.ControlType.kPosition, 0, Constants.TELESCOPING_ARM_FEEDFORWARD.calculate(state.velocity, acceleration),
                 SparkMaxPIDController.ArbFFUnits.kVoltage);
 
         pastVelocity = state.velocity;
         pastTime = currentTime;
 
-        logData("Wanted pos", state.position / Constants.TELESCOPING_ARM_POSITION_MULTIPLIER);
-        logData("Wanted vel", state.velocity / Constants.TELESCOPING_ARM_POSITION_MULTIPLIER / 60);
+        logData("Wanted pos", state.position / Constants.TELESCOPING_ARM_ROTATIONS_PER_METER);
+        logData("Wanted vel", state.velocity / Constants.TELESCOPING_ARM_ROTATIONS_PER_METER / 60);
         logData("Wanted accel", acceleration);
         logData("Total trapezoidProfile time", trapezoidProfile.totalTime());
         logData("TrapezoidProfile time", currentTime - trapezoidProfileStartTime);
@@ -72,9 +72,9 @@ public class TelescopingArm extends AbstractSubsystem {
 
     @Override
     public void logData() {
-        logData("Motor Position", telescopingArmSparkMax.getEncoder().getPosition() / Constants.TELESCOPING_ARM_POSITION_MULTIPLIER);
+        logData("Motor Position", telescopingArmSparkMax.getEncoder().getPosition() / Constants.TELESCOPING_ARM_ROTATIONS_PER_METER);
         logData("Motor Velocity", telescopingArmSparkMax.getEncoder().getVelocity()
-                / Constants.TELESCOPING_ARM_POSITION_MULTIPLIER / 60);
+                / Constants.TELESCOPING_ARM_ROTATIONS_PER_METER / 60);
         logData("Motor current", telescopingArmSparkMax.getOutputCurrent());
         logData("Motor temperature", telescopingArmSparkMax.getMotorTemperature());
     }

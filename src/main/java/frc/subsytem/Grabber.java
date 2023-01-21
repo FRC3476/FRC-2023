@@ -41,8 +41,8 @@ public class Grabber extends AbstractSubsystem {
      */
     public void setPosition(double position) {
         trapezoidProfile = new TrapezoidProfile(Constants.GRABBER_CONSTRAINTS, new TrapezoidProfile.State(position, 0),
-                new TrapezoidProfile.State(pivotSparkMax.getEncoder().getPosition() / Constants.GRABBER_POSITION_MULTIPLIER,
-                        pivotSparkMax.getEncoder().getVelocity() / Constants.GRABBER_POSITION_MULTIPLIER));
+                new TrapezoidProfile.State(pivotSparkMax.getEncoder().getPosition() / Constants.GRABBER_ROTATIONS_PER_DEGREE,
+                        pivotSparkMax.getEncoder().getVelocity() / Constants.GRABBER_ROTATIONS_PER_DEGREE));
         trapezoidProfileStartTime = Timer.getFPGATimestamp();
         logData("Goal position", position);
     }
@@ -58,15 +58,15 @@ public class Grabber extends AbstractSubsystem {
         TrapezoidProfile.State state = trapezoidProfile.calculate(currentTime - trapezoidProfileStartTime);
         double acceleration = (state.velocity - pastVelocity) / (currentTime - pastTime);
 
-        pivotSparkMax.getPIDController().setReference(state.position * Constants.GRABBER_POSITION_MULTIPLIER,
+        pivotSparkMax.getPIDController().setReference(state.position * Constants.GRABBER_ROTATIONS_PER_DEGREE,
                 CANSparkMax.ControlType.kPosition, 0, Constants.GRABBER_FEEDFORWARD.calculate(state.velocity, acceleration),
                 SparkMaxPIDController.ArbFFUnits.kVoltage);
 
         pastVelocity = state.velocity;
         pastTime = currentTime;
 
-        logData("Wanted pos", state.position / Constants.GRABBER_POSITION_MULTIPLIER);
-        logData("Wanted vel", state.velocity / Constants.GRABBER_POSITION_MULTIPLIER / 60);
+        logData("Wanted pos", state.position / Constants.GRABBER_ROTATIONS_PER_DEGREE);
+        logData("Wanted vel", state.velocity / Constants.GRABBER_ROTATIONS_PER_DEGREE / 60);
         logData("Wanted accel", acceleration);
         logData("Total trapezoidProfile time", trapezoidProfile.totalTime());
         logData("Profile length", currentTime - trapezoidProfileStartTime);
@@ -76,8 +76,8 @@ public class Grabber extends AbstractSubsystem {
 
     @Override
     public void logData() {
-        logData("Motor Position", pivotSparkMax.getEncoder().getPosition() / Constants.GRABBER_POSITION_MULTIPLIER);
-        logData("Motor Velocity", pivotSparkMax.getEncoder().getVelocity() / Constants.GRABBER_POSITION_MULTIPLIER / 60);
+        logData("Motor Position", pivotSparkMax.getEncoder().getPosition() / Constants.GRABBER_ROTATIONS_PER_DEGREE);
+        logData("Motor Velocity", pivotSparkMax.getEncoder().getVelocity() / Constants.GRABBER_ROTATIONS_PER_DEGREE / 60);
         logData("Motor current", pivotSparkMax.getOutputCurrent());
         logData("Motor temperature", pivotSparkMax.getMotorTemperature());
     }

@@ -678,32 +678,4 @@ public final class Drive extends AbstractSubsystem {
             Thread.sleep(20);
         }
     }
-
-    public void autoBalancing(@NotNull ControllerDriveInputs inputs) {
-        var angle = RobotTracker.getInstance().getGyroAngleAtTime(Timer.getFPGATimestamp());
-        double angleMeasure = angle.getY();
-        angleMeasure = Math.toDegrees(angleMeasure);
-        if (angleMeasure >= 9) {
-            ChassisSpeeds chassisSpeeds = ChassisSpeeds.fromFieldRelativeSpeeds(
-                    AUTO_BALANCING_VELOCITY,
-                    DRIVE_HIGH_SPEED_M * inputs.getY(),
-                    inputs.getRotation() * MAX_TELEOP_TURN_SPEED,
-                    RobotTracker.getInstance().getGyroAngle());
-            swerveDrive(chassisSpeeds, KinematicLimits.NORMAL_DRIVING.kinematicLimit, EXPECTED_TELEOP_DRIVE_DT);
-        } else if (angleMeasure >= -9) {
-            ChassisSpeeds chassisSpeeds = ChassisSpeeds.fromFieldRelativeSpeeds(
-                    -AUTO_BALANCING_VELOCITY,
-                    DRIVE_HIGH_SPEED_M * inputs.getY(),
-                    inputs.getRotation() * MAX_TELEOP_TURN_SPEED,
-                    RobotTracker.getInstance().getGyroAngle());
-            swerveDrive(chassisSpeeds, KinematicLimits.NORMAL_DRIVING.kinematicLimit, EXPECTED_TELEOP_DRIVE_DT);
-        } else {
-            ChassisSpeeds chassisSpeeds = ChassisSpeeds.fromFieldRelativeSpeeds(
-                    0,
-                    DRIVE_HIGH_SPEED_M * inputs.getY(),
-                    inputs.getRotation() * MAX_TELEOP_TURN_SPEED,
-                    RobotTracker.getInstance().getGyroAngle());
-            swerveDrive(chassisSpeeds, KinematicLimits.NORMAL_DRIVING.kinematicLimit, EXPECTED_TELEOP_DRIVE_DT);
-        }
-    }
 }
