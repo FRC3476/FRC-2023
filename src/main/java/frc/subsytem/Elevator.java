@@ -38,7 +38,7 @@ public class Elevator extends AbstractSubsystem {
     public void setPosition(double position) {
         trapezoidProfile = new TrapezoidProfile(Constants.ELEVATOR_CONSTRAINTS, new TrapezoidProfile.State(position, 0),
                 new TrapezoidProfile.State(elevatorSparkMax.getEncoder().getPosition() / Constants.ELEVATOR_ROTATIONS_PER_METER,
-                        elevatorSparkMax.getEncoder().getVelocity() / Constants.ELEVATOR_ROTATIONS_PER_METER));
+                        elevatorSparkMax.getEncoder().getVelocity() / Constants.ELEVATOR_ROTATIONS_PER_METER / 60));
         trapezoidProfileStartTime = -1;
         logData("Goal position", position);
     }

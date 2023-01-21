@@ -38,7 +38,7 @@ public class TelescopingArm extends AbstractSubsystem {
     public void setPosition(double position) {
         trapezoidProfile = new TrapezoidProfile(Constants.TELESCOPING_ARM_CONSTRAINTS, new TrapezoidProfile.State(position, 0),
                 new TrapezoidProfile.State(telescopingArmSparkMax.getEncoder().getPosition() / Constants.TELESCOPING_ARM_ROTATIONS_PER_METER,
-                        telescopingArmSparkMax.getEncoder().getVelocity() / Constants.TELESCOPING_ARM_ROTATIONS_PER_METER));
+                        telescopingArmSparkMax.getEncoder().getVelocity() / Constants.TELESCOPING_ARM_ROTATIONS_PER_METER / 60));
         trapezoidProfileStartTime = -1;
         logData("Goal position", position);
     }
