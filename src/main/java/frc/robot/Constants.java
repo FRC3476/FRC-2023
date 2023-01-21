@@ -159,26 +159,30 @@ public final class Constants {
     public static final int PIGEON_CAN_ID = 30;
 
     // Elevator
-    public static final TrapezoidProfile.Constraints elevatorConstraints
+    public static final int ELEVATOR_PERIOD = 20;
+    public static final TrapezoidProfile.Constraints ELEVATOR_CONSTRAINTS
             = new TrapezoidProfile.Constraints(3, 3);
-    public static final ElevatorFeedforward elevatorFeedforward = new ElevatorFeedforward(0, 0, 0, 0);
+    public static final ElevatorFeedforward ELEVATOR_FEEDFORWARD = new ElevatorFeedforward(0, 0, 0, 0);
     public static final int ELEVATOR_P = 5;
     public static final int ELEVATOR_I = 5;
     public static final int ELEVATOR_D = 5;
     public static final int ELEVATOR_POSITION_MULTIPLIER = 5;
 
     // Telescoping Arm
-    public static final TrapezoidProfile.Constraints telescopingArmConstraints
+    public static final int TELESCOPING_ARM_PERIOD = 20;
+    public static final TrapezoidProfile.Constraints TELESCOPING_ARM_CONSTRAINTS
             = new TrapezoidProfile.Constraints(3, 3);
-    public static final ArmFeedforward wristFeedforward = new ArmFeedforward(0, 0, 0, 0);
+    public static final ElevatorFeedforward TELESCOPING_ARM_FEEDFORWARD = new ElevatorFeedforward(0, 0, 0, 0);
     public static final int TELESCOPING_ARM_P = 5;
     public static final int TELESCOPING_ARM_I = 5;
     public static final int TELESCOPING_ARM_D = 5;
     public static final int TELESCOPING_ARM_POSITION_MULTIPLIER = 5;
 
-    // Telescoping Arm
-    public static final TrapezoidProfile.Constraints wristConstraints = new TrapezoidProfile.Constraints(3, 3);
-    public static final ElevatorFeedforward telescopingArmFeedforward = new ElevatorFeedforward(0, 0, 0, 0);
+    // Wrist
+    public static final int WRIST_PERIOD = 20;
+    public static final ArmFeedforward WRIST_FEEDFORWARD = new ArmFeedforward(0, 0, 0, 0);
+    public static final TrapezoidProfile.Constraints WRIST_CONSTRAINTS
+            = new TrapezoidProfile.Constraints(3, 3);
     public static final int WRIST_P = 5;
     public static final int WRIST_I = 5;
     public static final int WRIST_D = 5;

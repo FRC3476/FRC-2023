@@ -199,14 +199,4 @@ public class Robot extends TimedRobot {
                     .applyDeadZone(0.05, 0.05, 0.2, 0.2).squareInputs();
         }
     }
-
-    public void setPosition(double elevatorPosition, double telescopingArmPosition, double wristPosition) {
-        Elevator elevator = Elevator.getInstance();
-        TelescopingArm telescopingArm = TelescopingArm.getInstance();
-        Wrist wrist = Wrist.getInstance();
-
-        elevator.setPosition(elevatorPosition);
-        telescopingArm.setPosition(telescopingArmPosition);
-        wrist.setPosition(wristPosition);
-    }
 }

@@ -3,19 +3,19 @@ package frc.subsytem;
 import com.revrobotics.CANSparkMax;
 import com.revrobotics.CANSparkMaxLowLevel;
 import com.revrobotics.SparkMaxPIDController;
-import edu.wpi.first.math.controller.ElevatorFeedforward;
 import edu.wpi.first.math.trajectory.TrapezoidProfile;
 import edu.wpi.first.wpilibj.Timer;
 import frc.robot.Constants;
-import org.checkerframework.checker.units.qual.C;
 
 public class TelescopingArm extends AbstractSubsystem {
     private final CANSparkMax telescopingArmSparkMax;
     private final SparkMaxPIDController telescopingArmSparkMaxPIDController;
     private static final TelescopingArm instance = new TelescopingArm();
-
+    public static TelescopingArm getInstance() {
+        return instance;
+    }
     public TelescopingArm() {
-        super(20, 5);
+        super(Constants.TELESCOPING_ARM_PERIOD, 5);
         telescopingArmSparkMax = new CANSparkMax(0, CANSparkMaxLowLevel.MotorType.kBrushless);
         telescopingArmSparkMaxPIDController = telescopingArmSparkMax.getPIDController();
         telescopingArmSparkMaxPIDController.setP(Constants.TELESCOPING_ARM_P);
@@ -23,56 +23,60 @@ public class TelescopingArm extends AbstractSubsystem {
         telescopingArmSparkMaxPIDController.setD(Constants.TELESCOPING_ARM_D);
     }
 
-    static TrapezoidProfile trapezoidProfile =
-            new TrapezoidProfile(new TrapezoidProfile.Constraints(Constants.telescopingArmConstraints.maxVelocity,
-                    Constants.telescopingArmConstraints.maxAcceleration),
+    private TrapezoidProfile trapezoidProfile =
+            new TrapezoidProfile(new TrapezoidProfile.Constraints(Constants.TELESCOPING_ARM_CONSTRAINTS.maxVelocity,
+                    Constants.TELESCOPING_ARM_CONSTRAINTS.maxAcceleration),
                     new TrapezoidProfile.State());
-    static double setPositionPastTime = 0;
+    private double trapezoidProfileStartTime = 0;
 
     /**
-     * This method takes in meters
+     * @param position The position to set the telescoping arm (meters)
      */
     public void setPosition(double position) {
-        trapezoidProfile = new TrapezoidProfile(Constants.telescopingArmConstraints, new TrapezoidProfile.State(position, 0),
+        trapezoidProfile = new TrapezoidProfile(Constants.TELESCOPING_ARM_CONSTRAINTS, new TrapezoidProfile.State(position, 0),
                 new TrapezoidProfile.State(telescopingArmSparkMax.getEncoder().getPosition() / Constants.TELESCOPING_ARM_POSITION_MULTIPLIER,
                         telescopingArmSparkMax.getEncoder().getVelocity() / Constants.TELESCOPING_ARM_POSITION_MULTIPLIER));
-        setPositionPastTime = Timer.getFPGATimestamp();
+        trapezoidProfileStartTime = -1;
         logData("Goal position", position);
     }
 
-    double pastVelocity = 0, pastTime = 0;
+    private double pastVelocity = 0, pastTime = 0, currentTime, acceleration;
 
     @Override
     public void update() {
-        TrapezoidProfile.State state = trapezoidProfile.calculate(Timer.getFPGATimestamp() - setPositionPastTime);
-        double acceleration = (state.velocity - pastVelocity) / (Timer.getFPGATimestamp() - pastTime);
+        if(trapezoidProfileStartTime == -1) {
+            currentTime = Timer.getFPGATimestamp();
+        }
+        TrapezoidProfile.State state = trapezoidProfile.calculate(currentTime - trapezoidProfileStartTime);
+        acceleration = (state.velocity - pastVelocity) / (currentTime - pastTime);
 
         telescopingArmSparkMax.getPIDController().setReference(state.position * Constants.TELESCOPING_ARM_POSITION_MULTIPLIER,
-                CANSparkMax.ControlType.kPosition, 0, Constants.telescopingArmFeedforward.calculate(state.velocity, acceleration),
+                CANSparkMax.ControlType.kPosition, 0, Constants.TELESCOPING_ARM_FEEDFORWARD.calculate(state.velocity, acceleration),
                 SparkMaxPIDController.ArbFFUnits.kVoltage);
 
         pastVelocity = state.velocity;
-        pastTime = Timer.getFPGATimestamp();
+        pastTime = currentTime;
+
+        logData("Wanted pos", state.position);
+        logData("Wanted vel", state.velocity);
+        logData("Wanted accel", acceleration);
+        logData("Total trapezoidProfile time", trapezoidProfile.totalTime());
+        logData("TrapezoidProfile time", Timer.getFPGATimestamp() - trapezoidProfileStartTime);
+        if (trapezoidProfile.isFinished(Timer.getFPGATimestamp())) {
+            logData("TrapezoidProfile error", trapezoidProfile.calculate(Timer.getFPGATimestamp()).position
+                    - telescopingArmSparkMax.getEncoder().getPosition());
+        }
     }
 
     @Override
     public void logData() {
         logData("Motor Position", telescopingArmSparkMax.getEncoder().getPosition() * Constants.ELEVATOR_POSITION_MULTIPLIER);
-        logData("Current position of the trapezoidProfile", trapezoidProfile.calculate(Timer.getFPGATimestamp()));
         logData("Motor current", telescopingArmSparkMax.getOutputCurrent());
         logData("Motor temperature", telescopingArmSparkMax.getMotorTemperature());
-        logData("Time in the trapezoidProfile", trapezoidProfile.totalTime());
-        if (trapezoidProfile.isFinished(Timer.getFPGATimestamp())) {
-            logData("Error from the trapezoidProfile", trapezoidProfile.calculate(Timer.getFPGATimestamp()));
-        }
     }
 
     @Override
     public void selfTest() {
 
-    }
-
-    public static TelescopingArm getInstance() {
-        return instance;
     }
 }
