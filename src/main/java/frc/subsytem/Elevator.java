@@ -11,9 +11,11 @@ public class Elevator extends AbstractSubsystem {
     private final CANSparkMax elevatorSparkMax;
     private final SparkMaxPIDController elevatorSparkMaxPIDController;
     private final static Elevator instance = new Elevator();
+
     public static Elevator getInstance() {
         return instance;
     }
+
     public Elevator() {
         super(Constants.ELEVATOR_PERIOD, 5);
         elevatorSparkMax = new CANSparkMax(0, CANSparkMaxLowLevel.MotorType.kBrushless);
@@ -46,8 +48,8 @@ public class Elevator extends AbstractSubsystem {
     public void update() {
         double acceleration;
         double currentTime = Timer.getFPGATimestamp();
-        if(trapezoidProfileStartTime == -1) {
-            trapezoidProfileStartTime = Timer.getFPGATimestamp();
+        if (trapezoidProfileStartTime == -1) {
+            trapezoidProfileStartTime = currentTime;
         }
         TrapezoidProfile.State state = trapezoidProfile.calculate(currentTime - trapezoidProfileStartTime);
         acceleration = (state.velocity - pastVelocity) / (currentTime - pastTime);
@@ -64,7 +66,7 @@ public class Elevator extends AbstractSubsystem {
         logData("Wanted accel", acceleration);
         logData("Total trapezoidProfile time", trapezoidProfile.totalTime());
         logData("TrapezoidProfile time", currentTime - trapezoidProfileStartTime);
-        logData("TrapezoidProfile Error", trapezoidProfile.calculate(currentTime).position
+        logData("TrapezoidProfile Error", state.position
                 - elevatorSparkMax.getEncoder().getPosition());
     }
 

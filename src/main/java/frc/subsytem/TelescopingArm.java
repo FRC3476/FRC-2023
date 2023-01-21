@@ -11,9 +11,11 @@ public class TelescopingArm extends AbstractSubsystem {
     private final CANSparkMax telescopingArmSparkMax;
     private final SparkMaxPIDController telescopingArmSparkMaxPIDController;
     private static final TelescopingArm instance = new TelescopingArm();
+
     public static TelescopingArm getInstance() {
         return instance;
     }
+
     public TelescopingArm() {
         super(Constants.TELESCOPING_ARM_PERIOD, 5);
         telescopingArmSparkMax = new CANSparkMax(0, CANSparkMaxLowLevel.MotorType.kBrushless);
@@ -46,8 +48,8 @@ public class TelescopingArm extends AbstractSubsystem {
     public void update() {
         double acceleration;
         double currentTime = Timer.getFPGATimestamp();
-        if(trapezoidProfileStartTime == -1) {
-            trapezoidProfileStartTime = Timer.getFPGATimestamp();
+        if (trapezoidProfileStartTime == -1) {
+            trapezoidProfileStartTime = currentTime;
         }
         TrapezoidProfile.State state = trapezoidProfile.calculate(currentTime - trapezoidProfileStartTime);
         acceleration = (state.velocity - pastVelocity) / (currentTime - pastTime);
@@ -64,7 +66,7 @@ public class TelescopingArm extends AbstractSubsystem {
         logData("Wanted accel", acceleration);
         logData("Total trapezoidProfile time", trapezoidProfile.totalTime());
         logData("TrapezoidProfile time", currentTime - trapezoidProfileStartTime);
-        logData("TrapezoidProfile error", trapezoidProfile.calculate(currentTime).position
+        logData("TrapezoidProfile error", state.position
                 - telescopingArmSparkMax.getEncoder().getPosition());
     }
 

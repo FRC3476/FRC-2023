@@ -13,15 +13,17 @@ import frc.robot.Constants;
 public class Grabber extends AbstractSubsystem {
     private final CANSparkMax grabberSparkMax;
     private final SparkMaxPIDController grabberSparkMaxPIDController;
+    private final CANSparkMax grabberSparkMax2;
     private static final Grabber instance = new Grabber();
-    private final Solenoid solenoid;
+
     public static Grabber getInstance() {
         return instance;
     }
+
     public Grabber() {
         super(Constants.GRABBER_PERIOD, 5);
-        solenoid = new Solenoid(PneumaticsModuleType.CTREPCM, 0);
         grabberSparkMax = new CANSparkMax(0, CANSparkMaxLowLevel.MotorType.kBrushless);
+        grabberSparkMax2 = new CANSparkMax(0, CANSparkMaxLowLevel.MotorType.kBrushless);
         grabberSparkMaxPIDController = grabberSparkMax.getPIDController();
         grabberSparkMaxPIDController.setP(Constants.GRABBER_P);
         grabberSparkMaxPIDController.setI(Constants.GRABBER_I);
@@ -51,8 +53,8 @@ public class Grabber extends AbstractSubsystem {
     public void update() {
         double acceleration;
         double currentTime = Timer.getFPGATimestamp();
-        if(trapezoidProfileStartTime == -1) {
-            trapezoidProfileStartTime = Timer.getFPGATimestamp();
+        if (trapezoidProfileStartTime == -1) {
+            trapezoidProfileStartTime = currentTime;
         }
         TrapezoidProfile.State state = trapezoidProfile.calculate(currentTime - trapezoidProfileStartTime);
         acceleration = (state.velocity - pastVelocity) / (currentTime - pastTime);
@@ -69,7 +71,7 @@ public class Grabber extends AbstractSubsystem {
         logData("Wanted accel", acceleration);
         logData("Total trapezoidProfile time", trapezoidProfile.totalTime());
         logData("Profile length", currentTime - trapezoidProfileStartTime);
-        logData("TrapezoidProfile error", trapezoidProfile.calculate(currentTime).position
+        logData("TrapezoidProfile error", state.position
                 - grabberSparkMax.getEncoder().getPosition());
     }
 
@@ -81,8 +83,8 @@ public class Grabber extends AbstractSubsystem {
         logData("Motor temperature", grabberSparkMax.getMotorTemperature());
     }
 
-    public void toggle() {
-        solenoid.toggle();
+    public void setVoltage() {
+        grabberSparkMax2.setVoltage(6);
     }
 
     @Override
