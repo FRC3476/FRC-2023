@@ -9,17 +9,16 @@ import frc.robot.Constants;
 
 public class TelescopingArm extends AbstractSubsystem {
     private final CANSparkMax telescopingArmSparkMax;
-    private final SparkMaxPIDController telescopingArmSparkMaxPIDController;
     private static final TelescopingArm instance = new TelescopingArm();
 
     public static TelescopingArm getInstance() {
         return instance;
     }
 
-    public TelescopingArm() {
+    private TelescopingArm() {
         super(Constants.TELESCOPING_ARM_PERIOD, 5);
         telescopingArmSparkMax = new CANSparkMax(0, CANSparkMaxLowLevel.MotorType.kBrushless);
-        telescopingArmSparkMaxPIDController = telescopingArmSparkMax.getPIDController();
+        SparkMaxPIDController telescopingArmSparkMaxPIDController = telescopingArmSparkMax.getPIDController();
         telescopingArmSparkMaxPIDController.setP(Constants.TELESCOPING_ARM_P);
         telescopingArmSparkMaxPIDController.setI(Constants.TELESCOPING_ARM_I);
         telescopingArmSparkMaxPIDController.setD(Constants.TELESCOPING_ARM_D);
@@ -46,13 +45,12 @@ public class TelescopingArm extends AbstractSubsystem {
 
     @Override
     public void update() {
-        double acceleration;
         double currentTime = Timer.getFPGATimestamp();
         if (trapezoidProfileStartTime == -1) {
             trapezoidProfileStartTime = currentTime;
         }
         TrapezoidProfile.State state = trapezoidProfile.calculate(currentTime - trapezoidProfileStartTime);
-        acceleration = (state.velocity - pastVelocity) / (currentTime - pastTime);
+        double acceleration = (state.velocity - pastVelocity) / (currentTime - pastTime);
 
         telescopingArmSparkMax.getPIDController().setReference(state.position * Constants.TELESCOPING_ARM_POSITION_MULTIPLIER,
                 CANSparkMax.ControlType.kPosition, 0, Constants.TELESCOPING_ARM_FEEDFORWARD.calculate(state.velocity, acceleration),

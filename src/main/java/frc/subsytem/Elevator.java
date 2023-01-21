@@ -9,17 +9,16 @@ import frc.robot.Constants;
 
 public class Elevator extends AbstractSubsystem {
     private final CANSparkMax elevatorSparkMax;
-    private final SparkMaxPIDController elevatorSparkMaxPIDController;
     private final static Elevator instance = new Elevator();
 
     public static Elevator getInstance() {
         return instance;
     }
 
-    public Elevator() {
+    private Elevator() {
         super(Constants.ELEVATOR_PERIOD, 5);
         elevatorSparkMax = new CANSparkMax(0, CANSparkMaxLowLevel.MotorType.kBrushless);
-        elevatorSparkMaxPIDController = elevatorSparkMax.getPIDController();
+        SparkMaxPIDController elevatorSparkMaxPIDController = elevatorSparkMax.getPIDController();
         elevatorSparkMaxPIDController.setP(Constants.ELEVATOR_P);
         elevatorSparkMaxPIDController.setI(Constants.ELEVATOR_I);
         elevatorSparkMaxPIDController.setD(Constants.ELEVATOR_D);
@@ -46,13 +45,12 @@ public class Elevator extends AbstractSubsystem {
 
     @Override
     public void update() {
-        double acceleration;
         double currentTime = Timer.getFPGATimestamp();
         if (trapezoidProfileStartTime == -1) {
             trapezoidProfileStartTime = currentTime;
         }
         TrapezoidProfile.State state = trapezoidProfile.calculate(currentTime - trapezoidProfileStartTime);
-        acceleration = (state.velocity - pastVelocity) / (currentTime - pastTime);
+        double acceleration = (state.velocity - pastVelocity) / (currentTime - pastTime);
 
         elevatorSparkMax.getPIDController().setReference(state.position * Constants.ELEVATOR_POSITION_MULTIPLIER,
                 CANSparkMax.ControlType.kPosition, 0, Constants.ELEVATOR_FEEDFORWARD.calculate(state.velocity, acceleration),
