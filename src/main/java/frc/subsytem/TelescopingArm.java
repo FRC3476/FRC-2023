@@ -40,12 +40,14 @@ public class TelescopingArm extends AbstractSubsystem {
         logData("Goal position", position);
     }
 
-    private double pastVelocity = 0, pastTime = 0, currentTime, acceleration;
+    private double pastVelocity = 0, pastTime = 0;
 
     @Override
     public void update() {
+        double acceleration;
+        double currentTime = Timer.getFPGATimestamp();
         if(trapezoidProfileStartTime == -1) {
-            currentTime = Timer.getFPGATimestamp();
+            trapezoidProfileStartTime = Timer.getFPGATimestamp();
         }
         TrapezoidProfile.State state = trapezoidProfile.calculate(currentTime - trapezoidProfileStartTime);
         acceleration = (state.velocity - pastVelocity) / (currentTime - pastTime);
@@ -61,16 +63,15 @@ public class TelescopingArm extends AbstractSubsystem {
         logData("Wanted vel", state.velocity);
         logData("Wanted accel", acceleration);
         logData("Total trapezoidProfile time", trapezoidProfile.totalTime());
-        logData("TrapezoidProfile time", Timer.getFPGATimestamp() - trapezoidProfileStartTime);
-        if (trapezoidProfile.isFinished(Timer.getFPGATimestamp())) {
-            logData("TrapezoidProfile error", trapezoidProfile.calculate(Timer.getFPGATimestamp()).position
-                    - telescopingArmSparkMax.getEncoder().getPosition());
-        }
+        logData("TrapezoidProfile time", currentTime - trapezoidProfileStartTime);
+        logData("TrapezoidProfile error", trapezoidProfile.calculate(currentTime).position
+                - telescopingArmSparkMax.getEncoder().getPosition());
     }
 
     @Override
     public void logData() {
         logData("Motor Position", telescopingArmSparkMax.getEncoder().getPosition() * Constants.ELEVATOR_POSITION_MULTIPLIER);
+        logData("Motor Velocity", telescopingArmSparkMax.getEncoder().getVelocity());
         logData("Motor current", telescopingArmSparkMax.getOutputCurrent());
         logData("Motor temperature", telescopingArmSparkMax.getMotorTemperature());
     }

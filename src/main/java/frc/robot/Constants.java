@@ -178,15 +178,15 @@ public final class Constants {
     public static final int TELESCOPING_ARM_D = 5;
     public static final int TELESCOPING_ARM_POSITION_MULTIPLIER = 5;
 
-    // Wrist
-    public static final int WRIST_PERIOD = 20;
-    public static final ArmFeedforward WRIST_FEEDFORWARD = new ArmFeedforward(0, 0, 0, 0);
-    public static final TrapezoidProfile.Constraints WRIST_CONSTRAINTS
+    // Grabber
+    public static final int GRABBER_PERIOD = 20;
+    public static final ArmFeedforward GRABBER_FEEDFORWARD = new ArmFeedforward(0, 0, 0, 0);
+    public static final TrapezoidProfile.Constraints GRABBER_CONSTRAINTS
             = new TrapezoidProfile.Constraints(3, 3);
-    public static final int WRIST_P = 5;
-    public static final int WRIST_I = 5;
-    public static final int WRIST_D = 5;
-    public static final int WRIST_POSITION_MULTIPLIER = 5;
+    public static final int GRABBER_P = 5;
+    public static final int GRABBER_I = 5;
+    public static final int GRABBER_D = 5;
+    public static final int GRABBER_POSITION_MULTIPLIER = 5;
 
     // Vision constants
     public static final int VISION_HANDLER_PERIOD = -1;

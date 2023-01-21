@@ -40,12 +40,14 @@ public class Elevator extends AbstractSubsystem {
         logData("Goal position", position);
     }
 
-    private double pastVelocity = 0, pastTime = 0, currentTime, acceleration;
+    private double pastVelocity = 0, pastTime = 0;
 
     @Override
     public void update() {
+        double acceleration;
+        double currentTime = Timer.getFPGATimestamp();
         if(trapezoidProfileStartTime == -1) {
-            currentTime = Timer.getFPGATimestamp();
+            trapezoidProfileStartTime = Timer.getFPGATimestamp();
         }
         TrapezoidProfile.State state = trapezoidProfile.calculate(currentTime - trapezoidProfileStartTime);
         acceleration = (state.velocity - pastVelocity) / (currentTime - pastTime);
@@ -61,16 +63,15 @@ public class Elevator extends AbstractSubsystem {
         logData("Wanted vel", state.velocity);
         logData("Wanted accel", acceleration);
         logData("Total trapezoidProfile time", trapezoidProfile.totalTime());
-        logData("TrapezoidProfile time", Timer.getFPGATimestamp() - trapezoidProfileStartTime);
-        if (trapezoidProfile.isFinished(Timer.getFPGATimestamp())) {
-            logData("TrapezoidProfile Error", trapezoidProfile.calculate(Timer.getFPGATimestamp()).position
-                    - elevatorSparkMax.getEncoder().getPosition());
-        }
+        logData("TrapezoidProfile time", currentTime - trapezoidProfileStartTime);
+        logData("TrapezoidProfile Error", trapezoidProfile.calculate(currentTime).position
+                - elevatorSparkMax.getEncoder().getPosition());
     }
 
     @Override
     public void logData() {
         logData("Motor Position", elevatorSparkMax.getEncoder().getPosition() * Constants.ELEVATOR_POSITION_MULTIPLIER);
+        logData("Motor Velocity", elevatorSparkMax.getEncoder().getVelocity());
         logData("Motor current", elevatorSparkMax.getOutputCurrent());
         logData("Motor temperature", elevatorSparkMax.getMotorTemperature());
     }
