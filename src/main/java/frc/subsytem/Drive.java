@@ -16,6 +16,7 @@ import edu.wpi.first.math.controller.HolonomicDriveController;
 import edu.wpi.first.math.controller.ProfiledPIDController;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.geometry.Twist2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.kinematics.SwerveModulePosition;
@@ -28,6 +29,7 @@ import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import frc.robot.Constants;
 import frc.utility.ControllerDriveInputs;
+import frc.utility.PathGenerator;
 import frc.utility.net.editing.LiveEditableValue;
 import frc.utility.swerve.SwerveSetpointGenerator;
 import frc.utility.swerve.SwerveSetpointGenerator.KinematicLimit;
@@ -37,6 +39,7 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -203,6 +206,10 @@ public final class Drive extends AbstractSubsystem {
         return INSTANCE;
     }
 
+    public enum DriveState {
+        TELEOP, TURN, HOLD, DONE, RAMSETE, STOP, WAITING_FOR_PATH
+    }
+
     public void resetAuto() {
         swerveAutoControllerLock.lock();
         try {
@@ -227,7 +234,6 @@ public final class Drive extends AbstractSubsystem {
             for (CANSparkMax swerveMotor : swerveMotors) {
                 swerveMotor.setIdleMode(IdleMode.kCoast);
             }
-
             for (CANSparkMax swerveDriveMotor : swerveDriveMotors) {
                 swerveDriveMotor.setIdleMode(IdleMode.kCoast);
             }
@@ -328,6 +334,46 @@ public final class Drive extends AbstractSubsystem {
         swerveDrive(chassisSpeeds, KinematicLimits.NORMAL_DRIVING.kinematicLimit, EXPECTED_TELEOP_DRIVE_DT);
     }
 
+    private @Nullable CompletableFuture<Trajectory> trajectoryToDrive = null;
+    private double realtimeTrajectoryStartTime = 0;
+    private boolean trajectoryGenerationDoneEarly = false;
+    private @Nullable Translation2d realtimeTrajectoryStartVelocity = null;
+
+    public synchronized void driveToPosition(Translation2d targetPosition, Rotation2d targetAngle) {
+        if (driveState == DriveState.WAITING_FOR_PATH || driveState == DriveState.RAMSETE) {
+            var robotTracker = RobotTracker.getInstance();
+            realtimeTrajectoryStartVelocity = robotTracker.getVelocity();
+            trajectoryToDrive = PathGenerator.generateTrajectory(
+                    robotTracker.getLatestPose().getTranslation(),
+                    realtimeTrajectoryStartVelocity, targetPosition, START_POS_PREDICT_AHEAD);
+            realtimeTrajectoryStartTime = Timer.getFPGATimestamp() + START_POS_PREDICT_AHEAD;
+            trajectoryGenerationDoneEarly = false;
+            setDriveState(DriveState.WAITING_FOR_PATH);
+        }
+        if (driveState == DriveState.WAITING_FOR_PATH) {
+            assert trajectoryToDrive != null;
+            if (trajectoryToDrive.isDone()) {
+                if (Timer.getFPGATimestamp() < realtimeTrajectoryStartTime) {
+                    trajectoryGenerationDoneEarly = true;
+                } else {
+                    setAutoPath(trajectoryToDrive.join());
+                    setAutoRotation(targetAngle);
+                    if (!trajectoryGenerationDoneEarly) {
+                        DriverStation.reportError("Trajectory Generation was late by: "
+                                + (Timer.getFPGATimestamp() - realtimeTrajectoryStartTime) + "s", false);
+                    }
+                }
+            } else {
+                ChassisSpeeds chassisSpeeds = ChassisSpeeds.fromFieldRelativeSpeeds(
+                        realtimeTrajectoryStartVelocity.getX(),
+                        realtimeTrajectoryStartVelocity.getY(),
+                        0,
+                        RobotTracker.getInstance().getGyroAngle());
+                swerveDrive(chassisSpeeds, KinematicLimits.NORMAL_DRIVING.kinematicLimit, EXPECTED_TELEOP_DRIVE_DT);
+            }
+        }
+    }
+
     public void swerveDrive(@NotNull ChassisSpeeds desiredRobotRelativeSpeeds, KinematicLimit kinematicLimit, double dt) {
         Pose2d robot_pose_vel = new Pose2d(desiredRobotRelativeSpeeds.vxMetersPerSecond * dt,
                 desiredRobotRelativeSpeeds.vyMetersPerSecond * dt,
@@ -415,12 +461,16 @@ public final class Drive extends AbstractSubsystem {
     }
 
     public void setAutoPath(Trajectory trajectory) {
+        setAutoPath(trajectory, Timer.getFPGATimestamp());
+    }
+
+    private void setAutoPath(Trajectory trajectory, double autoStartTime) {
         currentAutoTrajectoryLock.lock();
         try {
             swerveAutoControllerInitialized = false;
             setDriveState(DriveState.RAMSETE);
             this.currentAutoTrajectory = trajectory;
-            autoStartTime = Timer.getFPGATimestamp();
+            this.autoStartTime = autoStartTime;
         } finally {
             currentAutoTrajectoryLock.unlock();
         }
@@ -756,9 +806,5 @@ public final class Drive extends AbstractSubsystem {
                     RobotTracker.getInstance().getGyroAngle());
             swerveDrive(chassisSpeeds, KinematicLimits.NORMAL_DRIVING.kinematicLimit, EXPECTED_TELEOP_DRIVE_DT);
         }
-    }
-
-    public enum DriveState {
-        TELEOP, TURN, HOLD, DONE, RAMSETE, STOP
     }
 }

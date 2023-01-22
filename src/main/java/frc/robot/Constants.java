@@ -198,4 +198,8 @@ public final class Constants {
             this.kinematicLimit = kinematicLimit;
         }
     }
+
+
+    // Realtime path generation
+    public static final double START_POS_PREDICT_AHEAD = 0.1;
 }
