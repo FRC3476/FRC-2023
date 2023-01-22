@@ -15,7 +15,6 @@ import java.io.File;
 import java.nio.file.Files;
 
 public final class Constants {
-
     public static final boolean IS_PRACTICE = Files.exists(new File("/home/lvuser/practice").toPath());
 
     // 2048 sensor units per revolution
@@ -103,7 +102,8 @@ public final class Constants {
             SWERVE_RIGHT_BACK_LOCATION
     };
 
-    @NotNull public static final SwerveDriveKinematics SWERVE_DRIVE_KINEMATICS = new SwerveDriveKinematics(
+    @NotNull
+    public static final SwerveDriveKinematics SWERVE_DRIVE_KINEMATICS = new SwerveDriveKinematics(
             SWERVE_MODULE_LOCATIONS
     );
 
@@ -159,4 +159,12 @@ public final class Constants {
 
     public static final double FIELD_HEIGHT_METERS = 8.0137;
     public static final double FIELD_WIDTH_METERS = 16.54175;
+    //Old Constants
+    public static final int SWERVE_MOTOR_PID_TIMEOUT_MS = 50;
+    public static final double SWERVE_ACCELERATION =
+            ((360 * 10 * FALCON_ENCODER_TICKS_PER_ROTATIONS) / SWERVE_MOTOR_POSITION_CONVERSION_FACTOR) / 360; //5 rot/s^2
+    public static final double SWERVE_CRUISE_VELOCITY =
+            ((360 * 7 * FALCON_ENCODER_TICKS_PER_ROTATIONS) / SWERVE_MOTOR_POSITION_CONVERSION_FACTOR) / 360; //6.5 rot/s
+    public static final double MAX_ANGULAR_ACCELERATION = Math.toRadians(360 * 22);
+
 }

@@ -2,16 +2,17 @@
 
 package frc.subsytem;
 
+import com.ctre.phoenix.motorcontrol.ControlMode;
 import com.ctre.phoenix.sensors.AbsoluteSensorRange;
 import com.ctre.phoenix.sensors.CANCoder;
 import com.ctre.phoenix.sensors.CANCoderStatusFrame;
 import com.revrobotics.CANSparkMax;
 import com.revrobotics.CANSparkMax.IdleMode;
-import com.revrobotics.CANSparkMaxLowLevel.MotorType;
 import edu.wpi.first.math.controller.HolonomicDriveController;
 import edu.wpi.first.math.controller.ProfiledPIDController;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.geometry.Twist2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.kinematics.SwerveModulePosition;
@@ -26,12 +27,16 @@ import frc.robot.Constants;
 import frc.utility.ControllerDriveInputs;
 import frc.utility.net.editing.LiveEditableValue;
 import frc.utility.swerve.SwerveSetpointGenerator;
-import frc.utility.swerve.SwerveSetpointGenerator.KinematicLimit;
 import frc.utility.swerve.SwerveSetpointGenerator.SwerveSetpoint;
 import frc.utility.wpimodified.PIDController;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import com.ctre.phoenix.sensors.SensorVelocityMeasPeriod;
+import com.ctre.phoenix.motorcontrol.NeutralMode;
+import com.ctre.phoenix.motorcontrol.StatusFrameEnhanced;
+import com.ctre.phoenix.motorcontrol.SupplyCurrentLimitConfiguration;
+import com.ctre.phoenix.motorcontrol.can.TalonFX;
 
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
@@ -100,12 +105,12 @@ public final class Drive extends AbstractSubsystem {
     /**
      * Motors that turn the wheels around. Uses Falcon500s
      */
-    private final @NotNull CANSparkMax[] swerveMotors = new CANSparkMax[4];
+    final @NotNull TalonFX[] swerveMotors = new TalonFX[4];
 
     /**
      * Motors that are driving the robot around and causing it to move
      */
-    private final @NotNull CANSparkMax[] swerveDriveMotors = new CANSparkMax[4];
+    final @NotNull TalonFX[] swerveDriveMotors = new TalonFX[4];
 
     /**
      * Absolute Encoders for the motors that turn the wheel
@@ -116,39 +121,39 @@ public final class Drive extends AbstractSubsystem {
     private Drive() {
         super(Constants.DRIVE_PERIOD, 5);
 
-        final @NotNull CANSparkMax leftFrontSpark, leftBackSpark, rightFrontSpark, rightBackSpark;
+        final @NotNull TalonFX leftFrontTalon, leftBackTalon, rightFrontTalon, rightBackTalon;
         final @NotNull CANCoder leftFrontCanCoder, leftBackCanCoder, rightFrontCanCoder, rightBackCanCoder;
-        final @NotNull CANSparkMax leftFrontSparkSwerve, leftBackSparkSwerve, rightFrontSparkSwerve, rightBackSparkSwerve;
+        final @NotNull TalonFX leftFrontTalonSwerve, leftBackTalonSwerve, rightFrontTalonSwerve, rightBackTalonSwerve;
         // Swerve Drive Motors
-        leftFrontSpark = new CANSparkMax(Constants.DRIVE_LEFT_FRONT_ID, MotorType.kBrushless);
-        leftBackSpark = new CANSparkMax(Constants.DRIVE_LEFT_BACK_ID, MotorType.kBrushless);
-        rightFrontSpark = new CANSparkMax(Constants.DRIVE_RIGHT_FRONT_ID, MotorType.kBrushless);
-        rightBackSpark = new CANSparkMax(Constants.DRIVE_RIGHT_BACK_ID, MotorType.kBrushless);
+        leftFrontTalon = new TalonFX(Constants.DRIVE_LEFT_FRONT_ID);
+        leftBackTalon = new TalonFX(Constants.DRIVE_LEFT_BACK_ID);
+        rightFrontTalon = new TalonFX(Constants.DRIVE_RIGHT_FRONT_ID);
+        rightBackTalon = new TalonFX(Constants.DRIVE_RIGHT_BACK_ID);
 
-        leftFrontSpark.setInverted(false);
-        rightFrontSpark.setInverted(false);
-        leftBackSpark.setInverted(false);
-        rightBackSpark.setInverted(false);
+        leftFrontTalon.setInverted(false);
+        rightFrontTalon.setInverted(false);
+        leftBackTalon.setInverted(false);
+        rightBackTalon.setInverted(false);
 
-        leftFrontSparkSwerve = new CANSparkMax(Constants.DRIVE_LEFT_FRONT_SWERVE_ID, MotorType.kBrushless);
-        leftBackSparkSwerve = new CANSparkMax(Constants.DRIVE_LEFT_BACK_SWERVE_ID, MotorType.kBrushless);
-        rightFrontSparkSwerve = new CANSparkMax(Constants.DRIVE_RIGHT_FRONT_SWERVE_ID, MotorType.kBrushless);
-        rightBackSparkSwerve = new CANSparkMax(Constants.DRIVE_RIGHT_BACK_SWERVE_ID, MotorType.kBrushless);
+        leftFrontTalonSwerve = new TalonFX(Constants.DRIVE_LEFT_FRONT_SWERVE_ID);
+        leftBackTalonSwerve = new TalonFX(Constants.DRIVE_LEFT_BACK_SWERVE_ID);
+        rightFrontTalonSwerve = new TalonFX(Constants.DRIVE_RIGHT_FRONT_SWERVE_ID);
+        rightBackTalonSwerve = new TalonFX(Constants.DRIVE_RIGHT_BACK_SWERVE_ID);
 
         leftFrontCanCoder = new CANCoder(Constants.CAN_LEFT_FRONT_ID);
         leftBackCanCoder = new CANCoder(Constants.CAN_LEFT_BACK_ID);
         rightFrontCanCoder = new CANCoder(Constants.CAN_RIGHT_FRONT_ID);
         rightBackCanCoder = new CANCoder(Constants.CAN_RIGHT_BACK_ID);
 
-        swerveMotors[0] = leftFrontSparkSwerve;
-        swerveMotors[1] = leftBackSparkSwerve;
-        swerveMotors[2] = rightFrontSparkSwerve;
-        swerveMotors[3] = rightBackSparkSwerve;
+        swerveMotors[0] = leftFrontTalonSwerve;
+        swerveMotors[1] = leftBackTalonSwerve;
+        swerveMotors[2] = rightFrontTalonSwerve;
+        swerveMotors[3] = rightBackTalonSwerve;
 
-        swerveDriveMotors[0] = leftFrontSpark;
-        swerveDriveMotors[1] = leftBackSpark;
-        swerveDriveMotors[2] = rightFrontSpark;
-        swerveDriveMotors[3] = rightBackSpark;
+        swerveDriveMotors[0] = leftFrontTalon;
+        swerveDriveMotors[1] = leftBackTalon;
+        swerveDriveMotors[2] = rightFrontTalon;
+        swerveDriveMotors[3] = rightBackTalon;
 
         swerveCanCoders[0] = leftFrontCanCoder;
         swerveCanCoders[1] = leftBackCanCoder;
@@ -157,23 +162,32 @@ public final class Drive extends AbstractSubsystem {
 
         for (int i = 0; i < 4; i++) {
             // Sets swerveMotors PID
-            swerveMotors[i].getPIDController().setP(Constants.SWERVE_DRIVE_P);
-            swerveMotors[i].getPIDController().setD(Constants.SWERVE_DRIVE_D);
-            swerveMotors[i].getPIDController().setI(Constants.SWERVE_DRIVE_I);
-            swerveMotors[i].getPIDController().setFF(Constants.SWERVE_DRIVE_F);
-            swerveMotors[i].getPIDController().setIZone(Constants.SWERVE_DRIVE_INTEGRAL_ZONE);
+            swerveMotors[i].config_kP(0, Constants.SWERVE_DRIVE_P, Constants.SWERVE_MOTOR_PID_TIMEOUT_MS);
+            swerveMotors[i].config_kD(0, Constants.SWERVE_DRIVE_D, Constants.SWERVE_MOTOR_PID_TIMEOUT_MS);
+            swerveMotors[i].config_kI(0, Constants.SWERVE_DRIVE_I, Constants.SWERVE_MOTOR_PID_TIMEOUT_MS);
+            swerveMotors[i].config_kF(0, Constants.SWERVE_DRIVE_F, Constants.SWERVE_MOTOR_PID_TIMEOUT_MS);
+            swerveMotors[i].configMotionAcceleration(Constants.SWERVE_ACCELERATION, Constants.SWERVE_MOTOR_PID_TIMEOUT_MS);
+            swerveMotors[i].configMotionCruiseVelocity(Constants.SWERVE_CRUISE_VELOCITY, Constants.SWERVE_MOTOR_PID_TIMEOUT_MS);
+            swerveMotors[i].config_IntegralZone(0, Constants.SWERVE_DRIVE_INTEGRAL_ZONE);
 
             // Sets current limits for motors
-            swerveMotors[i].setSmartCurrentLimit(SWERVE_MOTOR_CURRENT_LIMIT);
-            swerveMotors[i].enableVoltageCompensation(Constants.SWERVE_DRIVE_VOLTAGE_LIMIT);
+            swerveMotors[i].configSupplyCurrentLimit(new SupplyCurrentLimitConfiguration(true,
+                    Constants.SWERVE_MOTOR_CURRENT_LIMIT, Constants.SWERVE_MOTOR_CURRENT_LIMIT, 0));
 
-            swerveDriveMotors[i].setSmartCurrentLimit(SWERVE_DRIVE_MOTOR_CURRENT_LIMIT);
-            swerveDriveMotors[i].enableVoltageCompensation(Constants.SWERVE_DRIVE_VOLTAGE_LIMIT);
+            swerveDriveMotors[i].configSupplyCurrentLimit(new SupplyCurrentLimitConfiguration(true,
+                    Constants.SWERVE_DRIVE_MOTOR_CURRENT_LIMIT, Constants.SWERVE_DRIVE_MOTOR_CURRENT_LIMIT, 0));
+
+            swerveDriveMotors[i].configVoltageCompSaturation(Constants.SWERVE_DRIVE_VOLTAGE_LIMIT);
 
             // This makes motors brake when no RPM is set
-            swerveDriveMotors[i].setIdleMode(IdleMode.kCoast);
-            swerveMotors[i].setIdleMode(IdleMode.kCoast);
+            swerveDriveMotors[i].setNeutralMode(NeutralMode.Coast);
+            swerveMotors[i].setNeutralMode(NeutralMode.Coast);
             swerveMotors[i].setInverted(true);
+            swerveDriveMotors[i].configVelocityMeasurementPeriod(SensorVelocityMeasPeriod.Period_5Ms);
+            swerveDriveMotors[i].setStatusFramePeriod(StatusFrameEnhanced.Status_1_General, 50);
+            swerveDriveMotors[i].setStatusFramePeriod(StatusFrameEnhanced.Status_2_Feedback0, 20);
+            swerveMotors[i].setStatusFramePeriod(StatusFrameEnhanced.Status_1_General, 50);
+            swerveMotors[i].setStatusFramePeriod(StatusFrameEnhanced.Status_2_Feedback0, 20);
 
             swerveCanCoders[i].setStatusFramePeriod(CANCoderStatusFrame.VbatAndFaults, 200);
             swerveCanCoders[i].setStatusFramePeriod(CANCoderStatusFrame.SensorData, 20);
@@ -182,30 +196,28 @@ public final class Drive extends AbstractSubsystem {
     }
 
     public void configCoast() {
-        for (CANSparkMax swerveMotor : swerveMotors) {
-            swerveMotor.setIdleMode(IdleMode.kCoast);
+        for (TalonFX swerveMotor : swerveMotors) {
+            swerveMotor.setNeutralMode(NeutralMode.Coast);
         }
-
-        for (CANSparkMax swerveDriveMotor : swerveDriveMotors) {
-            swerveDriveMotor.setIdleMode(IdleMode.kCoast);
+        for (TalonFX swerveDriveMotor : swerveDriveMotors) {
+            swerveDriveMotor.setNeutralMode(NeutralMode.Coast);
         }
     }
 
     public void configBrake() {
-        for (CANSparkMax swerveMotor : swerveMotors) {
-            swerveMotor.setIdleMode(IdleMode.kBrake);
+        for (TalonFX swerveMotor : swerveMotors) {
+            swerveMotor.setNeutralMode(NeutralMode.Brake);
         }
-
-        for (CANSparkMax swerveDriveMotor : swerveDriveMotors) {
-            swerveDriveMotor.setIdleMode(IdleMode.kBrake);
+        for (TalonFX swerveDriveMotor : swerveDriveMotors) {
+            swerveDriveMotor.setNeutralMode(NeutralMode.Brake);
         }
     }
 
     /**
-     * @return the relative position of the selected swerve motor in degrees
+     * @return the relative position of the selected swerve drive motor
      */
     private double getRelativeSwervePosition(int motorNum) {
-        return swerveMotors[motorNum].getEncoder().getPosition() *
+        return (swerveMotors[motorNum].getSelectedSensorPosition() / Constants.FALCON_ENCODER_TICKS_PER_ROTATIONS) *
                 Constants.SWERVE_MOTOR_POSITION_CONVERSION_FACTOR * 360;
     }
 
@@ -216,7 +228,8 @@ public final class Drive extends AbstractSubsystem {
      * @param position the target position in degrees (0-360)
      */
     private void setSwerveMotorPosition(int motorNum, double position) {
-        swerveMotors[motorNum].getEncoder().setPosition((position / Constants.SWERVE_MOTOR_POSITION_CONVERSION_FACTOR) / 360);
+        swerveMotors[motorNum].set(ControlMode.MotionMagic, ((position * Constants.FALCON_ENCODER_TICKS_PER_ROTATIONS) /
+                Constants.SWERVE_MOTOR_POSITION_CONVERSION_FACTOR) / 360);
     }
 
 
@@ -224,16 +237,16 @@ public final class Drive extends AbstractSubsystem {
      * @return the relative position of the selected swerve motor in degrees
      */
     private double getSwerveDrivePosition(int motorNum) {
-        return swerveDriveMotors[motorNum].getEncoder().getPosition()
-                * Constants.SWERVE_DRIVE_MOTOR_REDUCTION * SWERVE_METER_PER_ROTATION;
+        return (swerveDriveMotors[motorNum].getSelectedSensorPosition()
+                / Constants.FALCON_ENCODER_TICKS_PER_ROTATIONS) * Constants.SWERVE_DRIVE_MOTOR_REDUCTION;
     }
 
     /**
      * @return Returns requested drive wheel velocity in Meters per second
      */
     private double getSwerveDriveVelocity(int motorNum) {
-        return swerveDriveMotors[motorNum].getEncoder().getVelocity()
-                * Constants.SWERVE_DRIVE_MOTOR_REDUCTION
+        return swerveDriveMotors[motorNum].getSelectedSensorVelocity()
+                * Constants.FALCON_ENCODER_TICKS_PER_100_MS_TO_RPM * Constants.SWERVE_DRIVE_MOTOR_REDUCTION
                 * SWERVE_METER_PER_ROTATION;
     }
 
@@ -280,7 +293,7 @@ public final class Drive extends AbstractSubsystem {
             },
             new double[]{0, 0, 0, 0});
 
-    public void swerveDrive(@NotNull ChassisSpeeds desiredRobotRelativeSpeeds, KinematicLimit kinematicLimit, double dt) {
+    public void swerveDrive(@NotNull ChassisSpeeds desiredRobotRelativeSpeeds, SwerveSetpointGenerator.KinematicLimit kinematicLimit, double dt) {
         Pose2d robot_pose_vel = new Pose2d(desiredRobotRelativeSpeeds.vxMetersPerSecond * dt,
                 desiredRobotRelativeSpeeds.vyMetersPerSecond * dt,
                 Rotation2d.fromRadians(desiredRobotRelativeSpeeds.omegaRadiansPerSecond * dt));
@@ -340,15 +353,16 @@ public final class Drive extends AbstractSubsystem {
      * @param velocity The target velocity
      */
     public void setMotorSpeed(int module, double velocity, double acceleration) {
-        if (module < 0 || module > DRIVE_FEEDFORWARD.length) {
+        if (module < 0 || module > 3) {
             throw new IllegalArgumentException("Module must be between 0 and 3");
         }
 
 
-        double ffv = DRIVE_FEEDFORWARD[module].calculate(velocity, acceleration);
+        double ffv = Constants.DRIVE_FEEDFORWARD[module].calculate(velocity, acceleration);
         // Converts ffv voltage to percent output and sets it to motor
-        swerveDriveMotors[module].setVoltage(ffv);
-        logData("Out Volts " + module, ffv);
+        swerveDriveMotors[module].set(ControlMode.PercentOutput, ffv / Constants.SWERVE_DRIVE_VOLTAGE_LIMIT);
+        swerveDriveMotors[module].set(ControlMode.PercentOutput, ffv / Constants.SWERVE_DRIVE_VOLTAGE_LIMIT);
+        SmartDashboard.putNumber("Out Volts " + module, ffv);
         //swerveDriveMotors[module].setVoltage(10 * velocity/Constants.SWERVE_METER_PER_ROTATION);
     }
 
@@ -602,10 +616,10 @@ public final class Drive extends AbstractSubsystem {
             logData("Swerve Motor " + i + " Relative Position", relPos);
             logData("Swerve Motor " + i + " Absolute Position", getWheelRotation(i));
             logData("Drive Motor " + i + " Velocity", getSwerveDriveVelocity(i) / 60.0d);
-            logData("Drive Motor " + i + " Current", swerveDriveMotors[i].getOutputCurrent());
-            logData("Swerve Motor " + i + " Current", swerveMotors[i].getOutputCurrent());
-            logData("Swerve Motor " + i + " Temp", swerveMotors[i].getMotorTemperature());
-            logData("Drive Motor " + i + " Temp", swerveDriveMotors[i].getMotorTemperature());
+            logData("Drive Motor " + i + " Current", swerveDriveMotors[i].getStatorCurrent());
+            logData("Swerve Motor " + i + " Current", swerveMotors[i].getStatorCurrent());
+            logData("Swerve Motor " + i + " Temp", swerveMotors[i].getTemperature());
+            logData("Drive Motor " + i + " Temp", swerveDriveMotors[i].getTemperature());
         }
         logData("Drive State", driveState.toString());
     }
@@ -634,7 +648,7 @@ public final class Drive extends AbstractSubsystem {
      * @return distance in meters
      */
     public double getDrivePosition(int moduleNumber) {
-        return swerveMotors[moduleNumber].getEncoder().getPosition()
+        return (swerveDriveMotors[moduleNumber].getSelectedSensorPosition() / FALCON_ENCODER_TICKS_PER_ROTATIONS)
                 * SWERVE_METER_PER_ROTATION;
     }
 
