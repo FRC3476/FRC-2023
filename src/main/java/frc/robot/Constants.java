@@ -17,6 +17,7 @@ import java.nio.file.Files;
 public final class Constants {
 
     public static final boolean IS_PRACTICE = Files.exists(new File("/home/lvuser/practice").toPath());
+    public static final boolean USE_CANCODERS = false;
 
     // 2048 sensor units per revolution
     public static final double FALCON_ENCODER_TICKS_PER_ROTATIONS = 2048;
