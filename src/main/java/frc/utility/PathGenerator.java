@@ -14,7 +14,7 @@ import java.util.concurrent.CompletableFuture;
 public class PathGenerator {
 
     public static final double END_VECTOR_LEN = 0.5;
-    public static final int VELOCTY_VECTOR_LEN_SCALE = 1;
+    public static final int VELOCITY_VECTOR_LEN_SCALE = 1;
 
     private PathGenerator() {}
 
@@ -53,8 +53,8 @@ public class PathGenerator {
             var startPos = robotTranslation.plus(robotVelocity.times(startPosPredictAhead));
             ControlVectorList controlVectors = new ControlVectorList();
             controlVectors.add(new ControlVector(
-                    new double[]{startPos.getX(), robotVelocity.getX() * VELOCTY_VECTOR_LEN_SCALE, 0},
-                    new double[]{startPos.getY(), robotVelocity.getY() * VELOCTY_VECTOR_LEN_SCALE, 0}
+                    new double[]{startPos.getX(), robotVelocity.getX() * VELOCITY_VECTOR_LEN_SCALE, 0},
+                    new double[]{startPos.getY(), robotVelocity.getY() * VELOCITY_VECTOR_LEN_SCALE, 0}
             ));
             controlVectors.add(new ControlVector(
                     new double[]{targetPosition.getX(), endDir.getX(), 0},
