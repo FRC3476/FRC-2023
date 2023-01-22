@@ -159,4 +159,8 @@ public final class Constants {
 
     public static final double FIELD_HEIGHT_METERS = 8.0137;
     public static final double FIELD_WIDTH_METERS = 16.54175;
+
+
+    // Realtime path generation
+    public static final double START_POS_PREDICT_AHEAD = 0.1;
 }
