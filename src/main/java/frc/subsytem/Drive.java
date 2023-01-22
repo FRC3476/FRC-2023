@@ -681,7 +681,7 @@ public final class Drive extends AbstractSubsystem {
      * @return distance in meters
      */
     public double getDrivePosition(int moduleNumber) {
-        return swerveMotors[moduleNumber].getEncoder().getPosition()
+        return swerveDriveMotors[moduleNumber].getEncoder().getPosition()
                 * SWERVE_METER_PER_ROTATION;
     }
 
