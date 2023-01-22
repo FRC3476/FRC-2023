@@ -13,10 +13,8 @@ import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
-import frc.subsytem.Drive;
+import frc.subsytem.*;
 import frc.subsytem.Drive.DriveState;
-import frc.subsytem.RobotTracker;
-import frc.subsytem.VisionHandler;
 import frc.utility.Controller;
 import frc.utility.Controller.XboxButtons;
 import frc.utility.ControllerDriveInputs;
@@ -39,7 +37,6 @@ public class Robot extends TimedRobot {
     private @NotNull VisionHandler visionHandler;
 
     private @NotNull Controller xbox;
-
 
     // Autonomous
     private final SendableChooser<String> autoChooser = new SendableChooser<>();
@@ -99,7 +96,8 @@ public class Robot extends TimedRobot {
      * SmartDashboard integrated updating.
      */
     @Override
-    public void robotPeriodic() {}
+    public void robotPeriodic() {
+    }
 
 
     @Override

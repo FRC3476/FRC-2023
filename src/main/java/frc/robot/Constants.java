@@ -1,11 +1,14 @@
 package frc.robot;
 
+import edu.wpi.first.math.controller.ArmFeedforward;
+import edu.wpi.first.math.controller.ElevatorFeedforward;
 import edu.wpi.first.math.controller.SimpleMotorFeedforward;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
+import edu.wpi.first.math.trajectory.TrapezoidProfile;
 import edu.wpi.first.math.util.Units;
 import frc.utility.swerve.SwerveSetpointGenerator.KinematicLimit;
 import frc.utility.swerve.SwerveSetpointGenerator.SwerveSetpoint;
@@ -54,7 +57,6 @@ public final class Constants {
     public static final double SWERVE_DRIVE_I = 0.00;
     public static final double SWERVE_DRIVE_F = 0.00;
     public static final double SWERVE_DRIVE_INTEGRAL_ZONE = 0.00;
-
     /**
      * Feed forward constants for the drivetrain.
      * <p>
@@ -103,7 +105,8 @@ public final class Constants {
             SWERVE_RIGHT_BACK_LOCATION
     };
 
-    @NotNull public static final SwerveDriveKinematics SWERVE_DRIVE_KINEMATICS = new SwerveDriveKinematics(
+    @NotNull
+    public static final SwerveDriveKinematics SWERVE_DRIVE_KINEMATICS = new SwerveDriveKinematics(
             SWERVE_MODULE_LOCATIONS
     );
 
@@ -142,6 +145,7 @@ public final class Constants {
     }
 
     public static final int MAX_TELEOP_TURN_SPEED = 7;
+    public static final double COAST_AFTER_DISABLE_TIME = 0.5;
 
 
     //Robot Tracker
@@ -153,9 +157,45 @@ public final class Constants {
 
     public static final int PIGEON_CAN_ID = 30;
 
+    // Elevator
+    public static final int ELEVATOR_PERIOD = 20;
+    public static final TrapezoidProfile.Constraints ELEVATOR_CONSTRAINTS
+            = new TrapezoidProfile.Constraints(3, 3);
+    public static final ElevatorFeedforward ELEVATOR_FEEDFORWARD = new ElevatorFeedforward(0, 0, 0, 0);
+    public static final int ELEVATOR_P = 5;
+    public static final int ELEVATOR_I = 5;
+    public static final int ELEVATOR_D = 5;
+    public static final int ELEVATOR_ROTATIONS_PER_METER = 5;
+    public static final int ELEVATOR_NOMINAL_VOLTAGE = 9;
+    public static final int ELEVATOR_SMART_CURRENT_LIMIT = 40;
+
+    // Telescoping Arm
+    public static final int TELESCOPING_ARM_PERIOD = 20;
+    public static final TrapezoidProfile.Constraints TELESCOPING_ARM_CONSTRAINTS
+            = new TrapezoidProfile.Constraints(3, 3);
+    public static final ElevatorFeedforward TELESCOPING_ARM_FEEDFORWARD = new ElevatorFeedforward(0, 0, 0, 0);
+    public static final int TELESCOPING_ARM_P = 5;
+    public static final int TELESCOPING_ARM_I = 5;
+    public static final int TELESCOPING_ARM_D = 5;
+    public static final int TELESCOPING_ARM_ROTATIONS_PER_METER = 5;
+    public static final int TELESCOPING_ARM_NOMINAL_VOLTAGE = 9;
+    public static final int TELESCOPING_ARM_SMART_CURRENT_LIMIT = 40;
+
+    // Grabber
+    public static final int GRABBER_PERIOD = 20;
+    public static final ArmFeedforward GRABBER_FEEDFORWARD = new ArmFeedforward(0, 0, 0, 0);
+    public static final TrapezoidProfile.Constraints GRABBER_CONSTRAINTS
+            = new TrapezoidProfile.Constraints(3, 3);
+    public static final int GRABBER_P = 5;
+    public static final int GRABBER_I = 5;
+    public static final int GRABBER_D = 5;
+    public static final int GRABBER_ROTATIONS_PER_DEGREE = 5;
+    public static final int GRABBER_NOMINAL_VOLTAGE = 9;
+    public static final int GRABBER_SMART_CURRENT_LIMIT = 40;
+    public static final int PIVOT_SMART_CURRENT_LIMIT = 40;
+
     // Vision constants
     public static final int VISION_HANDLER_PERIOD = -1;
-    public static final double COAST_AFTER_DISABLE_TIME = 0.5;
 
     public static final double FIELD_HEIGHT_METERS = 8.0137;
     public static final double FIELD_WIDTH_METERS = 16.54175;
