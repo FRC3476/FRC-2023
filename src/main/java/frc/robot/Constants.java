@@ -196,7 +196,14 @@ public final class Constants {
 
     // Vision constants
     public static final int VISION_HANDLER_PERIOD = -1;
-
     public static final double FIELD_HEIGHT_METERS = 8.0137;
     public static final double FIELD_WIDTH_METERS = 16.54175;
+
+    //Position Constants
+    public static final double MIDDLE_NODE_DISTANCE = 0;
+    public static final double TOP_NODE_DISTANCE = 0;
+    public static final int SET_POSITION_PERIOD = 20;
+    public static final double GRABBER_LENGTH = 0;
+    public static final double ELEVATOR_DISTANCE_MIDDLE_HEIGHT = 0;
+    public static final double ELEVATOR_DISTANCE_TOP_HEIGHT = 0;
 }

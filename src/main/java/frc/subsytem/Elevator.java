@@ -43,6 +43,10 @@ public class Elevator extends AbstractSubsystem {
         logData("Goal position", position);
     }
 
+    public double getPosition() {
+        return trapezoidProfile.calculate(Timer.getFPGATimestamp() - trapezoidProfileStartTime).position;
+    }
+
     private double pastVelocity = 0, pastTime = 0;
 
     @Override
