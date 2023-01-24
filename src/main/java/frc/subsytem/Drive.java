@@ -339,7 +339,7 @@ public final class Drive extends AbstractSubsystem {
     private @Nullable Translation2d realtimeTrajectoryStartVelocity = null;
 
     public synchronized void driveToPosition(Translation2d targetPosition, Rotation2d targetAngle) {
-        if (driveState == DriveState.WAITING_FOR_PATH || driveState == DriveState.RAMSETE) {
+        if (!(driveState == DriveState.WAITING_FOR_PATH || driveState == DriveState.RAMSETE)) {
             var robotTracker = RobotTracker.getInstance();
             realtimeTrajectoryStartVelocity = robotTracker.getVelocity();
             trajectoryToDrive = PathGenerator.generateTrajectory(
@@ -352,7 +352,7 @@ public final class Drive extends AbstractSubsystem {
             assert trajectoryToDrive != null;
             if (trajectoryToDrive.isDone()) {
                 if (Timer.getFPGATimestamp() > realtimeTrajectoryStartTime) {
-                    setAutoPath(trajectoryToDrive.join());
+                    setAutoPath(trajectoryToDrive.join(), realtimeTrajectoryStartTime);
                     setAutoRotation(targetAngle);
                     if (Timer.getFPGATimestamp() + EXPECTED_TELEOP_DRIVE_DT > realtimeTrajectoryStartTime) {
                         DriverStation.reportError("Trajectory Generation was late by: "
@@ -360,6 +360,7 @@ public final class Drive extends AbstractSubsystem {
                     }
                 }
             } else {
+                assert realtimeTrajectoryStartVelocity != null;
                 ChassisSpeeds chassisSpeeds = ChassisSpeeds.fromFieldRelativeSpeeds(
                         realtimeTrajectoryStartVelocity.getX(),
                         realtimeTrajectoryStartVelocity.getY(),

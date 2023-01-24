@@ -18,6 +18,7 @@ public class PathGenerator {
 
     private PathGenerator() {}
 
+    //set initial velocity, copy it then
     private static final TrajectoryConfig realtimeConfig = new TrajectoryConfig(3, 2);
 
     static {
@@ -28,8 +29,9 @@ public class PathGenerator {
     public static CompletableFuture<Trajectory> generateTrajectory(
             Translation2d robotVelocity, Translation2d robotTranslation, Translation2d targetPosition,
             double startPosPredictAhead) {
-        // Implicitly determine the position based on the position of the target position
-        double dir = targetPosition.getX() > Constants.FIELD_WIDTH_METERS / 2 ? END_VECTOR_LEN : -END_VECTOR_LEN;
+        // Implicitly determine the goal vector based on the position of the target position
+        double dir = targetPosition.getX() > Constants.FIELD_WIDTH_METERS / 2 ? END_VECTOR_LEN : -END_VECTOR_LEN; //based on
+        // alliance flip end vector
         return generateTrajectory(robotVelocity, robotTranslation, targetPosition, new Translation2d(dir, 0),
                 startPosPredictAhead);
     }
