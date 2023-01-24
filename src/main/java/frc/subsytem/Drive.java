@@ -39,6 +39,7 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
@@ -334,11 +335,20 @@ public final class Drive extends AbstractSubsystem {
         swerveDrive(chassisSpeeds, KinematicLimits.NORMAL_DRIVING.kinematicLimit, EXPECTED_TELEOP_DRIVE_DT);
     }
 
-    private @Nullable CompletableFuture<Trajectory> trajectoryToDrive = null;
+    private @Nullable CompletableFuture<Optional<Trajectory>> trajectoryToDrive = null;
     private double realtimeTrajectoryStartTime = 0;
     private @Nullable Translation2d realtimeTrajectoryStartVelocity = null;
 
-    public synchronized void driveToPosition(Translation2d targetPosition, Rotation2d targetAngle) {
+    /**
+     * Drive the robot to a given position using a trajectory
+     *
+     * @param targetPosition The target position to drive to
+     * @param targetAngle    The target angle to drive to
+     * @param inputs         Controller inputs to use if the trajectory fails to be generated
+     * @return A boolean indicating whether the robot was successfully able to generate a trajectory to the target position.
+     */
+    public synchronized boolean driveToPosition(Translation2d targetPosition, Rotation2d targetAngle,
+                                                ControllerDriveInputs inputs) {
         if (!(driveState == DriveState.WAITING_FOR_PATH || driveState == DriveState.RAMSETE)) {
             var robotTracker = RobotTracker.getInstance();
             realtimeTrajectoryStartVelocity = robotTracker.getVelocity();
@@ -352,11 +362,19 @@ public final class Drive extends AbstractSubsystem {
             assert trajectoryToDrive != null;
             if (trajectoryToDrive.isDone()) {
                 if (Timer.getFPGATimestamp() > realtimeTrajectoryStartTime) {
-                    setAutoPath(trajectoryToDrive.join(), realtimeTrajectoryStartTime);
-                    setAutoRotation(targetAngle);
-                    if (Timer.getFPGATimestamp() + EXPECTED_TELEOP_DRIVE_DT > realtimeTrajectoryStartTime) {
-                        DriverStation.reportError("Trajectory Generation was late by: "
-                                + (Timer.getFPGATimestamp() - realtimeTrajectoryStartTime) + "s", false);
+                    // Optional of the trajectory. Empty if the trajectory failed to be generated
+                    var trajectory = trajectoryToDrive.join();
+
+                    if (trajectory.isPresent()) {
+                        setAutoPath(trajectory.get(), realtimeTrajectoryStartTime); // Sets the DriveState to RAMSETE
+                        setAutoRotation(targetAngle);
+                        if (Timer.getFPGATimestamp() + EXPECTED_TELEOP_DRIVE_DT > realtimeTrajectoryStartTime) {
+                            DriverStation.reportError("Trajectory Generation was late by: "
+                                    + (Timer.getFPGATimestamp() - realtimeTrajectoryStartTime) + "s", false);
+                        }
+                    } else {
+                        swerveDrive(inputs); // Trajectory generation failed, fallback to teleop
+                        return false;
                     }
                 }
             } else {
@@ -369,6 +387,7 @@ public final class Drive extends AbstractSubsystem {
                 swerveDrive(chassisSpeeds, KinematicLimits.NORMAL_DRIVING.kinematicLimit, EXPECTED_TELEOP_DRIVE_DT);
             }
         }
+        return true;
     }
 
     public void swerveDrive(@NotNull ChassisSpeeds desiredRobotRelativeSpeeds, KinematicLimit kinematicLimit, double dt) {
