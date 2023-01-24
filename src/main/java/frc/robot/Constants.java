@@ -129,7 +129,7 @@ public final class Constants {
     public static final double DEFAULT_TURN_D = 0.4;
     public static final double TURN_SPEED_LIMIT_WHILE_AIMING = 4.0;
 
-    public static final double EXPECTED_TELEOP_DRIVE_DT = 0.2;
+    public static final double EXPECTED_TELEOP_DRIVE_DT = 0.02;
 
     public static final double EXPECTED_AUTO_DRIVE_DT = DRIVE_PERIOD / 1000.0;
 
