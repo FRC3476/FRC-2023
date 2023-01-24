@@ -275,7 +275,6 @@ public final class Drive extends AbstractSubsystem {
 
     private @Nullable CompletableFuture<Trajectory> trajectoryToDrive = null;
     private double realtimeTrajectoryStartTime = 0;
-    private boolean trajectoryGenerationDoneEarly = false;
     private @Nullable Translation2d realtimeTrajectoryStartVelocity = null;
 
     public synchronized void driveToPosition(Translation2d targetPosition, Rotation2d targetAngle) {
@@ -286,18 +285,15 @@ public final class Drive extends AbstractSubsystem {
                     robotTracker.getLatestPose().getTranslation(),
                     realtimeTrajectoryStartVelocity, targetPosition, START_POS_PREDICT_AHEAD);
             realtimeTrajectoryStartTime = Timer.getFPGATimestamp() + START_POS_PREDICT_AHEAD;
-            trajectoryGenerationDoneEarly = false;
             setDriveState(DriveState.WAITING_FOR_PATH);
         }
         if (driveState == DriveState.WAITING_FOR_PATH) {
             assert trajectoryToDrive != null;
             if (trajectoryToDrive.isDone()) {
-                if (Timer.getFPGATimestamp() < realtimeTrajectoryStartTime) {
-                    trajectoryGenerationDoneEarly = true;
-                } else {
+                if (Timer.getFPGATimestamp() > realtimeTrajectoryStartTime) {
                     setAutoPath(trajectoryToDrive.join());
                     setAutoRotation(targetAngle);
-                    if (!trajectoryGenerationDoneEarly) {
+                    if (Timer.getFPGATimestamp() + EXPECTED_TELEOP_DRIVE_DT > realtimeTrajectoryStartTime) {
                         DriverStation.reportError("Trajectory Generation was late by: "
                                 + (Timer.getFPGATimestamp() - realtimeTrajectoryStartTime) + "s", false);
                     }
