@@ -189,6 +189,8 @@ public final class Drive extends AbstractSubsystem {
             // This makes motors brake when no RPM is set
             swerveDriveMotors[i].setIdleMode(IdleMode.kCoast);
             swerveMotors[i].setIdleMode(IdleMode.kCoast);
+            isBreaking = false;
+
             swerveMotors[i].setInverted(true);
 
             if (USE_CANCODERS) {
@@ -210,23 +212,31 @@ public final class Drive extends AbstractSubsystem {
         setDriveState(DriveState.TELEOP);
     }
 
-    public void configCoast() {
-        for (CANSparkMax swerveMotor : swerveMotors) {
-            swerveMotor.setIdleMode(IdleMode.kCoast);
-        }
+    private boolean isBreaking;
 
-        for (CANSparkMax swerveDriveMotor : swerveDriveMotors) {
-            swerveDriveMotor.setIdleMode(IdleMode.kCoast);
+    public synchronized void configCoast() {
+        if (isBreaking) {
+            for (CANSparkMax swerveMotor : swerveMotors) {
+                swerveMotor.setIdleMode(IdleMode.kCoast);
+            }
+
+            for (CANSparkMax swerveDriveMotor : swerveDriveMotors) {
+                swerveDriveMotor.setIdleMode(IdleMode.kCoast);
+            }
+            isBreaking = false;
         }
     }
 
-    public void configBrake() {
-        for (CANSparkMax swerveMotor : swerveMotors) {
-            swerveMotor.setIdleMode(IdleMode.kBrake);
-        }
+    public synchronized void configBrake() {
+        if (!isBreaking) {
+            for (CANSparkMax swerveMotor : swerveMotors) {
+                swerveMotor.setIdleMode(IdleMode.kBrake);
+            }
 
-        for (CANSparkMax swerveDriveMotor : swerveDriveMotors) {
-            swerveDriveMotor.setIdleMode(IdleMode.kBrake);
+            for (CANSparkMax swerveDriveMotor : swerveDriveMotors) {
+                swerveDriveMotor.setIdleMode(IdleMode.kBrake);
+            }
+            isBreaking = true;
         }
     }
 
