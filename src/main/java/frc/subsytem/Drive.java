@@ -310,7 +310,8 @@ public final class Drive extends AbstractSubsystem {
                 DRIVE_HIGH_SPEED_M * inputs.getX(),
                 DRIVE_HIGH_SPEED_M * inputs.getY(),
                 inputs.getRotation() * MAX_TELEOP_TURN_SPEED,
-                RobotTracker.getInstance().getGyroAngle());
+                RobotTracker.getInstance().getGyroAngle()
+                        .plus(new Rotation2d(RobotTracker.getInstance().getAngularVelocity() * EXPECTED_TELEOP_DRIVE_DT / 2)));
         swerveDrive(chassisSpeeds, KinematicLimits.NORMAL_DRIVING.kinematicLimit, EXPECTED_TELEOP_DRIVE_DT);
     }
 
@@ -353,9 +354,9 @@ public final class Drive extends AbstractSubsystem {
 
             setMotorSpeed(i, moduleState.speedMetersPerSecond, setpoint.wheelAccelerations()[i]);
 
-            logData("SwerveModule " + i + " Angle", moduleState.angle.getDegrees());
-            logData("SwerveModule " + i + " Speed", moduleState.speedMetersPerSecond);
-            logData("SwerveModule " + i + " Acceleration", setpoint.wheelAccelerations()[i]);
+            logData("SwerveModule " + i + " Wanted Angle", moduleState.angle.getDegrees());
+            logData("SwerveModule " + i + " Wanted Speed", moduleState.speedMetersPerSecond);
+            logData("SwerveModule " + i + " Wanted Acceleration", setpoint.wheelAccelerations()[i]);
             logData("SwerveModule " + i + " Angle Error", angleDiff);
         }
     }
