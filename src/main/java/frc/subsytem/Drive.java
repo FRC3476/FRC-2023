@@ -194,6 +194,7 @@ public final class Drive extends AbstractSubsystem {
             if (USE_CANCODERS) {
                 swerveCanCoders[i].setStatusFramePeriod(CANCoderStatusFrame.VbatAndFaults, 200);
                 swerveCanCoders[i].setStatusFramePeriod(CANCoderStatusFrame.SensorData, 20);
+                swerveCanCoders[i].configAbsoluteSensorRange(AbsoluteSensorRange.Unsigned_0_to_360);
             } else {
                 swerveSparkAbsoluteEncoders[i] = swerveMotors[i].getAbsoluteEncoder(Type.kDutyCycle);
                 swerveMotors[i].getPIDController().setFeedbackDevice(swerveSparkAbsoluteEncoders[i]);
@@ -275,7 +276,7 @@ public final class Drive extends AbstractSubsystem {
      * @return Returns requested drive wheel velocity in Meters per second
      */
     private double getSwerveDriveVelocity(int motorNum) {
-        return swerveDriveMotors[motorNum].getEncoder().getVelocity()
+        return (swerveDriveMotors[motorNum].getEncoder().getVelocity() / 60.0)
                 * Constants.SWERVE_DRIVE_MOTOR_REDUCTION
                 * SWERVE_METER_PER_ROTATION;
     }
@@ -682,6 +683,7 @@ public final class Drive extends AbstractSubsystem {
      */
     public double getDrivePosition(int moduleNumber) {
         return swerveDriveMotors[moduleNumber].getEncoder().getPosition()
+                * SWERVE_DRIVE_MOTOR_REDUCTION
                 * SWERVE_METER_PER_ROTATION;
     }
 
@@ -691,7 +693,7 @@ public final class Drive extends AbstractSubsystem {
         for (int i = 0; i < 4; i++) {
             swerveModulePositions[i] = new SwerveModulePosition(
                     getDrivePosition(i),
-                    new Rotation2d(getWheelRotation(i)));
+                    Rotation2d.fromDegrees(getWheelRotation(i)));
         }
         return swerveModulePositions;
     }
@@ -701,7 +703,7 @@ public final class Drive extends AbstractSubsystem {
         SwerveModuleState[] swerveModuleStates = new SwerveModuleState[4];
         for (int i = 0; i < 4; i++) {
             swerveModuleStates[i] = new SwerveModuleState(
-                    getSwerveDriveVelocity(i) / 60.0d * SWERVE_METER_PER_ROTATION,
+                    getSwerveDriveVelocity(i),
                     new Rotation2d(getWheelRotation(i)));
         }
         return swerveModuleStates;
