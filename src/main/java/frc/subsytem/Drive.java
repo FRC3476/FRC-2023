@@ -350,9 +350,14 @@ public final class Drive extends AbstractSubsystem {
 
             double angleDiff = getAngleDiff(moduleState.angle.getDegrees(), currentAngle);
 
-            setSwerveMotorPosition(i, getRelativeSwervePosition(i) + angleDiff);
+            if (Math.abs(angleDiff) > 2) {
+                setSwerveMotorPosition(i, getRelativeSwervePosition(i) + angleDiff);
+            } else {
+                swerveMotors[i].set(0);
+            }
 
             setMotorSpeed(i, moduleState.speedMetersPerSecond, setpoint.wheelAccelerations()[i]);
+            //setMotorSpeed(i, 0, 0);
 
             logData("SwerveModule " + i + " Wanted Angle", moduleState.angle.getDegrees());
             logData("SwerveModule " + i + " Wanted Speed", moduleState.speedMetersPerSecond);
