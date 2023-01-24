@@ -261,7 +261,7 @@ public final class Drive extends AbstractSubsystem {
     private void setSwerveMotorPosition(int motorNum, double position) {
         if (USE_CANCODERS) {
             swerveMotors[motorNum].getPIDController().setReference(
-                    (position / Constants.SWERVE_MOTOR_POSITION_CONVERSION_FACTOR) / 360, ControlType.kPosition
+                    (position / Constants.SWERVE_MOTOR_POSITION_CONVERSION_FACTOR) / 360.0, ControlType.kPosition
             );
         } else {
             position = position % 360;
