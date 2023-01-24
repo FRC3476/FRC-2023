@@ -163,4 +163,21 @@ public final class Constants {
 
     // Realtime path generation
     public static final double START_POS_PREDICT_AHEAD = 0.1;
+    public static final double END_VECTOR_LEN = 0.5;
+    public static final int VELOCITY_VECTOR_LEN_SCALE = 1;
+    public static final double MAX_VELOCITY_ERROR_NEW_PATH = 0.05;
+
+    public static final double GRIDS_RED_X = 1.373;
+    public static final double GRIDS_BLUE_X = 15.168;
+    public static final double GRIDS_START_Y = -1.5;
+
+    public static final double FIELD_WALL_RIGHT_X = Constants.FIELD_WIDTH_METERS;
+    public static final double FIELD_WALL_LEFT_X = 0;
+    public static final double FIELD_WALL_TOP_Y = 4.012;
+    public static final double FIELD_WALL_BOTTOM_Y = -FIELD_WALL_TOP_Y;
+
+    public static final double ROBOT_WIDTH = 0.8128;
+    public static final double HALF_ROBOT_WIDTH = ROBOT_WIDTH / 2;
+    public static final double ROBOT_LENGTH = 0.8128;
+    public static final double HALF_ROBOT_LENGTH = ROBOT_LENGTH / 2;
 }
