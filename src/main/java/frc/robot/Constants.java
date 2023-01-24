@@ -53,7 +53,7 @@ public final class Constants {
 
     public static final double SWERVE_INCHES_PER_ROTATION = 12.5 * 0.976;
     public static final double SWERVE_METER_PER_ROTATION = Units.inchesToMeters(SWERVE_INCHES_PER_ROTATION);
-    public static final double SWERVE_DRIVE_P = 0.1;
+    public static final double SWERVE_DRIVE_P = 5;
     public static final double SWERVE_DRIVE_D = 0.00;
     public static final double SWERVE_DRIVE_I = 0.00;
     public static final double SWERVE_DRIVE_F = 0.00;
@@ -70,10 +70,10 @@ public final class Constants {
      * 3 -> Right Back
      */
     public static final SimpleMotorFeedforward[] DRIVE_FEEDFORWARD = {
-            new SimpleMotorFeedforward(0.17763, 2.7731, 0.5),
-            new SimpleMotorFeedforward(0.17763, 2.7731, 0.5),
-            new SimpleMotorFeedforward(0.17763, 2.7731, 0.5),
-            new SimpleMotorFeedforward(0.17763, 2.7731, 0.5)};
+            new SimpleMotorFeedforward(0.17763, 2.7731, 0.0),
+            new SimpleMotorFeedforward(0.17763, 2.7731, 0.0),
+            new SimpleMotorFeedforward(0.17763, 2.7731, 0.0),
+            new SimpleMotorFeedforward(0.17763, 2.7731, 0.0)};
 
 
     /**
@@ -95,10 +95,10 @@ public final class Constants {
     }, new double[]{0, 0, 0, 0});
 
     // 0.307975 is 12.125 in inches
-    public static final @NotNull Translation2d SWERVE_LEFT_FRONT_LOCATION = new Translation2d(0.307975, 0.307975);
-    public static final @NotNull Translation2d SWERVE_LEFT_BACK_LOCATION = new Translation2d(-0.307975, 0.307975);
-    public static final @NotNull Translation2d SWERVE_RIGHT_FRONT_LOCATION = new Translation2d(0.307975, -0.307975);
-    public static final @NotNull Translation2d SWERVE_RIGHT_BACK_LOCATION = new Translation2d(-0.307975, -0.307975);
+    public static final @NotNull Translation2d SWERVE_LEFT_FRONT_LOCATION = new Translation2d(0.26352, 0.26352);
+    public static final @NotNull Translation2d SWERVE_LEFT_BACK_LOCATION = new Translation2d(-0.26352, 0.26352);
+    public static final @NotNull Translation2d SWERVE_RIGHT_FRONT_LOCATION = new Translation2d(0.26352, -0.26352);
+    public static final @NotNull Translation2d SWERVE_RIGHT_BACK_LOCATION = new Translation2d(-0.26352, -0.26352);
     public static final @NotNull Translation2d @NotNull [] SWERVE_MODULE_LOCATIONS = {
             SWERVE_LEFT_FRONT_LOCATION,
             SWERVE_LEFT_BACK_LOCATION,
@@ -137,7 +137,7 @@ public final class Constants {
         /**
          * Normal acceleration limit while driving. This ensures that the driver can't tip the robot.
          */
-        NORMAL_DRIVING(new KinematicLimit(4.2, 5, Math.PI * 2 * 6));
+        NORMAL_DRIVING(new KinematicLimit(4, 5000, Math.PI * 2 * 10));
         public final KinematicLimit kinematicLimit;
 
         KinematicLimits(KinematicLimit kinematicLimit) {
