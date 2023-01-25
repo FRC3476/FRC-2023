@@ -691,7 +691,7 @@ public final class Drive extends AbstractSubsystem {
                     inputs.getRotation() * MAX_TELEOP_TURN_SPEED,
                     RobotTracker.getInstance().getGyroAngle());
             swerveDrive(chassisSpeeds, KinematicLimits.NORMAL_DRIVING.kinematicLimit, EXPECTED_TELEOP_DRIVE_DT);
-        } else if (angleMeasure >= -9) {
+        } else if (angleMeasure <= -9) {
             ChassisSpeeds chassisSpeeds = ChassisSpeeds.fromFieldRelativeSpeeds(
                     -AUTO_BALANCING_VELOCITY,
                     DRIVE_HIGH_SPEED_M * inputs.getY(),

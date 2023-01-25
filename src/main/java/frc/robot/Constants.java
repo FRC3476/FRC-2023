@@ -30,7 +30,7 @@ public final class Constants {
     public static final int DEFAULT_PERIODS_PER_LOG = 20;
 
     //Drive Constants
-    public static final int AUTO_BALANCING_VELOCITY = 10;
+    public static final double AUTO_BALANCING_VELOCITY = 0.5;
     public static final int DRIVE_PERIOD = 20;
 
     public static final int DRIVE_LEFT_FRONT_ID = 11;
