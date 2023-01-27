@@ -19,6 +19,8 @@ import java.nio.file.Files;
 
 public final class Constants {
 
+    public static final double SECONDS_PER_MINUTE = 60;
+
     public static final boolean IS_PRACTICE = Files.exists(new File("/home/lvuser/practice").toPath());
     public static final boolean USE_CANCODERS = false;
 
@@ -121,7 +123,7 @@ public final class Constants {
     public static final int SWERVE_DRIVE_MOTOR_CURRENT_LIMIT = 15;
     public static final int SWERVE_DRIVE_VOLTAGE_LIMIT = 12;
 
-    public static final double SWERVE_DRIVE_MOTOR_REDUCTION = 1 / 6.75;
+    public static final double SWERVE_DRIVE_MOTOR_REDUCTION = 1 / 6.75; // L2 gear ratio
     // TurnPID
 
     public static final double DEFAULT_TURN_P = 10.0;
@@ -132,6 +134,7 @@ public final class Constants {
     public static final double EXPECTED_TELEOP_DRIVE_DT = 0.02;
 
     public static final double EXPECTED_AUTO_DRIVE_DT = DRIVE_PERIOD / 1000.0;
+    public static final double ALLOWED_SWERVE_ANGLE_ERROR = 2;
 
     public enum KinematicLimits {
         /**
