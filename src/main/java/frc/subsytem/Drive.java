@@ -286,7 +286,7 @@ public final class Drive extends AbstractSubsystem {
      * @return Returns requested drive wheel velocity in Meters per second
      */
     private double getSwerveDriveVelocity(int motorNum) {
-        return (swerveDriveMotors[motorNum].getEncoder().getVelocity() / 60.0)
+        return (swerveDriveMotors[motorNum].getEncoder().getVelocity() / SECONDS_PER_MINUTE)
                 * Constants.SWERVE_DRIVE_MOTOR_REDUCTION
                 * SWERVE_METER_PER_ROTATION;
     }
@@ -360,7 +360,7 @@ public final class Drive extends AbstractSubsystem {
 
             double angleDiff = getAngleDiff(moduleState.angle.getDegrees(), currentAngle);
 
-            if (Math.abs(angleDiff) > 2) {
+            if (Math.abs(angleDiff) > ALLOWED_SWERVE_ANGLE_ERROR) {
                 setSwerveMotorPosition(i, getRelativeSwervePosition(i) + angleDiff);
             } else {
                 swerveMotors[i].set(0);
@@ -661,7 +661,7 @@ public final class Drive extends AbstractSubsystem {
             if (relPos < 0) relPos += 360;
             logData("Swerve Motor " + i + " Relative Position", relPos);
             logData("Swerve Motor " + i + " Absolute Position", getWheelRotation(i));
-            logData("Drive Motor " + i + " Velocity", getSwerveDriveVelocity(i) / 60.0d);
+            logData("Drive Motor " + i + " Velocity", getSwerveDriveVelocity(i) / SECONDS_PER_MINUTE);
             logData("Drive Motor " + i + " Current", swerveDriveMotors[i].getOutputCurrent());
             logData("Swerve Motor " + i + " Current", swerveMotors[i].getOutputCurrent());
             logData("Swerve Motor " + i + " Temp", swerveMotors[i].getMotorTemperature());
