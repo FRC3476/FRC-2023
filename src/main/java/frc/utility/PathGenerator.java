@@ -14,6 +14,7 @@ import frc.robot.Constants;
 import java.util.ArrayList;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ForkJoinPool;
 
 import static frc.robot.Constants.*;
 
@@ -85,6 +86,8 @@ public class PathGenerator {
             } else if (Math.abs(
                     trajectory.getStates().get(0).velocityMetersPerSecond - robotVelocityNorm) > MAX_VELOCITY_ERROR_NEW_PATH) {
                 DriverStation.reportError("Failed to generate trajectory: initial velocity too far off actual", false);
+                // If we're getting this we likely need to increase VELOCITY_VECTOR_LEN_SCALE so that the path is more
+                // straight, at the beginning of it
                 return Optional.empty();
             }
             if (isTrajectoryInBounds(trajectory)) {
@@ -93,7 +96,7 @@ public class PathGenerator {
                 DriverStation.reportError("Failed to generate trajectory: trajectory goes out of bounds", false);
                 return Optional.empty();
             }
-        });
+        }, ForkJoinPool.commonPool());
     }
 
     public static boolean isTrajectoryInBounds(Trajectory trajectory) {
@@ -107,7 +110,7 @@ public class PathGenerator {
             }
 
             // Check bounds of the grids
-            if (state.poseMeters.getTranslation().getY() > GRIDS_START_Y + HALF_ROBOT_LENGTH &&
+            if (state.poseMeters.getTranslation().getY() > GRIDS_START_Y - HALF_ROBOT_LENGTH &&
                     (state.poseMeters.getTranslation().getX() > GRIDS_RED_X - HALF_ROBOT_WIDTH ||
                             state.poseMeters.getTranslation().getX() < GRIDS_BLUE_X + HALF_ROBOT_WIDTH)) {
                 return false;
