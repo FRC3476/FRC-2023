@@ -10,6 +10,8 @@ import edu.wpi.first.math.trajectory.constraint.CentripetalAccelerationConstrain
 import edu.wpi.first.math.trajectory.constraint.TrajectoryConstraint;
 import edu.wpi.first.wpilibj.DriverStation;
 import frc.robot.Constants;
+import org.joml.Intersectiond;
+import org.joml.PolygonsIntersection;
 
 import java.util.ArrayList;
 import java.util.Optional;
@@ -99,23 +101,120 @@ public class PathGenerator {
         }, ForkJoinPool.commonPool());
     }
 
+    public static final float FIELD_HEIGHT_METERS = (float) Constants.FIELD_HEIGHT_METERS;
+    public static final float FIELD_WIDTH_METERS = (float) Constants.FIELD_WIDTH_METERS;
+
+
     public static boolean isTrajectoryInBounds(Trajectory trajectory) {
+        Trajectory.State prev = trajectory.getStates().get(0);
         for (var state : trajectory.getStates()) {
-            // Check bounds of the field
-            if (state.poseMeters.getTranslation().getX() > FIELD_WALL_RIGHT_X - HALF_ROBOT_WIDTH ||
-                    state.poseMeters.getTranslation().getX() < FIELD_WALL_LEFT_X + HALF_ROBOT_WIDTH ||
-                    state.poseMeters.getTranslation().getY() > FIELD_WALL_TOP_Y - HALF_ROBOT_LENGTH ||
-                    state.poseMeters.getTranslation().getY() < FIELD_WALL_BOTTOM_Y + HALF_ROBOT_LENGTH) {
-                return false;
+            for (var testPoint : testPoints) {
+                float x = testPoint[0] + (float) state.poseMeters.getTranslation().getX();
+                float y = testPoint[1] + (float) state.poseMeters.getTranslation().getY();
+
+                if (!intersectionTest.testPoint(x, y)) {
+                    return false;
+                }
             }
 
-            // Check bounds of the grids
-            if (state.poseMeters.getTranslation().getY() > GRIDS_START_Y - HALF_ROBOT_LENGTH &&
-                    (state.poseMeters.getTranslation().getX() > GRIDS_RED_X - HALF_ROBOT_WIDTH ||
-                            state.poseMeters.getTranslation().getX() < GRIDS_BLUE_X + HALF_ROBOT_WIDTH)) {
+            // Do intersection test between to detect if we're touching the boundary between the 2 protected zones.
+            // Since it's long and thin we can't just do intersection tests with the corners of the robot.
+            if (Intersectiond.testAabAab(
+                    //robot bounds
+                    //lower point
+                    prev.poseMeters.getTranslation().getX() - HALF_ROBOT_WIDTH, //x
+                    prev.poseMeters.getTranslation().getY() - HALF_ROBOT_LENGTH, //y
+                    0, //z
+                    //upper point
+                    prev.poseMeters.getTranslation().getX() + HALF_ROBOT_WIDTH, //x
+                    prev.poseMeters.getTranslation().getY() + HALF_ROBOT_LENGTH, //y
+                    1, //z
+
+                    //target bounds
+                    //lower point
+                    GRIDS_RED_X, //x
+                    GRIDS_START_Y, //y
+                    0, //z
+                    //upper point
+                    GRIDS_RED_X + COMMUNITY_BOARDER_LENGTH, //x
+                    GRIDS_START_Y + COMMUNITY_BOARDER_HEIGHT, //y
+                    1 //z
+            ) || Intersectiond.testAabAab(
+                    //robot bounds
+                    //lower point
+                    prev.poseMeters.getTranslation().getX() - HALF_ROBOT_WIDTH, //x
+                    prev.poseMeters.getTranslation().getY() - HALF_ROBOT_LENGTH, //y
+                    0, //z
+                    //upper point
+                    prev.poseMeters.getTranslation().getX() + HALF_ROBOT_WIDTH, //x
+                    prev.poseMeters.getTranslation().getY() + HALF_ROBOT_LENGTH, //y
+                    1, //z
+
+                    //target bounds
+                    //lower point
+                    GRIDS_BLUE_X - COMMUNITY_BOARDER_LENGTH, //x
+                    GRIDS_START_Y, //y
+                    0, //z
+                    //upper point
+                    GRIDS_RED_X, //x
+                    GRIDS_START_Y + COMMUNITY_BOARDER_HEIGHT, //y
+                    1 //z
+            )) {
                 return false;
             }
         }
         return true;
     }
+
+    private static final float[] vertices = new float[]{
+            //x, y
+            //Field boundary
+            0, -FIELD_HEIGHT_METERS / 2,
+            0, FIELD_HEIGHT_METERS / 2,
+            FIELD_WIDTH_METERS, FIELD_HEIGHT_METERS / 2,
+            FIELD_WIDTH_METERS, -FIELD_HEIGHT_METERS / 2,
+
+            //Remove the Grids on the red side
+            0, GRIDS_START_Y,
+            0, FIELD_HEIGHT_METERS / 2,
+            GRIDS_RED_X, FIELD_HEIGHT_METERS / 2,
+            GRIDS_RED_X, GRIDS_START_Y,
+
+            //Remove the Grids on the blue side
+            GRIDS_BLUE_X, GRIDS_START_Y,
+            GRIDS_BLUE_X, FIELD_HEIGHT_METERS / 2,
+            FIELD_WIDTH_METERS, FIELD_HEIGHT_METERS / 2,
+            FIELD_WIDTH_METERS, GRIDS_START_Y,
+
+            //Remove the charging station on the red side
+            CHARGING_STATION_RED_LOWER_LEFT_X, CHARGING_STATION_LOWER_LEFT_Y,
+            CHARGING_STATION_RED_LOWER_LEFT_X, CHARGING_STATION_LOWER_LEFT_Y + CHARGING_STATION_HEIGHT,
+            CHARGING_STATION_RED_LOWER_LEFT_X + CHARGING_STATION_WIDTH, CHARGING_STATION_LOWER_LEFT_Y + CHARGING_STATION_HEIGHT,
+            CHARGING_STATION_RED_LOWER_LEFT_X + CHARGING_STATION_WIDTH, CHARGING_STATION_LOWER_LEFT_Y,
+
+            //Remove the charging station on the blue side
+            CHARGING_STATION_BLUE_LOWER_LEFT_X, CHARGING_STATION_LOWER_LEFT_Y,
+            CHARGING_STATION_BLUE_LOWER_LEFT_X, CHARGING_STATION_LOWER_LEFT_Y + CHARGING_STATION_HEIGHT,
+            CHARGING_STATION_BLUE_LOWER_LEFT_X + CHARGING_STATION_WIDTH, CHARGING_STATION_LOWER_LEFT_Y + CHARGING_STATION_HEIGHT,
+            CHARGING_STATION_BLUE_LOWER_LEFT_X + CHARGING_STATION_WIDTH, CHARGING_STATION_LOWER_LEFT_Y,
+    };
+
+    private static final int[] polygonStartIndices = new int[]{
+            0, 4, 8, 12, 16
+    };
+
+
+    private static final float[][] testPoints = new float[][]{
+            {-HALF_ROBOT_LENGTH, -HALF_ROBOT_WIDTH},
+            {-HALF_ROBOT_LENGTH, HALF_ROBOT_WIDTH},
+            {HALF_ROBOT_LENGTH, HALF_ROBOT_WIDTH},
+            {HALF_ROBOT_LENGTH, -HALF_ROBOT_WIDTH}
+    };
+
+
+    private static final PolygonsIntersection intersectionTest = new PolygonsIntersection(
+            vertices,
+            polygonStartIndices,
+            vertices.length / 2
+    );
 }
