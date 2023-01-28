@@ -346,15 +346,11 @@ public class Robot extends TimedRobot {
         SmartDashboard.putNumber("Time (seconds)", Timer.getFPGATimestamp());
     }
 
-    double autonomousStartTime;
-    double autonomousIntakePower;
-
     /**
      * Used to remember the last game piece picked up to apply some holding power.
      */
     static final int CONE = 1;
     static final int CUBE = 2;
-    static final int NOTHING = 3;
     int lastGamePiece;
 
     @Override
@@ -405,6 +401,6 @@ public class Robot extends TimedRobot {
 
         if (xbox.getRisingEdge(XboxButtons.A)) {
             robotTracker.resetPose(new Pose2d(robotTracker.getLatestPose().getTranslation(), new Rotation2d()));
-            }
         }
     }
+}
