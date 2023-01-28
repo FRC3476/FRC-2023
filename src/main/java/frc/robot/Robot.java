@@ -19,10 +19,8 @@ import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
-import frc.subsytem.Drive;
+import frc.subsytem.*;
 import frc.subsytem.Drive.DriveState;
-import frc.subsytem.RobotTracker;
-import frc.subsytem.VisionHandler;
 import frc.utility.Controller;
 import frc.utility.Controller.XboxButtons;
 import frc.utility.ControllerDriveInputs;
@@ -43,8 +41,11 @@ public class Robot extends TimedRobot {
     private @NotNull Drive drive;
     private @NotNull RobotTracker robotTracker;
     private @NotNull VisionHandler visionHandler;
+    private @NotNull Intake intake;
+    private @NotNull Arm arm;
 
     private @NotNull Controller xbox;
+    private @NotNull Controller buttonPanel;
 
 
     // Autonomous
@@ -179,73 +180,11 @@ public class Robot extends TimedRobot {
      * The arm is a NEO on Everybud.
      * The intake is a NEO 550 on Everybud.
      */
-    CANSparkMax arm = new CANSparkMax(5, CANSparkMaxLowLevel.MotorType.kBrushless);
-    CANSparkMax intake = new CANSparkMax(6, CANSparkMaxLowLevel.MotorType.kBrushless);
-
-    /**
-     * The starter code uses the most generic joystick class.
-     * <p>
-     * The reveal video was filmed using a logitech gamepad set to
-     * directinput mode (switch set to D on the bottom). You may want
-     * to use the XBoxController class with the gamepad set to XInput
-     * mode (switch set to X on the bottom) or a different controller
-     * that you feel is more comfortable.
-     */
-    Joystick j = new Joystick(0);
 
     /*
      * Magic numbers. Use these to adjust settings.
      */
 
-    /**
-     * How many amps the arm motor can use.
-     */
-    static final int ARM_CURRENT_LIMIT_A = 20;
-
-    /**
-     * Percent output to run the arm up/down at
-     */
-    static final double ARM_OUTPUT_POWER = 0.4;
-
-    /**
-     * How many amps the intake can use while picking up
-     */
-    static final int INTAKE_CURRENT_LIMIT_A = 25;
-
-    /**
-     * How many amps the intake can use while holding
-     */
-    static final int INTAKE_HOLD_CURRENT_LIMIT_A = 5;
-
-    /**
-     * Percent output for intaking
-     */
-    static final double INTAKE_OUTPUT_POWER = 1.0;
-
-    /**
-     * Percent output for holding
-     */
-    static final double INTAKE_HOLD_POWER = 0.07;
-
-    /**
-     * Time to extend or retract arm in auto
-     */
-    static final double ARM_EXTEND_TIME_S = 2.0;
-
-    /**
-     * Time to throw game piece in auto
-     */
-    static final double AUTO_THROW_TIME_S = 0.375;
-
-    /**
-     * Time to drive back in auto
-     */
-    static final double AUTO_DRIVE_TIME = 6.0;
-
-    /**
-     * Speed to drive backwards in auto
-     */
-    static final double AUTO_DRIVE_SPEED = -0.25;
 
     /**
      * This method is run once when the robot is first started up.
@@ -262,11 +201,6 @@ public class Robot extends TimedRobot {
          * If either one is reversed, change that here too. Arm out is defined
          * as positive, arm in is negative.
          */
-        arm.setInverted(true);
-        arm.setIdleMode(CANSparkMax.IdleMode.kBrake);
-        arm.setSmartCurrentLimit(ARM_CURRENT_LIMIT_A);
-        intake.setInverted(false);
-        intake.setIdleMode(CANSparkMax.IdleMode.kBrake);
 
 
         //Our robotInit()
@@ -275,7 +209,9 @@ public class Robot extends TimedRobot {
         drive = Drive.getInstance();
         robotTracker = RobotTracker.getInstance();
         visionHandler = VisionHandler.getInstance();
+        intake = Intake.getInstance();
         xbox = new Controller(0);
+        buttonPanel = new Controller(1);
 
         startSubsystems();
         AutonomousContainer.getInstance().setDebugPrints(true);
@@ -311,31 +247,6 @@ public class Robot extends TimedRobot {
         }
     }
 
-    /**
-     * Set the arm output power. Positive is out, negative is in.
-     *
-     * @param percent
-     */
-    public void setArmMotor(double percent) {
-        arm.set(percent);
-        SmartDashboard.putNumber("arm power (%)", percent);
-        SmartDashboard.putNumber("arm motor current (amps)", arm.getOutputCurrent());
-        SmartDashboard.putNumber("arm motor temperature (C)", arm.getMotorTemperature());
-    }
-
-    /**
-     * Set the arm output power.
-     *
-     * @param percent desired speed
-     * @param amps    current limit
-     */
-    public void setIntakeMotor(double percent, int amps) {
-        intake.set(percent);
-        intake.setSmartCurrentLimit(amps);
-        SmartDashboard.putNumber("intake power (%)", percent);
-        SmartDashboard.putNumber("intake motor current (amps)", intake.getOutputCurrent());
-        SmartDashboard.putNumber("intake motor temperature (C)", intake.getMotorTemperature());
-    }
 
     /**
      * This method is called every 20 ms, no matter the mode. It runs after
@@ -355,42 +266,40 @@ public class Robot extends TimedRobot {
 
     @Override
     public void teleopPeriodic() {
-        double armPower;
-        if (j.getRawButton(7)) {
+        if (buttonPanel.getRawButton(1)) {
             // lower the arm
-            armPower = -ARM_OUTPUT_POWER;
-        } else if (j.getRawButton(5)) {
+            arm.setArmMotor(-Constants.ARM_OUTPUT_POWER);
+        } else if (buttonPanel.getRawButton(2)) {
             // raise the arm
-            armPower = ARM_OUTPUT_POWER;
+            arm.setArmMotor(Constants.ARM_OUTPUT_POWER);
         } else {
             // do nothing and let it sit where it is
-            armPower = 0.0;
+            arm.setArmMotor(0);
         }
-        setArmMotor(armPower);
 
-        double intakePower;
-        int intakeAmps;
-        if (j.getRawButton(8)) {
+        double intakePower = 0;
+        int intakeAmps = 0;
+
+        if (buttonPanel.getRawButton(3)) {
             // cube in or cone out
-            intakePower = INTAKE_OUTPUT_POWER;
-            intakeAmps = INTAKE_CURRENT_LIMIT_A;
+            intakePower = Constants.INTAKE_OUTPUT_POWER;
+            intakeAmps = Constants.INTAKE_CURRENT_LIMIT_A;
             lastGamePiece = CUBE;
-        } else if (j.getRawButton(6)) {
+        } else if (buttonPanel.getRawButton(4)) {
             // cone in or cube out
-            intakePower = -INTAKE_OUTPUT_POWER;
-            intakeAmps = INTAKE_CURRENT_LIMIT_A;
+            intakePower = -Constants.INTAKE_OUTPUT_POWER;
+            intakeAmps = Constants.INTAKE_CURRENT_LIMIT_A;
             lastGamePiece = CONE;
         } else if (lastGamePiece == CUBE) {
-            intakePower = INTAKE_HOLD_POWER;
-            intakeAmps = INTAKE_HOLD_CURRENT_LIMIT_A;
+            intakePower = Constants.INTAKE_HOLD_POWER;
+            intakeAmps = Constants.INTAKE_HOLD_CURRENT_LIMIT_A;
         } else if (lastGamePiece == CONE) {
-            intakePower = -INTAKE_HOLD_POWER;
-            intakeAmps = INTAKE_HOLD_CURRENT_LIMIT_A;
+            intakePower = -Constants.INTAKE_HOLD_POWER;
+            intakeAmps = Constants.INTAKE_HOLD_CURRENT_LIMIT_A;
         } else {
-            intakePower = 0.0;
-            intakeAmps = 0;
+            intake.setIntakeMotor(0, 0);
         }
-        setIntakeMotor(intakePower, intakeAmps);
+        intake.setIntakeMotor(intakePower, intakeAmps);
 
         /*
          * Negative signs here because the values from the analog sticks are backwards

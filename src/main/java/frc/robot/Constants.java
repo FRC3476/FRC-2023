@@ -166,5 +166,39 @@ public final class Constants {
     public static final double SWERVE_CRUISE_VELOCITY =
             ((360 * 7 * FALCON_ENCODER_TICKS_PER_ROTATIONS) / SWERVE_MOTOR_POSITION_CONVERSION_FACTOR) / 360; //6.5 rot/s
     public static final double MAX_ANGULAR_ACCELERATION = Math.toRadians(360 * 22);
+    /**
+     * How many amps the intake can use while picking up
+     */
+    public static final int INTAKE_CURRENT_LIMIT_A = 25;
 
+    /**
+     * How many amps the intake can use while holding
+     */
+    public static final int INTAKE_HOLD_CURRENT_LIMIT_A = 5;
+
+    /**
+     * Percent output for intaking
+     */
+    public static final double INTAKE_OUTPUT_POWER = 1.0;
+
+    /**
+     * Percent output for holding
+     */
+    public static final double INTAKE_HOLD_POWER = 0.07;
+    public static final int INTAKE_PERIOD = 20;
+    /**
+     * How many amps the arm motor can use.
+     */
+    public static final int ARM_CURRENT_LIMIT_A = 20;
+
+    /**
+     * Percent output to run the arm up/down at
+     */
+    public static final double ARM_OUTPUT_POWER = 0.4;
+
+    /**
+     * Time to extend or retract arm in auto
+     */
+    public static final double ARM_EXTEND_TIME_S = 2.0;
+    public static final int ARM_PERIOD = 20;
 }
