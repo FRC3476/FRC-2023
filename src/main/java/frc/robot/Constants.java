@@ -203,4 +203,37 @@ public final class Constants {
 
     public static final double FIELD_HEIGHT_METERS = 8.0137;
     public static final double FIELD_WIDTH_METERS = 16.54175;
+
+
+    // Realtime path generation
+    public static final double START_POS_PREDICT_AHEAD = 0.1;
+    public static final double END_VECTOR_LEN = 0.5;
+    public static final int VELOCITY_VECTOR_LEN_SCALE = 1;
+    public static final double MAX_VELOCITY_ERROR_NEW_PATH = 0.05;
+
+    public static final float GRIDS_RED_X = 1.373f;
+    public static final float GRIDS_BLUE_X = 15.168f;
+    public static final float GRIDS_START_Y = -1.5f;
+
+    public static final float COMMUNITY_BOARDER_LENGTH = 1.5f;
+    public static final float COMMUNITY_BOARDER_HEIGHT = 0.025f;
+
+    public static final float FIELD_WALL_RIGHT_X = (float) Constants.FIELD_WIDTH_METERS;
+    public static final float FIELD_WALL_LEFT_X = 0;
+    public static final float FIELD_WALL_TOP_Y = 4.012f;
+    public static final float FIELD_WALL_BOTTOM_Y = -FIELD_WALL_TOP_Y;
+
+    public static final float CHARGING_STATION_WIDTH =
+            (float) Units.inchesToMeters(76.125);
+    public static final float CHARGING_STATION_HEIGHT =
+            (float) Units.inchesToMeters(97.25);
+
+    public static final float CHARGING_STATION_RED_LOWER_LEFT_X = 2.911f;
+    public static final float CHARGING_STATION_BLUE_LOWER_LEFT_X = 11.689f;
+    public static final float CHARGING_STATION_LOWER_LEFT_Y = -0.047f;
+
+    public static final float ROBOT_WIDTH = 0.8128f;
+    public static final float HALF_ROBOT_WIDTH = ROBOT_WIDTH / 2;
+    public static final float ROBOT_LENGTH = 0.8128f;
+    public static final float HALF_ROBOT_LENGTH = ROBOT_LENGTH / 2;
 }
