@@ -5,9 +5,13 @@ package frc.subsytem;
 import com.ctre.phoenix.sensors.AbsoluteSensorRange;
 import com.ctre.phoenix.sensors.CANCoder;
 import com.ctre.phoenix.sensors.CANCoderStatusFrame;
+import com.revrobotics.AbsoluteEncoder;
 import com.revrobotics.CANSparkMax;
+import com.revrobotics.CANSparkMax.ControlType;
 import com.revrobotics.CANSparkMax.IdleMode;
 import com.revrobotics.CANSparkMaxLowLevel.MotorType;
+import com.revrobotics.SparkMaxAbsoluteEncoder;
+import com.revrobotics.SparkMaxAbsoluteEncoder.Type;
 import edu.wpi.first.math.controller.HolonomicDriveController;
 import edu.wpi.first.math.controller.ProfiledPIDController;
 import edu.wpi.first.math.geometry.Pose2d;
@@ -44,7 +48,6 @@ import static frc.robot.Constants.*;
 
 
 public final class Drive extends AbstractSubsystem {
-
     private static final Pose2d IDENTITY_POSE = new Pose2d();
 
     private final SwerveSetpointGenerator setpointGenerator = new SwerveSetpointGenerator(SWERVE_DRIVE_KINEMATICS);
@@ -114,14 +117,19 @@ public final class Drive extends AbstractSubsystem {
     /**
      * Absolute Encoders for the motors that turn the wheel
      */
+    private final @Nullable CANCoder[] swerveCanCoders;
 
-    private final @NotNull CANCoder[] swerveCanCoders = new CANCoder[4];
+
+    /**
+     * Absolute Encoders for the motors that turn the wheel
+     */
+
+    private final @Nullable SparkMaxAbsoluteEncoder[] swerveSparkAbsoluteEncoders = new SparkMaxAbsoluteEncoder[4];
 
     private Drive() {
         super(Constants.DRIVE_PERIOD, 5);
 
         final @NotNull CANSparkMax leftFrontSpark, leftBackSpark, rightFrontSpark, rightBackSpark;
-        final @NotNull CANCoder leftFrontCanCoder, leftBackCanCoder, rightFrontCanCoder, rightBackCanCoder;
         final @NotNull CANSparkMax leftFrontSparkSwerve, leftBackSparkSwerve, rightFrontSparkSwerve, rightBackSparkSwerve;
         // Swerve Drive Motors
         leftFrontSpark = new CANSparkMax(Constants.DRIVE_LEFT_FRONT_ID, MotorType.kBrushless);
@@ -139,10 +147,6 @@ public final class Drive extends AbstractSubsystem {
         rightFrontSparkSwerve = new CANSparkMax(Constants.DRIVE_RIGHT_FRONT_SWERVE_ID, MotorType.kBrushless);
         rightBackSparkSwerve = new CANSparkMax(Constants.DRIVE_RIGHT_BACK_SWERVE_ID, MotorType.kBrushless);
 
-        leftFrontCanCoder = new CANCoder(Constants.CAN_LEFT_FRONT_ID);
-        leftBackCanCoder = new CANCoder(Constants.CAN_LEFT_BACK_ID);
-        rightFrontCanCoder = new CANCoder(Constants.CAN_RIGHT_FRONT_ID);
-        rightBackCanCoder = new CANCoder(Constants.CAN_RIGHT_BACK_ID);
 
         swerveMotors[0] = leftFrontSparkSwerve;
         swerveMotors[1] = leftBackSparkSwerve;
@@ -154,10 +158,22 @@ public final class Drive extends AbstractSubsystem {
         swerveDriveMotors[2] = rightFrontSpark;
         swerveDriveMotors[3] = rightBackSpark;
 
-        swerveCanCoders[0] = leftFrontCanCoder;
-        swerveCanCoders[1] = leftBackCanCoder;
-        swerveCanCoders[2] = rightFrontCanCoder;
-        swerveCanCoders[3] = rightBackCanCoder;
+        if (USE_CANCODERS) {
+            final @NotNull CANCoder leftFrontCanCoder, leftBackCanCoder, rightFrontCanCoder, rightBackCanCoder;
+
+            leftFrontCanCoder = new CANCoder(Constants.CAN_LEFT_FRONT_ID);
+            leftBackCanCoder = new CANCoder(Constants.CAN_LEFT_BACK_ID);
+            rightFrontCanCoder = new CANCoder(Constants.CAN_RIGHT_FRONT_ID);
+            rightBackCanCoder = new CANCoder(Constants.CAN_RIGHT_BACK_ID);
+
+            swerveCanCoders = new CANCoder[4];
+            swerveCanCoders[0] = leftFrontCanCoder;
+            swerveCanCoders[1] = leftBackCanCoder;
+            swerveCanCoders[2] = rightFrontCanCoder;
+            swerveCanCoders[3] = rightBackCanCoder;
+        } else {
+            swerveCanCoders = null;
+        }
 
         for (int i = 0; i < 4; i++) {
             // Sets swerveMotors PID
@@ -177,31 +193,54 @@ public final class Drive extends AbstractSubsystem {
             // This makes motors brake when no RPM is set
             swerveDriveMotors[i].setIdleMode(IdleMode.kCoast);
             swerveMotors[i].setIdleMode(IdleMode.kCoast);
+            isBreaking = false;
+
             swerveMotors[i].setInverted(true);
 
-            swerveCanCoders[i].setStatusFramePeriod(CANCoderStatusFrame.VbatAndFaults, 200);
-            swerveCanCoders[i].setStatusFramePeriod(CANCoderStatusFrame.SensorData, 20);
+            if (USE_CANCODERS) {
+                swerveCanCoders[i].setStatusFramePeriod(CANCoderStatusFrame.VbatAndFaults, 200);
+                swerveCanCoders[i].setStatusFramePeriod(CANCoderStatusFrame.SensorData, 20);
+                swerveCanCoders[i].configAbsoluteSensorRange(AbsoluteSensorRange.Unsigned_0_to_360);
+            } else {
+                swerveSparkAbsoluteEncoders[i] = swerveMotors[i].getAbsoluteEncoder(Type.kDutyCycle);
+                swerveMotors[i].getPIDController().setFeedbackDevice(swerveSparkAbsoluteEncoders[i]);
+                swerveSparkAbsoluteEncoders[i].setPositionConversionFactor(360);
+                swerveSparkAbsoluteEncoders[i].setVelocityConversionFactor(360 / 60.0);
+                swerveMotors[i].getPIDController().setPositionPIDWrappingEnabled(true);
+                swerveMotors[i].getPIDController().setOutputRange(0, 360);
+            }
+
+            swerveMotors[i].burnFlash();
+            swerveDriveMotors[i].burnFlash();
         }
         setDriveState(DriveState.TELEOP);
     }
 
-    public void configCoast() {
-        for (CANSparkMax swerveMotor : swerveMotors) {
-            swerveMotor.setIdleMode(IdleMode.kCoast);
-        }
+    private boolean isBreaking;
 
-        for (CANSparkMax swerveDriveMotor : swerveDriveMotors) {
-            swerveDriveMotor.setIdleMode(IdleMode.kCoast);
+    public synchronized void configCoast() {
+        if (isBreaking) {
+            for (CANSparkMax swerveMotor : swerveMotors) {
+                swerveMotor.setIdleMode(IdleMode.kCoast);
+            }
+
+            for (CANSparkMax swerveDriveMotor : swerveDriveMotors) {
+                swerveDriveMotor.setIdleMode(IdleMode.kCoast);
+            }
+            isBreaking = false;
         }
     }
 
-    public void configBrake() {
-        for (CANSparkMax swerveMotor : swerveMotors) {
-            swerveMotor.setIdleMode(IdleMode.kBrake);
-        }
+    public synchronized void configBrake() {
+        if (!isBreaking) {
+            for (CANSparkMax swerveMotor : swerveMotors) {
+                swerveMotor.setIdleMode(IdleMode.kBrake);
+            }
 
-        for (CANSparkMax swerveDriveMotor : swerveDriveMotors) {
-            swerveDriveMotor.setIdleMode(IdleMode.kBrake);
+            for (CANSparkMax swerveDriveMotor : swerveDriveMotors) {
+                swerveDriveMotor.setIdleMode(IdleMode.kBrake);
+            }
+            isBreaking = true;
         }
     }
 
@@ -209,8 +248,12 @@ public final class Drive extends AbstractSubsystem {
      * @return the relative position of the selected swerve motor in degrees
      */
     private double getRelativeSwervePosition(int motorNum) {
-        return swerveMotors[motorNum].getEncoder().getPosition() *
-                Constants.SWERVE_MOTOR_POSITION_CONVERSION_FACTOR * 360;
+        if (USE_CANCODERS) {
+            return swerveMotors[motorNum].getEncoder().getPosition() *
+                    Constants.SWERVE_MOTOR_POSITION_CONVERSION_FACTOR * 360;
+        } else {
+            return swerveSparkAbsoluteEncoders[motorNum].getPosition();
+        }
     }
 
     /**
@@ -220,7 +263,18 @@ public final class Drive extends AbstractSubsystem {
      * @param position the target position in degrees (0-360)
      */
     private void setSwerveMotorPosition(int motorNum, double position) {
-        swerveMotors[motorNum].getEncoder().setPosition((position / Constants.SWERVE_MOTOR_POSITION_CONVERSION_FACTOR) / 360);
+        if (USE_CANCODERS) {
+            swerveMotors[motorNum].getPIDController().setReference(
+                    (position / Constants.SWERVE_MOTOR_POSITION_CONVERSION_FACTOR) / 360.0, ControlType.kPosition
+            );
+        } else {
+            position = position % 360;
+            if (position < 0) {
+                position += 360;
+            }
+
+            swerveMotors[motorNum].getPIDController().setReference(position, ControlType.kPosition);
+        }
     }
 
 
@@ -236,7 +290,7 @@ public final class Drive extends AbstractSubsystem {
      * @return Returns requested drive wheel velocity in Meters per second
      */
     private double getSwerveDriveVelocity(int motorNum) {
-        return swerveDriveMotors[motorNum].getEncoder().getVelocity()
+        return (swerveDriveMotors[motorNum].getEncoder().getVelocity() / SECONDS_PER_MINUTE)
                 * Constants.SWERVE_DRIVE_MOTOR_REDUCTION
                 * SWERVE_METER_PER_ROTATION;
     }
@@ -270,7 +324,8 @@ public final class Drive extends AbstractSubsystem {
                 DRIVE_HIGH_SPEED_M * inputs.getX(),
                 DRIVE_HIGH_SPEED_M * inputs.getY(),
                 inputs.getRotation() * MAX_TELEOP_TURN_SPEED,
-                RobotTracker.getInstance().getGyroAngle());
+                RobotTracker.getInstance().getGyroAngle()
+                        .plus(new Rotation2d(RobotTracker.getInstance().getAngularVelocity() * EXPECTED_TELEOP_DRIVE_DT / 2)));
         swerveDrive(chassisSpeeds, KinematicLimits.NORMAL_DRIVING.kinematicLimit, EXPECTED_TELEOP_DRIVE_DT);
     }
 
@@ -364,13 +419,18 @@ public final class Drive extends AbstractSubsystem {
 
             double angleDiff = getAngleDiff(moduleState.angle.getDegrees(), currentAngle);
 
-            setSwerveMotorPosition(i, getRelativeSwervePosition(i) + angleDiff);
+            if (Math.abs(angleDiff) > ALLOWED_SWERVE_ANGLE_ERROR) {
+                setSwerveMotorPosition(i, getRelativeSwervePosition(i) + angleDiff);
+            } else {
+                swerveMotors[i].set(0);
+            }
 
             setMotorSpeed(i, moduleState.speedMetersPerSecond, setpoint.wheelAccelerations()[i]);
+            //setMotorSpeed(i, 0, 0);
 
-            logData("SwerveModule " + i + " Angle", moduleState.angle.getDegrees());
-            logData("SwerveModule " + i + " Speed", moduleState.speedMetersPerSecond);
-            logData("SwerveModule " + i + " Acceleration", setpoint.wheelAccelerations()[i]);
+            logData("SwerveModule " + i + " Wanted Angle", moduleState.angle.getDegrees());
+            logData("SwerveModule " + i + " Wanted Speed", moduleState.speedMetersPerSecond);
+            logData("SwerveModule " + i + " Wanted Acceleration", setpoint.wheelAccelerations()[i]);
             logData("SwerveModule " + i + " Angle Error", angleDiff);
         }
     }
@@ -664,7 +724,7 @@ public final class Drive extends AbstractSubsystem {
             if (relPos < 0) relPos += 360;
             logData("Swerve Motor " + i + " Relative Position", relPos);
             logData("Swerve Motor " + i + " Absolute Position", getWheelRotation(i));
-            logData("Drive Motor " + i + " Velocity", getSwerveDriveVelocity(i) / 60.0d);
+            logData("Drive Motor " + i + " Velocity", getSwerveDriveVelocity(i) / SECONDS_PER_MINUTE);
             logData("Drive Motor " + i + " Current", swerveDriveMotors[i].getOutputCurrent());
             logData("Swerve Motor " + i + " Current", swerveMotors[i].getOutputCurrent());
             logData("Swerve Motor " + i + " Temp", swerveMotors[i].getMotorTemperature());
@@ -686,7 +746,11 @@ public final class Drive extends AbstractSubsystem {
             if (relPos < 0) relPos += 360;
             return relPos;
         } else {
-            return swerveCanCoders[moduleNumber].getAbsolutePosition();
+            if (USE_CANCODERS) {
+                return swerveCanCoders[moduleNumber].getAbsolutePosition();
+            } else {
+                return swerveSparkAbsoluteEncoders[moduleNumber].getPosition();
+            }
         }
     }
 
@@ -697,7 +761,8 @@ public final class Drive extends AbstractSubsystem {
      * @return distance in meters
      */
     public double getDrivePosition(int moduleNumber) {
-        return swerveMotors[moduleNumber].getEncoder().getPosition()
+        return swerveDriveMotors[moduleNumber].getEncoder().getPosition()
+                * SWERVE_DRIVE_MOTOR_REDUCTION
                 * SWERVE_METER_PER_ROTATION;
     }
 
@@ -707,7 +772,7 @@ public final class Drive extends AbstractSubsystem {
         for (int i = 0; i < 4; i++) {
             swerveModulePositions[i] = new SwerveModulePosition(
                     getDrivePosition(i),
-                    new Rotation2d(getWheelRotation(i)));
+                    Rotation2d.fromDegrees(getWheelRotation(i)));
         }
         return swerveModulePositions;
     }
@@ -717,7 +782,7 @@ public final class Drive extends AbstractSubsystem {
         SwerveModuleState[] swerveModuleStates = new SwerveModuleState[4];
         for (int i = 0; i < 4; i++) {
             swerveModuleStates[i] = new SwerveModuleState(
-                    getSwerveDriveVelocity(i) / 60.0d * SWERVE_METER_PER_ROTATION,
+                    getSwerveDriveVelocity(i),
                     new Rotation2d(getWheelRotation(i)));
         }
         return swerveModuleStates;
@@ -725,11 +790,23 @@ public final class Drive extends AbstractSubsystem {
 
 
     public void setAbsoluteZeros() {
-        for (int i = 0; i < swerveCanCoders.length; i++) {
-            CANCoder swerveCanCoder = swerveCanCoders[i];
-            System.out.println(i + " Setting Zero " + swerveCanCoder.configGetMagnetOffset() + " -> 0");
-            swerveCanCoder.configAbsoluteSensorRange(AbsoluteSensorRange.Unsigned_0_to_360);
-            swerveCanCoder.configMagnetOffset(-(swerveCanCoder.getAbsolutePosition() - swerveCanCoder.configGetMagnetOffset()));
+        if (USE_CANCODERS) {
+            for (int i = 0; i < swerveCanCoders.length; i++) {
+                CANCoder swerveCanCoder = swerveCanCoders[i];
+                System.out.println(i + " Setting Zero " + swerveCanCoder.configGetMagnetOffset() + " -> 0");
+                swerveCanCoder.configAbsoluteSensorRange(AbsoluteSensorRange.Unsigned_0_to_360);
+                swerveCanCoder.configMagnetOffset(
+                        -(swerveCanCoder.getAbsolutePosition() - swerveCanCoder.configGetMagnetOffset())
+                );
+            }
+        } else {
+            for (int i = 0; i < swerveSparkAbsoluteEncoders.length; i++) {
+                AbsoluteEncoder swerveSparkAbsoluteEncoder = swerveSparkAbsoluteEncoders[i];
+                System.out.println(i + " Setting Zero " + swerveSparkAbsoluteEncoder.getZeroOffset() + " -> 0");
+                swerveSparkAbsoluteEncoder.setZeroOffset(
+                        -(swerveSparkAbsoluteEncoder.getPosition() - swerveSparkAbsoluteEncoder.getZeroOffset())
+                );
+            }
         }
     }
 
