@@ -4,8 +4,15 @@ import frc.robot.Constants;
 
 public class SetPosition extends AbstractSubsystem {
 
+    Elevator elevator;
+    TelescopingArm telescopingArm;
+    Grabber grabber;
+
     public SetPosition(int period, int loggingInterval) {
         super(Constants.SET_POSITION_PERIOD, 5);
+        elevator = Elevator.getInstance();
+        telescopingArm = TelescopingArm.getInstance();
+        grabber = Grabber.getInstance();
     }
 
     public enum State {
@@ -23,44 +30,55 @@ public class SetPosition extends AbstractSubsystem {
 
     State previousState;
 
+    /**
+     * @param state - State enum containing an elevator position, telescoping arm position, and a grabber position
+     */
     public void setPosition(State state) {
-        double elevatorHeight = Elevator.getInstance().getPosition();
-        Grabber.getInstance().setPosition(state.grabberPosition);
+        double elevatorHeight = elevator.getPosition();
+        //The grabber usually won't be restricted by anything so we move it first
+        grabber.setPosition(state.grabberPosition);
+
         if (state == State.MIDDLE_STATE) {
+            //This moves the telescoping arm while the elevator isn't in the right spot
             while (elevatorHeight < state.elevatorPosition) {
-                TelescopingArm.getInstance().setPosition(Constants.MIDDLE_NODE_DISTANCE - Constants.GRABBER_LENGTH
+                telescopingArm.setPosition(Constants.MIDDLE_NODE_DISTANCE - Constants.GRABBER_LENGTH
                         - Constants.ELEVATOR_DISTANCE_MIDDLE_HEIGHT);
-                elevatorHeight = Elevator.getInstance().getPosition();
+                elevatorHeight = elevator.getPosition();
             }
-            TelescopingArm.getInstance().setPosition(state.telescopingArmPosition);
-            Grabber.getInstance().setGrabState(Grabber.GrabState.OPEN);
+            telescopingArm.setPosition(state.telescopingArmPosition);
+            grabber.setGrabState(Grabber.GrabState.OPEN);
         }
 
         if (state == State.TOP_STATE) {
+            //This moves the telescoping arm while the elevator is below the middle node
             while (elevatorHeight < State.MIDDLE_STATE.elevatorPosition) {
-                TelescopingArm.getInstance().setPosition(Constants.MIDDLE_NODE_DISTANCE - Constants.GRABBER_LENGTH
+                telescopingArm.setPosition(Constants.MIDDLE_NODE_DISTANCE - Constants.GRABBER_LENGTH
                         - Constants.ELEVATOR_DISTANCE_MIDDLE_HEIGHT);
-                elevatorHeight = Elevator.getInstance().getPosition();
+                elevatorHeight = elevator.getPosition();
             }
+            //This moves the telescoping arm while the elevator i00000000000000000000000000sn't in the right spot
             while (elevatorHeight < state.elevatorPosition) {
-                TelescopingArm.getInstance().setPosition(Constants.TOP_NODE_DISTANCE - Constants.GRABBER_LENGTH
+                telescopingArm.setPosition(Constants.TOP_NODE_DISTANCE - Constants.GRABBER_LENGTH
                         - Constants.ELEVATOR_DISTANCE_TOP_HEIGHT);
-                elevatorHeight = Elevator.getInstance().getPosition();
+                elevatorHeight = elevator.getPosition();
             }
-            TelescopingArm.getInstance().setPosition(state.telescopingArmPosition);
-            Grabber.getInstance().setGrabState(Grabber.GrabState.OPEN);
+            telescopingArm.setPosition(state.telescopingArmPosition);
+            grabber.setGrabState(Grabber.GrabState.OPEN);
         }
 
         if (state == State.BOTTOM_STATE) {
+            //Checks if the robot is at the top node or the middle node
             if (previousState == State.TOP_STATE) {
+                //This moves the telescoping arm while the elevator is above the middle node
                 while (elevatorHeight > State.MIDDLE_STATE.elevatorPosition) {
-                    TelescopingArm.getInstance().setPosition(State.MIDDLE_STATE.telescopingArmPosition);
-                    elevatorHeight = Elevator.getInstance().getPosition();
+                    telescopingArm.setPosition(State.MIDDLE_STATE.telescopingArmPosition);
+                    elevatorHeight = elevator.getPosition();
                 }
             }
+            //This moves the telescoping arm while the elevator isn't in the right spot
             while (elevatorHeight > State.BOTTOM_STATE.elevatorPosition) {
-                TelescopingArm.getInstance().setPosition(State.BOTTOM_STATE.telescopingArmPosition);
-                elevatorHeight = Elevator.getInstance().getPosition();
+                telescopingArm.setPosition(State.BOTTOM_STATE.telescopingArmPosition);
+                elevatorHeight = elevator.getPosition();
             }
         }
         previousState = state;
