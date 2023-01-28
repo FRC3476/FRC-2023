@@ -331,6 +331,10 @@ public final class RobotTracker extends AbstractSubsystem {
         }
     }
 
+    public boolean isOnRedSide() {
+        return getLatestPose().getX() < FIELD_WIDTH_METERS / 2;
+    }
+
 
     /**
      * Coverts data in fixed point notation to a double
