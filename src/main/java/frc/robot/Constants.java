@@ -137,6 +137,7 @@ public final class Constants {
     public static final double ALLOWED_SWERVE_ANGLE_ERROR = 2;
     public static final int SYSTEM_COORDINATOR_PERIOD = 20;
 
+
     public enum KinematicLimits {
         /**
          * Normal acceleration limit while driving. This ensures that the driver can't tip the robot.
@@ -174,6 +175,10 @@ public final class Constants {
     public static final int ELEVATOR_NOMINAL_VOLTAGE = 9;
     public static final int ELEVATOR_SMART_CURRENT_LIMIT = 40;
 
+    // TODO: Figure out how much the elevator is angled at
+    public static final double ELEVATOR_TILT_RADIANS = 0;
+
+
     // Telescoping Arm
     public static final int TELESCOPING_ARM_PERIOD = 20;
     public static final TrapezoidProfile.Constraints TELESCOPING_ARM_CONSTRAINTS
@@ -198,6 +203,9 @@ public final class Constants {
     public static final int GRABBER_NOMINAL_VOLTAGE = 9;
     public static final int GRABBER_SMART_CURRENT_LIMIT = 40;
     public static final int PIVOT_SMART_CURRENT_LIMIT = 40;
+
+    // TODO: Need to determine real grabber length
+    public static final double GRABBER_LENGTH = 0;
 
     // Vision constants
     public static final int VISION_HANDLER_PERIOD = -1;

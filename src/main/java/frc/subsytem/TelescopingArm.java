@@ -43,6 +43,13 @@ public class TelescopingArm extends AbstractSubsystem {
         logData("Goal position", position);
     }
 
+    /**
+     * Gets the arm position in meters
+     */
+    public double getPosition() {
+        return telescopingArmSparkMax.getEncoder().getPosition() / Constants.TELESCOPING_ARM_ROTATIONS_PER_METER;
+    }
+
     private double pastVelocity = 0, pastTime = 0;
 
     @Override

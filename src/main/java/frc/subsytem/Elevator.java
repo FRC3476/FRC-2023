@@ -43,6 +43,13 @@ public class Elevator extends AbstractSubsystem {
         logData("Goal position", position);
     }
 
+    /**
+     * @return Elevator position in meters
+     */
+    public double getPosition() {
+        return elevatorSparkMax.getEncoder().getPosition() / Constants.ELEVATOR_ROTATIONS_PER_METER;
+    }
+
     private double pastVelocity = 0, pastTime = 0;
 
     @Override
