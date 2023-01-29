@@ -2,6 +2,7 @@ package frc.subsytem;
 
 import com.revrobotics.CANSparkMax;
 import com.revrobotics.CANSparkMaxLowLevel;
+import com.revrobotics.SparkMaxPIDController;
 import frc.robot.Constants;
 
 public class Arm extends AbstractSubsystem {
@@ -22,14 +23,18 @@ public class Arm extends AbstractSubsystem {
         arm.setInverted(true);
         arm.setIdleMode(CANSparkMax.IdleMode.kBrake);
         arm.setSmartCurrentLimit(Constants.ARM_CURRENT_LIMIT);
+        SparkMaxPIDController armPIDController = arm.getPIDController();
+        armPIDController.setP(Constants.ARM_P);
+        armPIDController.setI(Constants.ARM_I);
+        armPIDController.setD(Constants.ARM_D);
     }
 
     /**
      * Set the arm position
      *
-     * @param percent
+     * @param angle
      */
     public void setArmMotor(double angle) {
-        
+        arm.getEncoder().setPosition(angle);
     }
 }

@@ -128,35 +128,17 @@ public final class Constants {
     public static final double EXPECTED_TELEOP_DRIVE_DT = 0.2;
 
     public static final double EXPECTED_AUTO_DRIVE_DT = DRIVE_PERIOD / 1000.0;
-
-    public enum KinematicLimits {
-        /**
-         * Normal acceleration limit while driving. This ensures that the driver can't tip the robot.
-         */
-        NORMAL_DRIVING(new KinematicLimit(4.2, 5, Math.PI * 2 * 6));
-        public final KinematicLimit kinematicLimit;
-
-        KinematicLimits(KinematicLimit kinematicLimit) {
-            this.kinematicLimit = kinematicLimit;
-        }
-    }
-
     public static final int MAX_TELEOP_TURN_SPEED = 7;
-
-
     //Robot Tracker
     public static final int ROBOT_TRACKER_PERIOD = 20;
     /**
      * Acceleration due to gravity in meters per second squared. (9.80665 m/s^2)
      */
     public static final double GRAVITY = 9.80665;
-
     public static final int PIGEON_CAN_ID = 30;
-
     // Vision constants
     public static final int VISION_HANDLER_PERIOD = -1;
     public static final double COAST_AFTER_DISABLE_TIME = 0.5;
-
     public static final double FIELD_HEIGHT_METERS = 8.0137;
     public static final double FIELD_WIDTH_METERS = 16.54175;
     //Old Constants
@@ -170,12 +152,10 @@ public final class Constants {
      * How many amps the intake can use while picking up
      */
     public static final int INTAKE_CURRENT_LIMIT = 25;
-
     /**
      * Percent output for intaking
      */
     public static final double INTAKE_OUTPUT_POWER = 1.0;
-
     /**
      * Percent output for holding
      */
@@ -185,8 +165,24 @@ public final class Constants {
      * How many amps the arm motor can use.
      */
     public static final int ARM_CURRENT_LIMIT = 20;
-
     public static final int ARM_MOTOR_ID = 5;
-
     public static final int ARM_PERIOD = 20;
+    public static final double ARM_P = 5;
+    public static final double ARM_I = 5;
+    public static final double ARM_D = 5;
+    public static final double ARM_POSITION_LOW = 0;
+    public static final double ARM_POSITION_MID = 0;
+    public static final double ARM_POSITION_HIGH = 0;
+
+    public enum KinematicLimits {
+        /**
+         * Normal acceleration limit while driving. This ensures that the driver can't tip the robot.
+         */
+        NORMAL_DRIVING(new KinematicLimit(4.2, 5, Math.PI * 2 * 6));
+        public final KinematicLimit kinematicLimit;
+
+        KinematicLimits(KinematicLimit kinematicLimit) {
+            this.kinematicLimit = kinematicLimit;
+        }
+    }
 }
