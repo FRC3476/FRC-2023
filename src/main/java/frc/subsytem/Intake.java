@@ -2,7 +2,6 @@ package frc.subsytem;
 
 import com.revrobotics.CANSparkMax;
 import com.revrobotics.CANSparkMaxLowLevel;
-import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import frc.robot.Constants;
 
 public class Intake extends AbstractSubsystem {
@@ -22,18 +21,17 @@ public class Intake extends AbstractSubsystem {
         super(period, loggingInterval);
         intake.setInverted(false);
         intake.setIdleMode(CANSparkMax.IdleMode.kBrake);
+        intake.setSmartCurrentLimit(Constants.INTAKE_CURRENT_LIMIT);
     }
 
     /**
      * Set the intake output power.
      *
      * @param percent desired speed
-     * @param amps    current limit
      */
 
-    public void setIntakeMotor(double percent, int amps) {
+    public void setIntakePercentOutput(double percent) {
         intake.set(percent);
-        intake.setSmartCurrentLimit(amps);
         logData("intake power (%)", percent);
         logData("intake motor current (amps)", intake.getOutputCurrent());
         logData("intake motor temperature (C)", intake.getMotorTemperature());

@@ -169,12 +169,7 @@ public final class Constants {
     /**
      * How many amps the intake can use while picking up
      */
-    public static final int INTAKE_CURRENT_LIMIT_A = 25;
-
-    /**
-     * How many amps the intake can use while holding
-     */
-    public static final int INTAKE_HOLD_CURRENT_LIMIT_A = 5;
+    public static final int INTAKE_CURRENT_LIMIT = 25;
 
     /**
      * Percent output for intaking
@@ -189,16 +184,9 @@ public final class Constants {
     /**
      * How many amps the arm motor can use.
      */
-    public static final int ARM_CURRENT_LIMIT_A = 20;
+    public static final int ARM_CURRENT_LIMIT = 20;
 
-    /**
-     * Percent output to run the arm up/down at
-     */
-    public static final double ARM_OUTPUT_POWER = 0.4;
+    public static final int ARM_MOTOR_ID = 5;
 
-    /**
-     * Time to extend or retract arm in auto
-     */
-    public static final double ARM_EXTEND_TIME_S = 2.0;
     public static final int ARM_PERIOD = 20;
 }

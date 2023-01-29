@@ -284,10 +284,13 @@ public class Robot extends TimedRobot {
         // Intake speed control
         if (xbox.getRawAxis(3) > .1) {
             // Intaking
+            intake.setIntakePercentOutput(Constants.INTAKE_OUTPUT_POWER);
         } else if (xbox.getRawAxis(2) > .1) {
             // Outtaking
+            intake.setIntakePercentOutput(-Constants.INTAKE_OUTPUT_POWER);
         } else {
             // Holding
+            intake.setIntakePercentOutput(0);
         }
 
         /*
