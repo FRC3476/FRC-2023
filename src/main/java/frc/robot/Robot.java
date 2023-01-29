@@ -35,6 +35,7 @@ public class Robot extends TimedRobot {
     private @NotNull Drive drive;
     private @NotNull RobotTracker robotTracker;
     private @NotNull VisionHandler visionHandler;
+    private @NotNull SystemCoordinator systemCoordinator;
 
     private @NotNull Controller xbox;
 
@@ -51,6 +52,7 @@ public class Robot extends TimedRobot {
         drive = Drive.getInstance();
         robotTracker = RobotTracker.getInstance();
         visionHandler = VisionHandler.getInstance();
+        systemCoordinator = SystemCoordinator.getInstance();
         xbox = new Controller(0);
 
         startSubsystems();
@@ -186,6 +188,7 @@ public class Robot extends TimedRobot {
         drive.start();
         robotTracker.start();
         visionHandler.start();
+        systemCoordinator.start();
     }
 
     private ControllerDriveInputs getControllerDriveInputs() {
