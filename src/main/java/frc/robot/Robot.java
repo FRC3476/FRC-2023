@@ -136,6 +136,8 @@ public class Robot extends TimedRobot {
     public void startSubsystems() {
         drive.start();
         robotTracker.start();
+        intake.start();
+        arm.start();
         visionHandler.start();
     }
 
