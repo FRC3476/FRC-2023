@@ -270,40 +270,23 @@ public class Robot extends TimedRobot {
         xbox.update();
         buttonPanel.update();
 
-        if (buttonPanel.getRawButton(1)) {
-            // lower the arm
-            arm.setArmMotor(-Constants.ARM_OUTPUT_POWER);
-        } else if (buttonPanel.getRawButton(2)) {
-            // raise the arm
-            arm.setArmMotor(Constants.ARM_OUTPUT_POWER);
-        } else {
-            // do nothing and let it sit where it is
-            arm.setArmMotor(0);
+        // Arm position controls
+        if (xbox.getRisingEdge(XboxButtons.X)) {
+            // Low position
+        } else if (xbox.getRisingEdge(XboxButtons.Y)) {
+            // Middle Position
+        } else if (xbox.getRisingEdge(XboxButtons.B)) {
+            // High Position
         }
 
-        double intakePower = 0;
-        int intakeAmps = 0;
-
-        if (buttonPanel.getRawButton(3)) {
-            // cube in or cone out
-            intakePower = Constants.INTAKE_OUTPUT_POWER;
-            intakeAmps = Constants.INTAKE_CURRENT_LIMIT_A;
-            lastGamePiece = CUBE;
-        } else if (buttonPanel.getRawButton(4)) {
-            // cone in or cube out
-            intakePower = -Constants.INTAKE_OUTPUT_POWER;
-            intakeAmps = Constants.INTAKE_CURRENT_LIMIT_A;
-            lastGamePiece = CONE;
-        } else if (lastGamePiece == CUBE) {
-            intakePower = Constants.INTAKE_HOLD_POWER;
-            intakeAmps = Constants.INTAKE_HOLD_CURRENT_LIMIT_A;
-        } else if (lastGamePiece == CONE) {
-            intakePower = -Constants.INTAKE_HOLD_POWER;
-            intakeAmps = Constants.INTAKE_HOLD_CURRENT_LIMIT_A;
+        // Intake speed control
+        if (xbox.getRawAxis(3) > .1) {
+            // Intaking
+        } else if (xbox.getRawAxis(2) > .1) {
+            // Outtaking
         } else {
-            intake.setIntakeMotor(0, 0);
+            // Holding
         }
-        intake.setIntakeMotor(intakePower, intakeAmps);
 
         /*
          * Negative signs here because the values from the analog sticks are backwards
