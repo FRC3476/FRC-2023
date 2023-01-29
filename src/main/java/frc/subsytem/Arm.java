@@ -6,10 +6,10 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import frc.robot.Constants;
 
 public class Arm extends AbstractSubsystem {
-    private Arm instance;
+    private static Arm instance;
     CANSparkMax arm = new CANSparkMax(5, CANSparkMaxLowLevel.MotorType.kBrushless);
 
-    public Arm getInstance() {
+    public static Arm getInstance() {
         if (instance == null) {
             instance = new Arm(Constants.ARM_PERIOD, 5);
         }

@@ -210,6 +210,7 @@ public class Robot extends TimedRobot {
         robotTracker = RobotTracker.getInstance();
         visionHandler = VisionHandler.getInstance();
         intake = Intake.getInstance();
+        arm = Arm.getInstance();
         xbox = new Controller(0);
         buttonPanel = new Controller(1);
 
@@ -266,6 +267,9 @@ public class Robot extends TimedRobot {
 
     @Override
     public void teleopPeriodic() {
+        xbox.update();
+        buttonPanel.update();
+
         if (buttonPanel.getRawButton(1)) {
             // lower the arm
             arm.setArmMotor(-Constants.ARM_OUTPUT_POWER);
@@ -305,7 +309,6 @@ public class Robot extends TimedRobot {
          * Negative signs here because the values from the analog sticks are backwards
          * from what we want. Forward returns a negative when we want it positive.
          */
-        xbox.update();
         drive.swerveDrive(getControllerDriveInputs());
 
         if (xbox.getRisingEdge(XboxButtons.A)) {
