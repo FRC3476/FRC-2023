@@ -44,10 +44,30 @@ public class Elevator extends AbstractSubsystem {
     }
 
     /**
-     * @return Elevator position in meters
+     * Use speed control for controlling elevator
+     * @param percentOutput in -1
      */
-    public double getPosition() {
-        return elevatorSparkMax.getEncoder().getPosition() / Constants.ELEVATOR_ROTATIONS_PER_METER;
+    public void setPercentOutput(double percentOutput) {
+        elevatorSparkMax.set(percentOutput);
+    }
+
+    public void zeroEncoder() {
+        elevatorSparkMax.getEncoder().setPosition(0);
+    }
+    private boolean hasStalledIntoBottom = false;
+    private double minRunTime = -1;
+    public void elevatorStallIntoBottom() {
+        if (minRunTime == -1) minRunTime = Timer.getFPGATimestamp() + 0.5;
+        if(hasStalledIntoBottom){
+            setPercentOutput(0);
+        } else {
+            setPercentOutput(-0.01);
+        }
+        if (Math.abs(elevatorSparkMax.getOutputCurrent()) > 12 && Timer.getFPGATimestamp() > minRunTime){
+            hasStalledIntoBottom = true;
+            zeroEncoder();
+
+        }
     }
 
     /**

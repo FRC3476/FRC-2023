@@ -3,14 +3,15 @@ package frc.subsytem;
 import frc.robot.Constants;
 import frc.utility.MechanismState;
 
-/**
- * Coordinates the elevator, telescoping arm, and grabber subsystems
- */
 public class SystemCoordinator extends AbstractSubsystem {
 
-    private final Elevator elevator;
-    private final TelescopingArm telescopingArm;
-    private final Grabber grabber;
+    private final Elevator elevator = Elevator.getInstance();
+    private final TelescopingArm telescopingArm = TelescopingArm.getInstance();
+    private final Grabber grabber = Grabber.getInstance();
+
+    private double xCoordinate;
+    private double yCoordinate;
+    private double zCoordinate;
 
     private static SystemCoordinator instance;
 
@@ -23,9 +24,6 @@ public class SystemCoordinator extends AbstractSubsystem {
     }
     private SystemCoordinator(int period, int loggingInterval) {
         super(period, loggingInterval);
-        elevator = Elevator.getInstance();
-        telescopingArm = TelescopingArm.getInstance();
-        grabber = Grabber.getInstance();
     }
 
     /**
