@@ -21,7 +21,7 @@ public class SystemCoordinator extends AbstractSubsystem {
 
         return instance;
     }
-    public SystemCoordinator(int period, int loggingInterval) {
+    private SystemCoordinator(int period, int loggingInterval) {
         super(period, loggingInterval);
         elevator = Elevator.getInstance();
         telescopingArm = TelescopingArm.getInstance();
@@ -32,18 +32,27 @@ public class SystemCoordinator extends AbstractSubsystem {
      * Will drive the elevator, grabber, and telescoping arm to that the end of the grabber reaches these coordinates
      * Coordinates in meters with an orgin at the grabber position with a completely retracted arm and completely lowered
      * elevator and a horizontally level wrist. Orgin measured from the tip of the grabber in the center.
-     * @param mechanismState - A mechanism state that includes and x, y, z, and wrist angle
+     * @param desiredState - A mechanism state that includes and x, y, z, and wrist angle
      */
-    public void goToCoordinates(MechanismState mechanismState) {
+    public void goToCoordinates(MechanismState desiredState) {
 
+        // Move the wrist first to satisfy wristAngle
+        grabber.setPosition(desiredState.getWristAngle());
 
-        // Move elevator first
+        // Move elevator second to satisfy y keeping in mind that wrist already satisfies some of y
+        double elevatorYMovement = desiredState.getyCoordinate() - Constants.GRABBER_LENGTH * Math.sin(Math.toRadians(desiredState.getWristAngle()));
+        elevator.setPosition(elevatorYMovement / Math.sin(Constants.ELEVATOR_TILT_RADIANS));
 
-        // Move arm second
+        // Move arm third to satisfy x keeping in mind that the elevator already satisfies some of x
+        telescopingArm.setPosition(desiredState.getxCoordinate() - (elevatorYMovement / Math.tan(Constants.ELEVATOR_TILT_RADIANS))
+                - Constants.GRABBER_LENGTH * Math.cos(Math.toRadians(desiredState.getWristAngle())));
 
-        // Move
     }
 
+    /**
+     * Gets current mechanism state based off encoder values
+     * Assumes that each system is zeroed on startup
+     */
     private MechanismState findCurrentMechanismState() {
         // Find x coordinate
         double x = 0;
