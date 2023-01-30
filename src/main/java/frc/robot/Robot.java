@@ -39,6 +39,7 @@ public class Robot extends TimedRobot {
     private @NotNull Elevator elevator;
     private @NotNull TelescopingArm telescopingArm;
     private @NotNull SystemCoordinator systemCoordinator;
+    private @NotNull Grabber grabber;
 
     private @NotNull Controller xbox;
     private @NotNull Controller buttonPanel;
@@ -58,6 +59,7 @@ public class Robot extends TimedRobot {
         visionHandler = VisionHandler.getInstance();
         elevator = Elevator.getInstance();
         telescopingArm = TelescopingArm.getInstance();
+        grabber = Grabber.getInstance();
         systemCoordinator = SystemCoordinator.getInstance();
         xbox = new Controller(0);
         buttonPanel = new Controller(0);
@@ -210,6 +212,9 @@ public class Robot extends TimedRobot {
         drive.start();
         robotTracker.start();
         visionHandler.start();
+        grabber.start();
+        elevator.start();
+        telescopingArm.start();
         systemCoordinator.start();
     }
 
