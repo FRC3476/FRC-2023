@@ -49,6 +49,36 @@ public class TelescopingArm extends AbstractSubsystem {
     public double getPosition() {
         return telescopingArmSparkMax.getEncoder().getPosition() / Constants.TELESCOPING_ARM_ROTATIONS_PER_METER;
     }
+    
+    /**
+     * Use speed control for controlling elevator
+     * @param percentOutput in -1
+     */
+
+    private void setPercentOutput(double percentOutput) {
+        telescopingArmSparkMax.set(percentOutput);
+    }
+
+    private void zeroEncoder() {
+        telescopingArmSparkMax.getEncoder().setPosition(0);
+    }
+
+    private boolean hasStalledIntoBottom = false;
+    private double minRunTime = -1;
+    public void telescopingArmStallIntoBottom() {
+        if (minRunTime == -1) minRunTime = Timer.getFPGATimestamp() + 0.5;
+        if(hasStalledIntoBottom){
+           setPercentOutput(0);
+        } else {
+            setPercentOutput(-0.01);
+        }
+        if (Math.abs(telescopingArmSparkMax.getOutputCurrent()) > 12 && Timer.getFPGATimestamp() > minRunTime){
+            hasStalledIntoBottom = true;
+            zeroEncoder();
+        }
+    }
+
+
 
     private double pastVelocity = 0, pastTime = 0;
 
