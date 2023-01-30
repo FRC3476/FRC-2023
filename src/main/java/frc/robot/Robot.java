@@ -35,9 +35,13 @@ public class Robot extends TimedRobot {
     private @NotNull Drive drive;
     private @NotNull RobotTracker robotTracker;
     private @NotNull VisionHandler visionHandler;
+
+    private @NotNull Elevator elevator;
+    private @NotNull TelescopingArm telescopingArm;
     private @NotNull SystemCoordinator systemCoordinator;
 
     private @NotNull Controller xbox;
+    private @NotNull Controller buttonPanel;
 
     // Autonomous
     private final SendableChooser<String> autoChooser = new SendableChooser<>();
@@ -52,8 +56,11 @@ public class Robot extends TimedRobot {
         drive = Drive.getInstance();
         robotTracker = RobotTracker.getInstance();
         visionHandler = VisionHandler.getInstance();
+        elevator = Elevator.getInstance();
+        telescopingArm = TelescopingArm.getInstance();
         systemCoordinator = SystemCoordinator.getInstance();
         xbox = new Controller(0);
+        buttonPanel = new Controller(0);
 
         startSubsystems();
         AutonomousContainer.getInstance().setDebugPrints(true);
@@ -133,10 +140,11 @@ public class Robot extends TimedRobot {
      */
     @Override
     public void teleopPeriodic() {
+        buttonPanel.update();
         xbox.update();
         drive.swerveDriveFieldRelative(getControllerDriveInputs());
 
-        if (xbox.getRisingEdge(XboxButtons.A)) {
+        if (buttonPanel.getRisingEdge(XboxButtons.A)) {
             robotTracker.resetPose(new Pose2d(robotTracker.getLatestPose().getTranslation(), new Rotation2d()));
         }
     }
@@ -175,6 +183,8 @@ public class Robot extends TimedRobot {
     /**
      * This method is called periodically during test mode.
      */
+
+
     @Override
     public void testPeriodic() {
         xbox.update();
@@ -182,7 +192,19 @@ public class Robot extends TimedRobot {
                 && xbox.getRisingEdge(XboxButtons.X) && xbox.getRisingEdge(XboxButtons.B)) {
             drive.setAbsoluteZeros();
         }
+
+        if(xbox.getRisingEdge(XboxButtons.X)){
+            elevator.elevatorStallIntoBottom();
+        } else if(xbox.getRisingEdge(XboxButtons.Y)){
+            telescopingArm.telescopingArmStallIntoBottom();
+        }
+
+
+
+
+
     }
+
 
     public void startSubsystems() {
         drive.start();
