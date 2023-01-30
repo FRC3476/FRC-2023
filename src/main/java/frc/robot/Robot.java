@@ -181,7 +181,7 @@ public class Robot extends TimedRobot {
         if (robotTracker.isOnRedSide() == isRed()) {
             // We're on the same side as our alliance
             // Try to go to the scoring position
-            y = ScoringPositionManager.getBestY(
+            y = ScoringPositionManager.getBestFieldY(
                     scoringPositionManager.getSelectedPosition(),
                     isRed(),
                     robotTracker.getLatestPose().getTranslation(),

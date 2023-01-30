@@ -124,7 +124,7 @@ public class ScoringPositionManager {
      * @return An array of 3 Y coordinates of where the robot could be placed in order to score in the selected position
      */
     @Contract(pure = true)
-    public static double @NotNull [] getPossibleYs(@NotNull SelectedPosition selectedPosition, boolean isRedAlliance) {
+    public static double @NotNull [] getPossibleFieldYs(@NotNull SelectedPosition selectedPosition, boolean isRedAlliance) {
         double[] possibleYs = new double[3];
         double y = getGridRelativeY(selectedPosition, isRedAlliance);
         for (int i = 0; i < 3; i++) {
@@ -133,9 +133,23 @@ public class ScoringPositionManager {
         return possibleYs;
     }
 
+    /**
+     * Returns the Y coordinate that the robot should be at in order to score in the selected position that the driver most likely
+     * wants based on their current position and velocity.
+     * <p>
+     * The code uses the following algorithm: It generates a line from the robot's current position to the robot's current
+     * position + the robot's current velocity. It then finds the intersection of that line with the three possible Y coordinates
+     * of the scoring position. It then finds the cosest of the the three possible Y coordinates to the intersection.
+     *
+     * @param selectedPosition Currently selected position
+     * @param isRedAlliance    Whether the robot is on the red alliance
+     * @param robotPosition    The position of the robot
+     * @param robotVelocity    The velocity of the robot
+     * @return The Y position the robot should be at in order to score in the selected position that the driver most likely wants
+     */
     @Contract(pure = true)
-    public static double getBestY(@NotNull SelectedPosition selectedPosition, boolean isRedAlliance,
-                                  @NotNull Translation2d robotPosition, @NotNull Translation2d robotVelocity) {
+    public static double getBestFieldY(@NotNull SelectedPosition selectedPosition, boolean isRedAlliance,
+                                       @NotNull Translation2d robotPosition, @NotNull Translation2d robotVelocity) {
         double intersectionXLine;
 
         if (isRedAlliance) {
@@ -146,17 +160,21 @@ public class ScoringPositionManager {
 
         Vector2d intersection = new Vector2d();
         Intersectiond.intersectLineLine(
+                // Create a line that includes the robot's position and is in the direction of the robot's velocity
                 robotPosition.getX(), robotPosition.getY(),
                 robotPosition.getX() + robotVelocity.getX(), robotPosition.getY() + robotVelocity.getY(),
+
+                // Create a line  parallel to the y axis that is at the intersectionXLine
                 intersectionXLine, 0,
                 intersectionXLine, 3,
                 intersection
         );
 
-        double[] possibleYs = getPossibleYs(selectedPosition, isRedAlliance);
+        double[] possibleYs = getPossibleFieldYs(selectedPosition, isRedAlliance);
 
         double bestY = possibleYs[0];
 
+        // Find the closest possible Y to the intersection that we found.
         for (double possibleY : possibleYs) {
             if (Math.abs(possibleY - intersection.y) < Math.abs(bestY - intersection.y)) {
                 bestY = possibleY;
