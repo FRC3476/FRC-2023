@@ -37,6 +37,13 @@ public class Grabber extends AbstractSubsystem {
     private double trapezoidProfileStartTime = 0;
 
     /**
+     * @return Gets the pivot angle in dergees
+     */
+    public double getPivotAngle() {
+        return pivotSparkMax.getEncoder().getPosition() * 360.0;
+    }
+
+    /**
      * @param position The position to set the grabber (degrees)
      */
     public void setPosition(double position) {

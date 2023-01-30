@@ -5,16 +5,15 @@ import frc.utility.MechanismState;
 
 public class SystemCoordinator extends AbstractSubsystem {
 
-    private final Elevator elevator = Elevator.getInstance();
-    private final TelescopingArm telescopingArm = TelescopingArm.getInstance();
-    private final Grabber grabber = Grabber.getInstance();
-
-    private double xCoordinate;
-    private double yCoordinate;
-    private double zCoordinate;
+    private Elevator elevator;
+    private TelescopingArm telescopingArm;
+    private final Grabber grabber;
 
     private static SystemCoordinator instance;
 
+    /**
+     * Coordinates the elevator, telescoping arm, and grabber subsystems
+     */
     public static SystemCoordinator getInstance() {
         if (instance == null) {
             instance = new SystemCoordinator(Constants.SYSTEM_COORDINATOR_PERIOD, 5);
@@ -24,6 +23,9 @@ public class SystemCoordinator extends AbstractSubsystem {
     }
     private SystemCoordinator(int period, int loggingInterval) {
         super(period, loggingInterval);
+        elevator = Elevator.getInstance();
+        telescopingArm = TelescopingArm.getInstance();
+        grabber = Grabber.getInstance();
     }
 
     /**

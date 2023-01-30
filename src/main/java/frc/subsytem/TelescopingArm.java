@@ -46,18 +46,15 @@ public class TelescopingArm extends AbstractSubsystem {
      * Use speed control for controlling elevator
      * @param percentOutput in -1
      */
-
     private void setPercentOutput(double percentOutput) {
         telescopingArmSparkMax.set(percentOutput);
     }
-    
+
     /**
-     * Use speed control for controlling elevator
-     * @param percentOutput in -1
+     * Gets the arm position in meters
      */
-
-    private void setPercentOutput(double percentOutput) {
-        telescopingArmSparkMax.set(percentOutput);
+    public double getPosition() {
+        return telescopingArmSparkMax.getEncoder().getPosition() / Constants.TELESCOPING_ARM_ROTATIONS_PER_METER;
     }
 
     private void zeroEncoder() {
@@ -66,6 +63,7 @@ public class TelescopingArm extends AbstractSubsystem {
 
     private boolean hasStalledIntoBottom = false;
     private double minRunTime = -1;
+
     public void telescopingArmStallIntoBottom() {
         if (minRunTime == -1) minRunTime = Timer.getFPGATimestamp() + 0.5;
         if(hasStalledIntoBottom){
@@ -78,29 +76,6 @@ public class TelescopingArm extends AbstractSubsystem {
             zeroEncoder();
         }
     }
-
-
-
-    private void zeroEncoder() {
-        telescopingArmSparkMax.getEncoder().setPosition(0);
-    }
-
-    private boolean hasStalledIntoBottom = false;
-    private double minRunTime = -1;
-    public void telescopingArmStallIntoBottom() {
-        if (minRunTime == -1) minRunTime = Timer.getFPGATimestamp() + 0.5;
-        if(hasStalledIntoBottom){
-           setPercentOutput(0);
-        } else {
-            setPercentOutput(-0.01);
-        }
-        if (Math.abs(telescopingArmSparkMax.getOutputCurrent()) > 12 && Timer.getFPGATimestamp() > minRunTime){
-            hasStalledIntoBottom = true;
-            zeroEncoder();
-        }
-    }
-
-
 
     private double pastVelocity = 0, pastTime = 0;
 
