@@ -72,7 +72,7 @@ public final class RobotTracker extends AbstractSubsystem {
             Drive.getInstance().getModulePositions()
     );
 
-    private static final double VELOCITY_MEASUREMENT_WINDOW = 0.1;
+    private static final double VELOCITY_MEASUREMENT_WINDOW = 0.5;
 
     private final TimeInterpolatableBuffer<Pose2d> poseBufferForVelocity = TimeInterpolatableBuffer.createBuffer(
             Pose2d::interpolate, 1.5);
@@ -231,8 +231,6 @@ public final class RobotTracker extends AbstractSubsystem {
 
                 // The average deltaVelocity over our measurement window
                 var deltaVelocity = mutDeltaVelocity.getTranslation2d();
-                //TODO: the delta velocity calculation is broken, this disables it for now
-                deltaVelocity = new Translation2d();
 
                 // https://www.desmos.com/calculator/szqs5g5d6i
 
