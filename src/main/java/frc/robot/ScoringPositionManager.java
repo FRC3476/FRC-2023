@@ -139,7 +139,7 @@ public class ScoringPositionManager {
      * <p>
      * The code uses the following algorithm: It generates a line from the robot's current position to the robot's current
      * position + the robot's current velocity. It then finds the intersection of that line with the three possible Y coordinates
-     * of the scoring position. It then finds the cosest of the the three possible Y coordinates to the intersection.
+     * of the scoring position. It then finds the closest of the three possible Y coordinates to the intersection.
      *
      * @param selectedPosition Currently selected position
      * @param isRedAlliance    Whether the robot is on the red alliance
