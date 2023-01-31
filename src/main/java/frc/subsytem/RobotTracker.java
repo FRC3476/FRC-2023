@@ -134,8 +134,17 @@ public final class RobotTracker extends AbstractSubsystem {
             gyroSensor.get6dQuaternion(quaternion);
             gyroSensor.getBiasedAccelerometer(ba_xyz);
 
-            var rotation = new Rotation3d(
-                    new Quaternion(quaternion[0], quaternion[1], quaternion[2], quaternion[3]));
+            var w = quaternion[0];
+            var x = quaternion[1];
+            var y = quaternion[2];
+            var z = quaternion[3];
+
+            // we need to transform the axis:
+            // what we have to what it should be
+            // x = -y
+            // y = x
+            // z = z
+            var rotation = new Rotation3d(new Quaternion(w, -y, x, z));
 
             acceleration = new Translation3d(toFloat(ba_xyz[0]), toFloat(ba_xyz[1]), toFloat(ba_xyz[2]))
                     .times(GRAVITY)
