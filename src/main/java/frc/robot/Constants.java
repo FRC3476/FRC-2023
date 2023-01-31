@@ -55,6 +55,7 @@ public final class Constants {
     public static final double SWERVE_DRIVE_I = 0.00;
     public static final double SWERVE_DRIVE_F = 0.00;
     public static final double SWERVE_DRIVE_INTEGRAL_ZONE = 0.00;
+    public static final double AUTO_BALANCING_DEGREES = 9;
 
     /**
      * Feed forward constants for the drivetrain.
