@@ -62,7 +62,7 @@ public class Robot extends TimedRobot {
         grabber = Grabber.getInstance();
         systemCoordinator = SystemCoordinator.getInstance();
         xbox = new Controller(0);
-        buttonPanel = new Controller(0);
+        buttonPanel = new Controller(2);
 
         startSubsystems();
         AutonomousContainer.getInstance().setDebugPrints(true);
@@ -200,11 +200,6 @@ public class Robot extends TimedRobot {
         } else if(xbox.getRisingEdge(XboxButtons.Y)){
             telescopingArm.telescopingArmStallIntoBottom();
         }
-
-
-
-
-
     }
 
 

@@ -58,20 +58,20 @@ public class Elevator extends AbstractSubsystem {
         elevatorSparkMax.set(percentOutput);
     }
 
-    public void zeroEncoder() {
+    private void zeroEncoder() {
         elevatorSparkMax.getEncoder().setPosition(0);
     }
 
     private boolean hasStalledIntoBottom = false;
     private double minRunTime = -1;
     public void elevatorStallIntoBottom() {
-        if (minRunTime == -1) minRunTime = Timer.getFPGATimestamp() + 0.5;
+        if (minRunTime == -1) minRunTime = Timer.getFPGATimestamp() + Constants.MOTOR_STARTING_TIME;
         if(hasStalledIntoBottom){
             setPercentOutput(0);
         } else {
-            setPercentOutput(-0.01);
+            setPercentOutput(Constants.MOTOR_SPEED_DECREASING_RATE);
         }
-        if (Math.abs(elevatorSparkMax.getOutputCurrent()) > 12 && Timer.getFPGATimestamp() > minRunTime){
+        if (Math.abs(elevatorSparkMax.getOutputCurrent()) > Constants.STALLING_CURRENT && Timer.getFPGATimestamp() > minRunTime){
             hasStalledIntoBottom = true;
             zeroEncoder();
 

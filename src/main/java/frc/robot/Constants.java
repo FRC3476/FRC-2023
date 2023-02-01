@@ -176,6 +176,9 @@ public final class Constants {
 
     // TODO: Figure out how much the elevator is angled at
     public static final double ELEVATOR_TILT_RADIANS = 0;
+    public static final double STALLING_CURRENT = 12;
+    public static final double MOTOR_STARTING_TIME = 0.5;
+    public static final double MOTOR_SPEED_DECREASING_RATE = -0.01;
 
 
 
@@ -213,4 +216,5 @@ public final class Constants {
 
     public static final double FIELD_HEIGHT_METERS = 8.0137;
     public static final double FIELD_WIDTH_METERS = 16.54175;
+
 }
