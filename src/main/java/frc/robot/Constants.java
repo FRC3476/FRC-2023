@@ -55,7 +55,7 @@ public final class Constants {
     public static final double SWERVE_DRIVE_I = 0.00;
     public static final double SWERVE_DRIVE_F = 0.00;
     public static final double SWERVE_DRIVE_INTEGRAL_ZONE = 0.00;
-    public static final double AUTO_BALANCING_DEGREES = 9;
+    public static final double AUTO_BALANCE_COMPLETE_THRESHOLD = 9;
 
     /**
      * Feed forward constants for the drivetrain.
@@ -131,6 +131,19 @@ public final class Constants {
     public static final double EXPECTED_TELEOP_DRIVE_DT = 0.2;
 
     public static final double EXPECTED_AUTO_DRIVE_DT = DRIVE_PERIOD / 1000.0;
+    public static final int MAX_TELEOP_TURN_SPEED = 7;
+    //Robot Tracker
+    public static final int ROBOT_TRACKER_PERIOD = 20;
+    /**
+     * Acceleration due to gravity in meters per second squared. (9.80665 m/s^2)
+     */
+    public static final double GRAVITY = 9.80665;
+    public static final int PIGEON_CAN_ID = 30;
+    // Vision constants
+    public static final int VISION_HANDLER_PERIOD = -1;
+    public static final double COAST_AFTER_DISABLE_TIME = 0.5;
+    public static final double FIELD_HEIGHT_METERS = 8.0137;
+    public static final double FIELD_WIDTH_METERS = 16.54175;
 
     public enum KinematicLimits {
         /**
@@ -143,23 +156,4 @@ public final class Constants {
             this.kinematicLimit = kinematicLimit;
         }
     }
-
-    public static final int MAX_TELEOP_TURN_SPEED = 7;
-
-
-    //Robot Tracker
-    public static final int ROBOT_TRACKER_PERIOD = 20;
-    /**
-     * Acceleration due to gravity in meters per second squared. (9.80665 m/s^2)
-     */
-    public static final double GRAVITY = 9.80665;
-
-    public static final int PIGEON_CAN_ID = 30;
-
-    // Vision constants
-    public static final int VISION_HANDLER_PERIOD = -1;
-    public static final double COAST_AFTER_DISABLE_TIME = 0.5;
-
-    public static final double FIELD_HEIGHT_METERS = 8.0137;
-    public static final double FIELD_WIDTH_METERS = 16.54175;
 }
