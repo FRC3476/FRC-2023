@@ -35,36 +35,9 @@ public class SetPosition extends AbstractSubsystem {
      */
     public void setPosition(State state) {
         double elevatorHeight = elevator.getPosition();
-        //The grabber usually won't be restricted by anything so we move it first
+
+        //The grabber usually won't be restricted by anything, so we move it first
         grabber.setPosition(state.grabberPosition);
-
-        if (state == State.MIDDLE_STATE) {
-            //This moves the telescoping arm while the elevator isn't in the right spot
-            while (elevatorHeight < state.elevatorPosition) {
-                telescopingArm.setPosition(Constants.MIDDLE_NODE_DISTANCE - Constants.GRABBER_LENGTH
-                        - Constants.ELEVATOR_DISTANCE_MIDDLE_HEIGHT);
-                elevatorHeight = elevator.getPosition();
-            }
-            telescopingArm.setPosition(state.telescopingArmPosition);
-            grabber.setGrabState(Grabber.GrabState.OPEN);
-        }
-
-        if (state == State.TOP_STATE) {
-            //This moves the telescoping arm while the elevator is below the middle node
-            while (elevatorHeight < State.MIDDLE_STATE.elevatorPosition) {
-                telescopingArm.setPosition(Constants.MIDDLE_NODE_DISTANCE - Constants.GRABBER_LENGTH
-                        - Constants.ELEVATOR_DISTANCE_MIDDLE_HEIGHT);
-                elevatorHeight = elevator.getPosition();
-            }
-            //This moves the telescoping arm while the elevator i00000000000000000000000000sn't in the right spot
-            while (elevatorHeight < state.elevatorPosition) {
-                telescopingArm.setPosition(Constants.TOP_NODE_DISTANCE - Constants.GRABBER_LENGTH
-                        - Constants.ELEVATOR_DISTANCE_TOP_HEIGHT);
-                elevatorHeight = elevator.getPosition();
-            }
-            telescopingArm.setPosition(state.telescopingArmPosition);
-            grabber.setGrabState(Grabber.GrabState.OPEN);
-        }
 
         if (state == State.BOTTOM_STATE) {
             //Checks if the robot is at the top node or the middle node
@@ -80,7 +53,27 @@ public class SetPosition extends AbstractSubsystem {
                 telescopingArm.setPosition(State.BOTTOM_STATE.telescopingArmPosition);
                 elevatorHeight = elevator.getPosition();
             }
+        } else {
+            while (elevatorHeight < State.MIDDLE_STATE.elevatorPosition) {
+                telescopingArm.setPosition(Constants.MIDDLE_NODE_DISTANCE - Constants.GRABBER_LENGTH
+                        - Constants.ELEVATOR_DISTANCE_MIDDLE_HEIGHT);
+                elevatorHeight = elevator.getPosition();
+            }
+            if (state == State.MIDDLE_STATE) {
+                telescopingArm.setPosition(state.telescopingArmPosition);
+                grabber.setGrabState(Grabber.GrabState.OPEN);
+            }
+            if (state == State.TOP_STATE) {
+                //This moves the telescoping arm while the elevator isn't in the right spot
+                while (elevatorHeight < state.elevatorPosition) {
+                    telescopingArm.setPosition(Constants.TOP_NODE_DISTANCE - Constants.GRABBER_LENGTH
+                            - Constants.ELEVATOR_DISTANCE_TOP_HEIGHT);
+                    elevatorHeight = elevator.getPosition();
+                }
+                telescopingArm.setPosition(state.telescopingArmPosition);
+                grabber.setGrabState(Grabber.GrabState.OPEN);
+            }
+            previousState = state;
         }
-        previousState = state;
     }
 }
