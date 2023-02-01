@@ -165,7 +165,7 @@ public final class Constants {
      * How many amps the arm motor can use.
      */
     public static final int ARM_CURRENT_LIMIT = 20;
-    public static final int ARM_MOTOR_ID = 5;
+    public static final int ARM_MOTOR_ID = 41;
     public static final int ARM_PERIOD = 20;
     public static final double ARM_P = 5;
     public static final double ARM_I = 5;
