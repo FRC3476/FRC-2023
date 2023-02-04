@@ -151,7 +151,7 @@ public final class Constants {
     /**
      * How many amps the intake can use while picking up
      */
-    public static final int INTAKE_CURRENT_LIMIT = 25;
+    public static final int INTAKE_CURRENT_LIMIT = 20;
     /**
      * Percent output for intaking
      */
@@ -162,14 +162,14 @@ public final class Constants {
     public static final double INTAKE_HOLD_POWER = 0.07;
     public static final int INTAKE_PERIOD = 20;
     public static final int INTAKE_CAN_ID = 40;
-    public static final int ARM_CURRENT_LIMIT = 20;
+    public static final int ARM_CURRENT_LIMIT = 40;
     public static final int ARM_MOTOR_ID = 41;
     public static final int ARM_PERIOD = 20;
     public static final double ARM_P = 5;
     public static final double ARM_I = 5;
     public static final double ARM_D = 5;
     public static final double ARM_TUCKED_ROTATION = 0;
-    public static final double ARM_ROTATION_EXTENDED = 0;
+    public static final double ARM_ROTATION_EXTENDED = -1469;
     public static final double ARM_GEAR_RATIO = 75;
 
     public enum KinematicLimits {
