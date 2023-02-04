@@ -46,7 +46,7 @@ public class Arm extends AbstractSubsystem {
      * Get the arm rotation in degrees
      */
     public double getArmRotation() {
-        return arm.getEncoder().getPosition() * 360.0 * Constants.ARM_GEAR_RATIO;
+        return (arm.getEncoder().getPosition() * 360.0) / Constants.ARM_GEAR_RATIO;
     }
 
     @Override
