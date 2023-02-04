@@ -130,15 +130,20 @@ public final class Drive extends AbstractSubsystem {
         rightFrontTalon = new TalonFX(Constants.DRIVE_RIGHT_FRONT_ID);
         rightBackTalon = new TalonFX(Constants.DRIVE_RIGHT_BACK_ID);
 
-        leftFrontTalon.setInverted(false);
-        rightFrontTalon.setInverted(false);
-        leftBackTalon.setInverted(false);
-        rightBackTalon.setInverted(false);
+        leftFrontTalon.setInverted(true);
+        rightFrontTalon.setInverted(true);
+        leftBackTalon.setInverted(true);
+        rightBackTalon.setInverted(true);
 
         leftFrontTalonSwerve = new TalonFX(Constants.DRIVE_LEFT_FRONT_SWERVE_ID);
         leftBackTalonSwerve = new TalonFX(Constants.DRIVE_LEFT_BACK_SWERVE_ID);
         rightFrontTalonSwerve = new TalonFX(Constants.DRIVE_RIGHT_FRONT_SWERVE_ID);
         rightBackTalonSwerve = new TalonFX(Constants.DRIVE_RIGHT_BACK_SWERVE_ID);
+
+        leftFrontTalonSwerve.setInverted(true);
+        leftBackTalonSwerve.setInverted(true);
+        rightFrontTalonSwerve.setInverted(true);
+        rightBackTalonSwerve.setInverted(true);
 
         leftFrontCanCoder = new CANCoder(Constants.CAN_LEFT_FRONT_ID);
         leftBackCanCoder = new CANCoder(Constants.CAN_LEFT_BACK_ID);
