@@ -56,6 +56,7 @@ public final class Constants {
     public static final double SWERVE_DRIVE_F = 0.00;
     public static final double SWERVE_DRIVE_INTEGRAL_ZONE = 0.00;
     public static final double AUTO_BALANCE_COMPLETE_THRESHOLD = 9;
+    public static final double AUTO_BALANCE_OFFSET = 0.5;
 
     /**
      * Feed forward constants for the drivetrain.
