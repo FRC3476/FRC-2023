@@ -252,13 +252,10 @@ public class Robot extends TimedRobot {
         // Arm position controls
         if (xbox.getRisingEdge(XboxButtons.X)) {
             // Low position
-            arm.setArmMotor(Constants.ARM_POSITION_LOW);
+            arm.setArmMotor(Constants.ARM_TUCKED_ROTATION);
         } else if (xbox.getRisingEdge(XboxButtons.Y)) {
             // Middle Position
-            arm.setArmMotor(Constants.ARM_POSITION_MID);
-        } else if (xbox.getRisingEdge(XboxButtons.B)) {
-            // High Position
-            arm.setArmMotor(Constants.ARM_POSITION_HIGH);
+            arm.setArmMotor(Constants.ARM_ROTATION_EXTENDED);
         }
 
         // Intake speed control

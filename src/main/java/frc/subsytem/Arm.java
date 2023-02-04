@@ -10,7 +10,6 @@ public class Arm extends AbstractSubsystem {
 
     private CANSparkMax arm;
     private static Arm instance;
-    private static DutyCycleEncoder encoder;
 
 
     public static Arm getInstance() {
@@ -31,11 +30,6 @@ public class Arm extends AbstractSubsystem {
         armPIDController.setP(Constants.ARM_P);
         armPIDController.setI(Constants.ARM_I);
         armPIDController.setD(Constants.ARM_D);
-        encoder = new DutyCycleEncoder(0);
-
-        // Sync the relative encoder to the absolute encoder position
-        arm.getEncoder().setPosition(encoder.get());
-
     }
 
     /**

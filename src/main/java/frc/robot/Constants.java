@@ -170,9 +170,8 @@ public final class Constants {
     public static final double ARM_P = 5;
     public static final double ARM_I = 5;
     public static final double ARM_D = 5;
-    public static final double ARM_POSITION_LOW = 0;
-    public static final double ARM_POSITION_MID = 0;
-    public static final double ARM_POSITION_HIGH = 0;
+    public static final double ARM_TUCKED_ROTATION = 0;
+    public static final double ARM_ROTATION_EXTENDED = 0;
     public static final double ARM_GEAR_RATIO = 75;
 
     public enum KinematicLimits {
