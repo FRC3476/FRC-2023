@@ -4,6 +4,7 @@ import com.revrobotics.CANSparkMax;
 import com.revrobotics.CANSparkMaxLowLevel;
 import com.revrobotics.SparkMaxPIDController;
 import edu.wpi.first.wpilibj.DutyCycleEncoder;
+import edu.wpi.first.wpilibj.Timer;
 import frc.robot.Constants;
 
 public class Arm extends AbstractSubsystem {
@@ -52,6 +53,27 @@ public class Arm extends AbstractSubsystem {
      */
     public double getArmRotation() {
         return arm.getEncoder().getPosition();
+    }
+
+    private void zeroEncoder() {
+        arm.getEncoder().setPosition(0);
+    }
+
+    private boolean hasStalledIntoBottom = false;
+    private double minRunTime = -1;
+
+    public void armStallIntoTuckedPosition() {
+        if (minRunTime == -1) minRunTime = Timer.getFPGATimestamp() + Constants.MOTOR_STARTING_TIME;
+        if(hasStalledIntoBottom){
+            setArmPercent(0);
+        } else {
+            setArmPercent(Constants.MOTOR_SPEED_DECREASING_RATE);
+        }
+        if (Math.abs(arm.getOutputCurrent()) > Constants.STALLING_CURRENT && Timer.getFPGATimestamp() > minRunTime){
+            hasStalledIntoBottom = true;
+            zeroEncoder();
+
+        }
     }
 
     @Override
