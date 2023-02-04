@@ -264,7 +264,7 @@ public class Robot extends TimedRobot {
             intake.setIntakePercentOutput(Constants.INTAKE_OUTPUT_POWER);
         } else if (xbox.getRawAxis(2) > .1) {
             // Outtaking
-            intake.setIntakePercentOutput(-Constants.INTAKE_OUTPUT_POWER);
+            intake.setIntakePercentOutput(-Constants.INTAKE_OUTPUT_POWER * .5);
         } else {
             // Holding
             intake.setIntakePercentOutput(0);
