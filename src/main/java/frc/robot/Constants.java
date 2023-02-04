@@ -173,6 +173,7 @@ public final class Constants {
     public static final double ARM_POSITION_LOW = 0;
     public static final double ARM_POSITION_MID = 0;
     public static final double ARM_POSITION_HIGH = 0;
+    public static final double ARM_GEAR_RATIO = 75;
 
     public enum KinematicLimits {
         /**

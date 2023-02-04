@@ -13,16 +13,12 @@ public class Arm extends AbstractSubsystem {
     private static DutyCycleEncoder encoder;
 
 
-
-
-
     public static Arm getInstance() {
         if (instance == null) {
             instance = new Arm(Constants.ARM_PERIOD, 5);
         }
         return instance;
     }
-
 
 
     private Arm(int period, int loggingInterval) {
@@ -49,6 +45,6 @@ public class Arm extends AbstractSubsystem {
      */
     public void setArmMotor(double angle) {
         // Set the motor position to the desired angle
-        arm.getPIDController().setReference(angle / 360, CANSparkMax.ControlType.kPosition);
+        arm.getPIDController().setReference((angle / 360) * Constants.ARM_GEAR_RATIO, CANSparkMax.ControlType.kPosition);
     }
 }
