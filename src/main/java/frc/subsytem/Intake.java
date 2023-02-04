@@ -1,11 +1,15 @@
 package frc.subsytem;
 
+import com.ctre.phoenix.motorcontrol.NeutralMode;
+import com.ctre.phoenix.motorcontrol.TalonSRXControlMode;
+import com.ctre.phoenix.motorcontrol.can.TalonSRX;
 import com.revrobotics.CANSparkMax;
 import com.revrobotics.CANSparkMaxLowLevel;
 import frc.robot.Constants;
 
 public class Intake extends AbstractSubsystem {
-    CANSparkMax intake = new CANSparkMax(Constants.INTAKE_CAN_ID, CANSparkMaxLowLevel.MotorType.kBrushless);
+
+    TalonSRX intakeMotor;
 
     private static Intake instance;
 
@@ -19,9 +23,10 @@ public class Intake extends AbstractSubsystem {
 
     private Intake(int period, int loggingInterval) {
         super(period, loggingInterval);
-        intake.setInverted(false);
-        intake.setIdleMode(CANSparkMax.IdleMode.kBrake);
-        intake.setSmartCurrentLimit(Constants.INTAKE_CURRENT_LIMIT);
+        intakeMotor = new TalonSRX(Constants.INTAKE_CAN_ID);
+        intakeMotor.setInverted(false);
+        intakeMotor.setNeutralMode(NeutralMode.Brake);
+        intakeMotor.configContinuousCurrentLimit(Constants.INTAKE_CURRENT_LIMIT);
     }
 
     /**
@@ -31,10 +36,10 @@ public class Intake extends AbstractSubsystem {
      */
 
     public void setIntakePercentOutput(double percent) {
-        intake.set(percent);
+        intakeMotor.set(TalonSRXControlMode.PercentOutput, percent);
         logData("intake power (%)", percent);
-        logData("intake motor current (amps)", intake.getOutputCurrent());
-        logData("intake motor temperature (C)", intake.getMotorTemperature());
+        logData("intake motor current (amps)", intakeMotor.getStatorCurrent());
+        logData("intake motor temperature (C)", intakeMotor.getTemperature());
 
     }
 
