@@ -39,18 +39,19 @@ public class Arm extends AbstractSubsystem {
      */
     public void setArmMotor(double angle) {
         // Set the motor position to the desired angle
-        arm.getPIDController().setReference((angle / 360.0) * Constants.ARM_GEAR_RATIO, CANSparkMax.ControlType.kPosition);
+        arm.getPIDController().setReference(angle, CANSparkMax.ControlType.kPosition);
     }
 
     public void setArmPercent(double percent) {
-        arm.getPIDController().setReference(percent * 12.0, CANSparkMax.ControlType.kVoltage);
+        arm.getPIDController().setReference(percent * 12.0
+                , CANSparkMax.ControlType.kVoltage);
     }
 
     /**
      * Get the arm rotation in degrees
      */
     public double getArmRotation() {
-        return (arm.getEncoder().getPosition() * 360.0) / Constants.ARM_GEAR_RATIO;
+        return arm.getEncoder().getPosition();
     }
 
     @Override

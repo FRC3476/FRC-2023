@@ -165,9 +165,9 @@ public final class Constants {
     public static final int ARM_CURRENT_LIMIT = 40;
     public static final int ARM_MOTOR_ID = 41;
     public static final int ARM_PERIOD = 20;
-    public static final double ARM_P = 5;
-    public static final double ARM_I = 5;
-    public static final double ARM_D = 5;
+    public static final double ARM_P = 0.0001;
+    public static final double ARM_I = 0;
+    public static final double ARM_D = 0;
     public static final double ARM_TUCKED_ROTATION = 0;
     public static final double ARM_ROTATION_EXTENDED = -1469;
     public static final double ARM_GEAR_RATIO = 75;
