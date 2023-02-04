@@ -37,8 +37,6 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
 import static frc.robot.Constants.*;
-import static frc.robot.Constants.AUTO_BALANCING_VELOCITY;
-
 
 public final class Drive extends AbstractSubsystem {
 
