@@ -5,7 +5,7 @@ import com.revrobotics.CANSparkMaxLowLevel;
 import frc.robot.Constants;
 
 public class Intake extends AbstractSubsystem {
-    CANSparkMax intake = new CANSparkMax(6, CANSparkMaxLowLevel.MotorType.kBrushless);
+    CANSparkMax intake = new CANSparkMax(Constants.INTAKE_CAN_ID, CANSparkMaxLowLevel.MotorType.kBrushless);
 
     private static Intake instance;
 

@@ -161,9 +161,7 @@ public final class Constants {
      */
     public static final double INTAKE_HOLD_POWER = 0.07;
     public static final int INTAKE_PERIOD = 20;
-    /**
-     * How many amps the arm motor can use.
-     */
+    public static final int INTAKE_CAN_ID = 40;
     public static final int ARM_CURRENT_LIMIT = 20;
     public static final int ARM_MOTOR_ID = 41;
     public static final int ARM_PERIOD = 20;
