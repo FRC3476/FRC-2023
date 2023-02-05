@@ -203,7 +203,7 @@ public final class Drive extends AbstractSubsystem {
                 swerveSparkAbsoluteEncoders[i].setPositionConversionFactor(360);
                 swerveSparkAbsoluteEncoders[i].setVelocityConversionFactor(360 / 60.0);
                 swerveMotors[i].getPIDController().setPositionPIDWrappingEnabled(true);
-                swerveMotors[i].getPIDController().setOutputRange(0, 360);
+                swerveMotors[i].getPIDController().setOutputRange(-1, 1);
             }
 
             swerveMotors[i].burnFlash();
