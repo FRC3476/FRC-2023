@@ -186,5 +186,5 @@ public final class Constants {
 
     public static final double MOTOR_STARTING_TIME = 0.5;
     public static final double MOTOR_SPEED_DECREASING_RATE = -0.01;
-    public static final double STALLING_CURRENT = 12;
+    public static final double STALLING_CURRENT = -12;
 }

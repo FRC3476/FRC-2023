@@ -250,24 +250,26 @@ public class Robot extends TimedRobot {
         buttonPanel.update();
 
         // Arm position controls
-        if (xbox.getRisingEdge(XboxButtons.X)) {
+        if (xbox.getRawButton(XboxButtons.X)) {
             // In position
             //arm.setArmMotor(Constants.ARM_TUCKED_ROTATION);
-            arm.setArmPercent(0.16);
-        } else if (xbox.getRisingEdge(XboxButtons.Y)) {
+            arm.setArmPercent(-0.32);
+        } else if (xbox.getRawButton(XboxButtons.Y)) {
             // Out
             // Position
             //arm.setArmMotor(Constants.ARM_ROTATION_EXTENDED);
-            arm.setArmPercent(-0.16);
+            arm.setArmPercent(0.32);
+        } else {
+            arm.setArmPercent(0);
         }
 
         // Intake speed control
         if (xbox.getRawAxis(3) > .1) {
             // Intaking
-            intake.setIntakePercentOutput(Constants.INTAKE_OUTPUT_POWER);
+            intake.setIntakePercentOutput(0.6);
         } else if (xbox.getRawAxis(2) > .1) {
             // Outtaking
-            intake.setIntakePercentOutput(-Constants.INTAKE_OUTPUT_POWER * .5);
+            intake.setIntakePercentOutput(-0.5);
         } else {
             // Holding
             intake.setIntakePercentOutput(0);
@@ -277,7 +279,7 @@ public class Robot extends TimedRobot {
          * Negative signs here because the values from the analog sticks are backwards
          * from what we want. Forward returns a negative when we want it positive.
          */
-        drive.swerveDrive(getControllerDriveInputs());
+        //drive.swerveDrive(getControllerDriveInputs());
 
         if (xbox.getRisingEdge(XboxButtons.A)) {
             robotTracker.resetPose(new Pose2d(robotTracker.getLatestPose().getTranslation(), new Rotation2d()));
