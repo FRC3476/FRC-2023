@@ -152,11 +152,9 @@ public class Robot extends TimedRobot {
         }
 
         if(xbox.getRawButton(XboxButtons.B)) {
-            elevator.setPercentOutput(.3);
+
         } else if (xbox.getRawButton(XboxButtons.X)) {
-            elevator.setPercentOutput(-1);
-        } else {
-            elevator.setPercentOutput(0);
+
         }
     }
 

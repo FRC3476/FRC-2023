@@ -17,7 +17,7 @@ public class TelescopingArm extends AbstractSubsystem {
 
     private TelescopingArm() {
         super(Constants.TELESCOPING_ARM_PERIOD, 5);
-        telescopingArmSparkMax = new CANSparkMax(0, CANSparkMaxLowLevel.MotorType.kBrushless);
+        telescopingArmSparkMax = new CANSparkMax(Constants.TELESCOPING_ARM_ID, CANSparkMaxLowLevel.MotorType.kBrushless);
         SparkMaxPIDController telescopingArmSparkMaxPIDController = telescopingArmSparkMax.getPIDController();
         telescopingArmSparkMaxPIDController.setP(Constants.TELESCOPING_ARM_P);
         telescopingArmSparkMaxPIDController.setI(Constants.TELESCOPING_ARM_I);

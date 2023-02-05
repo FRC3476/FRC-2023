@@ -195,6 +195,7 @@ public final class Constants {
     public static final int TELESCOPING_ARM_ROTATIONS_PER_METER = 5;
     public static final int TELESCOPING_ARM_NOMINAL_VOLTAGE = 9;
     public static final int TELESCOPING_ARM_SMART_CURRENT_LIMIT = 40;
+    public static final int TELESCOPING_ARM_ID = 60;
 
     // Grabber
     public static final int GRABBER_PERIOD = 20;
@@ -208,6 +209,9 @@ public final class Constants {
     public static final int GRABBER_NOMINAL_VOLTAGE = 9;
     public static final int GRABBER_SMART_CURRENT_LIMIT = 40;
     public static final int PIVOT_SMART_CURRENT_LIMIT = 40;
+
+    public static final int PIVOT_SPARK_ID = 50;
+    public static final int GRABBER_SPARK_ID = 51;
 
     // TODO: Need to determine real grabber length
     public static final double GRABBER_LENGTH = 0;

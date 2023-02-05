@@ -18,8 +18,8 @@ public class Grabber extends AbstractSubsystem {
 
     private Grabber() {
         super(Constants.GRABBER_PERIOD, 5);
-        pivotSparkMax = new CANSparkMax(0, CANSparkMaxLowLevel.MotorType.kBrushless);
-        grabberSparkMax = new CANSparkMax(0, CANSparkMaxLowLevel.MotorType.kBrushless);
+        pivotSparkMax = new CANSparkMax(Constants.PIVOT_SPARK_ID, CANSparkMaxLowLevel.MotorType.kBrushless);
+        grabberSparkMax = new CANSparkMax(Constants.GRABBER_SPARK_ID, CANSparkMaxLowLevel.MotorType.kBrushless);
         SparkMaxPIDController pivotSparkMaxPIDController = pivotSparkMax.getPIDController();
         pivotSparkMaxPIDController.setP(Constants.GRABBER_P);
         pivotSparkMaxPIDController.setI(Constants.GRABBER_I);
