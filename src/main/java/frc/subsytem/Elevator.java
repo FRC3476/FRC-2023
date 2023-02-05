@@ -2,6 +2,7 @@ package frc.subsytem;
 
 import com.revrobotics.CANSparkMax;
 import com.revrobotics.CANSparkMaxLowLevel;
+import com.revrobotics.ControlType;
 import com.revrobotics.SparkMaxPIDController;
 import edu.wpi.first.math.trajectory.TrapezoidProfile;
 import edu.wpi.first.wpilibj.Timer;
@@ -44,6 +45,14 @@ public class Elevator extends AbstractSubsystem {
     }
 
     private double pastVelocity = 0, pastTime = 0;
+
+    /**
+     * Controls elevator motor with percent output
+     * @param percent Spans from -1 to 1 where the extremes are full power and direction depends on the sign
+     */
+    public void setPercentOutput(double percent) {
+        elevatorSparkMax.setVoltage(percent * 12);
+    }
 
     @Override
     public void update() {
