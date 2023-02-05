@@ -35,8 +35,8 @@ public class Robot extends TimedRobot {
     private @NotNull Drive drive;
     private @NotNull RobotTracker robotTracker;
     private @NotNull VisionHandler visionHandler;
-
     private @NotNull Elevator elevator;
+    
     private @NotNull TelescopingArm telescopingArm;
     private @NotNull SystemCoordinator systemCoordinator;
     private @NotNull Grabber grabber;
@@ -61,6 +61,7 @@ public class Robot extends TimedRobot {
         telescopingArm = TelescopingArm.getInstance();
         grabber = Grabber.getInstance();
         systemCoordinator = SystemCoordinator.getInstance();
+
         xbox = new Controller(0);
         buttonPanel = new Controller(2);
 
@@ -149,7 +150,16 @@ public class Robot extends TimedRobot {
         if (buttonPanel.getRisingEdge(XboxButtons.A)) {
             robotTracker.resetPose(new Pose2d(robotTracker.getLatestPose().getTranslation(), new Rotation2d()));
         }
+
+        if(xbox.getRawButton(XboxButtons.B)) {
+            elevator.setPercentOutput(.3);
+        } else if (xbox.getRawButton(XboxButtons.X)) {
+            elevator.setPercentOutput(-1);
+        } else {
+            elevator.setPercentOutput(0);
+        }
     }
+
 
 
     /**

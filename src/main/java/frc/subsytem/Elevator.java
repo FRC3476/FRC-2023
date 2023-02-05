@@ -2,14 +2,15 @@ package frc.subsytem;
 
 import com.revrobotics.CANSparkMax;
 import com.revrobotics.CANSparkMaxLowLevel;
-import com.revrobotics.ControlType;
 import com.revrobotics.SparkMaxPIDController;
 import edu.wpi.first.math.trajectory.TrapezoidProfile;
 import edu.wpi.first.wpilibj.Timer;
 import frc.robot.Constants;
 
 public class Elevator extends AbstractSubsystem {
-    private final CANSparkMax elevatorSparkMax;
+    private final CANSparkMax elevatorSparkMaster;
+    private final CANSparkMax elevatorSparkSlave;
+
     private final static Elevator instance = new Elevator();
 
     public static Elevator getInstance() {
@@ -18,13 +19,17 @@ public class Elevator extends AbstractSubsystem {
 
     private Elevator() {
         super(Constants.ELEVATOR_PERIOD, 5);
-        elevatorSparkMax = new CANSparkMax(0, CANSparkMaxLowLevel.MotorType.kBrushless);
-        SparkMaxPIDController elevatorSparkMaxPIDController = elevatorSparkMax.getPIDController();
+        elevatorSparkMaster = new CANSparkMax(Constants.ELEVATOR_MASTER_SPARK_ID, CANSparkMaxLowLevel.MotorType.kBrushless);
+        elevatorSparkSlave = new CANSparkMax(Constants.ELEVATOR_SLAVE_SPARK_ID, CANSparkMaxLowLevel.MotorType.kBrushless);
+        SparkMaxPIDController elevatorSparkMaxPIDController = elevatorSparkMaster.getPIDController();
         elevatorSparkMaxPIDController.setP(Constants.ELEVATOR_P);
         elevatorSparkMaxPIDController.setI(Constants.ELEVATOR_I);
         elevatorSparkMaxPIDController.setD(Constants.ELEVATOR_D);
-        elevatorSparkMax.enableVoltageCompensation(Constants.ELEVATOR_NOMINAL_VOLTAGE);
-        elevatorSparkMax.setSmartCurrentLimit(Constants.ELEVATOR_SMART_CURRENT_LIMIT);
+
+        elevatorSparkMaster.enableVoltageCompensation(Constants.ELEVATOR_NOMINAL_VOLTAGE);
+        elevatorSparkMaster.setSmartCurrentLimit(Constants.ELEVATOR_SMART_CURRENT_LIMIT);
+
+        elevatorSparkSlave.follow(elevatorSparkMaster);
     }
 
     private TrapezoidProfile trapezoidProfile =
@@ -38,8 +43,8 @@ public class Elevator extends AbstractSubsystem {
      */
     public void setPosition(double position) {
         trapezoidProfile = new TrapezoidProfile(Constants.ELEVATOR_CONSTRAINTS, new TrapezoidProfile.State(position, 0),
-                new TrapezoidProfile.State(elevatorSparkMax.getEncoder().getPosition() / Constants.ELEVATOR_ROTATIONS_PER_METER,
-                        elevatorSparkMax.getEncoder().getVelocity() / Constants.ELEVATOR_ROTATIONS_PER_METER / 60));
+                new TrapezoidProfile.State(elevatorSparkMaster.getEncoder().getPosition() / Constants.ELEVATOR_ROTATIONS_PER_METER,
+                        elevatorSparkMaster.getEncoder().getVelocity() / Constants.ELEVATOR_ROTATIONS_PER_METER / 60));
         trapezoidProfileStartTime = -1;
         logData("Goal position", position);
     }
@@ -48,19 +53,11 @@ public class Elevator extends AbstractSubsystem {
      * @return Elevator position in meters
      */
     public double getPosition() {
-        return elevatorSparkMax.getEncoder().getPosition() / Constants.ELEVATOR_ROTATIONS_PER_METER;
-    }
-
-    /**
-     * Use speed control for controlling elevator
-     * @param percentOutput in -1
-     */
-    public void setPercentOutput(double percentOutput) {
-        elevatorSparkMax.set(percentOutput);
+        return elevatorSparkMaster.getEncoder().getPosition() / Constants.ELEVATOR_ROTATIONS_PER_METER;
     }
 
     private void zeroEncoder() {
-        elevatorSparkMax.getEncoder().setPosition(0);
+        elevatorSparkMaster.getEncoder().setPosition(0);
     }
 
     private boolean hasStalledIntoBottom = false;
@@ -72,7 +69,7 @@ public class Elevator extends AbstractSubsystem {
         } else {
             setPercentOutput(Constants.MOTOR_SPEED_DECREASING_RATE);
         }
-        if (Math.abs(elevatorSparkMax.getOutputCurrent()) > Constants.STALLING_CURRENT && Timer.getFPGATimestamp() > minRunTime){
+        if (Math.abs(elevatorSparkMaster.getOutputCurrent()) > Constants.STALLING_CURRENT && Timer.getFPGATimestamp() > minRunTime){
             hasStalledIntoBottom = true;
             zeroEncoder();
 
@@ -86,11 +83,12 @@ public class Elevator extends AbstractSubsystem {
      * @param percent Spans from -1 to 1 where the extremes are full power and direction depends on the sign
      */
     public void setPercentOutput(double percent) {
-        elevatorSparkMax.setVoltage(percent * 12);
+        elevatorSparkMaster.getPIDController().setReference(percent, CANSparkMax.ControlType.kDutyCycle);
     }
 
     @Override
     public void update() {
+
         double currentTime = Timer.getFPGATimestamp();
         if (trapezoidProfileStartTime == -1) {
             trapezoidProfileStartTime = currentTime;
@@ -98,7 +96,7 @@ public class Elevator extends AbstractSubsystem {
         TrapezoidProfile.State state = trapezoidProfile.calculate(currentTime - trapezoidProfileStartTime);
         double acceleration = (state.velocity - pastVelocity) / (currentTime - pastTime);
 
-        elevatorSparkMax.getPIDController().setReference(state.position * Constants.ELEVATOR_ROTATIONS_PER_METER,
+        elevatorSparkMaster.getPIDController().setReference(state.position * Constants.ELEVATOR_ROTATIONS_PER_METER,
                 CANSparkMax.ControlType.kPosition, 0, Constants.ELEVATOR_FEEDFORWARD.calculate(state.velocity, acceleration),
                 SparkMaxPIDController.ArbFFUnits.kVoltage);
 
@@ -111,15 +109,17 @@ public class Elevator extends AbstractSubsystem {
         logData("Total trapezoidProfile time", trapezoidProfile.totalTime());
         logData("TrapezoidProfile time", currentTime - trapezoidProfileStartTime);
         logData("TrapezoidProfile Error", state.position
-                - elevatorSparkMax.getEncoder().getPosition());
+                - elevatorSparkMaster.getEncoder().getPosition());
+
+
     }
 
     @Override
     public void logData() {
-        logData("Motor Position", elevatorSparkMax.getEncoder().getPosition() / Constants.ELEVATOR_ROTATIONS_PER_METER);
-        logData("Motor Velocity", elevatorSparkMax.getEncoder().getVelocity() / Constants.ELEVATOR_ROTATIONS_PER_METER / 60);
-        logData("Motor current", elevatorSparkMax.getOutputCurrent());
-        logData("Motor temperature", elevatorSparkMax.getMotorTemperature());
+        logData("Motor Position", elevatorSparkMaster.getEncoder().getPosition() / Constants.ELEVATOR_ROTATIONS_PER_METER);
+        logData("Motor Velocity", elevatorSparkMaster.getEncoder().getVelocity() / Constants.ELEVATOR_ROTATIONS_PER_METER / 60);
+        logData("Motor current", elevatorSparkMaster.getOutputCurrent());
+        logData("Motor temperature", elevatorSparkMaster.getMotorTemperature());
     }
 
     @Override

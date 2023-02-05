@@ -173,6 +173,8 @@ public final class Constants {
     public static final int ELEVATOR_ROTATIONS_PER_METER = 5;
     public static final int ELEVATOR_NOMINAL_VOLTAGE = 9;
     public static final int ELEVATOR_SMART_CURRENT_LIMIT = 40;
+    public static final int ELEVATOR_MASTER_SPARK_ID = 40;
+    public static final int ELEVATOR_SLAVE_SPARK_ID = 42;
 
     // TODO: Figure out how much the elevator is angled at
     public static final double ELEVATOR_TILT_RADIANS = 0;

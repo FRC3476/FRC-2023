@@ -28,7 +28,7 @@ deploy {
                     // Enable VisualVM connection
                     // Default port 1099 Conflicts with Phoenix tuner?
                     jvmArgs.add("-Dcom.sun.management.jmxremote=true")
-                    jvmArgs.add("-Dcom.sun.management.jmxremote.port=1198")
+                    // jvmArgs.add("-Dcom.sun.management.jmxremote.port=1198")
                     jvmArgs.add("-Dcom.sun.management.jmxremote.local.only=false")
                     jvmArgs.add("-Dcom.sun.management.jmxremote.ssl=false")
                     jvmArgs.add("-Dcom.sun.management.jmxremote.authenticate=false")
