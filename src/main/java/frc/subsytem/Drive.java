@@ -68,6 +68,11 @@ public final class Drive extends AbstractSubsystem {
 
     private final @NotNull CANCoder[] swerveCanCoders;
     private final ReentrantLock swerveAutoControllerLock = new ReentrantLock();
+    /**
+     * Absolute Encoders for the motors that turn the wheel
+     */
+
+    private final @Nullable SparkMaxAbsoluteEncoder[] swerveSparkAbsoluteEncoders = new SparkMaxAbsoluteEncoder[4];
     double autoStartTime;
     boolean swerveAutoControllerInitialized = false;
     Trajectory currentAutoTrajectory;
@@ -88,18 +93,13 @@ public final class Drive extends AbstractSubsystem {
             new double[]{0, 0, 0, 0});
     private @Nullable HolonomicDriveController swerveAutoController;
     private double nextAllowedPrintError = 0;
+    private boolean isBreaking;
 
     {
         turnPID = new PIDController(turnP.get(), turnI.get(), turnD.get());
         turnPID.enableContinuousInput(-Math.PI, Math.PI);
         turnPID.setIntegratorRange(-Math.PI * 2 * 4, Math.PI * 2 * 4);
     }
-
-    /**
-     * Absolute Encoders for the motors that turn the wheel
-     */
-
-    private final @Nullable SparkMaxAbsoluteEncoder[] swerveSparkAbsoluteEncoders = new SparkMaxAbsoluteEncoder[4];
 
     private Drive() {
         super(Constants.DRIVE_PERIOD, 5);
@@ -213,8 +213,6 @@ public final class Drive extends AbstractSubsystem {
             swerveAutoControllerLock.unlock();
         }
     }
-
-    private boolean isBreaking;
 
     public synchronized void configCoast() {
         if (isBreaking) {
@@ -734,14 +732,14 @@ public final class Drive extends AbstractSubsystem {
         var angle = RobotTracker.getInstance().getGyroAngleAtTime(Timer.getFPGATimestamp());
         double angleMeasure = angle.getY();
         angleMeasure = Math.toDegrees(angleMeasure);
-        if (angleMeasure >= AUTO_BALANCE_COMPLETE_THRESHOLD - AUTO_BALANCE_OFFSET) {
+        if (angleMeasure >= AUTO_BALANCE_COMPLETE_THRESHOLD) {
             ChassisSpeeds chassisSpeeds = ChassisSpeeds.fromFieldRelativeSpeeds(
                     AUTO_BALANCING_VELOCITY,
                     DRIVE_HIGH_SPEED_M * inputs.getY(),
                     inputs.getRotation() * MAX_TELEOP_TURN_SPEED,
                     RobotTracker.getInstance().getGyroAngle());
             swerveDrive(chassisSpeeds, KinematicLimits.NORMAL_DRIVING.kinematicLimit, EXPECTED_TELEOP_DRIVE_DT);
-        } else if (angleMeasure <= -AUTO_BALANCE_COMPLETE_THRESHOLD + AUTO_BALANCE_OFFSET) {
+        } else if (angleMeasure <= -AUTO_BALANCE_COMPLETE_THRESHOLD) {
             ChassisSpeeds chassisSpeeds = ChassisSpeeds.fromFieldRelativeSpeeds(
                     -AUTO_BALANCING_VELOCITY,
                     DRIVE_HIGH_SPEED_M * inputs.getY(),
