@@ -97,7 +97,7 @@ public final class RobotTracker extends AbstractSubsystem {
 
     private RobotTracker() {
         super(Constants.ROBOT_TRACKER_PERIOD, 3);
-        new ScheduledThreadPoolExecutor(1).scheduleAtFixedRate(this::updateGyroHistory, 0, 5,
+        new ScheduledThreadPoolExecutor(1).scheduleAtFixedRate(this::updateGyroHistory, 0, 1,
                 TimeUnit.MILLISECONDS);
     }
 
@@ -120,42 +120,43 @@ public final class RobotTracker extends AbstractSubsystem {
     }
 
     private void updateGyroHistory() {
+        double time = Timer.getFPGATimestamp();
+
+        gyroSensor.getRawGyro(xyz_dps);
+        gyroYawVelocity = xyz_dps[2];
+        gyroRollVelocity = xyz_dps[0];
+        gyroPitchVelocity = xyz_dps[1];
+        lastGyroPitch = gyroSensor.getPitch();
+        lastGyroRoll = gyroSensor.getRoll();
+
+        gyroSensor.get6dQuaternion(quaternion);
+        gyroSensor.getBiasedAccelerometer(ba_xyz);
+
+        var rotW = quaternion[0];
+        var rotX = quaternion[1];
+        var rotY = quaternion[2];
+        var rotZ = quaternion[3];
+
+        // we need to transform the axis:
+        // what we have to what it should be
+        // x = -y
+        // y = x
+        // z = z
+        var rotation = new Rotation3d(new Quaternion(rotW, -rotY, rotX, rotZ));
+
+        var x = toFloat(ba_xyz[0]) * GRAVITY;
+        var y = toFloat(ba_xyz[1]) * GRAVITY;
+        var z = toFloat(ba_xyz[2]) * GRAVITY;
+        var accel = new Translation3d(-y, x, z) // transform the axis
+                .rotateBy(rotation.unaryMinus()); // rotate the acceleration to the field frame
+
         lock.writeLock().lock();
         try {
-            double time = Timer.getFPGATimestamp();
-
-            gyroSensor.getRawGyro(xyz_dps);
-            gyroYawVelocity = xyz_dps[2];
-            gyroRollVelocity = xyz_dps[0];
-            gyroPitchVelocity = xyz_dps[1];
-            lastGyroPitch = gyroSensor.getPitch();
-            lastGyroRoll = gyroSensor.getRoll();
-
-            gyroSensor.get6dQuaternion(quaternion);
-            gyroSensor.getBiasedAccelerometer(ba_xyz);
-
-            var rotW = quaternion[0];
-            var rotX = quaternion[1];
-            var rotY = quaternion[2];
-            var rotZ = quaternion[3];
-
-            // we need to transform the axis:
-            // what we have to what it should be
-            // x = -y
-            // y = x
-            // z = z
-            var rotation = new Rotation3d(new Quaternion(rotW, -rotY, rotX, rotZ));
-
-            var x = toFloat(ba_xyz[0]) * GRAVITY;
-            var y = toFloat(ba_xyz[1]) * GRAVITY;
-            var z = toFloat(ba_xyz[2]) * GRAVITY;
-            acceleration = new Translation3d(-y, x, z) // transform the axis
-                    .rotateBy(rotation.unaryMinus()); // rotate the acceleration to the field frame
-
             var lastEntryAcceleration = accelerationHistory.getInternalBuffer().lastEntry();
 
-            if (lastEntryAcceleration == null || !lastEntryAcceleration.getValue().equals(acceleration)) {
-                accelerationHistory.addSample(time, acceleration);
+            if (lastEntryAcceleration == null || !lastEntryAcceleration.getValue().equals(accel)) {
+                accelerationHistory.addSample(time, accel);
+                this.acceleration = accel;
             }
 
             var lastEntryRotation = gyroHistory.getInternalBuffer().lastEntry();
