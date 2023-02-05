@@ -13,10 +13,8 @@ import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
-import frc.subsytem.Drive;
+import frc.subsytem.*;
 import frc.subsytem.Drive.DriveState;
-import frc.subsytem.RobotTracker;
-import frc.subsytem.VisionHandler;
 import frc.utility.Controller;
 import frc.utility.Controller.XboxButtons;
 import frc.utility.ControllerDriveInputs;
@@ -39,7 +37,6 @@ public class Robot extends TimedRobot {
     private @NotNull VisionHandler visionHandler;
 
     private @NotNull Controller xbox;
-
 
     // Autonomous
     private final SendableChooser<String> autoChooser = new SendableChooser<>();
@@ -81,8 +78,6 @@ public class Robot extends TimedRobot {
         SmartDashboard.putData("Auto choices", autoChooser);
         SmartDashboard.putData("Red or Blue", sideChooser);
 
-        startSubsystems();
-
         if (IS_PRACTICE) {
             for (int i = 0; i < 10; i++) {
                 System.out.println("USING PRACTICE BOT CONFIG");
@@ -99,7 +94,8 @@ public class Robot extends TimedRobot {
      * SmartDashboard integrated updating.
      */
     @Override
-    public void robotPeriodic() {}
+    public void robotPeriodic() {
+    }
 
 
     @Override
@@ -136,7 +132,7 @@ public class Robot extends TimedRobot {
     @Override
     public void teleopPeriodic() {
         xbox.update();
-        drive.swerveDrive(getControllerDriveInputs());
+        drive.swerveDriveFieldRelative(getControllerDriveInputs());
 
         if (xbox.getRisingEdge(XboxButtons.A)) {
             robotTracker.resetPose(new Pose2d(robotTracker.getLatestPose().getTranslation(), new Rotation2d()));
@@ -194,10 +190,10 @@ public class Robot extends TimedRobot {
 
     private ControllerDriveInputs getControllerDriveInputs() {
         if (xbox.getRawButton(Controller.XboxButtons.X)) {
-            return new ControllerDriveInputs(xbox.getRawAxis(1), xbox.getRawAxis(0), -xbox.getRawAxis(4))
+            return new ControllerDriveInputs(xbox.getRawAxis(1), xbox.getRawAxis(0), xbox.getRawAxis(4))
                     .applyDeadZone(0.2, 0.2, 0.2, 0.2).squareInputs();
         } else {
-            return new ControllerDriveInputs(xbox.getRawAxis(1), xbox.getRawAxis(0), -xbox.getRawAxis(4))
+            return new ControllerDriveInputs(xbox.getRawAxis(1), xbox.getRawAxis(0), xbox.getRawAxis(4))
                     .applyDeadZone(0.05, 0.05, 0.2, 0.2).squareInputs();
         }
     }

@@ -72,7 +72,7 @@ public final class RobotTracker extends AbstractSubsystem {
             Drive.getInstance().getModulePositions()
     );
 
-    private static final double VELOCITY_MEASUREMENT_WINDOW = 0.5;
+    private static final double VELOCITY_MEASUREMENT_WINDOW = 0.1;
 
     private final TimeInterpolatableBuffer<Pose2d> poseBufferForVelocity = TimeInterpolatableBuffer.createBuffer(
             Pose2d::interpolate, 1.5);
@@ -141,11 +141,14 @@ public final class RobotTracker extends AbstractSubsystem {
                     .times(GRAVITY)
                     .rotateBy(rotation.unaryMinus());
 
-            if (!accelerationHistory.getInternalBuffer().lastEntry().getValue().equals(acceleration)) {
+            var lastEntryAcceleration = accelerationHistory.getInternalBuffer().lastEntry();
+
+            if (lastEntryAcceleration == null || !lastEntryAcceleration.getValue().equals(acceleration)) {
                 accelerationHistory.addSample(time, acceleration);
             }
 
-            if (!gyroHistory.getInternalBuffer().lastEntry().getValue().equals(rotation)) {
+            var lastEntryRotation = gyroHistory.getInternalBuffer().lastEntry();
+            if (lastEntryRotation == null || !lastEntryRotation.getValue().equals(rotation)) {
                 gyroHistory.addSample(time, rotation);
             }
         } finally {
@@ -219,6 +222,8 @@ public final class RobotTracker extends AbstractSubsystem {
 
                 // The average deltaVelocity over our measurement window
                 var deltaVelocity = mutDeltaVelocity.getTranslation2d();
+                //TODO: the delta velocity calculation is broken, this disables it for now
+                deltaVelocity = new Translation2d();
 
                 // https://www.desmos.com/calculator/szqs5g5d6i
 
@@ -348,11 +353,14 @@ public final class RobotTracker extends AbstractSubsystem {
         logData("rotation", getGyroAngle().getDegrees());
         logData("x", getLatestPose().getTranslation().getX());
         logData("y", getLatestPose().getTranslation().getY());
+        logData("xNoVision", noVisionOdometry.getPoseMeters().getX());
+        logData("yNoVision", noVisionOdometry.getPoseMeters().getY());
         logData("velocityX", getVelocity().getX());
         logData("velocityY", getVelocity().getY());
         logData("accelerationX", getAcceleration().getX());
         logData("accelerationY", getAcceleration().getY());
         logData("accelerationZ", getAcceleration().getZ());
+        logData("Velocity", getVelocity().getNorm());
 
         RobotPositionSender.addRobotPosition(new RobotState(getLatestPose(), getVelocity().getX(),
                 getVelocity().getY(), getAngularVelocity(), lastTimestamp));
