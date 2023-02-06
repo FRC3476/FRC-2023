@@ -167,7 +167,7 @@ public final class Constants {
     public static final TrapezoidProfile.Constraints ELEVATOR_CONSTRAINTS
             = new TrapezoidProfile.Constraints(1, 1);
     public static final ElevatorFeedforward ELEVATOR_FEEDFORWARD = new ElevatorFeedforward(0, 0, 0, 0);
-    public static final double ELEVATOR_P = .05;
+    public static final double ELEVATOR_P = .1;
     public static final int ELEVATOR_I = 0;
     public static final int ELEVATOR_D = 0;
     // 1 Meter divided by the circumference of the sprocket in meters
@@ -178,7 +178,7 @@ public final class Constants {
     public static final int ELEVATOR_MASTER_SPARK_ID = 40;
     public static final int ELEVATOR_SLAVE_SPARK_ID = 42;
     public static final double ELEVATOR_LOWER_LIMIT = .01;
-    public static final double ELEVATOR_UPPER_LIMIT = 1.10;
+    public static final double ELEVATOR_UPPER_LIMIT = 1.20;
 
     // TODO: Figure out how much the elevator is angled at
     public static final double ELEVATOR_TILT_RADIANS = 0;

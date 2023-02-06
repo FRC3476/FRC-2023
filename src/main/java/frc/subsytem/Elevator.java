@@ -106,7 +106,7 @@ public class Elevator extends AbstractSubsystem {
     public void update() {
         switch(currentElevatorState) {
             case TELEOP -> {
-                elevatorSparkMaster.getPIDController().setReference(positionSetpoint, CANSparkMax.ControlType.kPosition);
+                elevatorSparkMaster.getPIDController().setReference(positionSetpoint * Constants.ELEVATOR_ROTATIONS_PER_METER, CANSparkMax.ControlType.kPosition);
                 logData("Elevator Position Setpoint", positionSetpoint);
             }
 
