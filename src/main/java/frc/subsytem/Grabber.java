@@ -40,7 +40,7 @@ public class Grabber extends AbstractSubsystem {
      * @return Gets the pivot angle in dergees
      */
     public double getPivotAngle() {
-        return pivotSparkMax.getEncoder().getPosition() * 360.0;
+        return pivotSparkMax.getEncoder().getPosition() * Constants.DEGREES_PER_ROTAtION;
     }
 
     /**

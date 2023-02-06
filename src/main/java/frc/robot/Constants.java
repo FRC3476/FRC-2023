@@ -136,6 +136,7 @@ public final class Constants {
     public static final double EXPECTED_AUTO_DRIVE_DT = DRIVE_PERIOD / 1000.0;
     public static final double ALLOWED_SWERVE_ANGLE_ERROR = 2;
     public static final int SYSTEM_COORDINATOR_PERIOD = 20;
+    public static final double DEGREES_PER_ROTAtION = 360.0;
 
     public enum KinematicLimits {
         /**
