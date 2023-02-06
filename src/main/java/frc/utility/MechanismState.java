@@ -4,10 +4,6 @@ import frc.robot.Constants;
 
 public class MechanismState {
 
-    private double xCoordinate;
-    private double yCoordinate;
-    private double wristAngle;
-
     // TODO: Find real max and min values
     private final static double BASE_MIN_X = 0;
     private final static double BASE_MAX_X = 0;
@@ -15,11 +11,15 @@ public class MechanismState {
     private final static double MIN_Y = 0;
     private final static double MIN_WRIST_ANGLE = 0;
     private final static double MAX_WRIST_ANGLE = 0;
+    private double xCoordinate;
+    private double yCoordinate;
+    private double wristAngle;
 
     /**
      * Represents a state that the elevator-arm-grabber mechanism can be in
-     * @param x - coordinate in meters
-     * @param y - coordiante in meters
+     *
+     * @param x          - coordinate in meters
+     * @param y          - coordiante in meters
      * @param wristAngle - wrist angle in degrees
      */
     public MechanismState(double x, double y, double wristAngle) {
@@ -27,7 +27,7 @@ public class MechanismState {
         double minX = BASE_MIN_X + (y / Math.tan(Constants.ELEVATOR_TILT_RADIANS));
         double maxX = BASE_MAX_X + (y / Math.tan(Constants.ELEVATOR_TILT_RADIANS));
 
-        if(wristAngle > MAX_WRIST_ANGLE) {
+        if (wristAngle > MAX_WRIST_ANGLE) {
             wristAngle = MAX_WRIST_ANGLE;
         } else if (wristAngle < MIN_WRIST_ANGLE) {
             wristAngle = MIN_WRIST_ANGLE;
@@ -38,34 +38,34 @@ public class MechanismState {
         double wristY = Constants.GRABBER_LENGTH * Math.sin(Math.toRadians(wristAngle));
 
         // Add constraints for allowed x for certain wrist angles
-        if(wristAngle > 90 && wristAngle < 270) {
-            if(x > maxX + wristX) {
+        if (wristAngle > 90 && wristAngle < 270) {
+            if (x > maxX + wristX) {
                 x = maxX + wristX;
-            } else if(x < minX) {
+            } else if (x < minX) {
                 // Makes sure that elevator doesn't try to go below allowed amount so it can tilt the grabber up to meet the min X
                 x = minX;
             }
         } else {
-            if(x > maxX) {
+            if (x > maxX) {
                 x = maxX;
-            } else if(x < minX - wristX) {
+            } else if (x < minX - wristX) {
                 x = minX - wristX;
             }
         }
 
         // Add constraints for allowed y for certain wrist angles
-        if(wristAngle > 0) {
-            if(y > MAX_Y) {
+        if (wristAngle > 0) {
+            if (y > MAX_Y) {
                 y = MAX_Y;
-            } else if(y < MIN_Y + wristY) {
+            } else if (y < MIN_Y + wristY) {
                 // Makes sure that elevator doesn't try to go below allowed amount so it can tilt the grabber down to meet the max y
                 y = MIN_Y + wristY;
             }
         } else {
-            if(y > MAX_Y - wristY) {
+            if (y > MAX_Y - wristY) {
                 // Makes sure that elevator doesn't try to go above allowed amount so it can tilt the grabber up to meet the min y
                 y = MAX_Y - wristY;
-            } else if(y < MIN_Y) {
+            } else if (y < MIN_Y) {
                 y = MIN_Y;
             }
         }

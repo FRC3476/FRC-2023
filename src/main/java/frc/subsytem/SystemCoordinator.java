@@ -5,11 +5,17 @@ import frc.utility.MechanismState;
 
 public class SystemCoordinator extends AbstractSubsystem {
 
+    private static SystemCoordinator instance;
+    private final Grabber grabber;
     private Elevator elevator;
     private TelescopingArm telescopingArm;
-    private final Grabber grabber;
 
-    private static SystemCoordinator instance;
+    private SystemCoordinator() {
+        super(Constants.SYSTEM_COORDINATOR_PERIOD, 5);
+        elevator = Elevator.getInstance();
+        telescopingArm = TelescopingArm.getInstance();
+        grabber = Grabber.getInstance();
+    }
 
     /**
      * Coordinates the elevator, telescoping arm, and grabber subsystems
@@ -21,18 +27,12 @@ public class SystemCoordinator extends AbstractSubsystem {
 
         return instance;
     }
-    
-    private SystemCoordinator() {
-        super(Constants.SYSTEM_COORDINATOR_PERIOD, 5);
-        elevator = Elevator.getInstance();
-        telescopingArm = TelescopingArm.getInstance();
-        grabber = Grabber.getInstance();
-    }
 
     /**
      * Will drive the elevator, grabber, and telescoping arm to that the end of the grabber reaches these coordinates
      * Coordinates in meters with an orgin at the grabber position with a completely retracted arm and completely lowered
      * elevator and a horizontally level wrist. Orgin measured from the tip of the grabber in the center.
+     *
      * @param desiredState - A mechanism state that includes and x, y, z, and wrist angle
      */
     public void goToCoordinates(MechanismState desiredState) {
