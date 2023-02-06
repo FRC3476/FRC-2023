@@ -253,12 +253,12 @@ public class Robot extends TimedRobot {
         if (xbox.getRawButton(XboxButtons.X)) {
             // In position
             //arm.setArmMotor(Constants.ARM_TUCKED_ROTATION);
-            arm.setArmPercent(-0.08);
+            arm.setArmPercent(0.08);
         } else if (xbox.getRawButton(XboxButtons.Y)) {
             // Out
             // Position
             //arm.setArmMotor(Constants.ARM_ROTATION_EXTENDED);
-            arm.setArmPercent(0.08);
+            arm.setArmPercent(-0.08);
         } else {
             arm.setArmPercent(0);
         }

@@ -31,6 +31,7 @@ public class Arm extends AbstractSubsystem {
         armPIDController.setP(Constants.ARM_P);
         armPIDController.setI(Constants.ARM_I);
         armPIDController.setD(Constants.ARM_D);
+        arm.setInverted(true);
     }
 
     /**
