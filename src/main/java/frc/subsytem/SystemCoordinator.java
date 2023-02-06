@@ -16,13 +16,14 @@ public class SystemCoordinator extends AbstractSubsystem {
      */
     public static SystemCoordinator getInstance() {
         if (instance == null) {
-            instance = new SystemCoordinator(Constants.SYSTEM_COORDINATOR_PERIOD, 5);
+            instance = new SystemCoordinator();
         }
 
         return instance;
     }
-    private SystemCoordinator(int period, int loggingInterval) {
-        super(period, loggingInterval);
+    
+    private SystemCoordinator() {
+        super(Constants.SYSTEM_COORDINATOR_PERIOD, 5);
         elevator = Elevator.getInstance();
         telescopingArm = TelescopingArm.getInstance();
         grabber = Grabber.getInstance();
