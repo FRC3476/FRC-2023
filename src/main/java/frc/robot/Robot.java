@@ -263,6 +263,8 @@ public class Robot extends TimedRobot {
             arm.setArmPercent(0);
         }
 
+        //
+
         // Intake speed control
         if (xbox.getRawAxis(3) > .1) {
             // Intaking cones and outtaking cubes
@@ -275,11 +277,7 @@ public class Robot extends TimedRobot {
             intake.setIntakePercentOutput(0);
         }
 
-        /*
-         * Negative signs here because the values from the analog sticks are backwards
-         * from what we want. Forward returns a negative when we want it positive.
-         */
-        //drive.swerveDrive(getControllerDriveInputs());
+        drive.swerveDrive(getControllerDriveInputs());
 
         if (xbox.getRisingEdge(XboxButtons.A)) {
             robotTracker.resetPose(new Pose2d(robotTracker.getLatestPose().getTranslation(), new Rotation2d()));
