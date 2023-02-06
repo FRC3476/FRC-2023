@@ -9,8 +9,8 @@ public class MechanismState {
     private double wristAngle;
 
     // TODO: Find real max and min values
-    private final static double MAX_X = 0;
-    private final static double MIN_X = 0;
+    private final static double BASE_MIN_X = 0;
+    private final static double BASE_MAX_X = 0;
     private final static double MAX_Y = 0;
     private final static double MIN_Y = 0;
     private final static double MIN_WRIST_ANGLE = 0;
@@ -23,6 +23,10 @@ public class MechanismState {
      * @param wristAngle - wrist angle in degrees
      */
     public MechanismState(double x, double y, double wristAngle) {
+        // Calculate the minX and maxX based on desired y
+        double minX = BASE_MIN_X + (y / Math.tan(Constants.ELEVATOR_TILT_RADIANS));
+        double maxX = BASE_MAX_X + (y / Math.tan(Constants.ELEVATOR_TILT_RADIANS));
+
         if(wristAngle > MAX_WRIST_ANGLE) {
             wristAngle = MAX_WRIST_ANGLE;
         } else if (wristAngle < MIN_WRIST_ANGLE) {
@@ -35,17 +39,17 @@ public class MechanismState {
 
         // Add constraints for allowed x for certain wrist angles
         if(wristAngle > 90 && wristAngle < 270) {
-            if(x > MAX_X + wristX) {
-                x = MAX_X + wristX;
-            } else if(x < MIN_X) {
+            if(x > maxX + wristX) {
+                x = maxX + wristX;
+            } else if(x < minX) {
                 // Makes sure that elevator doesn't try to go below allowed amount so it can tilt the grabber up to meet the min X
-                x = MIN_X;
+                x = minX;
             }
         } else {
-            if(x > MAX_X) {
-                x = MAX_X;
-            } else if(x < MIN_X - wristX) {
-                x = MIN_X - wristX;
+            if(x > maxX) {
+                x = maxX;
+            } else if(x < minX - wristX) {
+                x = minX - wristX;
             }
         }
 
