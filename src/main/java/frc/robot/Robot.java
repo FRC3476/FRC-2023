@@ -146,7 +146,7 @@ public class Robot extends TimedRobot {
         xbox.update();
         drive.swerveDriveFieldRelative(getControllerDriveInputs());
 
-        if (buttonPanel.getRisingEdge(XboxButtons.A)) {
+        if (xbox.getRisingEdge(XboxButtons.A)) {
             robotTracker.resetPose(new Pose2d(robotTracker.getLatestPose().getTranslation(), new Rotation2d()));
         }
     }
