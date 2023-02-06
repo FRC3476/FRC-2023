@@ -154,9 +154,9 @@ public class Robot extends TimedRobot {
         }
 
         if(xbox.getRisingEdge(XboxButtons.B)) {
-            elevator.setPosition(0);
+            elevator.setPosition(.3);
         } else if (xbox.getRisingEdge(XboxButtons.X)) {
-            elevator.setPosition(1.2);
+            elevator.setPosition(.8);
         }
     }
 
@@ -208,13 +208,13 @@ public class Robot extends TimedRobot {
             drive.setAbsoluteZeros();
         }
 
-        if(xbox.getRawButton(XboxButtons.X)){
+        if(xbox.getRawButton(XboxButtons.A)){
             elevator.elevatorStallIntoBottom();
         } else if(xbox.getRawButton(XboxButtons.Y)){
             telescopingArm.telescopingArmStallIntoBottom();
         }
 
-        if(xbox.getRawButton(XboxButtons.A)) {
+        if(xbox.getRawButton(XboxButtons.Y)) {
             elevator.setPercentOutput(.2);
         } else if(xbox.getFallingEdge(XboxButtons.A)) {
             elevator.setPercentOutput(0);

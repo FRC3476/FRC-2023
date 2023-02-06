@@ -167,9 +167,10 @@ public final class Constants {
     public static final TrapezoidProfile.Constraints ELEVATOR_CONSTRAINTS
             = new TrapezoidProfile.Constraints(1, 1);
     public static final ElevatorFeedforward ELEVATOR_FEEDFORWARD = new ElevatorFeedforward(0, 0, 0, 0);
-    public static final double ELEVATOR_P = .1;
-    public static final int ELEVATOR_I = 0;
+    public static final double ELEVATOR_P = 1.3;
+    public static final double ELEVATOR_I = .0128;
     public static final int ELEVATOR_D = 0;
+    public static final double ELEVATOR_IZONE = .05;
     // 1 Meter divided by the circumference of the sprocket in meters
     public static final double ELEVATOR_ROTATIONS_PER_METER = 1 / ((2 * Math.PI) / 39.37);
     public static final double ELEVATOR_REDUCTION = 1.0 / 5.0;

@@ -33,6 +33,7 @@ public class Elevator extends AbstractSubsystem {
         elevatorSparkMaxPIDController.setP(Constants.ELEVATOR_P);
         elevatorSparkMaxPIDController.setI(Constants.ELEVATOR_I);
         elevatorSparkMaxPIDController.setD(Constants.ELEVATOR_D);
+        elevatorSparkMaxPIDController.setIZone(Constants.ELEVATOR_IZONE);
 
         elevatorSparkMaster.enableVoltageCompensation(Constants.ELEVATOR_NOMINAL_VOLTAGE);
         elevatorSparkMaster.setSmartCurrentLimit(Constants.ELEVATOR_SMART_CURRENT_LIMIT);
