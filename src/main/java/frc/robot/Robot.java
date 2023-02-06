@@ -113,6 +113,7 @@ public class Robot extends TimedRobot {
     @Override
     public void autonomousInit() {
         drive.configBrake();
+        elevator.setElevatorState(Elevator.ElevatorState.TELEOP);
         String autoName = autoChooser.getSelected();
         if (autoName != null) {
             AutonomousContainer.getInstance().runAutonomous(autoName, sideChooser.getSelected(), true);
@@ -135,6 +136,7 @@ public class Robot extends TimedRobot {
     @Override
     public void teleopInit() {
         drive.configBrake();
+        elevator.setElevatorState(Elevator.ElevatorState.TELEOP);
     }
 
 
@@ -151,10 +153,10 @@ public class Robot extends TimedRobot {
             robotTracker.resetPose(new Pose2d(robotTracker.getLatestPose().getTranslation(), new Rotation2d()));
         }
 
-        if(xbox.getRawButton(XboxButtons.B)) {
-
-        } else if (xbox.getRawButton(XboxButtons.X)) {
-
+        if(xbox.getRisingEdge(XboxButtons.B)) {
+            elevator.setPosition(0);
+        } else if (xbox.getRisingEdge(XboxButtons.X)) {
+            elevator.setPosition(1.2);
         }
     }
 
@@ -167,6 +169,7 @@ public class Robot extends TimedRobot {
     public void disabledInit() {
         AutonomousContainer.getInstance().killAuto();
         disabledTime = Timer.getFPGATimestamp();
+        elevator.setElevatorState(Elevator.ElevatorState.OFF);
     }
 
 
@@ -187,6 +190,8 @@ public class Robot extends TimedRobot {
     @Override
     public void testInit() {
         drive.setDriveState(DriveState.TELEOP);
+        elevator.setElevatorState(Elevator.ElevatorState.TEST);
+        elevator.resetHoming();
     }
 
 
@@ -203,10 +208,16 @@ public class Robot extends TimedRobot {
             drive.setAbsoluteZeros();
         }
 
-        if(xbox.getRisingEdge(XboxButtons.X)){
+        if(xbox.getRawButton(XboxButtons.X)){
             elevator.elevatorStallIntoBottom();
-        } else if(xbox.getRisingEdge(XboxButtons.Y)){
+        } else if(xbox.getRawButton(XboxButtons.Y)){
             telescopingArm.telescopingArmStallIntoBottom();
+        }
+
+        if(xbox.getRawButton(XboxButtons.A)) {
+            elevator.setPercentOutput(.2);
+        } else if(xbox.getFallingEdge(XboxButtons.A)) {
+            elevator.setPercentOutput(0);
         }
     }
 

@@ -165,22 +165,26 @@ public final class Constants {
     // Elevator
     public static final int ELEVATOR_PERIOD = 20;
     public static final TrapezoidProfile.Constraints ELEVATOR_CONSTRAINTS
-            = new TrapezoidProfile.Constraints(3, 3);
+            = new TrapezoidProfile.Constraints(1, 1);
     public static final ElevatorFeedforward ELEVATOR_FEEDFORWARD = new ElevatorFeedforward(0, 0, 0, 0);
-    public static final int ELEVATOR_P = 5;
-    public static final int ELEVATOR_I = 5;
-    public static final int ELEVATOR_D = 5;
-    public static final int ELEVATOR_ROTATIONS_PER_METER = 5;
+    public static final double ELEVATOR_P = .05;
+    public static final int ELEVATOR_I = 0;
+    public static final int ELEVATOR_D = 0;
+    // 1 Meter divided by the circumference of the sprocket in meters
+    public static final double ELEVATOR_ROTATIONS_PER_METER = 1 / ((2 * Math.PI) / 39.37);
+    public static final double ELEVATOR_REDUCTION = 1.0 / 5.0;
     public static final int ELEVATOR_NOMINAL_VOLTAGE = 9;
     public static final int ELEVATOR_SMART_CURRENT_LIMIT = 40;
     public static final int ELEVATOR_MASTER_SPARK_ID = 40;
     public static final int ELEVATOR_SLAVE_SPARK_ID = 42;
+    public static final double ELEVATOR_LOWER_LIMIT = .01;
+    public static final double ELEVATOR_UPPER_LIMIT = 1.10;
 
     // TODO: Figure out how much the elevator is angled at
     public static final double ELEVATOR_TILT_RADIANS = 0;
     public static final double STALLING_CURRENT = 12;
     public static final double MOTOR_STARTING_TIME = 0.5;
-    public static final double MOTOR_SPEED_DECREASING_RATE = -0.01;
+    public static final double MOTOR_SPEED_DECREASING_RATE = -0.1;
 
 
 
