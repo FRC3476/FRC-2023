@@ -34,8 +34,6 @@ public class Robot extends TimedRobot {
     /**
      * Used to remember the last game piece picked up to apply some holding power.
      */
-    static final int CONE = 1;
-    static final int CUBE = 2;
     // Copyright (c) FIRST and other WPILib contributors.
 // Open Source Software; you can modify and/or share it under the terms of
 // the WPILib BSD license file in the root directory of this project.
@@ -56,7 +54,6 @@ public class Robot extends TimedRobot {
     private @NotNull Intake intake;
     private @NotNull Arm arm;
     private @NotNull Controller xbox;
-    private @NotNull Controller buttonPanel;
     private String m_autoSelected;
 
     /**
@@ -199,7 +196,6 @@ public class Robot extends TimedRobot {
         intake = Intake.getInstance();
         arm = Arm.getInstance();
         xbox = new Controller(0);
-        buttonPanel = new Controller(1);
 
         startSubsystems();
         AutonomousContainer.getInstance().setDebugPrints(true);
@@ -247,29 +243,29 @@ public class Robot extends TimedRobot {
     @Override
     public void teleopPeriodic() {
         xbox.update();
-        buttonPanel.update();
 
         // Arm position controls
-        if (xbox.getRawButton(XboxButtons.X)) {
-            // In position
-            //arm.setArmMotor(Constants.ARM_TUCKED_ROTATION);
-            arm.setArmPercent(0.08);
-        } else if (xbox.getRawButton(XboxButtons.Y)) {
-            // Out
-            // Position
-            //arm.setArmMotor(Constants.ARM_ROTATION_EXTENDED);
-            arm.setArmPercent(-0.08);
+        if (xbox.getRawButton(XboxButtons.LEFT_BUMPER)) {
+            // Go out
+            arm.setArmPercent(-Constants.ARM_SPEED);
+        } else if (xbox.getRawAxis(2) > .1) {
+            // Go in
+            arm.setArmPercent(Constants.ARM_SPEED);
         } else {
             arm.setArmPercent(0);
         }
 
-        //
+        //Test Data for Position Control:
+        //-257.7025451660156, 52.78291702270508 = 309.7
+        //-268.5694274902344, 7.95624828338623 = 275.6
+        //-263.7181701660156, 64.62039947509766 = 327.7
+        //Mean = 304.3, MAD = 19.2
 
         // Intake speed control
-        if (xbox.getRawAxis(3) > .1) {
+        if (xbox.getRawButton(XboxButtons.RIGHT_BUMPER)) {
             // Intaking cones and outtaking cubes
             intake.setIntakePercentOutput(0.6);
-        } else if (xbox.getRawAxis(2) > .1) {
+        } else if (xbox.getRawAxis(3) > .1) {
             // Outtaking cones and intaking cubes
             intake.setIntakePercentOutput(-0.5);
         } else {
@@ -281,9 +277,6 @@ public class Robot extends TimedRobot {
 
         if (xbox.getRisingEdge(XboxButtons.A)) {
             robotTracker.resetPose(new Pose2d(robotTracker.getLatestPose().getTranslation(), new Rotation2d()));
-        }
-        if (xbox.getRawButton((XboxButtons.B))) {
-            arm.armStallIntoTuckedPosition();
         }
     }
 }

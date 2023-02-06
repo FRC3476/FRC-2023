@@ -162,15 +162,16 @@ public final class Constants {
     public static final double INTAKE_HOLD_POWER = 0.07;
     public static final int INTAKE_PERIOD = 20;
     public static final int INTAKE_CAN_ID = 40;
-    public static final int ARM_CURRENT_LIMIT = 20;
+    public static final int ARM_CURRENT_LIMIT = 23;
     public static final int ARM_MOTOR_ID = 41;
     public static final int ARM_PERIOD = 20;
-    public static final double ARM_P = 0.0001;
-    public static final double ARM_I = 0;
-    public static final double ARM_D = 0;
-    public static final double ARM_TUCKED_ROTATION = 0;
-    public static final double ARM_ROTATION_EXTENDED = -1469;
-    public static final double ARM_GEAR_RATIO = 75;
+    public static final double ARM_SPEED = 0.64;
+//For position control:
+//    public static final double ARM_P = 0.0004;
+//    public static final double ARM_I = 0;
+//    public static final double ARM_D = 0;
+//    public static final double ARM_ROTATION = 304.3;
+//    public static final double ARM_GEAR_RATIO = 75;
 
     public enum KinematicLimits {
         /**
