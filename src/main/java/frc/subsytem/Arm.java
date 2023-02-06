@@ -36,11 +36,11 @@ public class Arm extends AbstractSubsystem {
     /**
      * Set the arm position
      *
-     * @param angle
+     * @param rotation
      */
-    public void setArmMotor(double angle) {
-        // Set the motor position to the desired angle
-        arm.getPIDController().setReference(angle, CANSparkMax.ControlType.kPosition);
+    public void setArmMotor(double rotation) {
+        // Set the motor position to the desired motor rotation
+        arm.getPIDController().setReference(rotation, CANSparkMax.ControlType.kPosition);
     }
 
     public void setArmPercent(double percent) {
@@ -64,12 +64,12 @@ public class Arm extends AbstractSubsystem {
 
     public void armStallIntoTuckedPosition() {
         if (minRunTime == -1) minRunTime = Timer.getFPGATimestamp() + Constants.MOTOR_STARTING_TIME;
-        if(hasStalledIntoBottom){
+        if (hasStalledIntoBottom) {
             setArmPercent(0);
         } else {
             setArmPercent(Constants.MOTOR_SPEED_DECREASING_RATE);
         }
-        if (Math.abs(arm.getOutputCurrent()) > Constants.STALLING_CURRENT && Timer.getFPGATimestamp() > minRunTime){
+        if (Math.abs(arm.getOutputCurrent()) > Constants.STALLING_CURRENT && Timer.getFPGATimestamp() > minRunTime) {
             hasStalledIntoBottom = true;
             zeroEncoder();
 

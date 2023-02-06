@@ -253,22 +253,22 @@ public class Robot extends TimedRobot {
         if (xbox.getRawButton(XboxButtons.X)) {
             // In position
             //arm.setArmMotor(Constants.ARM_TUCKED_ROTATION);
-            arm.setArmPercent(-0.32);
+            arm.setArmPercent(-0.08);
         } else if (xbox.getRawButton(XboxButtons.Y)) {
             // Out
             // Position
             //arm.setArmMotor(Constants.ARM_ROTATION_EXTENDED);
-            arm.setArmPercent(0.32);
+            arm.setArmPercent(0.08);
         } else {
             arm.setArmPercent(0);
         }
 
         // Intake speed control
         if (xbox.getRawAxis(3) > .1) {
-            // Intaking
+            // Intaking cones and outtaking cubes
             intake.setIntakePercentOutput(0.6);
         } else if (xbox.getRawAxis(2) > .1) {
-            // Outtaking
+            // Outtaking cones and intaking cubes
             intake.setIntakePercentOutput(-0.5);
         } else {
             // Holding
@@ -283,6 +283,9 @@ public class Robot extends TimedRobot {
 
         if (xbox.getRisingEdge(XboxButtons.A)) {
             robotTracker.resetPose(new Pose2d(robotTracker.getLatestPose().getTranslation(), new Rotation2d()));
+        }
+        if (xbox.getRawButton((XboxButtons.B))) {
+            arm.armStallIntoTuckedPosition();
         }
     }
 }
