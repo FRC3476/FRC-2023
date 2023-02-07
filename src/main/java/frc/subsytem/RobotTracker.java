@@ -101,10 +101,6 @@ public final class RobotTracker extends AbstractSubsystem {
                 TimeUnit.MILLISECONDS);
     }
 
-    double[] xyz_dps = new double[3];
-    short[] ba_xyz = new short[3];
-    double[] quaternion = new double[4];
-
 
     private record VisionMeasurement(Pose2d pose, double timestamp, Optional<Matrix<N3, N1>> visionMeasurementStds) {
     }
@@ -118,6 +114,12 @@ public final class RobotTracker extends AbstractSubsystem {
     public void addVisionMeasurement(@NotNull Pose2d visionMeasurement, double timestamp, Matrix<N3, N1> visionMeasurementStds) {
         visionMeasurements.add(new VisionMeasurement(visionMeasurement, timestamp, Optional.of(visionMeasurementStds)));
     }
+
+
+    // Created here to avoid garbage collection
+    private final double[] xyz_dps = new double[3];
+    private final short[] ba_xyz = new short[3];
+    private final double[] quaternion = new double[4];
 
     private void updateGyroHistory() {
         double time = Timer.getFPGATimestamp();
@@ -138,17 +140,22 @@ public final class RobotTracker extends AbstractSubsystem {
         var rotZ = quaternion[3];
 
         // we need to transform the axis:
-        // what we have to what it should be
-        // x = -y
-        // y = x
-        // z = z
-        var rotation = new Rotation3d(new Quaternion(rotW, -rotY, rotX, rotZ));
+        // axis that we want <- what it is on the pigeon
+        // these follow the right hand rule
+        // x <- y
+        // y <- -x
+        // z <- z
 
+        // axis convention of the pigeon: https://store.ctr-electronics.com/content/user-manual/Pigeon2%20User's%20Guide.pdf#page=20,
+
+        var rotationFieldToRobot = new Rotation3d(new Quaternion(rotW, rotY, -rotX, rotZ));
+
+        //ba_xyz is in fixed point notation (Q2.14) in units of g
         var x = toFloat(ba_xyz[0]) * GRAVITY;
         var y = toFloat(ba_xyz[1]) * GRAVITY;
         var z = toFloat(ba_xyz[2]) * GRAVITY;
-        var accel = new Translation3d(-y, x, z) // transform the axis
-                .rotateBy(rotation.unaryMinus()); // rotate the acceleration to the field frame
+        var accel = new Translation3d(y, -x, z) // transform the axis (see above) (robot frame)
+                .rotateBy(rotationFieldToRobot.unaryMinus()); // rotate the acceleration to the field frame
 
         lock.writeLock().lock();
         try {
@@ -160,8 +167,8 @@ public final class RobotTracker extends AbstractSubsystem {
             }
 
             var lastEntryRotation = gyroHistory.getInternalBuffer().lastEntry();
-            if (lastEntryRotation == null || !lastEntryRotation.getValue().equals(rotation)) {
-                gyroHistory.addSample(time, rotation);
+            if (lastEntryRotation == null || !lastEntryRotation.getValue().equals(rotationFieldToRobot)) {
+                gyroHistory.addSample(time, rotationFieldToRobot);
             }
         } finally {
             lock.writeLock().unlock();
