@@ -42,85 +42,64 @@ import java.util.concurrent.locks.ReentrantLock;
 
 import static frc.robot.Constants.*;
 
-
 public final class Drive extends AbstractSubsystem {
     private static final Pose2d IDENTITY_POSE = new Pose2d();
-
+    private static final @NotNull Drive INSTANCE = new Drive();
+    final Lock currentAutoTrajectoryLock = new ReentrantLock();
     private final SwerveSetpointGenerator setpointGenerator = new SwerveSetpointGenerator(SWERVE_DRIVE_KINEMATICS);
-
     private final @NotNull LiveEditableValue<Double> turnP = new LiveEditableValue<>(DEFAULT_TURN_P, SmartDashboard.getEntry(
             "TurnPIDP"));
     private final @NotNull LiveEditableValue<Double> turnI = new LiveEditableValue<>(DEFAULT_TURN_I, SmartDashboard.getEntry(
             "TurnPIDI"));
     private final @NotNull LiveEditableValue<Double> turnD = new LiveEditableValue<>(DEFAULT_TURN_D, SmartDashboard.getEntry(
             "TurnPIDD"));
-
-
-    public void resetAuto() {
-        swerveAutoControllerLock.lock();
-        try {
-            ProfiledPIDController autoTurnPIDController
-                    = new ProfiledPIDController(turnP.get(), turnI.get(), turnD.get(),
-                    new TrapezoidProfile.Constraints(999999999, 999999999));
-            autoTurnPIDController.enableContinuousInput(-Math.PI, Math.PI);
-            autoTurnPIDController.setTolerance(Math.toRadians(10));
-
-            swerveAutoController = new HolonomicDriveController(
-                    new PIDController(3, 0, 0),
-                    new PIDController(3, 0, 0),
-                    autoTurnPIDController);
-            swerveAutoController.setTolerance(new Pose2d(0.5, 0.5, Rotation2d.fromDegrees(10))); //TODO: Tune
-        } finally {
-            swerveAutoControllerLock.unlock();
-        }
-    }
-
-    public enum DriveState {
-        TELEOP, TURN, HOLD, DONE, RAMSETE, STOP
-    }
-
-    private boolean useRelativeEncoderPosition = false;
-
-    private static final @NotNull Drive INSTANCE = new Drive();
-
-    public static @NotNull Drive getInstance() {
-        return INSTANCE;
-    }
-
     private final @NotNull PIDController turnPID;
+    /**
+     * Motors that turn the wheels around. Uses Falcon500s
+     */
+    private final @NotNull CANSparkMax[] swerveMotors = new CANSparkMax[4];
+    /**
+     * Motors that are driving the robot around and causing it to move
+     */
+    private final @NotNull CANSparkMax[] swerveDriveMotors = new CANSparkMax[4];
+    /**
+     * Absolute Encoders for the motors that turn the wheel
+     */
+
+    private final @NotNull CANCoder[] swerveCanCoders;
+    private final ReentrantLock swerveAutoControllerLock = new ReentrantLock();
+    /**
+     * Absolute Encoders for the motors that turn the wheel
+     */
+
+    private final @Nullable SparkMaxAbsoluteEncoder[] swerveSparkAbsoluteEncoders = new SparkMaxAbsoluteEncoder[4];
+    double autoStartTime;
+    boolean swerveAutoControllerInitialized = false;
+    Trajectory currentAutoTrajectory;
+    volatile Rotation2d autoTargetHeading;
+    double lastTurnUpdate = 0;
+    private boolean useRelativeEncoderPosition = false;
+    private @NotNull DriveState driveState = DriveState.TELEOP;
+    private volatile @NotNull Rotation2d wantedHeading = new Rotation2d();
+    private boolean isAiming = false;
+    private SwerveSetpoint lastSwerveSetpoint = new SwerveSetpoint(
+            new ChassisSpeeds(0, 0, 0),
+            new SwerveModuleState[]{
+                    new SwerveModuleState(0, new Rotation2d(0)),
+                    new SwerveModuleState(0, new Rotation2d(0)),
+                    new SwerveModuleState(0, new Rotation2d(0)),
+                    new SwerveModuleState(0, new Rotation2d(0))
+            },
+            new double[]{0, 0, 0, 0});
+    private @Nullable HolonomicDriveController swerveAutoController;
+    private double nextAllowedPrintError = 0;
+    private boolean isBreaking;
 
     {
         turnPID = new PIDController(turnP.get(), turnI.get(), turnD.get());
         turnPID.enableContinuousInput(-Math.PI, Math.PI);
         turnPID.setIntegratorRange(-Math.PI * 2 * 4, Math.PI * 2 * 4);
     }
-
-    private @NotNull DriveState driveState = DriveState.TELEOP;
-    private volatile @NotNull Rotation2d wantedHeading = new Rotation2d();
-
-    private boolean isAiming = false;
-
-    /**
-     * Motors that turn the wheels around. Uses Falcon500s
-     */
-    private final @NotNull CANSparkMax[] swerveMotors = new CANSparkMax[4];
-
-    /**
-     * Motors that are driving the robot around and causing it to move
-     */
-    private final @NotNull CANSparkMax[] swerveDriveMotors = new CANSparkMax[4];
-
-    /**
-     * Absolute Encoders for the motors that turn the wheel
-     */
-    private final @Nullable CANCoder[] swerveCanCoders;
-
-
-    /**
-     * Absolute Encoders for the motors that turn the wheel
-     */
-
-    private final @Nullable SparkMaxAbsoluteEncoder[] swerveSparkAbsoluteEncoders = new SparkMaxAbsoluteEncoder[4];
 
     private Drive() {
         super(Constants.DRIVE_PERIOD, 5);
@@ -212,7 +191,28 @@ public final class Drive extends AbstractSubsystem {
         setDriveState(DriveState.TELEOP);
     }
 
-    private boolean isBreaking;
+    public static @NotNull Drive getInstance() {
+        return INSTANCE;
+    }
+
+    public void resetAuto() {
+        swerveAutoControllerLock.lock();
+        try {
+            ProfiledPIDController autoTurnPIDController
+                    = new ProfiledPIDController(turnP.get(), turnI.get(), turnD.get(),
+                    new TrapezoidProfile.Constraints(999999999, 999999999));
+            autoTurnPIDController.enableContinuousInput(-Math.PI, Math.PI);
+            autoTurnPIDController.setTolerance(Math.toRadians(10));
+
+            swerveAutoController = new HolonomicDriveController(
+                    new PIDController(3, 0, 0),
+                    new PIDController(3, 0, 0),
+                    autoTurnPIDController);
+            swerveAutoController.setTolerance(new Pose2d(0.5, 0.5, Rotation2d.fromDegrees(10))); //TODO: Tune
+        } finally {
+            swerveAutoControllerLock.unlock();
+        }
+    }
 
     public synchronized void configCoast() {
         if (isBreaking) {
@@ -273,7 +273,6 @@ public final class Drive extends AbstractSubsystem {
         }
     }
 
-
     /**
      * @return the relative position of the selected swerve motor in degrees
      */
@@ -325,16 +324,6 @@ public final class Drive extends AbstractSubsystem {
         swerveDrive(chassisSpeeds, KinematicLimits.NORMAL_DRIVING.kinematicLimit, EXPECTED_TELEOP_DRIVE_DT);
     }
 
-    private SwerveSetpoint lastSwerveSetpoint = new SwerveSetpoint(
-            new ChassisSpeeds(0, 0, 0),
-            new SwerveModuleState[]{
-                    new SwerveModuleState(0, new Rotation2d(0)),
-                    new SwerveModuleState(0, new Rotation2d(0)),
-                    new SwerveModuleState(0, new Rotation2d(0)),
-                    new SwerveModuleState(0, new Rotation2d(0))
-            },
-            new double[]{0, 0, 0, 0});
-
     public void swerveDrive(@NotNull ChassisSpeeds desiredRobotRelativeSpeeds, KinematicLimit kinematicLimit, double dt) {
         Pose2d robot_pose_vel = new Pose2d(desiredRobotRelativeSpeeds.vxMetersPerSecond * dt,
                 desiredRobotRelativeSpeeds.vyMetersPerSecond * dt,
@@ -351,7 +340,6 @@ public final class Drive extends AbstractSubsystem {
 
         setSwerveModuleStates(newSwerveSetpoint);
     }
-
 
     public synchronized void setSwerveModuleStates(SwerveSetpoint setpoint) {
         for (int i = 0; i < 4; i++) {
@@ -422,12 +410,6 @@ public final class Drive extends AbstractSubsystem {
         setAutoRotation(Rotation2d.fromDegrees(angle));
     }
 
-    double autoStartTime;
-
-    private final ReentrantLock swerveAutoControllerLock = new ReentrantLock();
-    private @Nullable HolonomicDriveController swerveAutoController;
-    boolean swerveAutoControllerInitialized = false;
-
     public void setAutoPath(Trajectory trajectory) {
         currentAutoTrajectoryLock.lock();
         try {
@@ -439,12 +421,6 @@ public final class Drive extends AbstractSubsystem {
             currentAutoTrajectoryLock.unlock();
         }
     }
-
-    Trajectory currentAutoTrajectory;
-    final Lock currentAutoTrajectoryLock = new ReentrantLock();
-    volatile Rotation2d autoTargetHeading;
-
-    private double nextAllowedPrintError = 0;
 
     @SuppressWarnings("ProhibitedExceptionCaught")
     private void updateRamsete() {
@@ -573,8 +549,6 @@ public final class Drive extends AbstractSubsystem {
         updateTurn(new ControllerDriveInputs(0, 0, 0), wantedHeading, Math.toRadians(Constants.MAX_TURN_ERROR));
     }
 
-    double lastTurnUpdate = 0;
-
     /**
      * This method takes in x and y velocity as well as the target heading to calculate how much the robot needs to turn in order
      * to face a target
@@ -670,7 +644,6 @@ public final class Drive extends AbstractSubsystem {
         logData("Drive State", driveState.toString());
     }
 
-
     /**
      * Returns the angle/position of the requested encoder module
      *
@@ -725,7 +698,6 @@ public final class Drive extends AbstractSubsystem {
         return swerveModuleStates;
     }
 
-
     public void setAbsoluteZeros() {
         if (USE_CANCODERS) {
             for (int i = 0; i < swerveCanCoders.length; i++) {
@@ -754,5 +726,37 @@ public final class Drive extends AbstractSubsystem {
             //noinspection BusyWait
             Thread.sleep(20);
         }
+    }
+
+    public void autoBalance(@NotNull ControllerDriveInputs inputs) {
+        var angle = RobotTracker.getInstance().getGyroAngleAtTime(Timer.getFPGATimestamp());
+        double angleMeasure = angle.getY();
+        angleMeasure = Math.toDegrees(angleMeasure);
+        if (angleMeasure >= AUTO_BALANCE_COMPLETE_THRESHOLD) {
+            ChassisSpeeds chassisSpeeds = ChassisSpeeds.fromFieldRelativeSpeeds(
+                    AUTO_BALANCING_VELOCITY,
+                    DRIVE_HIGH_SPEED_M * inputs.getY(),
+                    inputs.getRotation() * MAX_TELEOP_TURN_SPEED,
+                    RobotTracker.getInstance().getGyroAngle());
+            swerveDrive(chassisSpeeds, KinematicLimits.NORMAL_DRIVING.kinematicLimit, EXPECTED_TELEOP_DRIVE_DT);
+        } else if (angleMeasure <= -AUTO_BALANCE_COMPLETE_THRESHOLD) {
+            ChassisSpeeds chassisSpeeds = ChassisSpeeds.fromFieldRelativeSpeeds(
+                    -AUTO_BALANCING_VELOCITY,
+                    DRIVE_HIGH_SPEED_M * inputs.getY(),
+                    inputs.getRotation() * MAX_TELEOP_TURN_SPEED,
+                    RobotTracker.getInstance().getGyroAngle());
+            swerveDrive(chassisSpeeds, KinematicLimits.NORMAL_DRIVING.kinematicLimit, EXPECTED_TELEOP_DRIVE_DT);
+        } else {
+            ChassisSpeeds chassisSpeeds = ChassisSpeeds.fromFieldRelativeSpeeds(
+                    0,
+                    DRIVE_HIGH_SPEED_M * inputs.getY(),
+                    inputs.getRotation() * MAX_TELEOP_TURN_SPEED,
+                    RobotTracker.getInstance().getGyroAngle());
+            swerveDrive(chassisSpeeds, KinematicLimits.NORMAL_DRIVING.kinematicLimit, EXPECTED_TELEOP_DRIVE_DT);
+        }
+    }
+
+    public enum DriveState {
+        TELEOP, TURN, HOLD, DONE, RAMSETE, STOP
     }
 }
