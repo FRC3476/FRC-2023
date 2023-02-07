@@ -210,8 +210,8 @@ public final class Constants {
     public static final float GRIDS_BLUE_X = 15.168f;
     public static final float GRIDS_START_Y = -1.5f;
 
-    public static final float COMMUNITY_BOARDER_LENGTH = 1.5f;
-    public static final float COMMUNITY_BOARDER_HEIGHT = 0.025f;
+    public static final float COMMUNITY_BORDER_LENGTH = 1.5f;
+    public static final float COMMUNITY_BORDER_HEIGHT = 0.025f;
 
     public static final float FIELD_WALL_RIGHT_X = (float) Constants.FIELD_WIDTH_METERS;
     public static final float FIELD_WALL_LEFT_X = 0;

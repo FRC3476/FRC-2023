@@ -136,8 +136,8 @@ public class PathGenerator {
                     GRIDS_START_Y, //y
                     0, //z
                     //upper point
-                    GRIDS_RED_X + COMMUNITY_BOARDER_LENGTH, //x
-                    GRIDS_START_Y + COMMUNITY_BOARDER_HEIGHT, //y
+                    GRIDS_RED_X + COMMUNITY_BORDER_LENGTH, //x
+                    GRIDS_START_Y + COMMUNITY_BORDER_HEIGHT, //y
                     1 //z
             ) || Intersectiond.testAabAab(
                     //robot bounds
@@ -152,12 +152,12 @@ public class PathGenerator {
 
                     //target bounds
                     //lower point
-                    GRIDS_BLUE_X - COMMUNITY_BOARDER_LENGTH, //x
+                    GRIDS_BLUE_X - COMMUNITY_BORDER_LENGTH, //x
                     GRIDS_START_Y, //y
                     0, //z
                     //upper point
                     GRIDS_RED_X, //x
-                    GRIDS_START_Y + COMMUNITY_BOARDER_HEIGHT, //y
+                    GRIDS_START_Y + COMMUNITY_BORDER_HEIGHT, //y
                     1 //z
             )) {
                 return false;
