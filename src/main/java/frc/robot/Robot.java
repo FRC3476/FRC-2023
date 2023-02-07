@@ -150,6 +150,7 @@ public class Robot extends TimedRobot {
     @Override
     public void teleopPeriodic() {
         xbox.update();
+        buttonPanel.update();
         var scoringPositionManager = ScoringPositionManager.getInstance();
         if (scoringPositionManager.updateSelectedPosition(buttonPanel)) {
             teleopDrivingAutoAlignPosition = null;
