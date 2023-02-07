@@ -11,6 +11,7 @@ import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.networktables.NetworkTable;
 import edu.wpi.first.networktables.NetworkTableInstance;
+import edu.wpi.first.wpilibj.GenericHID.RumbleType;
 import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
@@ -151,6 +152,9 @@ public class Robot extends TimedRobot {
     public void teleopPeriodic() {
         xbox.update();
         buttonPanel.update();
+        double wantedRumble = 0;
+
+
         var scoringPositionManager = ScoringPositionManager.getInstance();
         if (scoringPositionManager.updateSelectedPosition(buttonPanel)) {
             teleopDrivingAutoAlignPosition = null;
@@ -162,11 +166,14 @@ public class Robot extends TimedRobot {
                 assert teleopDrivingAutoAlignPosition != null;
             }
 
-            drive.driveToPosition(
+            if (!drive.driveToPosition(
                     teleopDrivingAutoAlignPosition.getTranslation(),
                     teleopDrivingAutoAlignPosition.getRotation(),
                     getControllerDriveInputs()
-            );
+            )) {
+                // We failed to generate a trajectory
+                wantedRumble = 1;
+            }
         } else {
             drive.swerveDriveFieldRelative(getControllerDriveInputs());
         }
@@ -174,6 +181,8 @@ public class Robot extends TimedRobot {
         if (xbox.getRisingEdge(XboxButtons.A)) {
             robotTracker.resetPose(new Pose2d(robotTracker.getLatestPose().getTranslation(), new Rotation2d()));
         }
+
+        xbox.setRumble(RumbleType.kBothRumble, wantedRumble);
     }
 
     private void updateTeleopDrivingTarget(ScoringPositionManager scoringPositionManager) {
