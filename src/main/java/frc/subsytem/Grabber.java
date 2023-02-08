@@ -37,16 +37,14 @@ public class Grabber extends AbstractSubsystem {
     }
 
     private TrapezoidProfile trapezoidProfile =
-            new TrapezoidProfile(new TrapezoidProfile.Constraints(Constants.GRABBER_CONSTRAINTS.maxVelocity,
-                    Constants.GRABBER_CONSTRAINTS.maxAcceleration),
-                    new TrapezoidProfile.State());
+            new TrapezoidProfile(Constants.GRABBER_PIVOT_CONSTRAINTS, new TrapezoidProfile.State());
     private double trapezoidProfileStartTime = 0;
 
     /**
      * @param position The position to set the grabber (degrees)
      */
     public void setPosition(double position) {
-        trapezoidProfile = new TrapezoidProfile(Constants.GRABBER_CONSTRAINTS, new TrapezoidProfile.State(position, 0),
+        trapezoidProfile = new TrapezoidProfile(Constants.GRABBER_PIVOT_CONSTRAINTS, new TrapezoidProfile.State(position, 0),
                 new TrapezoidProfile.State(pivotSparkMax.getEncoder().getPosition(), pivotSparkMax.getEncoder().getVelocity()));
         trapezoidProfileStartTime = Timer.getFPGATimestamp();
         logData("Goal position", position);
