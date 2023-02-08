@@ -27,9 +27,7 @@ public class TelescopingArm extends AbstractSubsystem {
     }
 
     private TrapezoidProfile trapezoidProfile =
-            new TrapezoidProfile(new TrapezoidProfile.Constraints(Constants.TELESCOPING_ARM_CONSTRAINTS.maxVelocity,
-                    Constants.TELESCOPING_ARM_CONSTRAINTS.maxAcceleration),
-                    new TrapezoidProfile.State());
+            new TrapezoidProfile(Constants.TELESCOPING_ARM_CONSTRAINTS, new TrapezoidProfile.State());
     private double trapezoidProfileStartTime = 0;
 
     /**
