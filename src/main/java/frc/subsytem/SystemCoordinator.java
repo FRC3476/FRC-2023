@@ -29,30 +29,29 @@ public class SystemCoordinator extends AbstractSubsystem {
     }
 
     /**
-     * Will drive the elevator, grabber, and telescoping arm to that the end of the grabber reaches these coordinates
-     * Coordinates in meters with an orgin at the grabber position with a completely retracted arm and completely lowered
-     * elevator and a horizontally level wrist. Orgin measured from the tip of the grabber in the center.
+     * Will drive the elevator, grabber, and telescoping arm to that the end of the grabber reaches these coordinates Coordinates
+     * in meters with an orgin at the grabber position with a completely retracted arm and completely lowered elevator and a
+     * horizontally level wrist. Orgin measured from the tip of the grabber in the center.
      *
      * @param desiredState - A mechanism state that includes and x, y, z, and wrist angle
      */
     public void goToCoordinates(MechanismState desiredState) {
 
         // Move the wrist first to satisfy wristAngle
-        grabber.setPosition(desiredState.getWristAngle());
+        grabber.setPosition(desiredState.wristAngle());
 
         // Move elevator second to satisfy y keeping in mind that wrist already satisfies some of y
-        double elevatorYMovement = desiredState.getyCoordinate() - Constants.GRABBER_LENGTH * Math.sin(Math.toRadians(desiredState.getWristAngle()));
+        double elevatorYMovement =
+                desiredState.y() - Constants.GRABBER_LENGTH * Math.sin(Math.toRadians(desiredState.wristAngle()));
         elevator.setPosition(elevatorYMovement / Math.sin(Constants.ELEVATOR_TILT_RADIANS));
 
         // Move arm third to satisfy x keeping in mind that the elevator already satisfies some of x
-        telescopingArm.setPosition(desiredState.getxCoordinate() - (elevatorYMovement / Math.tan(Constants.ELEVATOR_TILT_RADIANS))
-                - Constants.GRABBER_LENGTH * Math.cos(Math.toRadians(desiredState.getWristAngle())));
-
+        telescopingArm.setPosition(desiredState.x() - (elevatorYMovement / Math.tan(Constants.ELEVATOR_TILT_RADIANS))
+                - Constants.GRABBER_LENGTH * Math.cos(Math.toRadians(desiredState.wristAngle())));
     }
 
     /**
-     * Gets current mechanism state based off encoder values
-     * Assumes that each system is zeroed on startup
+     * Gets current mechanism state based off encoder values Assumes that each system is zeroed on startup
      */
     private MechanismState findCurrentMechanismState() {
         // Find x coordinate

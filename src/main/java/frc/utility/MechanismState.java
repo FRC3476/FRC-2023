@@ -2,7 +2,14 @@ package frc.utility;
 
 import frc.robot.Constants;
 
-public class MechanismState {
+/**
+ * Represents a state that the elevator-arm-grabber mechanism can be in
+ *
+ * @param x          X coordinate in meters
+ * @param y          Y coordinate in meters
+ * @param wristAngle wrist angle in degrees
+ */
+public record MechanismState(double x, double y, double wristAngle) {
 
     // TODO: Find real max and min values
     private final static double BASE_MIN_X = 0;
@@ -11,9 +18,6 @@ public class MechanismState {
     private final static double MIN_Y = 0;
     private final static double MIN_WRIST_ANGLE = 0;
     private final static double MAX_WRIST_ANGLE = 0;
-    private double xCoordinate;
-    private double yCoordinate;
-    private double wristAngle;
 
     /**
      * Represents a state that the elevator-arm-grabber mechanism can be in
@@ -22,7 +26,7 @@ public class MechanismState {
      * @param y          - coordiante in meters
      * @param wristAngle - wrist angle in degrees
      */
-    public MechanismState(double x, double y, double wristAngle) {
+    public MechanismState {
         // Calculate the minX and maxX based on desired y
         double minX = BASE_MIN_X + (y / Math.tan(Constants.ELEVATOR_TILT_RADIANS));
         double maxX = BASE_MAX_X + (y / Math.tan(Constants.ELEVATOR_TILT_RADIANS));
@@ -69,21 +73,5 @@ public class MechanismState {
                 y = MIN_Y;
             }
         }
-
-        xCoordinate = x;
-        yCoordinate = y;
-        this.wristAngle = wristAngle;
-    }
-
-    public double getxCoordinate() {
-        return xCoordinate;
-    }
-
-    public double getyCoordinate() {
-        return yCoordinate;
-    }
-
-    public double getWristAngle() {
-        return wristAngle;
     }
 }
