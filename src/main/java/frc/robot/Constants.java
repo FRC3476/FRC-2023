@@ -157,11 +157,11 @@ public final class Constants {
     public static final TrapezoidProfile.Constraints ELEVATOR_CONSTRAINTS
             = new TrapezoidProfile.Constraints(3, 3);
     public static final ElevatorFeedforward ELEVATOR_FEEDFORWARD = new ElevatorFeedforward(0, 0, 0, 0);
-    public static final int ELEVATOR_P = 5;
-    public static final int ELEVATOR_I = 5;
-    public static final int ELEVATOR_D = 5;
-    public static final int ELEVATOR_ROTATIONS_PER_METER = 5;
-    public static final int ELEVATOR_NOMINAL_VOLTAGE = 9;
+    public static final double ELEVATOR_P = 5;
+    public static final double ELEVATOR_I = 5;
+    public static final double ELEVATOR_D = 5;
+    public static final double ELEVATOR_ROTATIONS_PER_METER = 5;
+    public static final double ELEVATOR_NOMINAL_VOLTAGE = 9;
     public static final int ELEVATOR_SMART_CURRENT_LIMIT = 40;
     // Telescoping Arm
     public static final int TELESCOPING_ARM_PERIOD = 20;
@@ -186,6 +186,7 @@ public final class Constants {
     public static final int GRABBER_NOMINAL_VOLTAGE = 9;
     public static final int GRABBER_SMART_CURRENT_LIMIT = 40;
     public static final int PIVOT_SMART_CURRENT_LIMIT = 40;
+
     public enum KinematicLimits {
         /**
          * Normal acceleration limit while driving. This ensures that the driver can't tip the robot.
