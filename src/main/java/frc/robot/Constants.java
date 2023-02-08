@@ -179,11 +179,11 @@ public final class Constants {
     public static final ArmFeedforward GRABBER_FEEDFORWARD = new ArmFeedforward(0, 0, 0, 0);
     public static final TrapezoidProfile.Constraints GRABBER_CONSTRAINTS
             = new TrapezoidProfile.Constraints(3, 3);
-    public static final int GRABBER_P = 5;
-    public static final int GRABBER_I = 5;
-    public static final int GRABBER_D = 5;
-    public static final int GRABBER_ROTATIONS_PER_DEGREE = 5;
-    public static final int GRABBER_NOMINAL_VOLTAGE = 9;
+    public static final double GRABBER_P = 5;
+    public static final double GRABBER_I = 5;
+    public static final double GRABBER_D = 5;
+    public static final double GRABBER_ROTATIONS_PER_DEGREE = 5;
+    public static final double GRABBER_NOMINAL_VOLTAGE = 9;
     public static final int GRABBER_SMART_CURRENT_LIMIT = 40;
     public static final int PIVOT_SMART_CURRENT_LIMIT = 40;
 

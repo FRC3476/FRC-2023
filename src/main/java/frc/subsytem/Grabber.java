@@ -7,6 +7,9 @@ import edu.wpi.first.math.trajectory.TrapezoidProfile;
 import edu.wpi.first.wpilibj.Timer;
 import frc.robot.Constants;
 
+import static frc.robot.Constants.GRABBER_ROTATIONS_PER_DEGREE;
+import static frc.robot.Constants.SECONDS_PER_MINUTE;
+
 public class Grabber extends AbstractSubsystem {
     private final CANSparkMax pivotSparkMax;
     private final CANSparkMax grabberSparkMax;
@@ -28,6 +31,9 @@ public class Grabber extends AbstractSubsystem {
         pivotSparkMax.setSmartCurrentLimit(Constants.PIVOT_SMART_CURRENT_LIMIT);
         grabberSparkMax.enableVoltageCompensation(Constants.GRABBER_NOMINAL_VOLTAGE);
         grabberSparkMax.setSmartCurrentLimit(Constants.GRABBER_SMART_CURRENT_LIMIT);
+
+        pivotSparkMax.getEncoder().setPositionConversionFactor(1.0 / GRABBER_ROTATIONS_PER_DEGREE);
+        pivotSparkMax.getEncoder().setVelocityConversionFactor((1.0 / GRABBER_ROTATIONS_PER_DEGREE) / SECONDS_PER_MINUTE);
     }
 
     private TrapezoidProfile trapezoidProfile =
@@ -41,8 +47,7 @@ public class Grabber extends AbstractSubsystem {
      */
     public void setPosition(double position) {
         trapezoidProfile = new TrapezoidProfile(Constants.GRABBER_CONSTRAINTS, new TrapezoidProfile.State(position, 0),
-                new TrapezoidProfile.State(pivotSparkMax.getEncoder().getPosition() / Constants.GRABBER_ROTATIONS_PER_DEGREE,
-                        pivotSparkMax.getEncoder().getVelocity() / Constants.GRABBER_ROTATIONS_PER_DEGREE / 60));
+                new TrapezoidProfile.State(pivotSparkMax.getEncoder().getPosition(), pivotSparkMax.getEncoder().getVelocity()));
         trapezoidProfileStartTime = Timer.getFPGATimestamp();
         logData("Goal position", position);
     }
@@ -58,7 +63,7 @@ public class Grabber extends AbstractSubsystem {
         TrapezoidProfile.State state = trapezoidProfile.calculate(currentTime - trapezoidProfileStartTime);
         double acceleration = (state.velocity - pastVelocity) / (currentTime - pastTime);
 
-        pivotSparkMax.getPIDController().setReference(state.position * Constants.GRABBER_ROTATIONS_PER_DEGREE,
+        pivotSparkMax.getPIDController().setReference(state.position,
                 CANSparkMax.ControlType.kPosition, 0, Constants.GRABBER_FEEDFORWARD.calculate(state.velocity, acceleration),
                 SparkMaxPIDController.ArbFFUnits.kVoltage);
 
@@ -76,8 +81,8 @@ public class Grabber extends AbstractSubsystem {
 
     @Override
     public void logData() {
-        logData("Motor Position", pivotSparkMax.getEncoder().getPosition() / Constants.GRABBER_ROTATIONS_PER_DEGREE);
-        logData("Motor Velocity", pivotSparkMax.getEncoder().getVelocity() / Constants.GRABBER_ROTATIONS_PER_DEGREE / 60);
+        logData("Motor Position", pivotSparkMax.getEncoder().getPosition());
+        logData("Motor Velocity", pivotSparkMax.getEncoder().getVelocity());
         logData("Motor current", pivotSparkMax.getOutputCurrent());
         logData("Motor temperature", pivotSparkMax.getMotorTemperature());
     }
@@ -86,7 +91,7 @@ public class Grabber extends AbstractSubsystem {
         OPEN(-3),
         GRAB_CUBE(3),
         GRAB_CONE(6);
-        double voltage;
+        final double voltage;
 
         GrabState(double voltage) {
             this.voltage = voltage;
