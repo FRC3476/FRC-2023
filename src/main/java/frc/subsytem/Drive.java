@@ -161,9 +161,17 @@ public final class Drive extends AbstractSubsystem {
             // Sets current limits for motors
             swerveMotors[i].setSmartCurrentLimit(SWERVE_MOTOR_CURRENT_LIMIT);
             swerveMotors[i].enableVoltageCompensation(Constants.SWERVE_DRIVE_VOLTAGE_LIMIT);
+            swerveMotors[i].getEncoder().setPositionConversionFactor(
+                    Constants.SWERVE_MOTOR_POSITION_CONVERSION_FACTOR * 360);
+            swerveMotors[i].getEncoder().setVelocityConversionFactor(
+                    Constants.SWERVE_MOTOR_POSITION_CONVERSION_FACTOR * 360 / SECONDS_PER_MINUTE);
 
             swerveDriveMotors[i].setSmartCurrentLimit(SWERVE_DRIVE_MOTOR_CURRENT_LIMIT);
             swerveDriveMotors[i].enableVoltageCompensation(Constants.SWERVE_DRIVE_VOLTAGE_LIMIT);
+            swerveDriveMotors[i].getEncoder().setPositionConversionFactor(
+                    SWERVE_DRIVE_MOTOR_REDUCTION * SWERVE_METER_PER_ROTATION);
+            swerveDriveMotors[i].getEncoder().setVelocityConversionFactor(
+                    SWERVE_DRIVE_MOTOR_REDUCTION * SWERVE_METER_PER_ROTATION / SECONDS_PER_MINUTE);
 
             // This makes motors brake when no RPM is set
             swerveDriveMotors[i].setIdleMode(IdleMode.kCoast);
@@ -245,8 +253,7 @@ public final class Drive extends AbstractSubsystem {
      */
     private double getRelativeSwervePosition(int motorNum) {
         if (USE_CANCODERS) {
-            return swerveMotors[motorNum].getEncoder().getPosition() *
-                    Constants.SWERVE_MOTOR_POSITION_CONVERSION_FACTOR * 360;
+            return swerveMotors[motorNum].getEncoder().getPosition();
         } else {
             return swerveSparkAbsoluteEncoders[motorNum].getPosition();
         }
@@ -277,17 +284,14 @@ public final class Drive extends AbstractSubsystem {
      * @return the relative position of the selected swerve motor in degrees
      */
     private double getSwerveDrivePosition(int motorNum) {
-        return swerveDriveMotors[motorNum].getEncoder().getPosition()
-                * Constants.SWERVE_DRIVE_MOTOR_REDUCTION * SWERVE_METER_PER_ROTATION;
+        return swerveDriveMotors[motorNum].getEncoder().getPosition();
     }
 
     /**
      * @return Returns requested drive wheel velocity in Meters per second
      */
     private double getSwerveDriveVelocity(int motorNum) {
-        return (swerveDriveMotors[motorNum].getEncoder().getVelocity() / SECONDS_PER_MINUTE)
-                * Constants.SWERVE_DRIVE_MOTOR_REDUCTION
-                * SWERVE_METER_PER_ROTATION;
+        return (swerveDriveMotors[motorNum].getEncoder().getVelocity());
     }
 
     public synchronized void setDriveState(@NotNull DriveState driveState) {
@@ -635,7 +639,7 @@ public final class Drive extends AbstractSubsystem {
             if (relPos < 0) relPos += 360;
             logData("Swerve Motor " + i + " Relative Position", relPos);
             logData("Swerve Motor " + i + " Absolute Position", getWheelRotation(i));
-            logData("Drive Motor " + i + " Velocity", getSwerveDriveVelocity(i) / SECONDS_PER_MINUTE);
+            logData("Drive Motor " + i + " Velocity", getSwerveDriveVelocity(i));
             logData("Drive Motor " + i + " Current", swerveDriveMotors[i].getOutputCurrent());
             logData("Swerve Motor " + i + " Current", swerveMotors[i].getOutputCurrent());
             logData("Swerve Motor " + i + " Temp", swerveMotors[i].getMotorTemperature());
@@ -671,9 +675,7 @@ public final class Drive extends AbstractSubsystem {
      * @return distance in meters
      */
     public double getDrivePosition(int moduleNumber) {
-        return swerveDriveMotors[moduleNumber].getEncoder().getPosition()
-                * SWERVE_DRIVE_MOTOR_REDUCTION
-                * SWERVE_METER_PER_ROTATION;
+        return swerveDriveMotors[moduleNumber].getEncoder().getPosition();
     }
 
     @Contract(pure = true)
