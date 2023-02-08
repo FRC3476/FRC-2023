@@ -36,6 +36,7 @@ public final class Constants {
     public static final int DEFAULT_PERIODS_PER_LOG = 20;
 
     //Drive Constants
+    public static final double AUTO_BALANCING_VELOCITY = 0.5;
     public static final int DRIVE_PERIOD = 20;
 
     public static final int DRIVE_LEFT_FRONT_ID = 11;
@@ -55,11 +56,12 @@ public final class Constants {
 
     public static final double SWERVE_INCHES_PER_ROTATION = 12.5 * 0.976;
     public static final double SWERVE_METER_PER_ROTATION = Units.inchesToMeters(SWERVE_INCHES_PER_ROTATION);
-    public static final double SWERVE_DRIVE_P = 5;
+    public static final double SWERVE_DRIVE_P = .01;
     public static final double SWERVE_DRIVE_D = 0.00;
     public static final double SWERVE_DRIVE_I = 0.00;
     public static final double SWERVE_DRIVE_F = 0.00;
     public static final double SWERVE_DRIVE_INTEGRAL_ZONE = 0.00;
+    public static final double AUTO_BALANCE_COMPLETE_THRESHOLD = 9;
     /**
      * Feed forward constants for the drivetrain.
      * <p>
@@ -134,7 +136,56 @@ public final class Constants {
     public static final double EXPECTED_TELEOP_DRIVE_DT = 0.02;
 
     public static final double EXPECTED_AUTO_DRIVE_DT = DRIVE_PERIOD / 1000.0;
+
+    public static final int MAX_TELEOP_TURN_SPEED = 7;
+    //Robot Tracker
+    public static final int ROBOT_TRACKER_PERIOD = 20;
+    /**
+     * Acceleration due to gravity in meters per second squared. (9.80665 m/s^2)
+     */
+    public static final double GRAVITY = 9.80665;
+    public static final int PIGEON_CAN_ID = 30;
+    // Vision constants
+    public static final int VISION_HANDLER_PERIOD = -1;
+    public static final double COAST_AFTER_DISABLE_TIME = 0.5;
+    public static final double FIELD_HEIGHT_METERS = 8.0137;
+    public static final double FIELD_WIDTH_METERS = 16.54175;
+
     public static final double ALLOWED_SWERVE_ANGLE_ERROR = 2;
+    // Elevator
+    public static final int ELEVATOR_PERIOD = 20;
+    public static final TrapezoidProfile.Constraints ELEVATOR_CONSTRAINTS
+            = new TrapezoidProfile.Constraints(3, 3);
+    public static final ElevatorFeedforward ELEVATOR_FEEDFORWARD = new ElevatorFeedforward(0, 0, 0, 0);
+    public static final double ELEVATOR_P = 5;
+    public static final double ELEVATOR_I = 5;
+    public static final double ELEVATOR_D = 5;
+    public static final double ELEVATOR_ROTATIONS_PER_METER = 5;
+    public static final double ELEVATOR_NOMINAL_VOLTAGE = 9;
+    public static final int ELEVATOR_SMART_CURRENT_LIMIT = 40;
+    // Telescoping Arm
+    public static final int TELESCOPING_ARM_PERIOD = 20;
+    public static final TrapezoidProfile.Constraints TELESCOPING_ARM_CONSTRAINTS
+            = new TrapezoidProfile.Constraints(3, 3);
+    public static final ElevatorFeedforward TELESCOPING_ARM_FEEDFORWARD = new ElevatorFeedforward(0, 0, 0, 0);
+    public static final int TELESCOPING_ARM_P = 5;
+    public static final int TELESCOPING_ARM_I = 5;
+    public static final int TELESCOPING_ARM_D = 5;
+    public static final int TELESCOPING_ARM_ROTATIONS_PER_METER = 5;
+    public static final int TELESCOPING_ARM_NOMINAL_VOLTAGE = 9;
+    public static final int TELESCOPING_ARM_SMART_CURRENT_LIMIT = 40;
+    // Grabber
+    public static final int GRABBER_PERIOD = 20;
+    public static final ArmFeedforward GRABBER_FEEDFORWARD = new ArmFeedforward(0, 0, 0, 0);
+    public static final TrapezoidProfile.Constraints GRABBER_PIVOT_CONSTRAINTS
+            = new TrapezoidProfile.Constraints(3, 3);
+    public static final double GRABBER_P = 5;
+    public static final double GRABBER_I = 5;
+    public static final double GRABBER_D = 5;
+    public static final double GRABBER_ROTATIONS_PER_DEGREE = 5;
+    public static final double GRABBER_NOMINAL_VOLTAGE = 9;
+    public static final int GRABBER_SMART_CURRENT_LIMIT = 40;
+    public static final int PIVOT_SMART_CURRENT_LIMIT = 40;
 
     public enum KinematicLimits {
         /**
@@ -147,62 +198,6 @@ public final class Constants {
             this.kinematicLimit = kinematicLimit;
         }
     }
-
-    public static final int MAX_TELEOP_TURN_SPEED = 7;
-    public static final double COAST_AFTER_DISABLE_TIME = 0.5;
-
-
-    //Robot Tracker
-    public static final int ROBOT_TRACKER_PERIOD = 20;
-    /**
-     * Acceleration due to gravity in meters per second squared. (9.80665 m/s^2)
-     */
-    public static final double GRAVITY = 9.80665;
-
-    public static final int PIGEON_CAN_ID = 30;
-
-    // Elevator
-    public static final int ELEVATOR_PERIOD = 20;
-    public static final TrapezoidProfile.Constraints ELEVATOR_CONSTRAINTS
-            = new TrapezoidProfile.Constraints(3, 3);
-    public static final ElevatorFeedforward ELEVATOR_FEEDFORWARD = new ElevatorFeedforward(0, 0, 0, 0);
-    public static final int ELEVATOR_P = 5;
-    public static final int ELEVATOR_I = 5;
-    public static final int ELEVATOR_D = 5;
-    public static final int ELEVATOR_ROTATIONS_PER_METER = 5;
-    public static final int ELEVATOR_NOMINAL_VOLTAGE = 9;
-    public static final int ELEVATOR_SMART_CURRENT_LIMIT = 40;
-
-    // Telescoping Arm
-    public static final int TELESCOPING_ARM_PERIOD = 20;
-    public static final TrapezoidProfile.Constraints TELESCOPING_ARM_CONSTRAINTS
-            = new TrapezoidProfile.Constraints(3, 3);
-    public static final ElevatorFeedforward TELESCOPING_ARM_FEEDFORWARD = new ElevatorFeedforward(0, 0, 0, 0);
-    public static final int TELESCOPING_ARM_P = 5;
-    public static final int TELESCOPING_ARM_I = 5;
-    public static final int TELESCOPING_ARM_D = 5;
-    public static final int TELESCOPING_ARM_ROTATIONS_PER_METER = 5;
-    public static final int TELESCOPING_ARM_NOMINAL_VOLTAGE = 9;
-    public static final int TELESCOPING_ARM_SMART_CURRENT_LIMIT = 40;
-
-    // Grabber
-    public static final int GRABBER_PERIOD = 20;
-    public static final ArmFeedforward GRABBER_FEEDFORWARD = new ArmFeedforward(0, 0, 0, 0);
-    public static final TrapezoidProfile.Constraints GRABBER_CONSTRAINTS
-            = new TrapezoidProfile.Constraints(3, 3);
-    public static final int GRABBER_P = 5;
-    public static final int GRABBER_I = 5;
-    public static final int GRABBER_D = 5;
-    public static final int GRABBER_ROTATIONS_PER_DEGREE = 5;
-    public static final int GRABBER_NOMINAL_VOLTAGE = 9;
-    public static final int GRABBER_SMART_CURRENT_LIMIT = 40;
-    public static final int PIVOT_SMART_CURRENT_LIMIT = 40;
-
-    // Vision constants
-    public static final int VISION_HANDLER_PERIOD = -1;
-
-    public static final double FIELD_HEIGHT_METERS = 8.0137;
-    public static final double FIELD_WIDTH_METERS = 16.54175;
 
 
     // Realtime path generation

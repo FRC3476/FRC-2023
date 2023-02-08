@@ -72,7 +72,7 @@ public final class RobotTracker extends AbstractSubsystem {
             Drive.getInstance().getModulePositions()
     );
 
-    private static final double VELOCITY_MEASUREMENT_WINDOW = 0.1;
+    private static final double VELOCITY_MEASUREMENT_WINDOW = 0.5;
 
     private final TimeInterpolatableBuffer<Pose2d> poseBufferForVelocity = TimeInterpolatableBuffer.createBuffer(
             Pose2d::interpolate, 1.5);
@@ -97,13 +97,9 @@ public final class RobotTracker extends AbstractSubsystem {
 
     private RobotTracker() {
         super(Constants.ROBOT_TRACKER_PERIOD, 3);
-        new ScheduledThreadPoolExecutor(1).scheduleAtFixedRate(this::updateGyroHistory, 0, 5,
+        new ScheduledThreadPoolExecutor(1).scheduleAtFixedRate(this::updateGyroHistory, 0, 1,
                 TimeUnit.MILLISECONDS);
     }
-
-    double[] xyz_dps = new double[3];
-    short[] ba_xyz = new short[3];
-    double[] quaternion = new double[4];
 
 
     private record VisionMeasurement(Pose2d pose, double timestamp, Optional<Matrix<N3, N1>> visionMeasurementStds) {
@@ -119,37 +115,60 @@ public final class RobotTracker extends AbstractSubsystem {
         visionMeasurements.add(new VisionMeasurement(visionMeasurement, timestamp, Optional.of(visionMeasurementStds)));
     }
 
+
+    // Created here to avoid garbage collection
+    private final double[] xyz_dps = new double[3];
+    private final short[] ba_xyz = new short[3];
+    private final double[] quaternion = new double[4];
+
     private void updateGyroHistory() {
+        double time = Timer.getFPGATimestamp();
+
+        gyroSensor.getRawGyro(xyz_dps);
+        gyroYawVelocity = xyz_dps[2];
+        gyroRollVelocity = xyz_dps[0];
+        gyroPitchVelocity = xyz_dps[1];
+        lastGyroPitch = gyroSensor.getPitch();
+        lastGyroRoll = gyroSensor.getRoll();
+
+        gyroSensor.get6dQuaternion(quaternion);
+        gyroSensor.getBiasedAccelerometer(ba_xyz);
+
+        var rotW = quaternion[0];
+        var rotX = quaternion[1];
+        var rotY = quaternion[2];
+        var rotZ = quaternion[3];
+
+        // we need to transform the axis:
+        // axis that we want <- what it is on the pigeon
+        // these follow the right hand rule
+        // x <- y
+        // y <- -x
+        // z <- z
+
+        // axis convention of the pigeon: https://store.ctr-electronics.com/content/user-manual/Pigeon2%20User's%20Guide.pdf#page=20,
+
+        var rotationFieldToRobot = new Rotation3d(new Quaternion(rotW, rotY, -rotX, rotZ));
+
+        //ba_xyz is in fixed point notation (Q2.14) in units of g
+        var x = toFloat(ba_xyz[0]) * GRAVITY;
+        var y = toFloat(ba_xyz[1]) * GRAVITY;
+        var z = toFloat(ba_xyz[2]) * GRAVITY;
+        var accel = new Translation3d(y, -x, z) // transform the axis (see above) (robot frame)
+                .rotateBy(rotationFieldToRobot.unaryMinus()); // rotate the acceleration to the field frame
+
         lock.writeLock().lock();
         try {
-            double time = Timer.getFPGATimestamp();
-
-            gyroSensor.getRawGyro(xyz_dps);
-            gyroYawVelocity = xyz_dps[2];
-            gyroRollVelocity = xyz_dps[0];
-            gyroPitchVelocity = xyz_dps[1];
-            lastGyroPitch = gyroSensor.getPitch();
-            lastGyroRoll = gyroSensor.getRoll();
-
-            gyroSensor.get6dQuaternion(quaternion);
-            gyroSensor.getBiasedAccelerometer(ba_xyz);
-
-            var rotation = new Rotation3d(
-                    new Quaternion(quaternion[0], quaternion[1], quaternion[2], quaternion[3]));
-
-            acceleration = new Translation3d(toFloat(ba_xyz[0]), toFloat(ba_xyz[1]), toFloat(ba_xyz[2]))
-                    .times(GRAVITY)
-                    .rotateBy(rotation.unaryMinus());
-
             var lastEntryAcceleration = accelerationHistory.getInternalBuffer().lastEntry();
 
-            if (lastEntryAcceleration == null || !lastEntryAcceleration.getValue().equals(acceleration)) {
-                accelerationHistory.addSample(time, acceleration);
+            if (lastEntryAcceleration == null || !lastEntryAcceleration.getValue().equals(accel)) {
+                accelerationHistory.addSample(time, accel);
+                this.acceleration = accel;
             }
 
             var lastEntryRotation = gyroHistory.getInternalBuffer().lastEntry();
-            if (lastEntryRotation == null || !lastEntryRotation.getValue().equals(rotation)) {
-                gyroHistory.addSample(time, rotation);
+            if (lastEntryRotation == null || !lastEntryRotation.getValue().equals(rotationFieldToRobot)) {
+                gyroHistory.addSample(time, rotationFieldToRobot);
             }
         } finally {
             lock.writeLock().unlock();
@@ -222,8 +241,6 @@ public final class RobotTracker extends AbstractSubsystem {
 
                 // The average deltaVelocity over our measurement window
                 var deltaVelocity = mutDeltaVelocity.getTranslation2d();
-                //TODO: the delta velocity calculation is broken, this disables it for now
-                deltaVelocity = new Translation2d();
 
                 // https://www.desmos.com/calculator/szqs5g5d6i
 

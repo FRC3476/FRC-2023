@@ -7,6 +7,9 @@ import edu.wpi.first.math.trajectory.TrapezoidProfile;
 import edu.wpi.first.wpilibj.Timer;
 import frc.robot.Constants;
 
+import static frc.robot.Constants.ELEVATOR_ROTATIONS_PER_METER;
+import static frc.robot.Constants.SECONDS_PER_MINUTE;
+
 public class Elevator extends AbstractSubsystem {
     private final CANSparkMax elevatorSparkMax;
     private final static Elevator instance = new Elevator();
@@ -24,12 +27,12 @@ public class Elevator extends AbstractSubsystem {
         elevatorSparkMaxPIDController.setD(Constants.ELEVATOR_D);
         elevatorSparkMax.enableVoltageCompensation(Constants.ELEVATOR_NOMINAL_VOLTAGE);
         elevatorSparkMax.setSmartCurrentLimit(Constants.ELEVATOR_SMART_CURRENT_LIMIT);
+        elevatorSparkMax.getEncoder().setPositionConversionFactor(1.0 / ELEVATOR_ROTATIONS_PER_METER);
+        elevatorSparkMax.getEncoder().setVelocityConversionFactor((1.0 / ELEVATOR_ROTATIONS_PER_METER) / SECONDS_PER_MINUTE);
     }
 
     private TrapezoidProfile trapezoidProfile =
-            new TrapezoidProfile(new TrapezoidProfile.Constraints(Constants.ELEVATOR_CONSTRAINTS.maxVelocity,
-                    Constants.ELEVATOR_CONSTRAINTS.maxAcceleration),
-                    new TrapezoidProfile.State());
+            new TrapezoidProfile(Constants.ELEVATOR_CONSTRAINTS, new TrapezoidProfile.State());
     private double trapezoidProfileStartTime = 0;
 
     /**
@@ -37,13 +40,22 @@ public class Elevator extends AbstractSubsystem {
      */
     public void setPosition(double position) {
         trapezoidProfile = new TrapezoidProfile(Constants.ELEVATOR_CONSTRAINTS, new TrapezoidProfile.State(position, 0),
-                new TrapezoidProfile.State(elevatorSparkMax.getEncoder().getPosition() / Constants.ELEVATOR_ROTATIONS_PER_METER,
-                        elevatorSparkMax.getEncoder().getVelocity() / Constants.ELEVATOR_ROTATIONS_PER_METER / 60));
+                new TrapezoidProfile.State(elevatorSparkMax.getEncoder().getPosition(),
+                        elevatorSparkMax.getEncoder().getVelocity()));
         trapezoidProfileStartTime = -1;
         logData("Goal position", position);
     }
 
     private double pastVelocity = 0, pastTime = 0;
+
+    /**
+     * Controls elevator motor with percent output
+     *
+     * @param percent Spans from -1 to 1 where the extremes are full power and direction depends on the sign
+     */
+    public void setPercentOutput(double percent) {
+        elevatorSparkMax.setVoltage(percent * 12);
+    }
 
     @Override
     public void update() {
@@ -54,7 +66,7 @@ public class Elevator extends AbstractSubsystem {
         TrapezoidProfile.State state = trapezoidProfile.calculate(currentTime - trapezoidProfileStartTime);
         double acceleration = (state.velocity - pastVelocity) / (currentTime - pastTime);
 
-        elevatorSparkMax.getPIDController().setReference(state.position * Constants.ELEVATOR_ROTATIONS_PER_METER,
+        elevatorSparkMax.getPIDController().setReference(state.position,
                 CANSparkMax.ControlType.kPosition, 0, Constants.ELEVATOR_FEEDFORWARD.calculate(state.velocity, acceleration),
                 SparkMaxPIDController.ArbFFUnits.kVoltage);
 
@@ -72,8 +84,8 @@ public class Elevator extends AbstractSubsystem {
 
     @Override
     public void logData() {
-        logData("Motor Position", elevatorSparkMax.getEncoder().getPosition() / Constants.ELEVATOR_ROTATIONS_PER_METER);
-        logData("Motor Velocity", elevatorSparkMax.getEncoder().getVelocity() / Constants.ELEVATOR_ROTATIONS_PER_METER / 60);
+        logData("Motor Position", elevatorSparkMax.getEncoder().getPosition());
+        logData("Motor Velocity", elevatorSparkMax.getEncoder().getVelocity());
         logData("Motor current", elevatorSparkMax.getOutputCurrent());
         logData("Motor temperature", elevatorSparkMax.getMotorTemperature());
     }
