@@ -28,9 +28,7 @@ public class Elevator extends AbstractSubsystem {
     }
 
     private TrapezoidProfile trapezoidProfile =
-            new TrapezoidProfile(new TrapezoidProfile.Constraints(Constants.ELEVATOR_CONSTRAINTS.maxVelocity,
-                    Constants.ELEVATOR_CONSTRAINTS.maxAcceleration),
-                    new TrapezoidProfile.State());
+            new TrapezoidProfile(Constants.ELEVATOR_CONSTRAINTS, new TrapezoidProfile.State());
     private double trapezoidProfileStartTime = 0;
 
     /**

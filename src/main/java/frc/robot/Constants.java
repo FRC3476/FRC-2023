@@ -177,7 +177,7 @@ public final class Constants {
     // Grabber
     public static final int GRABBER_PERIOD = 20;
     public static final ArmFeedforward GRABBER_FEEDFORWARD = new ArmFeedforward(0, 0, 0, 0);
-    public static final TrapezoidProfile.Constraints GRABBER_CONSTRAINTS
+    public static final TrapezoidProfile.Constraints GRABBER_PIVOT_CONSTRAINTS
             = new TrapezoidProfile.Constraints(3, 3);
     public static final int GRABBER_P = 5;
     public static final int GRABBER_I = 5;
