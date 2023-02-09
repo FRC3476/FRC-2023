@@ -9,18 +9,24 @@ import com.dacubeking.AutoBuilder.robot.robotinterface.AutonomousContainer;
 import com.dacubeking.AutoBuilder.robot.robotinterface.CommandTranslator;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.networktables.NetworkTable;
+import edu.wpi.first.networktables.NetworkTableInstance;
+import edu.wpi.first.wpilibj.GenericHID.RumbleType;
 import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
-import frc.subsytem.*;
+import frc.subsytem.Drive;
 import frc.subsytem.Drive.DriveState;
+import frc.subsytem.RobotTracker;
+import frc.subsytem.VisionHandler;
 import frc.utility.Controller;
 import frc.utility.Controller.XboxButtons;
 import frc.utility.ControllerDriveInputs;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import static frc.robot.Constants.IS_PRACTICE;
+import static frc.robot.Constants.*;
 
 
 /**
@@ -37,6 +43,9 @@ public class Robot extends TimedRobot {
     private @NotNull VisionHandler visionHandler;
 
     private @NotNull Controller xbox;
+    private @NotNull Controller stick;
+
+    private @NotNull Controller buttonPanel;
 
     // Autonomous
     private final SendableChooser<String> autoChooser = new SendableChooser<>();
@@ -52,6 +61,8 @@ public class Robot extends TimedRobot {
         robotTracker = RobotTracker.getInstance();
         visionHandler = VisionHandler.getInstance();
         xbox = new Controller(0);
+        stick = new Controller(1);
+        buttonPanel = new Controller(2);
 
         startSubsystems();
         AutonomousContainer.getInstance().setDebugPrints(true);
@@ -126,17 +137,92 @@ public class Robot extends TimedRobot {
     }
 
 
+    private @Nullable Pose2d teleopDrivingAutoAlignPosition = new Pose2d();
+
+    {
+        logData("Auto Align Y", teleopDrivingAutoAlignPosition.getY());
+        logData("Auto Align X", teleopDrivingAutoAlignPosition.getX());
+        logData("Auto Align Angle", teleopDrivingAutoAlignPosition.getRotation().getDegrees());
+    }
+
     /**
      * This method is called periodically during operator control.
      */
     @Override
     public void teleopPeriodic() {
         xbox.update();
-        drive.swerveDriveFieldRelative(getControllerDriveInputs());
+        buttonPanel.update();
+        double wantedRumble = 0;
+
+
+        var scoringPositionManager = ScoringPositionManager.getInstance();
+        if (scoringPositionManager.updateSelectedPosition(buttonPanel)) {
+            teleopDrivingAutoAlignPosition = null;
+        }
+
+        if (xbox.getRawButton(XboxButtons.START)) { //Should be remapped to one of the back buttons
+            if (xbox.getRisingEdge(XboxButtons.START) || teleopDrivingAutoAlignPosition == null) {
+                updateTeleopDrivingTarget(scoringPositionManager);
+                assert teleopDrivingAutoAlignPosition != null;
+            }
+
+            if (!drive.driveToPosition(
+                    teleopDrivingAutoAlignPosition.getTranslation(),
+                    teleopDrivingAutoAlignPosition.getRotation(),
+                    getControllerDriveInputs()
+            )) {
+                // We failed to generate a trajectory
+                wantedRumble = 1;
+            }
+        } else {
+            drive.swerveDriveFieldRelative(getControllerDriveInputs());
+        }
 
         if (xbox.getRisingEdge(XboxButtons.A)) {
             robotTracker.resetPose(new Pose2d(robotTracker.getLatestPose().getTranslation(), new Rotation2d()));
         }
+
+        xbox.setRumble(RumbleType.kBothRumble, wantedRumble);
+    }
+
+    private void updateTeleopDrivingTarget(ScoringPositionManager scoringPositionManager) {
+        double x, y;
+        Rotation2d rotation;
+        if (robotTracker.isOnRedSide() == isRed()) {
+            // We're on the same side as our alliance
+            // Try to go to the scoring position
+            y = ScoringPositionManager.getBestFieldY(
+                    scoringPositionManager.getSelectedPosition(),
+                    isRed(),
+                    robotTracker.getLatestPose().getTranslation(),
+                    robotTracker.getVelocity()
+            );
+
+            if (isRed()) {
+                x = Constants.GRIDS_RED_X + HALF_ROBOT_WIDTH;
+                rotation = Constants.SCORING_ANGLE_RED;
+            } else {
+                x = Constants.GRIDS_BLUE_X - HALF_ROBOT_WIDTH;
+                rotation = Constants.SCORING_ANGLE_BLUE;
+            }
+        } else {
+            // We're on the opposite side as our alliance
+            // Try to go to the pickup position
+            y = PICKUP_POSITION_Y;
+            if (isRed()) {
+                x = PICKUP_POSITION_X_OFFSET_FROM_WALL;
+                rotation = PICKUP_ANGLE_RED;
+            } else {
+                x = FIELD_WIDTH_METERS - PICKUP_POSITION_X_OFFSET_FROM_WALL;
+                rotation = PICKUP_ANGLE_BLUE;
+            }
+        }
+
+        logData("Auto Align Y", y);
+        logData("Auto Align X", x);
+        logData("Auto Align Angle", rotation.getDegrees());
+
+        teleopDrivingAutoAlignPosition = new Pose2d(x, y, rotation);
     }
 
 
@@ -196,5 +282,16 @@ public class Robot extends TimedRobot {
             return new ControllerDriveInputs(xbox.getRawAxis(1), xbox.getRawAxis(0), xbox.getRawAxis(4))
                     .applyDeadZone(0.05, 0.05, 0.2, 0.2).squareInputs();
         }
+    }
+
+
+    NetworkTable loggingTable = NetworkTableInstance.getDefault().getTable("Robot");
+
+    public void logData(@NotNull String key, @NotNull Object value) {
+        loggingTable.getEntry(key).setValue(value);
+    }
+
+    public boolean isRed() {
+        return sideChooser.getSelected().equals("red");
     }
 }

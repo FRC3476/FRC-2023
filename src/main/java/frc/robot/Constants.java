@@ -231,4 +231,21 @@ public final class Constants {
     public static final float HALF_ROBOT_WIDTH = ROBOT_WIDTH / 2;
     public static final float ROBOT_LENGTH = 0.8128f;
     public static final float HALF_ROBOT_LENGTH = ROBOT_LENGTH / 2;
+
+
+    /**
+     * How far away from the edge of the grids do we want to create a line for the intersection test to choose the best scoring
+     * location?
+     */
+    public static final double INTERSECTION_TEST_LINE_X_OFFSET = 0.5;
+
+
+    public static final Rotation2d SCORING_ANGLE_RED = Rotation2d.fromDegrees(-180);
+    public static final Rotation2d SCORING_ANGLE_BLUE = Rotation2d.fromDegrees(0);
+
+    public static final Rotation2d PICKUP_ANGLE_RED = Rotation2d.fromDegrees(0);
+    public static final Rotation2d PICKUP_ANGLE_BLUE = Rotation2d.fromDegrees(180);
+
+    public static final double PICKUP_POSITION_Y = -3.4199;
+    public static final double PICKUP_POSITION_X_OFFSET_FROM_WALL = 0.7635;
 }
