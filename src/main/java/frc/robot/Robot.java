@@ -12,7 +12,6 @@ import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.networktables.NetworkTable;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.wpilibj.GenericHID.RumbleType;
-import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
@@ -25,6 +24,7 @@ import frc.utility.Controller.XboxButtons;
 import frc.utility.ControllerDriveInputs;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.littletonrobotics.junction.LoggedRobot;
 
 import static frc.robot.Constants.*;
 
@@ -34,7 +34,7 @@ import static frc.robot.Constants.*;
  * TimedRobot documentation. If you change the name of this class or the package after creating this project, you must also update
  * the build.gradle file in the project.
  */
-public class Robot extends TimedRobot {
+public class Robot extends LoggedRobot {
 
     private double disabledTime = 0;
 
