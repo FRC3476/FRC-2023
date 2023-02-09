@@ -7,7 +7,11 @@ import frc.robot.Constants;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public abstract class AbstractSubsystem implements Runnable {
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+
+public abstract class AbstractSubsystem {
     private final int period;
     private final int loggingInterval;
     private int logInterval;
@@ -15,6 +19,9 @@ public abstract class AbstractSubsystem implements Runnable {
     public final @NotNull String subsystemName;
     private @Nullable Thread thisThread;
     private final @NotNull NetworkTable loggingTable;
+
+    private static final List<AbstractSubsystem> subsystems = Collections.synchronizedList(new ArrayList<>());
+
 
     public enum ThreadSignal {
         ALIVE, PAUSED, DEAD
@@ -51,12 +58,26 @@ public abstract class AbstractSubsystem implements Runnable {
     }
 
     public void start() {
-        signal = ThreadSignal.ALIVE;
-        if ((thisThread == null || !thisThread.isAlive()) && this.period > 0) {
-            thisThread = new Thread(this);
-            thisThread.start();
+        subsystems.add(this);
+    }
+
+    public static void tick() {
+        for (AbstractSubsystem subsystem : subsystems) {
+            double startTime = Timer.getFPGATimestamp();
+            if (subsystem.signal == ThreadSignal.ALIVE) {
+                subsystem.update();
+
+                subsystem.logInterval++;
+                if (subsystem.logInterval > subsystem.loggingInterval) {
+                    subsystem.logData();
+                    subsystem.logInterval = 0;
+                }
+            }
+            double executionTimeMS = (Timer.getFPGATimestamp() - startTime) * 1000;
+            subsystem.logData("Execution Time", executionTimeMS);
         }
     }
+
 
     /**
      * This function will be called repeatedly when the thread is alive. The period will be whatever you defined when creating the
@@ -64,33 +85,5 @@ public abstract class AbstractSubsystem implements Runnable {
      */
     public void update() {
 
-    }
-
-    @Override
-    @SuppressWarnings("BusyWait")
-    public void run() {
-        while (signal != ThreadSignal.DEAD) {
-            double startTime = Timer.getFPGATimestamp();
-            if (signal == ThreadSignal.ALIVE) {
-                update();
-
-                logInterval++;
-                if (logInterval > loggingInterval) {
-                    logData();
-                    logInterval = 0;
-                }
-            }
-            double executionTimeMS = (Timer.getFPGATimestamp() - startTime) * 1000;
-            logData("Execution Time", executionTimeMS);
-            try {
-                if (period - executionTimeMS > 0) {
-                    Thread.sleep((long) (period - executionTimeMS));
-                }
-            } catch (InterruptedException e) {
-                System.out.println("Thread interrupted " + subsystemName + " message: " + e.getMessage());
-                return;
-            }
-            logData("Period Length", (Timer.getFPGATimestamp() - startTime) * 1000);
-        }
     }
 }

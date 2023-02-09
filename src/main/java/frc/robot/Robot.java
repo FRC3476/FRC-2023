@@ -17,6 +17,7 @@ import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import frc.subsytem.Drive;
 import frc.subsytem.Drive.DriveState;
+import frc.subsytem.AbstractSubsystem;
 import frc.subsytem.RobotTracker;
 import frc.subsytem.VisionHandler;
 import frc.utility.Controller;
@@ -106,6 +107,7 @@ public class Robot extends LoggedRobot {
      */
     @Override
     public void robotPeriodic() {
+        AbstractSubsystem.tick();
     }
 
 
