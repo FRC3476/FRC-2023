@@ -135,7 +135,7 @@ public final class Constants {
 
     public static final double EXPECTED_TELEOP_DRIVE_DT = 0.02;
 
-    public static final double EXPECTED_AUTO_DRIVE_DT = DRIVE_PERIOD / 1000.0;
+    public static final double EXPECTED_DRIVE_DT = DRIVE_PERIOD / 1000.0;
 
     public static final int MAX_TELEOP_TURN_SPEED = 7;
     //Robot Tracker

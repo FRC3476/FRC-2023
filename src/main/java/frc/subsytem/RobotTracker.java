@@ -15,6 +15,7 @@ import edu.wpi.first.math.numbers.N1;
 import edu.wpi.first.math.numbers.N3;
 import edu.wpi.first.wpilibj.Timer;
 import frc.robot.Constants;
+import frc.robot.Robot;
 import frc.utility.geometry.MutableTranslation2d;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -60,7 +61,7 @@ public final class RobotTracker extends AbstractSubsystem {
     private final SwerveDrivePoseEstimator swerveDriveOdometry = new SwerveDrivePoseEstimator(
             SWERVE_DRIVE_KINEMATICS,
             gyroSensor.getRotation2d(),
-            Drive.getInstance().getModulePositions(),
+            Robot.getDrive().getModulePositions(),
             new Pose2d(),
             VecBuilder.fill(0.1, 0.1, 0.1),
             defaultVisionMeasurementStdDevs
@@ -69,7 +70,7 @@ public final class RobotTracker extends AbstractSubsystem {
     private final SwerveDriveOdometry noVisionOdometry = new SwerveDriveOdometry(
             SWERVE_DRIVE_KINEMATICS,
             gyroSensor.getRotation2d(),
-            Drive.getInstance().getModulePositions()
+            Robot.getDrive().getModulePositions()
     );
 
     private static final double VELOCITY_MEASUREMENT_WINDOW = 0.5;
@@ -178,7 +179,7 @@ public final class RobotTracker extends AbstractSubsystem {
     @Override
     public void update() {
         double timestamp = Timer.getFPGATimestamp();
-        SwerveModulePosition[] modulePositions = Drive.getInstance().getModulePositions();
+        SwerveModulePosition[] modulePositions = Robot.getDrive().getModulePositions();
         swerveDriveOdometry.updateWithTime(timestamp, gyroSensor.getRotation2d(), modulePositions);
 
         // Copy the vision measurements into a local variable so that we don't have to lock the list
@@ -341,7 +342,7 @@ public final class RobotTracker extends AbstractSubsystem {
     public void resetPose(@NotNull Pose2d pose) {
         lock.writeLock().lock();
         try {
-            swerveDriveOdometry.resetPosition(gyroSensor.getRotation2d(), Drive.getInstance().getModulePositions(), pose);
+            swerveDriveOdometry.resetPosition(gyroSensor.getRotation2d(), Robot.getDrive().getModulePositions(), pose);
             gyroOffset = pose.getRotation().minus(gyroSensor.getRotation2d());
         } finally {
             lock.writeLock().unlock();

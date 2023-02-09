@@ -14,6 +14,11 @@ public class ControllerDriveInputs {
         this.rotation = rotation;
     }
 
+
+    public ControllerDriveInputs() {
+        this(0, 0, 0);
+    }
+
     public double getX() {
         return x;
     }

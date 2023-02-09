@@ -6,6 +6,7 @@ import edu.wpi.first.wpilibj.Timer;
 import frc.robot.Constants;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.littletonrobotics.junction.Logger;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -45,6 +46,10 @@ public abstract class AbstractSubsystem {
 
     public void logData() {}
 
+    /**
+     * @deprecated Use {@link Logger#recordOutput(String, long)} instead
+     */
+    @Deprecated(forRemoval = true)
     public void logData(@NotNull String key, @NotNull Object value) {
         loggingTable.getEntry(key).setValue(value);
     }

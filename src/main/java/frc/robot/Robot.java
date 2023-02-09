@@ -17,11 +17,12 @@ import edu.wpi.first.wpilibj.PowerDistribution.ModuleType;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
-import frc.subsytem.Drive;
-import frc.subsytem.Drive.DriveState;
 import frc.subsytem.AbstractSubsystem;
 import frc.subsytem.RobotTracker;
 import frc.subsytem.VisionHandler;
+import frc.subsytem.drive.Drive;
+import frc.subsytem.drive.DriveIO;
+import frc.subsytem.drive.DriveIOSparkMax;
 import frc.utility.Controller;
 import frc.utility.Controller.XboxButtons;
 import frc.utility.ControllerDriveInputs;
@@ -46,9 +47,9 @@ public class Robot extends LoggedRobot {
 
     private double disabledTime = 0;
 
-    private @NotNull Drive drive;
-    private @NotNull RobotTracker robotTracker;
-    private @NotNull VisionHandler visionHandler;
+    private @NotNull static Drive drive;
+    private @NotNull static RobotTracker robotTracker;
+    private @NotNull static VisionHandler visionHandler;
 
     private @NotNull Controller xbox;
     private @NotNull Controller stick;
@@ -71,18 +72,20 @@ public class Robot extends LoggedRobot {
             Logger.getInstance().addDataReceiver(new WPILOGWriter("/home/lvuser/logs"));
             Logger.getInstance().addDataReceiver(new NT4Publisher()); // Publish data to NetworkTables
             new PowerDistribution(1, ModuleType.kRev); // Enables power distribution logging
+
+            drive = new Drive(new DriveIOSparkMax());
         } else {
             setUseTiming(false); // Run as fast as possible
             String logPath = LogFileUtil.findReplayLog(); // Pull the replay log from AdvantageScope (or prompt the user)
             Logger.getInstance().setReplaySource(new WPILOGReader(logPath)); // Read replay log
             Logger.getInstance().addDataReceiver(
                     new WPILOGWriter(LogFileUtil.addPathSuffix(logPath, "_sim"))); // Save outputs to a new log
+
+            drive = new Drive(new DriveIO() {});
         }
 
         Logger.getInstance().start(); // Start logging! No more data receivers, replay sources, or metadata values may be added
 
-
-        drive = Drive.getInstance();
         robotTracker = RobotTracker.getInstance();
         visionHandler = VisionHandler.getInstance();
         xbox = new Controller(0);
@@ -137,7 +140,7 @@ public class Robot extends LoggedRobot {
 
     @Override
     public void autonomousInit() {
-        drive.configBrake();
+        drive.setBrakeMode(true);
         String autoName = autoChooser.getSelected();
         if (autoName != null) {
             AutonomousContainer.getInstance().runAutonomous(autoName, sideChooser.getSelected(), true);
@@ -159,7 +162,7 @@ public class Robot extends LoggedRobot {
      */
     @Override
     public void teleopInit() {
-        drive.configBrake();
+        drive.setBrakeMode(true);
     }
 
 
@@ -268,7 +271,7 @@ public class Robot extends LoggedRobot {
     @Override
     public void disabledPeriodic() {
         if (Timer.getFPGATimestamp() - disabledTime > Constants.COAST_AFTER_DISABLE_TIME) {
-            drive.configCoast();
+            drive.setBrakeMode(false);
         }
     }
 
@@ -278,7 +281,6 @@ public class Robot extends LoggedRobot {
      */
     @Override
     public void testInit() {
-        drive.setDriveState(DriveState.TELEOP);
     }
 
 
@@ -290,7 +292,7 @@ public class Robot extends LoggedRobot {
         xbox.update();
         if (xbox.getRawButton(XboxButtons.X) && xbox.getRawButton(XboxButtons.B)
                 && xbox.getRisingEdge(XboxButtons.X) && xbox.getRisingEdge(XboxButtons.B)) {
-            drive.setAbsoluteZeros();
+            drive.resetAbsoluteZeros();
         }
     }
 
@@ -319,5 +321,9 @@ public class Robot extends LoggedRobot {
 
     public boolean isRed() {
         return sideChooser.getSelected().equals("red");
+    }
+
+    public static Drive getDrive() {
+        return drive;
     }
 }
