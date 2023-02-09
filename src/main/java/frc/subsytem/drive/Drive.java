@@ -236,7 +236,11 @@ public final class Drive extends AbstractSubsystem {
             double angleDiff = getAngleDiff(moduleState.angle.getDegrees(), currentAngle);
 
             if (Math.abs(angleDiff) > ALLOWED_SWERVE_ANGLE_ERROR) {
-                driveIO.setSwerveMotorPosition(i, io.swerveMotorRelativePositions[i] + angleDiff);
+                if (USE_CANCODERS) {
+                    driveIO.setSwerveMotorPosition(i, io.swerveMotorRelativePositions[i] + angleDiff);
+                } else {
+                    driveIO.setSwerveMotorPosition(i, moduleState.angle.getDegrees());
+                }
             } else {
                 driveIO.setSwerveMotorPosition(i, io.swerveMotorRelativePositions[i]);
             }
