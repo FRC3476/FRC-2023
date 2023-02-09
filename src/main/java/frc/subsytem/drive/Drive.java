@@ -53,7 +53,7 @@ public final class Drive extends AbstractSubsystem {
     private Trajectory currentAutoTrajectory;
     private Rotation2d autoTargetHeading;
 
-    double lastTurnUpdate = 0;
+    private double lastTurnUpdate = 0;
     private boolean useRelativeEncoderPosition = false;
     private @NotNull DriveState driveState = DriveState.TELEOP;
     private SwerveSetpoint lastSwerveSetpoint = new SwerveSetpoint(

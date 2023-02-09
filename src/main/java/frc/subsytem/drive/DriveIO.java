@@ -4,7 +4,7 @@ import org.littletonrobotics.junction.AutoLog;
 
 public abstract class DriveIO {
     @AutoLog
-    public class DriveInputs {
+    public static class DriveInputs {
         double[] driveMotorPositions = new double[4];
         double[] driveMotorVelocities = new double[4];
 
