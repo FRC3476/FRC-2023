@@ -8,12 +8,12 @@ import org.littletonrobotics.junction.Logger;
 
 public class TelescopingArm extends AbstractSubsystem {
 
-    private final TelescopingArmIO telescopingArmIO;
-    private final TelescopingArmInputsAutoLogged io = new TelescopingArmInputsAutoLogged();
+    private final TelescopingArmIO io;
+    private final TelescopingArmInputsAutoLogged inputs = new TelescopingArmInputsAutoLogged();
 
     private TelescopingArm(TelescopingArmIO telescopingArmIO) {
         super(Constants.TELESCOPING_ARM_PERIOD, 5);
-        this.telescopingArmIO = telescopingArmIO;
+        this.io = telescopingArmIO;
     }
 
     private TrapezoidProfile trapezoidProfile =
@@ -26,8 +26,8 @@ public class TelescopingArm extends AbstractSubsystem {
     public void setPosition(double position) {
         trapezoidProfile = new TrapezoidProfile(Constants.TELESCOPING_ARM_CONSTRAINTS, new TrapezoidProfile.State(position, 0),
                 new TrapezoidProfile.State(
-                        io.position,
-                        io.velocity));
+                        inputs.position,
+                        inputs.velocity));
         trapezoidProfileStartTime = -1;
         Logger.getInstance().recordOutput("Telescoping Arm/Goal position", position);
     }
@@ -36,9 +36,9 @@ public class TelescopingArm extends AbstractSubsystem {
 
     @Override
     public void update() {
-        telescopingArmIO.updateInputs(io);
-        Logger.getInstance().processInputs("Telescoping Arm", io);
-        
+        io.updateInputs(inputs);
+        Logger.getInstance().processInputs("Telescoping Arm", inputs);
+
         double currentTime = Timer.getFPGATimestamp();
         if (trapezoidProfileStartTime == -1) {
             trapezoidProfileStartTime = currentTime;
@@ -46,7 +46,7 @@ public class TelescopingArm extends AbstractSubsystem {
         TrapezoidProfile.State state = trapezoidProfile.calculate(currentTime - trapezoidProfileStartTime);
         double acceleration = (state.velocity - pastVelocity) / (currentTime - pastTime);
 
-        telescopingArmIO.setTelescopingArmPosition(state.position,
+        io.setTelescopingArmPosition(state.position,
                 Constants.TELESCOPING_ARM_FEEDFORWARD.calculate(state.velocity, acceleration));
 
         pastVelocity = state.velocity;
@@ -57,7 +57,7 @@ public class TelescopingArm extends AbstractSubsystem {
         Logger.getInstance().recordOutput("Telescoping Arm/Wanted accel", acceleration);
         Logger.getInstance().recordOutput("Telescoping Arm/Total trapezoidProfile time", trapezoidProfile.totalTime());
         Logger.getInstance().recordOutput("Telescoping Arm/TrapezoidProfile time", currentTime - trapezoidProfileStartTime);
-        Logger.getInstance().recordOutput("Telescoping Arm/TrapezoidProfile error", state.position - io.position);
+        Logger.getInstance().recordOutput("Telescoping Arm/TrapezoidProfile error", state.position - inputs.position);
     }
 
     @Override

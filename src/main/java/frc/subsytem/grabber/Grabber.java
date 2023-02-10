@@ -8,12 +8,12 @@ import org.littletonrobotics.junction.Logger;
 
 public class Grabber extends AbstractSubsystem {
 
-    private final GrabberIO grabberIO;
-    private final GrabberInputsAutoLogged io = new GrabberInputsAutoLogged();
+    private final GrabberIO io;
+    private final GrabberInputsAutoLogged inputs = new GrabberInputsAutoLogged();
 
     private Grabber(GrabberIO grabberIO) {
         super(Constants.GRABBER_PERIOD, 5);
-        this.grabberIO = grabberIO;
+        this.io = grabberIO;
     }
 
     private TrapezoidProfile trapezoidProfile =
@@ -25,7 +25,7 @@ public class Grabber extends AbstractSubsystem {
      */
     public void setPosition(double position) {
         trapezoidProfile = new TrapezoidProfile(Constants.GRABBER_PIVOT_CONSTRAINTS, new TrapezoidProfile.State(position, 0),
-                new TrapezoidProfile.State(io.grabberPosition, io.grabberVelocity));
+                new TrapezoidProfile.State(inputs.grabberPosition, inputs.grabberVelocity));
         trapezoidProfileStartTime = Timer.getFPGATimestamp();
         Logger.getInstance().recordOutput("Pivot/Goal position", position);
     }
@@ -34,8 +34,8 @@ public class Grabber extends AbstractSubsystem {
 
     @Override
     public void update() {
-        grabberIO.updateInputs(io);
-        Logger.getInstance().processInputs("Grabber", io);
+        io.updateInputs(inputs);
+        Logger.getInstance().processInputs("Grabber", inputs);
 
         double currentTime = Timer.getFPGATimestamp();
         if (trapezoidProfileStartTime == -1) {
@@ -45,7 +45,7 @@ public class Grabber extends AbstractSubsystem {
         double acceleration = (state.velocity - pastVelocity) / (currentTime - pastTime);
 
         double arbFFVoltage = Constants.GRABBER_FEEDFORWARD.calculate(state.velocity, acceleration);
-        grabberIO.setPivotPosition(state.position, arbFFVoltage);
+        io.setPivotPosition(state.position, arbFFVoltage);
 
         pastVelocity = state.velocity;
         pastTime = currentTime;
@@ -55,7 +55,7 @@ public class Grabber extends AbstractSubsystem {
         Logger.getInstance().recordOutput("Pivot/Wanted accel", acceleration);
         Logger.getInstance().recordOutput("Pivot/Total trapezoidProfile time", trapezoidProfile.totalTime());
         Logger.getInstance().recordOutput("Pivot/Profile length", currentTime - trapezoidProfileStartTime);
-        Logger.getInstance().recordOutput("Pivot/TrapezoidProfile error", state.position - io.pivotPosition);
+        Logger.getInstance().recordOutput("Pivot/TrapezoidProfile error", state.position - inputs.pivotPosition);
         Logger.getInstance().recordOutput("Pivot/Arb FF voltage", arbFFVoltage);
     }
 
@@ -71,7 +71,7 @@ public class Grabber extends AbstractSubsystem {
     }
 
     public void setGrabState(GrabState grabState) {
-        grabberIO.setGrabberVoltage(grabState.voltage);
+        io.setGrabberVoltage(grabState.voltage);
     }
 
     @Override

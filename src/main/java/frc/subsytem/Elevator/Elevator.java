@@ -8,13 +8,13 @@ import org.littletonrobotics.junction.Logger;
 
 public class Elevator extends AbstractSubsystem {
 
-    private final ElevatorIO elevatorIO;
+    private final ElevatorIO io;
 
-    private final ElevatorInputsAutoLogged io = new ElevatorInputsAutoLogged();
+    private final ElevatorInputsAutoLogged inputs = new ElevatorInputsAutoLogged();
 
     public Elevator(ElevatorIO elevatorIO) {
         super(Constants.ELEVATOR_PERIOD, 5);
-        this.elevatorIO = elevatorIO;
+        this.io = elevatorIO;
     }
 
 
@@ -27,7 +27,7 @@ public class Elevator extends AbstractSubsystem {
      */
     public void setPosition(double position) {
         trapezoidProfile = new TrapezoidProfile(Constants.ELEVATOR_CONSTRAINTS, new TrapezoidProfile.State(position, 0),
-                new TrapezoidProfile.State(io.elevatorPosition, io.elevatorVelocity));
+                new TrapezoidProfile.State(inputs.elevatorPosition, inputs.elevatorVelocity));
         trapezoidProfileStartTime = -1;
         Logger.getInstance().recordOutput("Elevator/Goal position", position);
     }
@@ -40,13 +40,13 @@ public class Elevator extends AbstractSubsystem {
      * @param percent Spans from -1 to 1 where the extremes are full power and direction depends on the sign
      */
     public void setPercentOutput(double percent) {
-        elevatorIO.setElevatorVoltage(percent * Constants.ELEVATOR_NOMINAL_VOLTAGE);
+        io.setElevatorVoltage(percent * Constants.ELEVATOR_NOMINAL_VOLTAGE);
     }
 
     @Override
     public void update() {
-        elevatorIO.updateInputs(io);
-        Logger.getInstance().processInputs("Elevator", io);
+        io.updateInputs(inputs);
+        Logger.getInstance().processInputs("Elevator", inputs);
 
         double currentTime = Timer.getFPGATimestamp();
         if (trapezoidProfileStartTime == -1) {
@@ -55,7 +55,7 @@ public class Elevator extends AbstractSubsystem {
         TrapezoidProfile.State state = trapezoidProfile.calculate(currentTime - trapezoidProfileStartTime);
         double acceleration = (state.velocity - pastVelocity) / (currentTime - pastTime);
         double arbFFVoltage = Constants.ELEVATOR_FEEDFORWARD.calculate(state.velocity, acceleration);
-        elevatorIO.setElevatorPosition(state.position, arbFFVoltage);
+        io.setElevatorPosition(state.position, arbFFVoltage);
 
         pastVelocity = state.velocity;
         pastTime = currentTime;
@@ -65,7 +65,7 @@ public class Elevator extends AbstractSubsystem {
         Logger.getInstance().recordOutput("Elevator/Wanted accel", acceleration);
         Logger.getInstance().recordOutput("Elevator/Total trapezoidProfile time", trapezoidProfile.totalTime());
         Logger.getInstance().recordOutput("Elevator/TrapezoidProfile time", currentTime - trapezoidProfileStartTime);
-        Logger.getInstance().recordOutput("Elevator/TrapezoidProfile Error", state.position - io.elevatorPosition);
+        Logger.getInstance().recordOutput("Elevator/TrapezoidProfile Error", state.position - inputs.elevatorPosition);
         Logger.getInstance().recordOutput("Elevator/FF voltage", arbFFVoltage);
     }
 

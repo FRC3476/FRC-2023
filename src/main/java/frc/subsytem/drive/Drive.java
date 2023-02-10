@@ -74,13 +74,13 @@ public final class Drive extends AbstractSubsystem {
         turnPID.setIntegratorRange(-Math.PI * 2 * 4, Math.PI * 2 * 4);
     }
 
-    private final DriveIO driveIO;
-    private final DriveInputsAutoLogged io = new DriveInputsAutoLogged();
+    private final DriveIO io;
+    private final DriveInputsAutoLogged inputs = new DriveInputsAutoLogged();
 
 
     public Drive(DriveIO driveIO) {
         super(Constants.DRIVE_PERIOD, 5);
-        this.driveIO = driveIO;
+        this.io = driveIO;
 
         setDriveState(DriveState.TELEOP);
     }
@@ -108,7 +108,7 @@ public final class Drive extends AbstractSubsystem {
      * @return Returns requested drive wheel velocity in Meters per second
      */
     private double getSwerveDriveVelocity(int motorNum) {
-        return io.driveMotorVelocities[motorNum];
+        return inputs.driveMotorVelocities[motorNum];
     }
 
     private synchronized void setDriveState(@NotNull DriveState driveState) {
@@ -237,12 +237,12 @@ public final class Drive extends AbstractSubsystem {
 
             if (Math.abs(angleDiff) > ALLOWED_SWERVE_ANGLE_ERROR) {
                 if (USE_CANCODERS) {
-                    driveIO.setSwerveMotorPosition(i, io.swerveMotorRelativePositions[i] + angleDiff);
+                    io.setSwerveMotorPosition(i, inputs.swerveMotorRelativePositions[i] + angleDiff);
                 } else {
-                    driveIO.setSwerveMotorPosition(i, moduleState.angle.getDegrees());
+                    io.setSwerveMotorPosition(i, moduleState.angle.getDegrees());
                 }
             } else {
-                driveIO.setSwerveMotorPosition(i, io.swerveMotorRelativePositions[i]);
+                io.setSwerveMotorPosition(i, inputs.swerveMotorRelativePositions[i]);
             }
 
             setMotorSpeed(i, moduleState.speedMetersPerSecond, setpoint.wheelAccelerations()[i]);
@@ -287,7 +287,7 @@ public final class Drive extends AbstractSubsystem {
 
         double ffv = DRIVE_FEEDFORWARD[module].calculate(velocity, acceleration);
         // Converts ffv voltage to percent output and sets it to motor
-        driveIO.setDriveMotorVoltage(module, ffv);
+        io.setDriveMotorVoltage(module, ffv);
         Logger.getInstance().recordOutput("Drive/Out Volts " + module, ffv);
         //swerveDriveMotors[module].setVoltage(10 * velocity/Constants.SWERVE_METER_PER_ROTATION);
     }
@@ -383,8 +383,8 @@ public final class Drive extends AbstractSubsystem {
 
     @Override
     public synchronized void update() {
-        driveIO.updateInputs(io);
-        Logger.getInstance().processInputs("Drive", io);
+        io.updateInputs(inputs);
+        Logger.getInstance().processInputs("Drive", inputs);
 
         switch (driveState) {
             case TURN -> updateTurn();
@@ -473,17 +473,17 @@ public final class Drive extends AbstractSubsystem {
     @Override
     public synchronized void logData() {
         for (int i = 0; i < 4; i++) {
-            double relPos = io.swerveMotorRelativePositions[i];
+            double relPos = inputs.swerveMotorRelativePositions[i];
             if (relPos < 0) relPos += 360;
             Logger.getInstance().recordOutput("Drive/Swerve Motor " + i + " Relative Position", relPos);
             Logger.getInstance().recordOutput("Drive/Swerve Motor " + i + " Absolute Position", getWheelRotation(i));
             Logger.getInstance().recordOutput("Drive/Drive Motor " + i + " Velocity", getSwerveDriveVelocity(i));
-            Logger.getInstance().recordOutput("Drive/Drive Motor " + i + " Current", io.driveMotorCurrents[i]);
-            Logger.getInstance().recordOutput("Drive/Swerve Motor " + i + " Current", io.swerveMotorCurrents[i]);
-            Logger.getInstance().recordOutput("Drive/Swerve Motor " + i + " Temp", io.swerveMotorTemps[i]);
-            Logger.getInstance().recordOutput("Drive/Drive Motor " + i + " Temp", io.driveMotorTemps[i]);
-            Logger.getInstance().recordOutput("Drive/Swerve Motor " + i + " Voltage", io.swerveMotorVoltages[i]);
-            Logger.getInstance().recordOutput("Drive/Drive Motor " + i + " Voltage", io.driveMotorVoltages[i]);
+            Logger.getInstance().recordOutput("Drive/Drive Motor " + i + " Current", inputs.driveMotorCurrents[i]);
+            Logger.getInstance().recordOutput("Drive/Swerve Motor " + i + " Current", inputs.swerveMotorCurrents[i]);
+            Logger.getInstance().recordOutput("Drive/Swerve Motor " + i + " Temp", inputs.swerveMotorTemps[i]);
+            Logger.getInstance().recordOutput("Drive/Drive Motor " + i + " Temp", inputs.driveMotorTemps[i]);
+            Logger.getInstance().recordOutput("Drive/Swerve Motor " + i + " Voltage", inputs.swerveMotorVoltages[i]);
+            Logger.getInstance().recordOutput("Drive/Drive Motor " + i + " Voltage", inputs.driveMotorVoltages[i]);
         }
         Logger.getInstance().recordOutput("Drive/Drive State", driveState.toString());
     }
@@ -496,11 +496,11 @@ public final class Drive extends AbstractSubsystem {
      */
     public double getWheelRotation(int moduleNumber) {
         if (useRelativeEncoderPosition) {
-            double relPos = io.swerveMotorRelativePositions[moduleNumber] % 360;
+            double relPos = inputs.swerveMotorRelativePositions[moduleNumber] % 360;
             if (relPos < 0) relPos += 360;
             return relPos;
         } else {
-            return io.swerveMotorAbsolutePositions[moduleNumber];
+            return inputs.swerveMotorAbsolutePositions[moduleNumber];
         }
     }
 
@@ -511,7 +511,7 @@ public final class Drive extends AbstractSubsystem {
      * @return distance in meters
      */
     public double getDrivePosition(int moduleNumber) {
-        return io.driveMotorPositions[moduleNumber];
+        return inputs.driveMotorPositions[moduleNumber];
     }
 
     @Contract(pure = true)
@@ -565,10 +565,10 @@ public final class Drive extends AbstractSubsystem {
     }
 
     public synchronized void resetAbsoluteZeros() {
-        driveIO.resetAbsoluteZeros();
+        io.resetAbsoluteZeros();
     }
 
     public synchronized void setBrakeMode(boolean brake) {
-        driveIO.setBrakeMode(brake);
+        io.setBrakeMode(brake);
     }
 }
