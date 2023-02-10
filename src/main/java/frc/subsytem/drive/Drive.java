@@ -248,10 +248,11 @@ public final class Drive extends AbstractSubsystem {
             setMotorSpeed(i, moduleState.speedMetersPerSecond, setpoint.wheelAccelerations()[i]);
             //setMotorSpeed(i, 0, 0);
 
-            Logger.getInstance().recordOutput("SwerveModule " + i + " Wanted Angle", moduleState.angle.getDegrees());
-            Logger.getInstance().recordOutput("SwerveModule " + i + " Wanted Speed", moduleState.speedMetersPerSecond);
-            Logger.getInstance().recordOutput("SwerveModule " + i + " Wanted Acceleration", setpoint.wheelAccelerations()[i]);
-            Logger.getInstance().recordOutput("SwerveModule " + i + " Angle Error", angleDiff);
+            Logger.getInstance().recordOutput("Drive/SwerveModule " + i + " Wanted Angle", moduleState.angle.getDegrees());
+            Logger.getInstance().recordOutput("Drive/SwerveModule " + i + " Wanted Speed", moduleState.speedMetersPerSecond);
+            Logger.getInstance().recordOutput("Drive/SwerveModule " + i + " Wanted Acceleration",
+                    setpoint.wheelAccelerations()[i]);
+            Logger.getInstance().recordOutput("Drive/SwerveModule " + i + " Angle Error", angleDiff);
         }
     }
 
@@ -287,7 +288,7 @@ public final class Drive extends AbstractSubsystem {
         double ffv = DRIVE_FEEDFORWARD[module].calculate(velocity, acceleration);
         // Converts ffv voltage to percent output and sets it to motor
         driveIO.setDriveMotorVoltage(module, ffv);
-        Logger.getInstance().recordOutput("Out Volts " + module, ffv);
+        Logger.getInstance().recordOutput("Drive/Out Volts " + module, ffv);
         //swerveDriveMotors[module].setVoltage(10 * velocity/Constants.SWERVE_METER_PER_ROTATION);
     }
 
@@ -453,12 +454,12 @@ public final class Drive extends AbstractSubsystem {
         }
 
         double curSpeed = RobotTracker.getInstance().getAngularVelocity();
-        Logger.getInstance().recordOutput("Turn Position Error", Math.toDegrees(turnPID.getPositionError()));
-        Logger.getInstance().recordOutput("Turn Actual Speed", curSpeed);
-        Logger.getInstance().recordOutput("Turn PID Command", pidDeltaSpeed);
-        Logger.getInstance().recordOutput("Turn PID Setpoint Position", TurnInputs.goal.position);
-        Logger.getInstance().recordOutput("Turn PID Setpoint Velocity", TurnInputs.goal.velocity);
-        Logger.getInstance().recordOutput("Turn PID Measurement", RobotTracker.getInstance().getGyroAngle().getRadians());
+        Logger.getInstance().recordOutput("Drive/Turn Position Error", Math.toDegrees(turnPID.getPositionError()));
+        Logger.getInstance().recordOutput("Drive/Turn Actual Speed", curSpeed);
+        Logger.getInstance().recordOutput("Drive/Turn PID Command", pidDeltaSpeed);
+        Logger.getInstance().recordOutput("Drive/Turn PID Setpoint Position", TurnInputs.goal.position);
+        Logger.getInstance().recordOutput("Drive/Turn PID Setpoint Velocity", TurnInputs.goal.velocity);
+        Logger.getInstance().recordOutput("Drive/Turn PID Measurement", RobotTracker.getInstance().getGyroAngle().getRadians());
     }
 
     public void stopMovement() {
@@ -474,17 +475,17 @@ public final class Drive extends AbstractSubsystem {
         for (int i = 0; i < 4; i++) {
             double relPos = io.swerveMotorRelativePositions[i];
             if (relPos < 0) relPos += 360;
-            Logger.getInstance().recordOutput("Swerve Motor " + i + " Relative Position", relPos);
-            Logger.getInstance().recordOutput("Swerve Motor " + i + " Absolute Position", getWheelRotation(i));
-            Logger.getInstance().recordOutput("Drive Motor " + i + " Velocity", getSwerveDriveVelocity(i));
-            Logger.getInstance().recordOutput("Drive Motor " + i + " Current", io.driveMotorCurrents[i]);
-            Logger.getInstance().recordOutput("Swerve Motor " + i + " Current", io.swerveMotorCurrents[i]);
-            Logger.getInstance().recordOutput("Swerve Motor " + i + " Temp", io.swerveMotorTemps[i]);
-            Logger.getInstance().recordOutput("Drive Motor " + i + " Temp", io.driveMotorTemps[i]);
-            Logger.getInstance().recordOutput("Swerve Motor " + i + " Voltage", io.swerveMotorVoltages[i]);
-            Logger.getInstance().recordOutput("Drive Motor " + i + " Voltage", io.driveMotorVoltages[i]);
+            Logger.getInstance().recordOutput("Drive/Swerve Motor " + i + " Relative Position", relPos);
+            Logger.getInstance().recordOutput("Drive/Swerve Motor " + i + " Absolute Position", getWheelRotation(i));
+            Logger.getInstance().recordOutput("Drive/Drive Motor " + i + " Velocity", getSwerveDriveVelocity(i));
+            Logger.getInstance().recordOutput("Drive/Drive Motor " + i + " Current", io.driveMotorCurrents[i]);
+            Logger.getInstance().recordOutput("Drive/Swerve Motor " + i + " Current", io.swerveMotorCurrents[i]);
+            Logger.getInstance().recordOutput("Drive/Swerve Motor " + i + " Temp", io.swerveMotorTemps[i]);
+            Logger.getInstance().recordOutput("Drive/Drive Motor " + i + " Temp", io.driveMotorTemps[i]);
+            Logger.getInstance().recordOutput("Drive/Swerve Motor " + i + " Voltage", io.swerveMotorVoltages[i]);
+            Logger.getInstance().recordOutput("Drive/Drive Motor " + i + " Voltage", io.driveMotorVoltages[i]);
         }
-        Logger.getInstance().recordOutput("Drive State", driveState.toString());
+        Logger.getInstance().recordOutput("Drive/Drive State", driveState.toString());
     }
 
     /**

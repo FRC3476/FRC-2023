@@ -52,7 +52,7 @@ public class ElevatorIOSparkMax extends ElevatorIO {
 
     @Override
     public void setElevatorVoltage(double voltage) {
-        elevatorMain.setVoltage(voltage);
+        elevatorMain.getPIDController().setReference(voltage, CANSparkMax.ControlType.kVoltage);
     }
 
     @Override

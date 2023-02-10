@@ -27,7 +27,7 @@ public class Grabber extends AbstractSubsystem {
         trapezoidProfile = new TrapezoidProfile(Constants.GRABBER_PIVOT_CONSTRAINTS, new TrapezoidProfile.State(position, 0),
                 new TrapezoidProfile.State(io.grabberPosition, io.grabberVelocity));
         trapezoidProfileStartTime = Timer.getFPGATimestamp();
-        Logger.getInstance().recordOutput("Pivot Goal position", position);
+        Logger.getInstance().recordOutput("Pivot/Goal position", position);
     }
 
     private double pastVelocity = 0, pastTime = 0;
@@ -49,12 +49,12 @@ public class Grabber extends AbstractSubsystem {
         pastVelocity = state.velocity;
         pastTime = currentTime;
 
-        Logger.getInstance().recordOutput("Pivot Wanted pos", state.position);
-        Logger.getInstance().recordOutput("Pivot Wanted vel", state.velocity);
-        Logger.getInstance().recordOutput("Pivot Wanted accel", acceleration);
-        Logger.getInstance().recordOutput("Pivot Total trapezoidProfile time", trapezoidProfile.totalTime());
-        Logger.getInstance().recordOutput("Pivot Profile length", currentTime - trapezoidProfileStartTime);
-        Logger.getInstance().recordOutput("Pivot TrapezoidProfile error", state.position - io.pivotPosition);
+        Logger.getInstance().recordOutput("Pivot/Wanted pos", state.position);
+        Logger.getInstance().recordOutput("Pivot/Wanted vel", state.velocity);
+        Logger.getInstance().recordOutput("Pivot/Wanted accel", acceleration);
+        Logger.getInstance().recordOutput("Pivot/Total trapezoidProfile time", trapezoidProfile.totalTime());
+        Logger.getInstance().recordOutput("Pivot/Profile length", currentTime - trapezoidProfileStartTime);
+        Logger.getInstance().recordOutput("Pivot/TrapezoidProfile error", state.position - io.pivotPosition);
     }
 
     public enum GrabState {

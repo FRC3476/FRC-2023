@@ -29,7 +29,7 @@ public class Elevator extends AbstractSubsystem {
         trapezoidProfile = new TrapezoidProfile(Constants.ELEVATOR_CONSTRAINTS, new TrapezoidProfile.State(position, 0),
                 new TrapezoidProfile.State(io.elevatorPosition, io.elevatorVelocity));
         trapezoidProfileStartTime = -1;
-        Logger.getInstance().recordOutput("Goal position", position);
+        Logger.getInstance().recordOutput("Elevator/Goal position", position);
     }
 
     private double pastVelocity = 0, pastTime = 0;
@@ -47,7 +47,7 @@ public class Elevator extends AbstractSubsystem {
     public void update() {
         elevatorIO.updateInputs(io);
         Logger.getInstance().processInputs("Elevator", io);
-        
+
         double currentTime = Timer.getFPGATimestamp();
         if (trapezoidProfileStartTime == -1) {
             trapezoidProfileStartTime = currentTime;
@@ -59,12 +59,12 @@ public class Elevator extends AbstractSubsystem {
         pastVelocity = state.velocity;
         pastTime = currentTime;
 
-        Logger.getInstance().recordOutput("Wanted pos", state.position);
-        Logger.getInstance().recordOutput("Wanted vel", state.velocity);
-        Logger.getInstance().recordOutput("Wanted accel", acceleration);
-        Logger.getInstance().recordOutput("Total trapezoidProfile time", trapezoidProfile.totalTime());
-        Logger.getInstance().recordOutput("TrapezoidProfile time", currentTime - trapezoidProfileStartTime);
-        Logger.getInstance().recordOutput("TrapezoidProfile Error", state.position - io.elevatorPosition);
+        Logger.getInstance().recordOutput("Elevator/Wanted pos", state.position);
+        Logger.getInstance().recordOutput("Elevator/Wanted vel", state.velocity);
+        Logger.getInstance().recordOutput("Elevator/Wanted accel", acceleration);
+        Logger.getInstance().recordOutput("Elevator/Total trapezoidProfile time", trapezoidProfile.totalTime());
+        Logger.getInstance().recordOutput("Elevator/TrapezoidProfile time", currentTime - trapezoidProfileStartTime);
+        Logger.getInstance().recordOutput("Elevator/TrapezoidProfile Error", state.position - io.elevatorPosition);
     }
 
     @Override
