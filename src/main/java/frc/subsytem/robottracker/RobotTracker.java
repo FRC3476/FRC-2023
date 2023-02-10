@@ -171,6 +171,11 @@ public final class RobotTracker extends AbstractSubsystem {
 
     @Override
     public void update() {
+        try {
+            Thread.sleep(100);
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
         synchronized (gyroInputs) {
             gyroInputs.updateInputs(gyroSensor);
             Logger.getInstance().processInputs("Gyro", gyroInputs);
@@ -387,16 +392,17 @@ public final class RobotTracker extends AbstractSubsystem {
 
     @Override
     public void logData() {
-        Logger.getInstance().recordOutput("rotation", getGyroAngle().getDegrees());
-        Logger.getInstance().recordOutput("x", getLatestPose().getTranslation().getX());
-        Logger.getInstance().recordOutput("y", getLatestPose().getTranslation().getY());
-        Logger.getInstance().recordOutput("NoVisionPose", noVisionOdometry.getPoseMeters());
-        Logger.getInstance().recordOutput("velocityX", getVelocity().getX());
-        Logger.getInstance().recordOutput("velocityY", getVelocity().getY());
-        Logger.getInstance().recordOutput("accelerationX", getAcceleration().getX());
-        Logger.getInstance().recordOutput("accelerationY", getAcceleration().getY());
-        Logger.getInstance().recordOutput("accelerationZ", getAcceleration().getZ());
-        Logger.getInstance().recordOutput("Velocity", getVelocity().getNorm());
+        Logger.getInstance().recordOutput("RobotTracker/rotation", getGyroAngle().getDegrees());
+        Logger.getInstance().recordOutput("RobotTracker/x", getLatestPose().getTranslation().getX());
+        Logger.getInstance().recordOutput("RobotTracker/y", getLatestPose().getTranslation().getY());
+        Logger.getInstance().recordOutput("RobotTracker/NoVisionPose", noVisionOdometry.getPoseMeters());
+        Logger.getInstance().recordOutput("RobotTracker/VisionPose", getLatestPose());
+        Logger.getInstance().recordOutput("RobotTracker/velocityX", getVelocity().getX());
+        Logger.getInstance().recordOutput("RobotTracker/velocityY", getVelocity().getY());
+        Logger.getInstance().recordOutput("RobotTracker/accelerationX", getAcceleration().getX());
+        Logger.getInstance().recordOutput("RobotTracker/accelerationY", getAcceleration().getY());
+        Logger.getInstance().recordOutput("RobotTracker/accelerationZ", getAcceleration().getZ());
+        Logger.getInstance().recordOutput("RobotTracker/Velocity", getVelocity().getNorm());
 
         RobotPositionSender.addRobotPosition(new RobotState(getLatestPose(), getVelocity().getX(),
                 getVelocity().getY(), getAngularVelocity(), lastTimestamp));

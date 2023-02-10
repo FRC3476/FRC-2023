@@ -54,6 +54,7 @@ public abstract class AbstractSubsystem {
 
     public void start() {
         subsystems.add(this);
+        signal = ThreadSignal.ALIVE;
     }
 
     public static void tick() {
@@ -69,7 +70,8 @@ public abstract class AbstractSubsystem {
                 }
             }
             double executionTimeMS = (Timer.getFPGATimestamp() - startTime) * 1000;
-            Logger.getInstance().recordOutput(subsystem.subsystemName + "Execution Time", executionTimeMS);
+            Logger.getInstance().recordOutput("SubsystemExecutionTimes/" + subsystem.subsystemName + " Execution Time",
+                    executionTimeMS);
         }
     }
 
