@@ -5,14 +5,13 @@ import com.revrobotics.CANSparkMaxLowLevel;
 import com.revrobotics.SparkMaxPIDController;
 import frc.robot.Constants;
 
-import static frc.robot.Constants.SECONDS_PER_MINUTE;
-import static frc.robot.Constants.TELESCOPING_ARM_ROTATIONS_PER_METER;
+import static frc.robot.Constants.*;
 
 public class TelescopingArmIOSparkMax extends TelescopingArmIO {
     private final CANSparkMax telescopingArmSparkMax;
 
     TelescopingArmIOSparkMax() {
-        telescopingArmSparkMax = new CANSparkMax(0, CANSparkMaxLowLevel.MotorType.kBrushless);
+        telescopingArmSparkMax = new CANSparkMax(TELESCOPING_ARM_CAN_ID, CANSparkMaxLowLevel.MotorType.kBrushless);
         SparkMaxPIDController telescopingArmSparkMaxPIDController = telescopingArmSparkMax.getPIDController();
         telescopingArmSparkMaxPIDController.setP(Constants.TELESCOPING_ARM_P);
         telescopingArmSparkMaxPIDController.setI(Constants.TELESCOPING_ARM_I);

@@ -5,8 +5,7 @@ import com.revrobotics.CANSparkMaxLowLevel;
 import com.revrobotics.SparkMaxPIDController;
 import frc.robot.Constants;
 
-import static frc.robot.Constants.GRABBER_ROTATIONS_PER_DEGREE;
-import static frc.robot.Constants.SECONDS_PER_MINUTE;
+import static frc.robot.Constants.*;
 
 public class GrabberIOSparkMax extends GrabberIO {
 
@@ -14,8 +13,8 @@ public class GrabberIOSparkMax extends GrabberIO {
     private final CANSparkMax grabberSparkMax;
 
     public GrabberIOSparkMax() {
-        pivotSparkMax = new CANSparkMax(0, CANSparkMaxLowLevel.MotorType.kBrushless);
-        grabberSparkMax = new CANSparkMax(0, CANSparkMaxLowLevel.MotorType.kBrushless);
+        pivotSparkMax = new CANSparkMax(GRABBER_PIVOT_CAN_ID, CANSparkMaxLowLevel.MotorType.kBrushless);
+        grabberSparkMax = new CANSparkMax(GRABBER_CAN_ID, CANSparkMaxLowLevel.MotorType.kBrushless);
         SparkMaxPIDController pivotSparkMaxPIDController = pivotSparkMax.getPIDController();
         pivotSparkMaxPIDController.setP(Constants.GRABBER_P);
         pivotSparkMaxPIDController.setI(Constants.GRABBER_I);
