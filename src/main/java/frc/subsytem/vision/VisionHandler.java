@@ -17,7 +17,6 @@ import edu.wpi.first.networktables.NetworkTableEvent.Kind;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.util.Color8Bit;
-import frc.robot.Constants;
 import frc.robot.Robot;
 import frc.subsytem.AbstractSubsystem;
 import org.jetbrains.annotations.NotNull;
@@ -84,7 +83,7 @@ public class VisionHandler extends AbstractSubsystem {
     VisionInputs visionInputs = new VisionInputs();
 
     public VisionHandler() {
-        super(Constants.VISION_HANDLER_PERIOD);
+        super();
         // Network table init
         // Network tables
         @NotNull NetworkTableInstance networkTableInstance = NetworkTableInstance.getDefault();

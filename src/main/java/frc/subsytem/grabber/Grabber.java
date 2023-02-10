@@ -12,7 +12,7 @@ public class Grabber extends AbstractSubsystem {
     private final GrabberInputsAutoLogged inputs = new GrabberInputsAutoLogged();
 
     public Grabber(GrabberIO grabberIO) {
-        super(Constants.GRABBER_PERIOD, 5);
+        super(5);
         this.io = grabberIO;
     }
 

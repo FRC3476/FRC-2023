@@ -13,7 +13,7 @@ public class Elevator extends AbstractSubsystem {
     private final ElevatorInputsAutoLogged inputs = new ElevatorInputsAutoLogged();
 
     public Elevator(ElevatorIO elevatorIO) {
-        super(Constants.ELEVATOR_PERIOD, 5);
+        super(5);
         this.io = elevatorIO;
     }
 

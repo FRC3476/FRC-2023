@@ -154,7 +154,7 @@ public final class Limelight extends AbstractSubsystem {
     }
 
     private Limelight(String name) {
-        super(-1);
+        super();
         limelightTable = NetworkTableInstance.getDefault().getTable(name);
         limelightGuiTable = NetworkTableInstance.getDefault().getTable(name + "gui");
 

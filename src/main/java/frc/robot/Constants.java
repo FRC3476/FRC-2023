@@ -35,10 +35,10 @@ public final class Constants {
      */
     public static final int DEFAULT_PERIODS_PER_LOG = 20;
 
+    private static final int NOMINAL_DT_MS = 20;
+
     //Drive Constants
     public static final double AUTO_BALANCING_VELOCITY = 0.5;
-    public static final int DRIVE_PERIOD = 20;
-
     public static final int DRIVE_LEFT_FRONT_ID = 11;
     public static final int DRIVE_LEFT_BACK_ID = 12;
     public static final int DRIVE_RIGHT_FRONT_ID = 13;
@@ -135,25 +135,19 @@ public final class Constants {
 
     public static final double EXPECTED_TELEOP_DRIVE_DT = 0.02;
 
-    public static final double EXPECTED_DRIVE_DT = DRIVE_PERIOD / 1000.0;
+    public static final double EXPECTED_DRIVE_DT = NOMINAL_DT_MS / 1000.0;
 
     public static final int MAX_TELEOP_TURN_SPEED = 7;
-    //Robot Tracker
-    public static final int ROBOT_TRACKER_PERIOD = 20;
     /**
      * Acceleration due to gravity in meters per second squared. (9.80665 m/s^2)
      */
     public static final double GRAVITY = 9.80665;
     public static final int PIGEON_CAN_ID = 30;
-    // Vision constants
-    public static final int VISION_HANDLER_PERIOD = -1;
     public static final double COAST_AFTER_DISABLE_TIME = 0.5;
     public static final double FIELD_HEIGHT_METERS = 8.0137;
     public static final double FIELD_WIDTH_METERS = 16.54175;
 
     public static final double ALLOWED_SWERVE_ANGLE_ERROR = 2;
-    // Elevator
-    public static final int ELEVATOR_PERIOD = 20;
     public static final TrapezoidProfile.Constraints ELEVATOR_CONSTRAINTS
             = new TrapezoidProfile.Constraints(3, 3);
     public static final ElevatorFeedforward ELEVATOR_FEEDFORWARD = new ElevatorFeedforward(0, 0, 0, 0);
@@ -165,8 +159,6 @@ public final class Constants {
     public static final int ELEVATOR_SMART_CURRENT_LIMIT = 40;
     public static final int ELEVATOR_MAIN_CAN_ID = 41;
     public static final int ELEVATOR_FOLLOWER_CAN_ID = 42;
-    // Telescoping Arm
-    public static final int TELESCOPING_ARM_PERIOD = 20;
     public static final TrapezoidProfile.Constraints TELESCOPING_ARM_CONSTRAINTS
             = new TrapezoidProfile.Constraints(3, 3);
     public static final ElevatorFeedforward TELESCOPING_ARM_FEEDFORWARD = new ElevatorFeedforward(0, 0, 0, 0);
@@ -177,8 +169,6 @@ public final class Constants {
     public static final int TELESCOPING_ARM_NOMINAL_VOLTAGE = 9;
     public static final int TELESCOPING_ARM_SMART_CURRENT_LIMIT = 40;
     public static final int TELESCOPING_ARM_CAN_ID = 43;
-    // Grabber
-    public static final int GRABBER_PERIOD = 20;
     public static final ArmFeedforward GRABBER_FEEDFORWARD = new ArmFeedforward(0, 0, 0, 0);
     public static final TrapezoidProfile.Constraints GRABBER_PIVOT_CONSTRAINTS
             = new TrapezoidProfile.Constraints(3, 3);

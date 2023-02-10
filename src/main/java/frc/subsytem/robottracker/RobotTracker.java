@@ -14,7 +14,6 @@ import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.numbers.N1;
 import edu.wpi.first.math.numbers.N3;
 import edu.wpi.first.wpilibj.Timer;
-import frc.robot.Constants;
 import frc.robot.Robot;
 import frc.subsytem.AbstractSubsystem;
 import frc.subsytem.robottracker.GyroInputs.Entry;
@@ -80,7 +79,7 @@ public final class RobotTracker extends AbstractSubsystem {
             = TimeInterpolatableBuffer.createBuffer(Translation3d::interpolate, 1.5); //abt 1.5 seconds (ms * 300)
 
     public RobotTracker() {
-        super(Constants.ROBOT_TRACKER_PERIOD, 3);
+        super(3);
 
 
         gyroInputs.updateInputs(gyroSensor);

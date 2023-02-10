@@ -13,7 +13,6 @@ import java.util.Collections;
 import java.util.List;
 
 public abstract class AbstractSubsystem {
-    private final int period;
     private final int loggingInterval;
     private int logInterval;
     private @NotNull ThreadSignal signal = ThreadSignal.PAUSED;
@@ -29,30 +28,21 @@ public abstract class AbstractSubsystem {
     }
 
     /**
-     * @param period The period when calling update
+     *
      */
-    public AbstractSubsystem(int period, int loggingInterval) {
-        this.period = period;
+    public AbstractSubsystem(int loggingInterval) {
         this.subsystemName = this.getClass().getSimpleName();
         this.loggingInterval = loggingInterval;
         this.loggingTable = NetworkTableInstance.getDefault().getTable(subsystemName);
     }
 
-    public AbstractSubsystem(int period) {
-        this(period, Constants.DEFAULT_PERIODS_PER_LOG);
+    public AbstractSubsystem() {
+        this(Constants.DEFAULT_PERIODS_PER_LOG);
     }
 
     public void selfTest() {}
 
     public void logData() {}
-
-    /**
-     * @deprecated Use {@link Logger#recordOutput(String, long)} instead
-     */
-    @Deprecated(forRemoval = true)
-    public void logData(@NotNull String key, @NotNull Object value) {
-        loggingTable.getEntry(key).setValue(value);
-    }
 
     public void pause() {
         signal = ThreadSignal.PAUSED;
@@ -79,7 +69,7 @@ public abstract class AbstractSubsystem {
                 }
             }
             double executionTimeMS = (Timer.getFPGATimestamp() - startTime) * 1000;
-            subsystem.logData("Execution Time", executionTimeMS);
+            Logger.getInstance().recordOutput(subsystem.subsystemName + "Execution Time", executionTimeMS);
         }
     }
 
