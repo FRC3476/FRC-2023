@@ -382,6 +382,9 @@ public final class Drive extends AbstractSubsystem {
 
     @Override
     public synchronized void update() {
+        driveIO.updateInputs(io);
+        Logger.getInstance().processInputs("Drive", io);
+
         switch (driveState) {
             case TURN -> updateTurn();
             case HOLD -> setSwerveModuleStates(Constants.HOLD_MODULE_STATES);

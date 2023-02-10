@@ -56,4 +56,6 @@ public abstract class DriveIO {
 
 
     public void resetAbsoluteZeros() {}
+
+    public void updateInputs(DriveInputs inputs) {}
 }
