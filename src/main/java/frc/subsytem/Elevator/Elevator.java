@@ -54,7 +54,8 @@ public class Elevator extends AbstractSubsystem {
         }
         TrapezoidProfile.State state = trapezoidProfile.calculate(currentTime - trapezoidProfileStartTime);
         double acceleration = (state.velocity - pastVelocity) / (currentTime - pastTime);
-        elevatorIO.setElevatorPosition(state.position, Constants.ELEVATOR_FEEDFORWARD.calculate(state.velocity, acceleration));
+        double arbFFVoltage = Constants.ELEVATOR_FEEDFORWARD.calculate(state.velocity, acceleration);
+        elevatorIO.setElevatorPosition(state.position, arbFFVoltage);
 
         pastVelocity = state.velocity;
         pastTime = currentTime;
@@ -65,6 +66,7 @@ public class Elevator extends AbstractSubsystem {
         Logger.getInstance().recordOutput("Elevator/Total trapezoidProfile time", trapezoidProfile.totalTime());
         Logger.getInstance().recordOutput("Elevator/TrapezoidProfile time", currentTime - trapezoidProfileStartTime);
         Logger.getInstance().recordOutput("Elevator/TrapezoidProfile Error", state.position - io.elevatorPosition);
+        Logger.getInstance().recordOutput("Elevator/FF voltage", arbFFVoltage);
     }
 
     @Override

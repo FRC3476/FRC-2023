@@ -44,7 +44,8 @@ public class Grabber extends AbstractSubsystem {
         TrapezoidProfile.State state = trapezoidProfile.calculate(currentTime - trapezoidProfileStartTime);
         double acceleration = (state.velocity - pastVelocity) / (currentTime - pastTime);
 
-        grabberIO.setPivotPosition(state.position, Constants.GRABBER_FEEDFORWARD.calculate(state.velocity, acceleration));
+        double arbFFVoltage = Constants.GRABBER_FEEDFORWARD.calculate(state.velocity, acceleration);
+        grabberIO.setPivotPosition(state.position, arbFFVoltage);
 
         pastVelocity = state.velocity;
         pastTime = currentTime;
@@ -55,6 +56,7 @@ public class Grabber extends AbstractSubsystem {
         Logger.getInstance().recordOutput("Pivot/Total trapezoidProfile time", trapezoidProfile.totalTime());
         Logger.getInstance().recordOutput("Pivot/Profile length", currentTime - trapezoidProfileStartTime);
         Logger.getInstance().recordOutput("Pivot/TrapezoidProfile error", state.position - io.pivotPosition);
+        Logger.getInstance().recordOutput("Pivot/Arb FF voltage", arbFFVoltage);
     }
 
     public enum GrabState {
