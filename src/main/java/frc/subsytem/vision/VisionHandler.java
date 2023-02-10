@@ -21,8 +21,6 @@ import frc.robot.Robot;
 import frc.subsytem.AbstractSubsystem;
 import org.jetbrains.annotations.NotNull;
 import org.littletonrobotics.junction.Logger;
-import org.littletonrobotics.junction.networktables.LoggedDashboardBoolean;
-import org.littletonrobotics.junction.networktables.LoggedDashboardNumber;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -88,15 +86,19 @@ public class VisionHandler extends AbstractSubsystem {
         // Network tables
         @NotNull NetworkTableInstance networkTableInstance = NetworkTableInstance.getDefault();
         @NotNull NetworkTable visionTable = networkTableInstance.getTable("Vision");
+        @NotNull var visionMiscTable = networkTableInstance.getTable("Vision Misc");
+        @NotNull var configTable = networkTableInstance.getTable("Vision Config");
 
-        new LoggedDashboardNumber("Vision Config/Exposure", 100);
-        new LoggedDashboardNumber("Vision Config/Camera Type", 0);
-        new LoggedDashboardNumber("Vision Config/X Resolution", 1280);
-        new LoggedDashboardNumber("Vision Config/Y Resolution", 800);
-        new LoggedDashboardNumber("Vision Config/Framerate", 30);
-        new LoggedDashboardNumber("Vision Config/Threads", 4);
-        new LoggedDashboardBoolean("Vision Config/Do Stream", false);
-        new LoggedDashboardBoolean("Vision Config/Connection Flag", true);
+        // Send out connection flag to april tags processor
+        visionMiscTable.getEntry("Connection Flag").setBoolean(true);
+
+        configTable.getEntry("Exposure").setDouble(100);
+        configTable.getEntry("Camera Type").setDouble(0);
+        configTable.getEntry("X Resolution").setDouble(1280);
+        configTable.getEntry("Y Resolution").setDouble(800);
+        configTable.getEntry("Framerate").setDouble(30);
+        configTable.getEntry("Threads").setDouble(4);
+        configTable.getEntry("Do Stream").setBoolean(false);
 
         for (int i = 1; i <= 8; i++) {
             var table = visionTable.getEntry(String.valueOf(i));
