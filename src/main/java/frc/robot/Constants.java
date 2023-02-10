@@ -163,6 +163,8 @@ public final class Constants {
     public static final double ELEVATOR_ROTATIONS_PER_METER = 5;
     public static final double ELEVATOR_NOMINAL_VOLTAGE = 9;
     public static final int ELEVATOR_SMART_CURRENT_LIMIT = 40;
+    public static final int ELEVATOR_MAIN_CAN_ID = 41;
+    public static final int ELEVATOR_FOLLOWER_CAN_ID = 42;
     // Telescoping Arm
     public static final int TELESCOPING_ARM_PERIOD = 20;
     public static final TrapezoidProfile.Constraints TELESCOPING_ARM_CONSTRAINTS

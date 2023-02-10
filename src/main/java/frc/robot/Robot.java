@@ -18,6 +18,9 @@ import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import frc.subsytem.AbstractSubsystem;
+import frc.subsytem.Elevator.Elevator;
+import frc.subsytem.Elevator.ElevatorIO;
+import frc.subsytem.Elevator.ElevatorIOSparkMax;
 import frc.subsytem.RobotTracker;
 import frc.subsytem.VisionHandler;
 import frc.subsytem.drive.Drive;
@@ -48,6 +51,7 @@ public class Robot extends LoggedRobot {
     private double disabledTime = 0;
 
     private @NotNull static Drive drive;
+    private @NotNull static Elevator elevator;
     private @NotNull static RobotTracker robotTracker;
     private @NotNull static VisionHandler visionHandler;
 
@@ -74,6 +78,7 @@ public class Robot extends LoggedRobot {
             new PowerDistribution(1, ModuleType.kRev); // Enables power distribution logging
 
             drive = new Drive(new DriveIOSparkMax());
+            elevator = new Elevator(new ElevatorIOSparkMax());
         } else {
             setUseTiming(false); // Run as fast as possible
             String logPath = LogFileUtil.findReplayLog(); // Pull the replay log from AdvantageScope (or prompt the user)
@@ -82,6 +87,7 @@ public class Robot extends LoggedRobot {
                     new WPILOGWriter(LogFileUtil.addPathSuffix(logPath, "_sim"))); // Save outputs to a new log
 
             drive = new Drive(new DriveIO() {});
+            elevator = new Elevator(new ElevatorIO() {});
         }
 
         Logger.getInstance().start(); // Start logging! No more data receivers, replay sources, or metadata values may be added
@@ -323,7 +329,11 @@ public class Robot extends LoggedRobot {
         return sideChooser.getSelected().equals("red");
     }
 
-    public static Drive getDrive() {
+    public static @NotNull Drive getDrive() {
         return drive;
+    }
+
+    public static @NotNull Elevator getElevator() {
+        return elevator;
     }
 }
