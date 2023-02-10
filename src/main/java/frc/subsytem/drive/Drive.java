@@ -253,6 +253,7 @@ public final class Drive extends AbstractSubsystem {
             Logger.getInstance().recordOutput("Drive/SwerveModule " + i + " Wanted Acceleration",
                     setpoint.wheelAccelerations()[i]);
             Logger.getInstance().recordOutput("Drive/SwerveModule " + i + " Angle Error", angleDiff);
+            Logger.getInstance().recordOutput("Drive/SwerveModule " + i + " Wanted State", moduleState);
         }
     }
 
@@ -321,8 +322,26 @@ public final class Drive extends AbstractSubsystem {
             swerveAutoControllerInitialized = true;
         }
 
+        Pose2d currentPose = Robot.getRobotTracker().getLatestPose();
+
         Trajectory.State goal = currentAutoTrajectory.sample(Timer.getFPGATimestamp() - autoStartTime);
         Rotation2d targetHeading = autoTargetHeading;
+
+        Logger.getInstance().recordOutput("Drive/Auto/Target Heading", targetHeading.getDegrees());
+        Logger.getInstance().recordOutput("Drive/Auto/Target X", goal.poseMeters.getTranslation().getX());
+        Logger.getInstance().recordOutput("Drive/Auto/Target Y", goal.poseMeters.getTranslation().getY());
+        Logger.getInstance().recordOutput("Drive/Auto/Target Velocity", goal.velocityMetersPerSecond);
+        Logger.getInstance().recordOutput("Drive/Auto/Target Acceleration", goal.accelerationMetersPerSecondSq);
+        Logger.getInstance().recordOutput("Drive/Auto/Target Pose", goal.poseMeters);
+        Logger.getInstance().recordOutput("Drive/Auto/Path Time", Timer.getFPGATimestamp() - autoStartTime);
+        Logger.getInstance().recordOutput("Drive/Auto/Path Total Time", currentAutoTrajectory.getTotalTimeSeconds());
+        Logger.getInstance().recordOutput("Drive/Auto/X Error",
+                goal.poseMeters.getTranslation().getX() - currentPose.getTranslation().getX());
+        Logger.getInstance().recordOutput("Drive/Auto/Y Error",
+                goal.poseMeters.getTranslation().getY() - currentPose.getTranslation().getY());
+        Logger.getInstance().recordOutput("Drive/Auto/Heading Error",
+                getAngleDiff(targetHeading.getDegrees(), currentPose.getRotation().getDegrees()));
+
 
         try {
             if (swerveAutoController == null) {
@@ -332,7 +351,7 @@ public final class Drive extends AbstractSubsystem {
             }
 
             nextChassisSpeeds = swerveAutoController.calculate(
-                    Robot.getRobotTracker().getLatestPose(),
+                    currentPose,
                     goal,
                     targetHeading);
             kinematicLimit = KinematicLimits.NORMAL_DRIVING.kinematicLimit;
