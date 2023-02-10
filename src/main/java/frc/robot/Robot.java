@@ -13,8 +13,6 @@ import edu.wpi.first.wpilibj.GenericHID.RumbleType;
 import edu.wpi.first.wpilibj.PowerDistribution;
 import edu.wpi.first.wpilibj.PowerDistribution.ModuleType;
 import edu.wpi.first.wpilibj.Timer;
-import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
-import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import frc.subsytem.AbstractSubsystem;
 import frc.subsytem.Elevator.Elevator;
 import frc.subsytem.Elevator.ElevatorIO;
@@ -37,6 +35,7 @@ import org.jetbrains.annotations.Nullable;
 import org.littletonrobotics.junction.LogFileUtil;
 import org.littletonrobotics.junction.LoggedRobot;
 import org.littletonrobotics.junction.Logger;
+import org.littletonrobotics.junction.networktables.LoggedDashboardChooser;
 import org.littletonrobotics.junction.networktables.NT4Publisher;
 import org.littletonrobotics.junction.wpilog.WPILOGReader;
 import org.littletonrobotics.junction.wpilog.WPILOGWriter;
@@ -68,9 +67,9 @@ public class Robot extends LoggedRobot {
     private @NotNull Controller buttonPanel;
 
     // Autonomous
-    private final SendableChooser<String> autoChooser = new SendableChooser<>();
+    private final LoggedDashboardChooser<String> autoChooser = new LoggedDashboardChooser<>("AutoChooser");
 
-    public static final SendableChooser<String> sideChooser = new SendableChooser<>();
+    public static final LoggedDashboardChooser<String> sideChooser = new LoggedDashboardChooser<>("SideChooser");
 
     /**
      * This method is run when the robot is first started up and should be used for any initialization code.
@@ -135,11 +134,8 @@ public class Robot extends LoggedRobot {
         );
         AutonomousContainer.getInstance().getAutonomousNames().forEach(name -> autoChooser.addOption(name, name));
 
-        sideChooser.setDefaultOption("Blue", "blue");
+        sideChooser.addDefaultOption("Blue", "blue");
         sideChooser.addOption("Red", "red");
-
-        SmartDashboard.putData("Auto choices", autoChooser);
-        SmartDashboard.putData("Red or Blue", sideChooser);
 
         if (IS_PRACTICE) {
             for (int i = 0; i < 10; i++) {
@@ -165,9 +161,9 @@ public class Robot extends LoggedRobot {
     @Override
     public void autonomousInit() {
         drive.setBrakeMode(true);
-        String autoName = autoChooser.getSelected();
+        String autoName = autoChooser.get();
         if (autoName != null) {
-            AutonomousContainer.getInstance().runAutonomous(autoName, sideChooser.getSelected(), true);
+            AutonomousContainer.getInstance().runAutonomous(autoName, sideChooser.get(), true);
         }
     }
 
@@ -331,7 +327,7 @@ public class Robot extends LoggedRobot {
     }
 
     public boolean isRed() {
-        return sideChooser.getSelected().equals("red");
+        return sideChooser.get().equals("red");
     }
 
     public static @NotNull Drive getDrive() {
