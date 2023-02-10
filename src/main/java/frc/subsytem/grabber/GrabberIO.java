@@ -2,7 +2,7 @@ package frc.subsytem.grabber;
 
 import org.littletonrobotics.junction.AutoLog;
 
-public class GrabberIO {
+public abstract class GrabberIO {
     @AutoLog
     public static class GrabberInputs {
         double pivotPosition = 0.0;

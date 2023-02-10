@@ -11,7 +11,7 @@ public class Grabber extends AbstractSubsystem {
     private final GrabberIO io;
     private final GrabberInputsAutoLogged inputs = new GrabberInputsAutoLogged();
 
-    private Grabber(GrabberIO grabberIO) {
+    public Grabber(GrabberIO grabberIO) {
         super(Constants.GRABBER_PERIOD, 5);
         this.io = grabberIO;
     }

@@ -9,8 +9,6 @@ import com.dacubeking.AutoBuilder.robot.robotinterface.AutonomousContainer;
 import com.dacubeking.AutoBuilder.robot.robotinterface.CommandTranslator;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
-import edu.wpi.first.networktables.NetworkTable;
-import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.wpilibj.GenericHID.RumbleType;
 import edu.wpi.first.wpilibj.PowerDistribution;
 import edu.wpi.first.wpilibj.PowerDistribution.ModuleType;
@@ -24,7 +22,12 @@ import frc.subsytem.Elevator.ElevatorIOSparkMax;
 import frc.subsytem.drive.Drive;
 import frc.subsytem.drive.DriveIO;
 import frc.subsytem.drive.DriveIOSparkMax;
+import frc.subsytem.grabber.Grabber;
+import frc.subsytem.grabber.GrabberIO;
+import frc.subsytem.grabber.GrabberIOSparkMax;
 import frc.subsytem.robottracker.RobotTracker;
+import frc.subsytem.telescopingarm.TelescopingArm;
+import frc.subsytem.telescopingarm.TelescopingArmIO;
 import frc.subsytem.vision.VisionHandler;
 import frc.utility.Controller;
 import frc.utility.Controller.XboxButtons;
@@ -51,9 +54,13 @@ public class Robot extends LoggedRobot {
     private double disabledTime = 0;
 
     private @NotNull static Drive drive;
-    private @NotNull static Elevator elevator;
     private @NotNull static RobotTracker robotTracker;
     private @NotNull static VisionHandler visionHandler;
+
+    private @NotNull static Elevator elevator;
+    private @NotNull static TelescopingArm telescopingArm;
+    private @NotNull static Grabber grabber;
+
 
     private @NotNull Controller xbox;
     private @NotNull Controller stick;
@@ -70,7 +77,7 @@ public class Robot extends LoggedRobot {
      */
     @Override
     public void robotInit() {
-        Logger.getInstance().recordMetadata("ProjectName", "MyProject"); // Set a metadata value
+        Logger.getInstance().recordMetadata("ProjectName", "FRC2023"); // Set a metadata value
 
         if (isReal()) {
             Logger.getInstance().addDataReceiver(new WPILOGWriter("/home/lvuser/logs"));
@@ -79,6 +86,8 @@ public class Robot extends LoggedRobot {
 
             drive = new Drive(new DriveIOSparkMax());
             elevator = new Elevator(new ElevatorIOSparkMax());
+            telescopingArm = new TelescopingArm(new TelescopingArmIO());
+            grabber = new Grabber(new GrabberIOSparkMax());
         } else {
             setUseTiming(false); // Run as fast as possible
             String logPath = LogFileUtil.findReplayLog(); // Pull the replay log from AdvantageScope (or prompt the user)
@@ -88,17 +97,26 @@ public class Robot extends LoggedRobot {
 
             drive = new Drive(new DriveIO() {});
             elevator = new Elevator(new ElevatorIO() {});
+            telescopingArm = new TelescopingArm(new TelescopingArmIO() {});
+            grabber = new Grabber(new GrabberIO() {});
         }
 
         Logger.getInstance().start(); // Start logging! No more data receivers, replay sources, or metadata values may be added
 
-        robotTracker = RobotTracker.getInstance();
-        visionHandler = VisionHandler.getInstance();
+        robotTracker = new RobotTracker();
+        visionHandler = new VisionHandler();
+
+        visionHandler.start();
+        robotTracker.start();
+        elevator.start();
+        telescopingArm.start();
+        grabber.start();
+        drive.start();
+
         xbox = new Controller(0);
         stick = new Controller(1);
         buttonPanel = new Controller(2);
 
-        startSubsystems();
         AutonomousContainer.getInstance().setDebugPrints(true);
         AutonomousContainer.getInstance().initialize(
                 true,
@@ -175,9 +193,9 @@ public class Robot extends LoggedRobot {
     private @Nullable Pose2d teleopDrivingAutoAlignPosition = new Pose2d();
 
     {
-        logData("Auto Align Y", teleopDrivingAutoAlignPosition.getY());
-        logData("Auto Align X", teleopDrivingAutoAlignPosition.getX());
-        logData("Auto Align Angle", teleopDrivingAutoAlignPosition.getRotation().getDegrees());
+        Logger.getInstance().recordOutput("Auto Align Y", teleopDrivingAutoAlignPosition.getY());
+        Logger.getInstance().recordOutput("Auto Align X", teleopDrivingAutoAlignPosition.getX());
+        Logger.getInstance().recordOutput("Auto Align Angle", teleopDrivingAutoAlignPosition.getRotation().getDegrees());
     }
 
     /**
@@ -253,9 +271,9 @@ public class Robot extends LoggedRobot {
             }
         }
 
-        logData("Auto Align Y", y);
-        logData("Auto Align X", x);
-        logData("Auto Align Angle", rotation.getDegrees());
+        Logger.getInstance().recordOutput("Auto Align Y", y);
+        Logger.getInstance().recordOutput("Auto Align X", x);
+        Logger.getInstance().recordOutput("Auto Align Angle", rotation.getDegrees());
 
         teleopDrivingAutoAlignPosition = new Pose2d(x, y, rotation);
     }
@@ -302,12 +320,6 @@ public class Robot extends LoggedRobot {
         }
     }
 
-    public void startSubsystems() {
-        drive.start();
-        robotTracker.start();
-        visionHandler.start();
-    }
-
     private ControllerDriveInputs getControllerDriveInputs() {
         if (xbox.getRawButton(Controller.XboxButtons.X)) {
             return new ControllerDriveInputs(xbox.getRawAxis(1), xbox.getRawAxis(0), xbox.getRawAxis(4))
@@ -318,19 +330,28 @@ public class Robot extends LoggedRobot {
         }
     }
 
-
-    NetworkTable loggingTable = NetworkTableInstance.getDefault().getTable("Robot");
-
-    public void logData(@NotNull String key, @NotNull Object value) {
-        loggingTable.getEntry(key).setValue(value);
-    }
-
     public boolean isRed() {
         return sideChooser.getSelected().equals("red");
     }
 
     public static @NotNull Drive getDrive() {
         return drive;
+    }
+
+    public static @NotNull RobotTracker getRobotTracker() {
+        return robotTracker;
+    }
+
+    public static @NotNull VisionHandler getVisionHandler() {
+        return visionHandler;
+    }
+
+    public static @NotNull Grabber getGrabber() {
+        return grabber;
+    }
+
+    public static @NotNull TelescopingArm getTelescopingArm() {
+        return telescopingArm;
     }
 
     public static @NotNull Elevator getElevator() {

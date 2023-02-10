@@ -11,7 +11,7 @@ public class TelescopingArm extends AbstractSubsystem {
     private final TelescopingArmIO io;
     private final TelescopingArmInputsAutoLogged inputs = new TelescopingArmInputsAutoLogged();
 
-    private TelescopingArm(TelescopingArmIO telescopingArmIO) {
+    public TelescopingArm(TelescopingArmIO telescopingArmIO) {
         super(Constants.TELESCOPING_ARM_PERIOD, 5);
         this.io = telescopingArmIO;
     }

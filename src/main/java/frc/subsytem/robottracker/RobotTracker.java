@@ -39,12 +39,6 @@ public final class RobotTracker extends AbstractSubsystem {
     private final @NotNull WPI_Pigeon2 gyroSensor = new WPI_Pigeon2(PIGEON_CAN_ID, "rio");
     private final @NotNull Rotation3d ROTATION_IDENTITY = new Rotation3d();
 
-    private static final @NotNull RobotTracker instance = new RobotTracker();
-
-    public static @NotNull RobotTracker getInstance() {
-        return RobotTracker.instance;
-    }
-
     /**
      * The pose of the robot at the last time the odometry was updated.
      */
@@ -85,7 +79,7 @@ public final class RobotTracker extends AbstractSubsystem {
     private final @NotNull TimeInterpolatableBuffer<Translation3d> accelerationHistory
             = TimeInterpolatableBuffer.createBuffer(Translation3d::interpolate, 1.5); //abt 1.5 seconds (ms * 300)
 
-    private RobotTracker() {
+    public RobotTracker() {
         super(Constants.ROBOT_TRACKER_PERIOD, 3);
 
 

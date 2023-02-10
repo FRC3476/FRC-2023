@@ -176,6 +176,7 @@ public final class Constants {
     public static final int TELESCOPING_ARM_ROTATIONS_PER_METER = 5;
     public static final int TELESCOPING_ARM_NOMINAL_VOLTAGE = 9;
     public static final int TELESCOPING_ARM_SMART_CURRENT_LIMIT = 40;
+    public static final int TELESCOPING_ARM_CAN_ID = 43;
     // Grabber
     public static final int GRABBER_PERIOD = 20;
     public static final ArmFeedforward GRABBER_FEEDFORWARD = new ArmFeedforward(0, 0, 0, 0);
@@ -188,6 +189,9 @@ public final class Constants {
     public static final double GRABBER_NOMINAL_VOLTAGE = 9;
     public static final int GRABBER_SMART_CURRENT_LIMIT = 40;
     public static final int PIVOT_SMART_CURRENT_LIMIT = 40;
+
+    public static final int GRABBER_PIVOT_CAN_ID = 44;
+    public static final int GRABBER_CAN_ID = 45;
 
     public enum KinematicLimits {
         /**

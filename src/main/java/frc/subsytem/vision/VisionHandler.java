@@ -18,8 +18,8 @@ import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.util.Color8Bit;
 import frc.robot.Constants;
+import frc.robot.Robot;
 import frc.subsytem.AbstractSubsystem;
-import frc.subsytem.robottracker.RobotTracker;
 import org.jetbrains.annotations.NotNull;
 import org.littletonrobotics.junction.Logger;
 import org.littletonrobotics.junction.networktables.LoggedDashboardBoolean;
@@ -80,16 +80,10 @@ public class VisionHandler extends AbstractSubsystem {
 
     private final Translation3d cameraOffset = new Translation3d(0, 0, 0);
 
-    private static final VisionHandler INSTANCE = new VisionHandler();
-
-    public static VisionHandler getInstance() {
-        return INSTANCE;
-    }
-
 
     VisionInputs visionInputs = new VisionInputs();
 
-    private VisionHandler() {
+    public VisionHandler() {
         super(Constants.VISION_HANDLER_PERIOD);
         // Network table init
         // Network tables
@@ -133,7 +127,7 @@ public class VisionHandler extends AbstractSubsystem {
         final var robotToTagRobotRelative = translation.plus(cameraOffset);
 
 
-        Rotation3d gyroAngle = RobotTracker.getInstance().getGyroAngleAtTime(data.timestamp);
+        Rotation3d gyroAngle = Robot.getRobotTracker().getGyroAngleAtTime(data.timestamp);
 
         var calculatedTranslationFromGyro =
                 expectedTagPosition.getTranslation()
@@ -178,7 +172,7 @@ public class VisionHandler extends AbstractSubsystem {
                 new RobotState(poseToFeedToRobotTracker, data.timestamp, "Fed Vision Pose Tag: " + data.tagId));
         RobotPositionSender.addRobotPosition(
                 new RobotState(visionOnlyPose, data.timestamp, "Vision Only Pose Tag: " + data.tagId));
-        RobotTracker.getInstance().addVisionMeasurement(poseToFeedToRobotTracker, data.timestamp);
+        Robot.getRobotTracker().addVisionMeasurement(poseToFeedToRobotTracker, data.timestamp);
 
         Logger.getInstance().recordOutput("VisionHandler/VisionOnlyPose/" + data.tagId, visionOnlyPose);
         Logger.getInstance().recordOutput("VisionHandler/FedPoses/" + data.tagId, poseToFeedToRobotTracker);
