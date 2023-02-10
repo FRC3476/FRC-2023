@@ -21,13 +21,13 @@ public class VisionInputs implements LoggableInputs {
         table.put("VisionUpdates", data);
     }
 
-    private final double[] update = new double[8];
+    private final double[] update = new double[9];
 
     @Override
     public void fromLog(LogTable table) {
         double[] data = table.getDoubleArray("VisionUpdates", new double[0]);
         visionUpdates.clear();
-        for (int i = 0; i < data.length; i += 8) {
+        for (int i = 0; i < data.length; i += 9) {
             System.arraycopy(data, i, update, 0, update.length);
             visionUpdates.add(VisionUpdate.fromArray(update));
         }
