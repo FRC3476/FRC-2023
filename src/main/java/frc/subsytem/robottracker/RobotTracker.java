@@ -171,11 +171,6 @@ public final class RobotTracker extends AbstractSubsystem {
 
     @Override
     public void update() {
-        try {
-            Thread.sleep(100);
-        } catch (InterruptedException e) {
-            throw new RuntimeException(e);
-        }
         synchronized (gyroInputs) {
             gyroInputs.updateInputs(gyroSensor);
             Logger.getInstance().processInputs("Gyro", gyroInputs);

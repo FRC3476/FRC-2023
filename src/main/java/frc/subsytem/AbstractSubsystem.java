@@ -2,7 +2,6 @@ package frc.subsytem;
 
 import edu.wpi.first.networktables.NetworkTable;
 import edu.wpi.first.networktables.NetworkTableInstance;
-import edu.wpi.first.wpilibj.Timer;
 import frc.robot.Constants;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -59,7 +58,7 @@ public abstract class AbstractSubsystem {
 
     public static void tick() {
         for (AbstractSubsystem subsystem : subsystems) {
-            double startTime = Timer.getFPGATimestamp();
+            double startTime = Logger.getInstance().getRealTimestamp();
             if (subsystem.signal == ThreadSignal.ALIVE) {
                 subsystem.update();
 
@@ -69,7 +68,7 @@ public abstract class AbstractSubsystem {
                     subsystem.logInterval = 0;
                 }
             }
-            double executionTimeMS = (Timer.getFPGATimestamp() - startTime) * 1000;
+            double executionTimeMS = (Logger.getInstance().getRealTimestamp() - startTime) * 0.001; //micoseconds to ms
             Logger.getInstance().recordOutput("SubsystemExecutionTimes/" + subsystem.subsystemName + " Execution Time",
                     executionTimeMS);
         }
