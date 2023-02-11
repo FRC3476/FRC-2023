@@ -17,4 +17,6 @@ public abstract class ElevatorIO {
     public void setElevatorVoltage(double voltage) {}
 
     public void setElevatorPosition(double position, double arbFFVoltage) {}
+
+    public void resetPosition(double position) {}
 }

@@ -416,7 +416,7 @@ public final class Drive extends AbstractSubsystem {
             case RAMSETE -> updateRamsete();
         }
         if (driveState != DriveState.HOLD) {
-            swerveDrive(nextChassisSpeeds, kinematicLimit, EXPECTED_DRIVE_DT);
+            swerveDrive(nextChassisSpeeds, kinematicLimit, NOMINAL_DT);
         }
     }
 

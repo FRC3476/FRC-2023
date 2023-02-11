@@ -26,14 +26,17 @@ public class ElevatorIOSparkMax extends ElevatorIO {
             motor.restoreFactoryDefaults();
         }
         motor.setIdleMode(IdleMode.kBrake);
-        SparkMaxPIDController elevatorSparkMaxPIDController = motor.getPIDController();
-        elevatorSparkMaxPIDController.setP(Constants.ELEVATOR_P);
-        elevatorSparkMaxPIDController.setI(Constants.ELEVATOR_I);
-        elevatorSparkMaxPIDController.setD(Constants.ELEVATOR_D);
+        SparkMaxPIDController pidController = motor.getPIDController();
+        pidController.setP(Constants.ELEVATOR_P);
+        pidController.setI(Constants.ELEVATOR_I);
+        pidController.setD(Constants.ELEVATOR_D);
+        pidController.setIZone(Constants.ELEVATOR_IZONE);
+
         motor.enableVoltageCompensation(Constants.ELEVATOR_NOMINAL_VOLTAGE);
         motor.setSmartCurrentLimit(Constants.ELEVATOR_SMART_CURRENT_LIMIT);
-        motor.getEncoder().setPositionConversionFactor(1.0 / ELEVATOR_ROTATIONS_PER_METER);
-        motor.getEncoder().setVelocityConversionFactor((1.0 / ELEVATOR_ROTATIONS_PER_METER) / SECONDS_PER_MINUTE);
+        motor.getEncoder().setPositionConversionFactor(ELEVATOR_REDUCTION / ELEVATOR_ROTATIONS_PER_METER);
+        motor.getEncoder().setVelocityConversionFactor((ELEVATOR_REDUCTION / ELEVATOR_ROTATIONS_PER_METER) / SECONDS_PER_MINUTE);
+
 
         if (isReal()) {
             motor.burnFlash();
@@ -59,5 +62,10 @@ public class ElevatorIOSparkMax extends ElevatorIO {
     public void setElevatorPosition(double position, double arbFFVoltage) {
         elevatorMain.getPIDController().setReference(position, CANSparkMax.ControlType.kPosition, 0, arbFFVoltage,
                 SparkMaxPIDController.ArbFFUnits.kVoltage);
+    }
+
+    @Override
+    public void resetPosition(double position) {
+        elevatorMain.getEncoder().setPosition(position);
     }
 }

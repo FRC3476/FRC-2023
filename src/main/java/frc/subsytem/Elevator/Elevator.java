@@ -1,10 +1,15 @@
 package frc.subsytem.Elevator;
 
 import edu.wpi.first.math.trajectory.TrapezoidProfile;
+import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.Timer;
 import frc.robot.Constants;
 import frc.subsytem.AbstractSubsystem;
 import org.littletonrobotics.junction.Logger;
+
+import static frc.robot.Constants.ELEVATOR_MIN_HOME_TIME;
+import static frc.robot.Constants.MOTOR_SPEED_DECREASING_RATE;
+import static frc.utility.MathUtil.avg;
 
 public class Elevator extends AbstractSubsystem {
 
@@ -26,6 +31,12 @@ public class Elevator extends AbstractSubsystem {
      * @param position The position to set the elevator (meters)
      */
     public void setPosition(double position) {
+        if (position < Constants.ELEVATOR_LOWER_LIMIT) {
+            position = Constants.ELEVATOR_LOWER_LIMIT;
+        } else if (position > Constants.ELEVATOR_UPPER_LIMIT) {
+            position = Constants.ELEVATOR_UPPER_LIMIT;
+        }
+
         trapezoidProfile = new TrapezoidProfile(Constants.ELEVATOR_CONSTRAINTS, new TrapezoidProfile.State(position, 0),
                 new TrapezoidProfile.State(inputs.elevatorPosition, inputs.elevatorVelocity));
         trapezoidProfileStartTime = -1;
@@ -43,10 +54,31 @@ public class Elevator extends AbstractSubsystem {
         io.setElevatorVoltage(percent * Constants.ELEVATOR_NOMINAL_VOLTAGE);
     }
 
+    private boolean homing = false;
+    private double homeTime = 0;
+
+    public void homeElevator() {
+        homeTime = ELEVATOR_MIN_HOME_TIME;
+        homing = true;
+    }
+
     @Override
     public void update() {
         io.updateInputs(inputs);
         Logger.getInstance().processInputs("Elevator", inputs);
+
+        if (homing) {
+            if (DriverStation.isEnabled()) {
+                homeTime -= Constants.NOMINAL_DT;
+                setPercentOutput(MOTOR_SPEED_DECREASING_RATE);
+                if (homeTime <= 0 && avg(inputs.elevatorCurrent) > Constants.ELEVATOR_STALLING_CURRENT) {
+                    homing = false;
+                    io.resetPosition(0);
+                }
+            }
+            return;
+        }
+
 
         double currentTime = Timer.getFPGATimestamp();
         if (trapezoidProfileStartTime == -1) {
