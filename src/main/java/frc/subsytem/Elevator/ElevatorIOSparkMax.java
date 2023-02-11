@@ -17,7 +17,14 @@ public class ElevatorIOSparkMax extends ElevatorIO {
         elevatorMain = new CANSparkMax(ELEVATOR_MAIN_CAN_ID, CANSparkMaxLowLevel.MotorType.kBrushless);
         elevatorFollower = new CANSparkMax(ELEVATOR_FOLLOWER_CAN_ID, CANSparkMaxLowLevel.MotorType.kBrushless);
         initializeMotor(elevatorMain);
-        initializeMotor(elevatorFollower);
+
+        SparkMaxPIDController pidController = elevatorMain.getPIDController();
+        pidController.setP(Constants.ELEVATOR_P);
+        pidController.setI(Constants.ELEVATOR_I);
+        pidController.setD(Constants.ELEVATOR_D);
+        pidController.setIZone(Constants.ELEVATOR_IZONE);
+
+        //initializeMotor(elevatorFollower);
         elevatorFollower.follow(elevatorMain);
     }
 
@@ -26,16 +33,12 @@ public class ElevatorIOSparkMax extends ElevatorIO {
             motor.restoreFactoryDefaults();
         }
         motor.setIdleMode(IdleMode.kBrake);
-        SparkMaxPIDController pidController = motor.getPIDController();
-        pidController.setP(Constants.ELEVATOR_P);
-        pidController.setI(Constants.ELEVATOR_I);
-        pidController.setD(Constants.ELEVATOR_D);
-        pidController.setIZone(Constants.ELEVATOR_IZONE);
 
         motor.enableVoltageCompensation(Constants.ELEVATOR_NOMINAL_VOLTAGE);
         motor.setSmartCurrentLimit(Constants.ELEVATOR_SMART_CURRENT_LIMIT);
         motor.getEncoder().setPositionConversionFactor(ELEVATOR_REDUCTION / ELEVATOR_ROTATIONS_PER_METER);
         motor.getEncoder().setVelocityConversionFactor((ELEVATOR_REDUCTION / ELEVATOR_ROTATIONS_PER_METER) / SECONDS_PER_MINUTE);
+        motor.setInverted(false);
 
 
         if (isReal()) {
@@ -44,9 +47,11 @@ public class ElevatorIOSparkMax extends ElevatorIO {
     }
 
     @Override
-    public void updateInputs(ElevatorInputs inputs) {
-        inputs.elevatorPosition = elevatorMain.getEncoder().getPosition();
-        inputs.elevatorVelocity = elevatorMain.getEncoder().getVelocity();
+    public void updateInputs(ElevatorInputsAutoLogged inputs) {
+        inputs.elevatorPosition = new double[]{elevatorMain.getEncoder().getPosition(),
+                elevatorFollower.getEncoder().getPosition()};
+        inputs.elevatorVelocity = new double[]{elevatorMain.getEncoder().getVelocity(),
+                elevatorFollower.getEncoder().getPosition()};
 
         inputs.elevatorCurrent = new double[]{elevatorMain.getOutputCurrent(), elevatorFollower.getOutputCurrent()};
         inputs.elevatorTemp = new double[]{elevatorMain.getMotorTemperature(), elevatorFollower.getMotorTemperature()};
@@ -56,16 +61,20 @@ public class ElevatorIOSparkMax extends ElevatorIO {
     @Override
     public void setElevatorVoltage(double voltage) {
         elevatorMain.getPIDController().setReference(voltage, CANSparkMax.ControlType.kVoltage);
+//        elevatorFollower.getPIDController().setReference(voltage, CANSparkMax.ControlType.kVoltage);
     }
 
     @Override
     public void setElevatorPosition(double position, double arbFFVoltage) {
         elevatorMain.getPIDController().setReference(position, CANSparkMax.ControlType.kPosition, 0, arbFFVoltage,
                 SparkMaxPIDController.ArbFFUnits.kVoltage);
+//        elevatorFollower.getPIDController().setReference(position, CANSparkMax.ControlType.kPosition, 0, arbFFVoltage,
+//                SparkMaxPIDController.ArbFFUnits.kVoltage);
     }
 
     @Override
     public void resetPosition(double position) {
         elevatorMain.getEncoder().setPosition(position);
+        //elevatorFollower.getEncoder().setPosition(position);
     }
 }
