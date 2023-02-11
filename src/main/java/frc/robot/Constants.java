@@ -147,22 +147,23 @@ public final class Constants {
     public static final double FIELD_HEIGHT_METERS = 8.0137;
     public static final double FIELD_WIDTH_METERS = 16.54175;
 
-    public static final double ALLOWED_SWERVE_ANGLE_ERROR = 2;
+    public static final double ALLOWED_SWERVE_ANGLE_ERROR = 0;
     public static final TrapezoidProfile.Constraints ELEVATOR_CONSTRAINTS
-            = new TrapezoidProfile.Constraints(3, 3);
-    public static final ElevatorFeedforward ELEVATOR_FEEDFORWARD = new ElevatorFeedforward(0, 0, 0, 0);
-    public static final double ELEVATOR_P = 1.3;
-    public static final double ELEVATOR_I = .0128;
-    public static final int ELEVATOR_D = 0;
-    public static final double ELEVATOR_IZONE = .05;
+            = new TrapezoidProfile.Constraints(3, 10);
+    public static final ElevatorFeedforward ELEVATOR_FEEDFORWARD = new ElevatorFeedforward(0, 0.04, 0, 0);
+
     // 1 Meter divided by the circumference of the sprocket in meters
     public static final double ELEVATOR_ROTATIONS_PER_METER = 1 / ((2 * Math.PI) / 39.37);
     public static final double ELEVATOR_REDUCTION = 1.0 / 5.0;
+    public static final double ELEVATOR_P = 1.3;
+    public static final double ELEVATOR_I = .0000;
+    public static final int ELEVATOR_D = 0;
+    public static final double ELEVATOR_IZONE = .05;
 
     public static final double ELEVATOR_LOWER_LIMIT = .01;
     public static final double ELEVATOR_UPPER_LIMIT = 1.20;
     public static final double ELEVATOR_NOMINAL_VOLTAGE = 9;
-    public static final int ELEVATOR_SMART_CURRENT_LIMIT = 20;
+    public static final int ELEVATOR_SMART_CURRENT_LIMIT = 40;
 
     // TODO: Figure out how much the elevator is angled at
     public static final double ELEVATOR_TILT_RADIANS = Math.toRadians(64.24203436);
@@ -178,7 +179,7 @@ public final class Constants {
     public static final double TELESCOPING_ARM_P = 0.1;
     public static final double TELESCOPING_ARM_I = 0.0;
     public static final double TELESCOPING_ARM_D = 0.0;
-    public static final double TELESCOPING_ARM_ROTATIONS_PER_METER = 66.66646561;
+    public static final double TELESCOPING_ARM_ROTATIONS_PER_METER = 96.664 / (Math.PI);
     public static final double TELESCOPING_ARM_NOMINAL_VOLTAGE = 9;
     public static final int TELESCOPING_ARM_SMART_CURRENT_LIMIT = 15;
     public static final int TELESCOPING_ARM_CAN_ID = 60;
@@ -188,7 +189,7 @@ public final class Constants {
     public static final double PIVOT_P = 0.1;
     public static final double PIVOT_I = 0.05;
     public static final double PIVOT_D = 0;
-    public static final double PIVOT_ROTATIONS_PER_DEGREE = 0.185185185185185;
+    public static final double PIVOT_ROTATIONS_PER_DEGREE = 1 / 5.4;
     public static final double PIVOT_IZONE = 10;
     public static final double GRABBER_NOMINAL_VOLTAGE = 9;
     public static final int GRABBER_SMART_CURRENT_LIMIT = 5;
