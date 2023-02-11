@@ -229,6 +229,7 @@ public final class Drive extends AbstractSubsystem {
     }
 
     private synchronized void setSwerveModuleStates(SwerveSetpoint setpoint) {
+        Logger.getInstance().recordOutput("Drive/Wanted Swerve Module States", setpoint.moduleStates());
         for (int i = 0; i < 4; i++) {
             var moduleState = setpoint.moduleStates()[i];
             double currentAngle = getWheelRotation(i);
@@ -504,6 +505,7 @@ public final class Drive extends AbstractSubsystem {
             Logger.getInstance().recordOutput("Drive/Swerve Motor " + i + " Voltage", inputs.swerveMotorVoltages[i]);
             Logger.getInstance().recordOutput("Drive/Drive Motor " + i + " Voltage", inputs.driveMotorVoltages[i]);
         }
+        Logger.getInstance().recordOutput("Drive/Actual Swerve Module States", getModuleStates());
         Logger.getInstance().recordOutput("Drive/Drive State", driveState.toString());
     }
 
