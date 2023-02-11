@@ -6,6 +6,7 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.joml.Intersectiond;
 import org.joml.Vector2d;
+import org.littletonrobotics.junction.networktables.LoggedDashboardBoolean;
 
 import static frc.robot.Constants.*;
 
@@ -82,6 +83,14 @@ public class ScoringPositionManager {
 
     private SelectedPosition selectedPosition = SelectedPosition.TOP_LEFT;
 
+    private LoggedDashboardBoolean[] selectedPositions = new LoggedDashboardBoolean[9];
+
+    {
+        for (SelectedPosition value : SelectedPosition.values()) {
+            selectedPositions[value.ordinal()] = new LoggedDashboardBoolean("Selected Position " + value.name(), false);
+        }
+    }
+
     /**
      * @param buttonPanel the controller that is used to select the position
      * @return if the position was changed
@@ -92,6 +101,11 @@ public class ScoringPositionManager {
             if (buttonPanel.getRisingEdge(value.buttonPanelIndex)) {
                 selectedPosition = value;
             }
+        }
+
+        if (oldSelectedPosition != selectedPosition) {
+            selectedPositions[oldSelectedPosition.ordinal()].set(false);
+            selectedPositions[selectedPosition.ordinal()].set(true);
         }
         return oldSelectedPosition != selectedPosition;
     }
