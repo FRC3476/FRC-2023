@@ -156,7 +156,7 @@ public final class Constants {
     public static final double ELEVATOR_D = 5;
     public static final double ELEVATOR_ROTATIONS_PER_METER = 5;
     public static final double ELEVATOR_NOMINAL_VOLTAGE = 9;
-    public static final int ELEVATOR_SMART_CURRENT_LIMIT = 40;
+    public static final int ELEVATOR_SMART_CURRENT_LIMIT = 20;
     public static final int ELEVATOR_MAIN_CAN_ID = 41;
     public static final int ELEVATOR_FOLLOWER_CAN_ID = 42;
     public static final TrapezoidProfile.Constraints TELESCOPING_ARM_CONSTRAINTS
@@ -167,7 +167,7 @@ public final class Constants {
     public static final int TELESCOPING_ARM_D = 5;
     public static final int TELESCOPING_ARM_ROTATIONS_PER_METER = 5;
     public static final int TELESCOPING_ARM_NOMINAL_VOLTAGE = 9;
-    public static final int TELESCOPING_ARM_SMART_CURRENT_LIMIT = 40;
+    public static final int TELESCOPING_ARM_SMART_CURRENT_LIMIT = 15;
     public static final int TELESCOPING_ARM_CAN_ID = 43;
     public static final ArmFeedforward GRABBER_FEEDFORWARD = new ArmFeedforward(0, 0, 0, 0);
     public static final TrapezoidProfile.Constraints GRABBER_PIVOT_CONSTRAINTS
@@ -177,8 +177,8 @@ public final class Constants {
     public static final double GRABBER_D = 5;
     public static final double GRABBER_ROTATIONS_PER_DEGREE = 5;
     public static final double GRABBER_NOMINAL_VOLTAGE = 9;
-    public static final int GRABBER_SMART_CURRENT_LIMIT = 40;
-    public static final int PIVOT_SMART_CURRENT_LIMIT = 40;
+    public static final int GRABBER_SMART_CURRENT_LIMIT = 5;
+    public static final int PIVOT_SMART_CURRENT_LIMIT = 15;
 
     public static final int GRABBER_PIVOT_CAN_ID = 44;
     public static final int GRABBER_CAN_ID = 45;
