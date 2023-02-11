@@ -290,7 +290,8 @@ public class Robot extends LoggedRobot {
             case FLOOR_PICKUP -> mechanismStateManager.setState(MechanismStates.FLOOR_PICKUP);
             case STATION_PICKUP -> mechanismStateManager.setState(MechanismStates.STATION_PICKUP);
         }
-        
+        Logger.getInstance().recordOutput("Robot/Wanted Mechanism State", wantedMechanismState.name());
+
         if (xbox.getRisingEdge(XboxButtons.B)) {
             isGrabberOpen = !isGrabberOpen;
 
