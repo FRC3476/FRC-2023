@@ -28,7 +28,6 @@ public class GrabberIOSparkMax extends GrabberIO {
         pivotSparkMaxPIDController.setIZone(Constants.PIVOT_IZONE);
         pivotSparkMax.enableVoltageCompensation(Constants.GRABBER_NOMINAL_VOLTAGE);
         pivotSparkMax.setSmartCurrentLimit(Constants.PIVOT_SMART_CURRENT_LIMIT);
-        resetPivotPosition(34);
 
         grabberSparkMax.enableVoltageCompensation(Constants.GRABBER_NOMINAL_VOLTAGE);
         grabberSparkMax.setSmartCurrentLimit(Constants.GRABBER_SMART_CURRENT_LIMIT);
@@ -42,6 +41,7 @@ public class GrabberIOSparkMax extends GrabberIO {
 
         pivotSparkMax.getEncoder().setPositionConversionFactor(1.0 / PIVOT_ROTATIONS_PER_DEGREE);
         pivotSparkMax.getEncoder().setVelocityConversionFactor((1.0 / PIVOT_ROTATIONS_PER_DEGREE) / SECONDS_PER_MINUTE);
+        resetPivotPosition(56 + 90 - 20);
     }
 
     @Override

@@ -13,7 +13,7 @@ public class MechanismStateManager extends AbstractSubsystem {
 
 
     public enum MechanismStates {
-        STOWED(new MechanismState(0.0, 0.0, 0.0)),
+        STOWED(new MechanismState(0.0, 0.0, 56 + 90 - 20)),
         LOW_SCORING(new MechanismState(0.0, 0.0, 0.0)),
         MIDDLE_SCORING(new MechanismState(Units.inchesToMeters(36), Units.inchesToMeters(17.5), 0.0)),
         HIGH_SCORING(new MechanismState(Units.inchesToMeters(44), Units.inchesToMeters(17.5), 45.0)),
