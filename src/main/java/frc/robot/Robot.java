@@ -13,6 +13,7 @@ import edu.wpi.first.wpilibj.GenericHID.RumbleType;
 import edu.wpi.first.wpilibj.PowerDistribution;
 import edu.wpi.first.wpilibj.PowerDistribution.ModuleType;
 import edu.wpi.first.wpilibj.Timer;
+import frc.robot.ScoringPositionManager.PositionType;
 import frc.subsytem.AbstractSubsystem;
 import frc.subsytem.Elevator.Elevator;
 import frc.subsytem.Elevator.ElevatorIO;
@@ -23,6 +24,7 @@ import frc.subsytem.drive.Drive;
 import frc.subsytem.drive.DriveIO;
 import frc.subsytem.drive.DriveIOSparkMax;
 import frc.subsytem.grabber.Grabber;
+import frc.subsytem.grabber.Grabber.GrabState;
 import frc.subsytem.grabber.GrabberIO;
 import frc.subsytem.grabber.GrabberIOSparkMax;
 import frc.subsytem.robottracker.RobotTracker;
@@ -207,6 +209,8 @@ public class Robot extends LoggedRobot {
 
     private WantedMechanismState wantedMechanismState = WantedMechanismState.STOWED;
 
+    private boolean isGrabberOpen = false;
+
     /**
      * This method is called periodically during operator control.
      */
@@ -282,6 +286,20 @@ public class Robot extends LoggedRobot {
             }
             case FLOOR_PICKUP -> mechanismStateManager.setState(MechanismStates.FLOOR_PICKUP);
             case STATION_PICKUP -> mechanismStateManager.setState(MechanismStates.STATION_PICKUP);
+        }
+
+        if (xbox.getRisingEdge(XboxButtons.B)) {
+            isGrabberOpen = !isGrabberOpen;
+
+            if (isGrabberOpen) {
+                if (scoringPositionManager.getWantedPositionType() == PositionType.CONE) {
+                    grabber.setGrabState(GrabState.GRAB_CONE);
+                } else {
+                    grabber.setGrabState(GrabState.GRAB_CUBE);
+                }
+            } else {
+                grabber.setGrabState(GrabState.OPEN);
+            }
         }
 
 

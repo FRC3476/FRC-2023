@@ -83,12 +83,32 @@ public class ScoringPositionManager {
 
     private SelectedPosition selectedPosition = SelectedPosition.TOP_LEFT;
 
-    private LoggedDashboardBoolean[] selectedPositions = new LoggedDashboardBoolean[9];
+    private final LoggedDashboardBoolean[] selectedPositions = new LoggedDashboardBoolean[9];
 
     {
         for (SelectedPosition value : SelectedPosition.values()) {
             selectedPositions[value.ordinal()] = new LoggedDashboardBoolean("Selected Position " + value.name(), false);
         }
+    }
+
+    private PositionType wantedPositionType = PositionType.CONE;
+
+    LoggedDashboardBoolean isCone = new LoggedDashboardBoolean("Is Cone", true);
+    LoggedDashboardBoolean isCube = new LoggedDashboardBoolean("Is Cube", false);
+
+    LoggedDashboardBoolean doesWantedPositionTypeMatchSelectedPositionType =
+            new LoggedDashboardBoolean("Does Wanted Position Type Match Selected Position Type", true);
+
+
+    public PositionType getWantedPositionType() {
+        return wantedPositionType;
+    }
+
+    public boolean doesWantedPositionTypeMatchSelectedPositionType() {
+        if (wantedPositionType == PositionType.BOTH) {
+            return true;
+        }
+        return wantedPositionType == selectedPosition.positionType;
     }
 
     /**
@@ -103,9 +123,22 @@ public class ScoringPositionManager {
             }
         }
 
+        if (buttonPanel.getRisingEdge(4)) {
+            wantedPositionType = PositionType.CONE;
+            isCone.set(true);
+            isCube.set(false);
+            doesWantedPositionTypeMatchSelectedPositionType.set(doesWantedPositionTypeMatchSelectedPositionType());
+        } else if (buttonPanel.getRisingEdge(5)) {
+            wantedPositionType = PositionType.CUBE;
+            isCone.set(false);
+            isCube.set(true);
+            doesWantedPositionTypeMatchSelectedPositionType.set(doesWantedPositionTypeMatchSelectedPositionType());
+        }
+
         if (oldSelectedPosition != selectedPosition) {
             selectedPositions[oldSelectedPosition.ordinal()].set(false);
             selectedPositions[selectedPosition.ordinal()].set(true);
+            doesWantedPositionTypeMatchSelectedPositionType.set(doesWantedPositionTypeMatchSelectedPositionType());
         }
         return oldSelectedPosition != selectedPosition;
     }
