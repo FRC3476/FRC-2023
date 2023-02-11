@@ -302,7 +302,15 @@ public class Robot extends LoggedRobot {
             }
         }
 
-
+        if ((wantedMechanismState == WantedMechanismState.FLOOR_PICKUP || wantedMechanismState == WantedMechanismState.STATION_PICKUP)
+                && isGrabberOpen) {
+            grabber.setRollerVoltage(GRABBER_ROLLER_VOLTAGE);
+        } else if (!isGrabberOpen) {
+            grabber.setRollerVoltage(GRABBER_ROLLER_IDLE);
+        } else {
+            grabber.setRollerVoltage(0);
+        }
+        
         xbox.setRumble(RumbleType.kBothRumble, wantedRumble);
     }
 

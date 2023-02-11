@@ -74,6 +74,10 @@ public class Grabber extends AbstractSubsystem {
         io.setGrabberVoltage(grabState.voltage);
     }
 
+    public void setRollerVoltage(double voltage) {
+        io.setRollerVoltage(voltage);
+    }
+
     @Override
     public void selfTest() {
 
