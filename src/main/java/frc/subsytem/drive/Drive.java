@@ -79,7 +79,7 @@ public final class Drive extends AbstractSubsystem {
 
 
     public Drive(DriveIO driveIO) {
-        super(5);
+        super(0);
         this.io = driveIO;
 
         setDriveState(DriveState.TELEOP);
@@ -415,7 +415,7 @@ public final class Drive extends AbstractSubsystem {
             }
             case RAMSETE -> updateRamsete();
         }
-        if (driveState != DriveState.HOLD) {
+        if (driveState != DriveState.HOLD && !DriverStation.isTest() && DriverStation.isEnabled()) {
             swerveDrive(nextChassisSpeeds, kinematicLimit, NOMINAL_DT);
         }
     }
@@ -552,7 +552,7 @@ public final class Drive extends AbstractSubsystem {
         for (int i = 0; i < 4; i++) {
             swerveModuleStates[i] = new SwerveModuleState(
                     getSwerveDriveVelocity(i),
-                    new Rotation2d(getWheelRotation(i)));
+                    Rotation2d.fromDegrees(getWheelRotation(i)));
         }
         return swerveModuleStates;
     }

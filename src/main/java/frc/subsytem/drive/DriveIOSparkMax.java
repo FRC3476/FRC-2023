@@ -141,6 +141,7 @@ public class DriveIOSparkMax extends DriveIO {
         }
     }
 
+    @Override
     protected void updateInputs(DriveInputsAutoLogged inputs) {
         inputs.driveMotorPositions = new double[4];
         inputs.driveMotorVelocities = new double[4];
@@ -159,7 +160,7 @@ public class DriveIOSparkMax extends DriveIO {
             inputs.driveMotorCurrents[i] = swerveDriveMotors[i].getOutputCurrent();
             inputs.driveMotorTemps[i] = swerveDriveMotors[i].getMotorTemperature();
             inputs.driveMotorVoltages[i] = swerveDriveMotors[i].getBusVoltage();
-            
+
             if (USE_CANCODERS) {
                 inputs.swerveMotorAbsolutePositions[i] = swerveCanCoders[i].getAbsolutePosition();
             } else {
