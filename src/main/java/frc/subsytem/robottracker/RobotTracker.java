@@ -128,7 +128,7 @@ public final class RobotTracker extends AbstractSubsystem {
     private @Nullable Translation3d lastAcceleration;
 
     private void updateGyroHistory() {
-        double time = Timer.getFPGATimestamp();
+        double time = Logger.getInstance().getRealTimestamp() * SECONDS_PER_MICROSECOND;
 
         gyroSensor.get6dQuaternion(quaternion);
         gyroSensor.getBiasedAccelerometer(ba_xyz);

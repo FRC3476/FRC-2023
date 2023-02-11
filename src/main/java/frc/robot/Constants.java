@@ -23,6 +23,7 @@ public final class Constants {
 
     public static final boolean IS_PRACTICE = Files.exists(new File("/home/lvuser/practice").toPath());
     public static final boolean USE_CANCODERS = false;
+    public static final double SECONDS_PER_MICROSECOND = 1e-6;
 
     // 2048 sensor units per revolution
     public static final double FALCON_ENCODER_TICKS_PER_ROTATIONS = 2048;
@@ -203,7 +204,6 @@ public final class Constants {
 
     public static final double GRABBER_ROLLER_VOLTAGE = -6;
     public static final double GRABBER_ROLLER_IDLE = -1;
-
 
     public enum KinematicLimits {
         /**
