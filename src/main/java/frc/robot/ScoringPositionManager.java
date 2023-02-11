@@ -44,7 +44,6 @@ public class ScoringPositionManager {
      * On the blue alliance, the LEFT is a more positive Y value, and the RIGHT is a more negative Y value.
      */
     public enum SelectedPosition {
-        // TODO: make sure these are correct
         BOTTOM_LEFT(1, PositionType.BOTH),
         BOTTOM_MIDDLE(2, PositionType.BOTH),
         BOTTOM_RIGHT(3, PositionType.BOTH),
@@ -53,9 +52,9 @@ public class ScoringPositionManager {
         MIDDLE_MIDDLE(6, PositionType.CUBE),
         MIDDLE_RIGHT(7, PositionType.CONE),
 
-        TOP_LEFT(9, PositionType.CONE),
-        TOP_MIDDLE(10, PositionType.CUBE),
-        TOP_RIGHT(11, PositionType.CONE);
+        TOP_LEFT(11, PositionType.CONE),
+        TOP_MIDDLE(12, PositionType.CUBE),
+        TOP_RIGHT(9, PositionType.CONE);
 
 
         /**
