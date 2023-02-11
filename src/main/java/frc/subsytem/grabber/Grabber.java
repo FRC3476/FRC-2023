@@ -44,7 +44,8 @@ public class Grabber extends AbstractSubsystem {
         TrapezoidProfile.State state = trapezoidProfile.calculate(currentTime - trapezoidProfileStartTime);
         double acceleration = (state.velocity - pastVelocity) / (currentTime - pastTime);
 
-        double arbFFVoltage = Constants.GRABBER_FEEDFORWARD.calculate(state.velocity, acceleration);
+        double arbFFVoltage = Constants.GRABBER_FEEDFORWARD.calculate(Math.toRadians(inputs.pivotPosition),
+                state.velocity, acceleration);
         io.setPivotPosition(state.position, arbFFVoltage);
 
         pastVelocity = state.velocity;

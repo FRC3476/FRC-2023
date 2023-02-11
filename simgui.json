@@ -3,7 +3,9 @@
     "types": {
       "/FMSInfo": "FMSInfo",
       "/SmartDashboard/Auto choices": "String Chooser",
-      "/SmartDashboard/Red or Blue": "String Chooser"
+      "/SmartDashboard/AutoChooser": "String Chooser",
+      "/SmartDashboard/Red or Blue": "String Chooser",
+      "/SmartDashboard/SideChooser": "String Chooser"
     }
   },
   "NetworkTables": {
@@ -15,6 +17,11 @@
         "open": true
       },
       "autodata": {
+        "open": true
+      }
+    },
+    "transitory": {
+      "AdvantageKit": {
         "open": true
       }
     }
