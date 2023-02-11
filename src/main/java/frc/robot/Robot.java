@@ -256,10 +256,7 @@ public class Robot extends TimedRobot {
         }
 
         //Test Data for Position Control:
-        //-257.7025451660156, 52.78291702270508 = 309.7
-        //-268.5694274902344, 7.95624828338623 = 275.6
-        //-263.7181701660156, 64.62039947509766 = 327.7
-        //Mean = 304.3, MAD = 19.2
+        //
 
         // Intake speed control
         if (xbox.getRawButton(XboxButtons.RIGHT_BUMPER)) {
@@ -273,7 +270,7 @@ public class Robot extends TimedRobot {
             intake.setIntakePercentOutput(0);
         }
 
-        drive.swerveDrive(getControllerDriveInputs());
+        drive.swerveDriveFieldRelative(getControllerDriveInputs());
 
         if (xbox.getRisingEdge(XboxButtons.A)) {
             robotTracker.resetPose(new Pose2d(robotTracker.getLatestPose().getTranslation(), new Rotation2d()));
