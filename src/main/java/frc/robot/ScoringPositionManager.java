@@ -7,6 +7,7 @@ import org.jetbrains.annotations.NotNull;
 import org.joml.Intersectiond;
 import org.joml.Vector2d;
 import org.littletonrobotics.junction.networktables.LoggedDashboardBoolean;
+import org.littletonrobotics.junction.networktables.LoggedDashboardString;
 
 import static frc.robot.Constants.*;
 
@@ -94,6 +95,7 @@ public class ScoringPositionManager {
 
     LoggedDashboardBoolean isCone = new LoggedDashboardBoolean("Is Cone", true);
     LoggedDashboardBoolean isCube = new LoggedDashboardBoolean("Is Cube", false);
+    LoggedDashboardString wantedScoringPosition = new LoggedDashboardString("Wanted Scoring Position", selectedPosition.name());
 
     LoggedDashboardBoolean doesWantedPositionTypeMatchSelectedPositionType =
             new LoggedDashboardBoolean("Does Wanted Position Type Match Selected Position Type", true);
@@ -133,6 +135,8 @@ public class ScoringPositionManager {
             isCube.set(true);
             doesWantedPositionTypeMatchSelectedPositionType.set(doesWantedPositionTypeMatchSelectedPositionType());
         }
+
+        wantedScoringPosition.set(selectedPosition.name());
 
         if (oldSelectedPosition != selectedPosition) {
             selectedPositions[oldSelectedPosition.ordinal()].set(false);
