@@ -16,9 +16,9 @@ public class GrabberIOSparkMax extends GrabberIO {
         pivotSparkMax = new CANSparkMax(GRABBER_PIVOT_CAN_ID, CANSparkMaxLowLevel.MotorType.kBrushless);
         grabberSparkMax = new CANSparkMax(GRABBER_CAN_ID, CANSparkMaxLowLevel.MotorType.kBrushless);
         SparkMaxPIDController pivotSparkMaxPIDController = pivotSparkMax.getPIDController();
-        pivotSparkMaxPIDController.setP(Constants.GRABBER_P);
-        pivotSparkMaxPIDController.setI(Constants.GRABBER_I);
-        pivotSparkMaxPIDController.setD(Constants.GRABBER_D);
+        pivotSparkMaxPIDController.setP(Constants.PIVOT_P);
+        pivotSparkMaxPIDController.setI(Constants.PIVOT_I);
+        pivotSparkMaxPIDController.setD(Constants.PIVOT_D);
         pivotSparkMax.enableVoltageCompensation(Constants.GRABBER_NOMINAL_VOLTAGE);
         pivotSparkMax.setSmartCurrentLimit(Constants.PIVOT_SMART_CURRENT_LIMIT);
 
@@ -26,8 +26,8 @@ public class GrabberIOSparkMax extends GrabberIO {
         grabberSparkMax.enableVoltageCompensation(Constants.GRABBER_NOMINAL_VOLTAGE);
         grabberSparkMax.setSmartCurrentLimit(Constants.GRABBER_SMART_CURRENT_LIMIT);
 
-        pivotSparkMax.getEncoder().setPositionConversionFactor(1.0 / GRABBER_ROTATIONS_PER_DEGREE);
-        pivotSparkMax.getEncoder().setVelocityConversionFactor((1.0 / GRABBER_ROTATIONS_PER_DEGREE) / SECONDS_PER_MINUTE);
+        pivotSparkMax.getEncoder().setPositionConversionFactor(1.0 / PIVOT_ROTATIONS_PER_DEGREE);
+        pivotSparkMax.getEncoder().setVelocityConversionFactor((1.0 / PIVOT_ROTATIONS_PER_DEGREE) / SECONDS_PER_MINUTE);
     }
 
     @Override

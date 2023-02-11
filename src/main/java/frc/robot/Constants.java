@@ -165,7 +165,7 @@ public final class Constants {
     public static final int ELEVATOR_SMART_CURRENT_LIMIT = 20;
 
     // TODO: Figure out how much the elevator is angled at
-    public static final double ELEVATOR_TILT_RADIANS = 0;
+    public static final double ELEVATOR_TILT_RADIANS = Math.toRadians(64.24203436);
     public static final double ELEVATOR_STALLING_CURRENT = 12;
     public static final double ELEVATOR_MIN_HOME_TIME = 0.5;
     public static final double MOTOR_SPEED_DECREASING_RATE = -0.1;
@@ -175,20 +175,20 @@ public final class Constants {
     public static final TrapezoidProfile.Constraints TELESCOPING_ARM_CONSTRAINTS
             = new TrapezoidProfile.Constraints(3, 3);
     public static final ElevatorFeedforward TELESCOPING_ARM_FEEDFORWARD = new ElevatorFeedforward(0, 0, 0, 0);
-    public static final int TELESCOPING_ARM_P = 5;
-    public static final int TELESCOPING_ARM_I = 5;
-    public static final int TELESCOPING_ARM_D = 5;
-    public static final int TELESCOPING_ARM_ROTATIONS_PER_METER = 1;
-    public static final int TELESCOPING_ARM_NOMINAL_VOLTAGE = 9;
+    public static final double TELESCOPING_ARM_P = 5;
+    public static final double TELESCOPING_ARM_I = 5;
+    public static final double TELESCOPING_ARM_D = 5;
+    public static final double TELESCOPING_ARM_ROTATIONS_PER_METER = 66.66646561;
+    public static final double TELESCOPING_ARM_NOMINAL_VOLTAGE = 9;
     public static final int TELESCOPING_ARM_SMART_CURRENT_LIMIT = 15;
     public static final int TELESCOPING_ARM_CAN_ID = 60;
     public static final ArmFeedforward GRABBER_FEEDFORWARD = new ArmFeedforward(0, 0, 0, 0);
     public static final TrapezoidProfile.Constraints GRABBER_PIVOT_CONSTRAINTS
             = new TrapezoidProfile.Constraints(3, 3);
-    public static final double GRABBER_P = 5;
-    public static final double GRABBER_I = 5;
-    public static final double GRABBER_D = 5;
-    public static final double GRABBER_ROTATIONS_PER_DEGREE = 1;
+    public static final double PIVOT_P = 5;
+    public static final double PIVOT_I = 5;
+    public static final double PIVOT_D = 5;
+    public static final double PIVOT_ROTATIONS_PER_DEGREE = 0.185185185185185;
     public static final double GRABBER_NOMINAL_VOLTAGE = 9;
     public static final int GRABBER_SMART_CURRENT_LIMIT = 5;
     public static final int PIVOT_SMART_CURRENT_LIMIT = 15;
