@@ -75,6 +75,7 @@ public class Elevator extends AbstractSubsystem {
                     homing = false;
                     io.resetPosition(0);
                 }
+                Logger.getInstance().recordOutput("Elevator/Home time", homeTime);
             }
             return;
         }
