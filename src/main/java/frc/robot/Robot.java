@@ -30,6 +30,7 @@ import frc.subsytem.grabber.GrabberIOSparkMax;
 import frc.subsytem.robottracker.RobotTracker;
 import frc.subsytem.telescopingarm.TelescopingArm;
 import frc.subsytem.telescopingarm.TelescopingArmIO;
+import frc.subsytem.telescopingarm.TelescopingArmIOSparkMax;
 import frc.subsytem.vision.VisionHandler;
 import frc.utility.Controller;
 import frc.utility.Controller.XboxButtons;
@@ -84,13 +85,13 @@ public class Robot extends LoggedRobot {
         Logger.getInstance().recordMetadata("ProjectName", "FRC2023"); // Set a metadata value
 
         if (isReal() || true) {
-            Logger.getInstance().addDataReceiver(new WPILOGWriter("/home/lvuser/logs"));
+            Logger.getInstance().addDataReceiver(new WPILOGWriter("/home/lvuser/"));
             Logger.getInstance().addDataReceiver(new NT4Publisher()); // Publish data to NetworkTables
             new PowerDistribution(1, ModuleType.kRev); // Enables power distribution logging
 
             drive = new Drive(new DriveIOSparkMax());
             elevator = new Elevator(new ElevatorIOSparkMax());
-            telescopingArm = new TelescopingArm(new TelescopingArmIO());
+            telescopingArm = new TelescopingArm(new TelescopingArmIOSparkMax());
             grabber = new Grabber(new GrabberIOSparkMax());
         } else {
             setUseTiming(false); // Run as fast as possible
@@ -119,6 +120,7 @@ public class Robot extends LoggedRobot {
         telescopingArm.start();
         grabber.start();
         drive.start();
+        ScoringPositionManager.getInstance();
 
         xbox = new Controller(0);
         stick = new Controller(1);
@@ -217,6 +219,7 @@ public class Robot extends LoggedRobot {
     @Override
     public void teleopPeriodic() {
         xbox.update();
+        stick.update();
         buttonPanel.update();
         double wantedRumble = 0;
 
@@ -287,7 +290,7 @@ public class Robot extends LoggedRobot {
             case FLOOR_PICKUP -> mechanismStateManager.setState(MechanismStates.FLOOR_PICKUP);
             case STATION_PICKUP -> mechanismStateManager.setState(MechanismStates.STATION_PICKUP);
         }
-
+        
         if (xbox.getRisingEdge(XboxButtons.B)) {
             isGrabberOpen = !isGrabberOpen;
 
@@ -310,7 +313,7 @@ public class Robot extends LoggedRobot {
         } else {
             grabber.setRollerVoltage(0);
         }
-        
+
         xbox.setRumble(RumbleType.kBothRumble, wantedRumble);
     }
 
