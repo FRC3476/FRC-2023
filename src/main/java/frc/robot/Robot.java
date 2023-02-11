@@ -17,6 +17,8 @@ import frc.subsytem.AbstractSubsystem;
 import frc.subsytem.Elevator.Elevator;
 import frc.subsytem.Elevator.ElevatorIO;
 import frc.subsytem.Elevator.ElevatorIOSparkMax;
+import frc.subsytem.MechanismStateManager;
+import frc.subsytem.MechanismStateManager.MechanismStates;
 import frc.subsytem.drive.Drive;
 import frc.subsytem.drive.DriveIO;
 import frc.subsytem.drive.DriveIOSparkMax;
@@ -59,6 +61,7 @@ public class Robot extends LoggedRobot {
     private @NotNull static Elevator elevator;
     private @NotNull static TelescopingArm telescopingArm;
     private @NotNull static Grabber grabber;
+    private @NotNull static MechanismStateManager mechanismStateManager;
 
 
     private @NotNull Controller xbox;
@@ -78,7 +81,7 @@ public class Robot extends LoggedRobot {
     public void robotInit() {
         Logger.getInstance().recordMetadata("ProjectName", "FRC2023"); // Set a metadata value
 
-        if (isReal()) {
+        if (isReal() || true) {
             Logger.getInstance().addDataReceiver(new WPILOGWriter("/home/lvuser/logs"));
             Logger.getInstance().addDataReceiver(new NT4Publisher()); // Publish data to NetworkTables
             new PowerDistribution(1, ModuleType.kRev); // Enables power distribution logging
@@ -104,9 +107,12 @@ public class Robot extends LoggedRobot {
 
         robotTracker = new RobotTracker();
         visionHandler = new VisionHandler();
+        mechanismStateManager = new MechanismStateManager();
+
 
         visionHandler.start();
         robotTracker.start();
+        mechanismStateManager.start();
         elevator.start();
         telescopingArm.start();
         grabber.start();
@@ -194,6 +200,13 @@ public class Robot extends LoggedRobot {
         Logger.getInstance().recordOutput("Auto Align Angle", teleopDrivingAutoAlignPosition.getRotation().getDegrees());
     }
 
+
+    enum WantedMechanismState {
+        STOWED, SCORING, FLOOR_PICKUP, STATION_PICKUP
+    }
+
+    private WantedMechanismState wantedMechanismState = WantedMechanismState.STOWED;
+
     /**
      * This method is called periodically during operator control.
      */
@@ -230,6 +243,47 @@ public class Robot extends LoggedRobot {
         if (xbox.getRisingEdge(XboxButtons.A)) {
             robotTracker.resetPose(new Pose2d(robotTracker.getLatestPose().getTranslation(), new Rotation2d()));
         }
+
+        if (stick.getRisingEdge(7)) {
+            if (wantedMechanismState == WantedMechanismState.STOWED) {
+                wantedMechanismState = WantedMechanismState.SCORING;
+            } else {
+                wantedMechanismState = WantedMechanismState.STOWED;
+            }
+        }
+
+        if (stick.getRisingEdge(9)) {
+            if (wantedMechanismState == WantedMechanismState.STOWED) {
+                wantedMechanismState = WantedMechanismState.FLOOR_PICKUP;
+            } else {
+                wantedMechanismState = WantedMechanismState.STOWED;
+            }
+        }
+
+        if (stick.getRisingEdge(11)) {
+            if (wantedMechanismState == WantedMechanismState.STOWED) {
+                wantedMechanismState = WantedMechanismState.STATION_PICKUP;
+            } else {
+                wantedMechanismState = WantedMechanismState.STOWED;
+            }
+        }
+
+        switch (wantedMechanismState) {
+            case STOWED -> mechanismStateManager.setState(MechanismStates.STOWED);
+            case SCORING -> {
+                int level = scoringPositionManager.getSelectedPosition().getLevel();
+                if (level == 0) {
+                    mechanismStateManager.setState(MechanismStates.LOW_SCORING);
+                } else if (level == 1) {
+                    mechanismStateManager.setState(MechanismStates.MIDDLE_SCORING);
+                } else if (level == 2) {
+                    mechanismStateManager.setState(MechanismStates.HIGH_SCORING);
+                }
+            }
+            case FLOOR_PICKUP -> mechanismStateManager.setState(MechanismStates.FLOOR_PICKUP);
+            case STATION_PICKUP -> mechanismStateManager.setState(MechanismStates.STATION_PICKUP);
+        }
+
 
         xbox.setRumble(RumbleType.kBothRumble, wantedRumble);
     }
