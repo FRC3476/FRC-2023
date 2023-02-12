@@ -205,6 +205,9 @@ public final class Constants {
     public static final double GRABBER_ROLLER_VOLTAGE = -6;
     public static final double GRABBER_ROLLER_IDLE = -0;
 
+    // TODO: FIND ACTUAL GRABBER LENGTH
+    public static final double GRABBER_LENGTH = .368;
+
     public enum KinematicLimits {
         /**
          * Normal acceleration limit while driving. This ensures that the driver can't tip the robot.
@@ -266,4 +269,13 @@ public final class Constants {
 
     public static final double PICKUP_POSITION_Y = -3.4199;
     public static final double PICKUP_POSITION_X_OFFSET_FROM_WALL = 0.7635;
+
+    // Constraints
+    // TODO: FIND REAL CONSTRAINTS
+    public static final double MAX_WRIST_ANGLE = 126;
+    public static final double MIN_WRIST_ANGLE = -45;
+    public static final double BASE_MIN_X = -.1;
+    public static final double BASE_MAX_X = 1;
+    public static final double MIN_Y = 0;
+    public static final double MAX_Y = 1;
 }
