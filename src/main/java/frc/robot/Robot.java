@@ -261,7 +261,7 @@ public class Robot extends TimedRobot {
         // Intake speed control
         if (xbox.getRawButton(XboxButtons.RIGHT_BUMPER)) {
             // Intaking cones and outtaking cubes
-            intake.setIntakePercentOutput(0.6);
+            intake.setIntakePercentOutput(0.7);
         } else if (xbox.getRawAxis(3) > .1) {
             // Outtaking cones and intaking cubes
             intake.setIntakePercentOutput(-0.5);
