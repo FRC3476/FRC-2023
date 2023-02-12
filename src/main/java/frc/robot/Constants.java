@@ -269,4 +269,13 @@ public final class Constants {
 
     public static final double PICKUP_POSITION_Y = -3.4199;
     public static final double PICKUP_POSITION_X_OFFSET_FROM_WALL = 0.7635;
+
+    // Constraints
+    // TODO: FIND REAL CONSTRAINTS
+    public static final double MAX_WRIST_ANGLE = 0;
+    public static final double MIN_WRIST_ANGLE = 0;
+    public static final double BASE_MIN_X = 0;
+    public static final double BASE_MAX_X = 0;
+    public static final static double MAX_Y = 0;
+    public static final static double MIN_Y = 0;
 }
