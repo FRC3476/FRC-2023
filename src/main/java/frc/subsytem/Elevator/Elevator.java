@@ -38,7 +38,7 @@ public class Elevator extends AbstractSubsystem {
         }
 
         trapezoidProfile = new TrapezoidProfile(Constants.ELEVATOR_CONSTRAINTS, new TrapezoidProfile.State(position, 0),
-                new TrapezoidProfile.State(avg(inputs.elevatorPosition), avg(inputs.elevatorVelocity)));
+                new TrapezoidProfile.State(inputs.elevatorPosition[0], inputs.elevatorVelocity[0]));
         trapezoidProfileStartTime = -1;
         Logger.getInstance().recordOutput("Elevator/Goal position", position);
     }
@@ -103,8 +103,7 @@ public class Elevator extends AbstractSubsystem {
         Logger.getInstance().recordOutput("Elevator/FF voltage", arbFFVoltage);
     }
 
-    @Override
-    public void selfTest() {
-
+    public double getPosition() {
+        return inputs.elevatorPosition[0];
     }
 }

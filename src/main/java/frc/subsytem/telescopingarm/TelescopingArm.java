@@ -64,4 +64,8 @@ public class TelescopingArm extends AbstractSubsystem {
     public void selfTest() {
 
     }
+
+    public double getPosition() {
+        return inputs.position;
+    }
 }

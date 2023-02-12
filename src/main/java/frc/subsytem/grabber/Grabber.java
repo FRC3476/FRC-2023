@@ -83,4 +83,8 @@ public class Grabber extends AbstractSubsystem {
     public void selfTest() {
 
     }
+
+    public double getPivotDegrees() {
+        return inputs.pivotPosition;
+    }
 }

@@ -2,7 +2,10 @@ package frc.subsytem;
 
 import frc.robot.Constants;
 import frc.robot.Robot;
+import frc.subsytem.Elevator.ElevatorIO;
 import org.jetbrains.annotations.NotNull;
+import org.littletonrobotics.junction.LoggedRobot;
+import org.littletonrobotics.junction.Logger;
 
 public class MechanismStateManager extends AbstractSubsystem {
 
@@ -16,6 +19,12 @@ public class MechanismStateManager extends AbstractSubsystem {
         public double grabberAngleRadians() {
             return Math.toRadians(grabberAngleDegrees);
         }
+
+        @Override
+        public String toString() {
+            return "X: " + xMeters + " Y: " + yMeters + " Angle: " + grabberAngleDegrees;
+        }
+
     }
 
 
@@ -122,6 +131,36 @@ public class MechanismStateManager extends AbstractSubsystem {
         return new MechanismStateCoordinates(mutableX, mutableY, mutableWristAngle);
     }
 
+    /**
+     * Gets current mechanism state based off encoder values Assumes that each system is zeroed on startup
+     */
+    private MechanismStateCoordinates getCurrentCoordinates() {
+        // Find x coordinate
+        double x = 0;
+
+        // Determine how much the elevator contributes to x
+        x += Math.cos(Constants.ELEVATOR_TILT_RADIANS) * Robot.getElevator().getPosition()
+
+        // Determine how much the grabber contributes to x
+        x += Constants.GRABBER_LENGTH * Math.cos(Math.toDegrees(Robot.getGrabber().getPivotDegrees()));
+
+        // Find y coordinate
+        double y = 0;
+
+        // Determine how much the elevator contributes to y
+        y += Math.sin(Constants.ELEVATOR_TILT_RADIANS) * Robot.getElevator().getPosition();
+
+        // Determine how much the telescoping arm contributes y
+        y += Robot.getTelescopingArm().getPosition();
+
+        // Determine how much the grabber contributes to y
+        y += Constants.GRABBER_LENGTH * Math.sin(Math.toDegrees(Robot.getGrabber().getPivotDegrees()));
+
+        double wristAngle = Robot.getGrabber().getPivotDegrees();
+
+        return new MechanismStateCoordinates(x, y, wristAngle);
+    }
+}
 
     @Override
     public void update() {
@@ -141,5 +180,7 @@ public class MechanismStateManager extends AbstractSubsystem {
         }
 
         lastRequestedState = desiredStateCoordinates;
+
+        Logger.getInstance().recordOutput("MechanismStateManager / Current Coordinates", getCurrentCoordinates().toString());
     }
 }
