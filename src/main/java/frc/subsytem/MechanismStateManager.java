@@ -13,6 +13,11 @@ public class MechanismStateManager extends AbstractSubsystem {
         public double grabberAngleRadians() {
             return Math.toRadians(grabberAngleDegrees);
         }
+
+        @Override
+        public String toString() {
+            return "Elevator Pos: " + elevatorPositionMeters + " Arm Pos: " + telescopingArmPositionMeters + " Angle: " + grabberAngleDegrees;
+        }
     }
 
     public record MechanismStateCoordinates(double xMeters, double yMeters, double grabberAngleDegrees) {
@@ -139,7 +144,7 @@ public class MechanismStateManager extends AbstractSubsystem {
         double x = 0;
 
         // Determine how much the elevator contributes to x
-        x += Math.cos(Constants.ELEVATOR_TILT_RADIANS) * Robot.getElevator().getPosition()
+        x += Math.cos(Constants.ELEVATOR_TILT_RADIANS) * Robot.getElevator().getPosition();
 
         // Determine how much the grabber contributes to x
         x += Constants.GRABBER_LENGTH * Math.cos(Math.toDegrees(Robot.getGrabber().getPivotDegrees()));
@@ -160,7 +165,6 @@ public class MechanismStateManager extends AbstractSubsystem {
 
         return new MechanismStateCoordinates(x, y, wristAngle);
     }
-}
 
     @Override
     public void update() {
@@ -177,10 +181,16 @@ public class MechanismStateManager extends AbstractSubsystem {
             Robot.getElevator().setPosition(limitedStatePositions.elevatorPositionMeters);
             Robot.getTelescopingArm().setPosition(limitedStatePositions.telescopingArmPositionMeters);
             Robot.getGrabber().setPosition(limitedStatePositions.grabberAngleDegrees);
+
+            Logger.getInstance().recordOutput("MechanismStateManager / Elevator Position", limitedStatePositions.elevatorPositionMeters);
+            Logger.getInstance().recordOutput("MechanismStateManager / Arm Position", limitedStatePositions.telescopingArmPositionMeters);
+            Logger.getInstance().recordOutput("MechanismStateManager / Grabber Position", limitedStatePositions.grabberAngleDegrees);
         }
 
         lastRequestedState = desiredStateCoordinates;
 
-        Logger.getInstance().recordOutput("MechanismStateManager / Current Coordinates", getCurrentCoordinates().toString());
+        Logger.getInstance().recordOutput("MechanismStateManager / Current X", getCurrentCoordinates().xMeters);
+        Logger.getInstance().recordOutput("MechanismStateManager / Current Y", getCurrentCoordinates().yMeters);
+        Logger.getInstance().recordOutput("MechanismStateManager / Current Grabber Degrees", getCurrentCoordinates().grabberAngleDegrees);
     }
 }
