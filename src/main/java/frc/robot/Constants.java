@@ -177,12 +177,12 @@ public final class Constants {
     public static final TrapezoidProfile.Constraints TELESCOPING_ARM_CONSTRAINTS
             = new TrapezoidProfile.Constraints(3, 3);
     public static final ElevatorFeedforward TELESCOPING_ARM_FEEDFORWARD = new ElevatorFeedforward(0, 0, 0, 0);
-    public static final double TELESCOPING_ARM_P = 0.1;
+    public static final double TELESCOPING_ARM_P = 10;
     public static final double TELESCOPING_ARM_I = 0.0;
     public static final double TELESCOPING_ARM_D = 0.0;
     public static final double TELESCOPING_ARM_ROTATIONS_PER_METER = 96.664 / (Math.PI);
     public static final double TELESCOPING_ARM_NOMINAL_VOLTAGE = 9;
-    public static final int TELESCOPING_ARM_SMART_CURRENT_LIMIT = 15;
+    public static final int TELESCOPING_ARM_SMART_CURRENT_LIMIT = 40;
     public static final int TELESCOPING_ARM_CAN_ID = 60;
     public static final ArmFeedforward GRABBER_FEEDFORWARD = new ArmFeedforward(0.32, 0.34, 0, 0);
     public static final TrapezoidProfile.Constraints GRABBER_PIVOT_CONSTRAINTS

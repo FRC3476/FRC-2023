@@ -7,6 +7,7 @@ import com.revrobotics.SparkMaxPIDController;
 import com.revrobotics.SparkMaxPIDController.ArbFFUnits;
 import frc.robot.Constants;
 
+import static edu.wpi.first.wpilibj.RobotBase.isReal;
 import static frc.robot.Constants.*;
 
 public class TelescopingArmIOSparkMax extends TelescopingArmIO {
@@ -25,6 +26,10 @@ public class TelescopingArmIOSparkMax extends TelescopingArmIO {
         telescopingArmSparkMax.getEncoder().setPositionConversionFactor(1.0 / TELESCOPING_ARM_ROTATIONS_PER_METER);
         telescopingArmSparkMax.getEncoder().setVelocityConversionFactor(
                 (1.0 / TELESCOPING_ARM_ROTATIONS_PER_METER) / SECONDS_PER_MINUTE);
+        resetTelescopingArmPosition(0);
+        if (isReal()) {
+            telescopingArmSparkMax.burnFlash();
+        }
     }
 
 
@@ -46,5 +51,10 @@ public class TelescopingArmIOSparkMax extends TelescopingArmIO {
     public void setTelescopingArmPosition(double position, double arbFFVoltage) {
         telescopingArmSparkMax.getPIDController().setReference(position, ControlType.kPosition, 0, arbFFVoltage,
                 ArbFFUnits.kVoltage);
+    }
+
+    @Override
+    public void resetTelescopingArmPosition(double position) {
+        telescopingArmSparkMax.getEncoder().setPosition(position);
     }
 }

@@ -17,4 +17,6 @@ public abstract class TelescopingArmIO {
     public void setTelescopingArmVoltage(double voltage) {}
 
     public void setTelescopingArmPosition(double position, double arbFFVoltage) {}
+
+    public void resetTelescopingArmPosition(double position) {}
 }
