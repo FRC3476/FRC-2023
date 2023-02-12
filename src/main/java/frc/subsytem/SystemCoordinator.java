@@ -53,7 +53,7 @@ public class SystemCoordinator extends AbstractSubsystem {
     /**
      * Gets current mechanism state based off encoder values Assumes that each system is zeroed on startup
      */
-    private MechanismState findCurrentMechanismState() {
+    private MechanismState getCurrentMechanismState() {
         // Find x coordinate
         double x = 0;
 
