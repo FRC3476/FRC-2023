@@ -9,8 +9,8 @@ public class ControllerDriveInputs {
     private double x, y, rotation;
 
     public ControllerDriveInputs(double x, double y, double rotation) {
-        this.x = -y;
-        this.y = x;
+        this.x = y;
+        this.y = -x;
         this.rotation = rotation;
     }
 
