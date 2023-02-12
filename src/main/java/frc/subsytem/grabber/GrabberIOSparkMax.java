@@ -41,7 +41,7 @@ public class GrabberIOSparkMax extends GrabberIO {
 
         pivotSparkMax.getEncoder().setPositionConversionFactor(1.0 / PIVOT_ROTATIONS_PER_DEGREE);
         pivotSparkMax.getEncoder().setVelocityConversionFactor((1.0 / PIVOT_ROTATIONS_PER_DEGREE) / SECONDS_PER_MINUTE);
-        resetPivotPosition(56 + 90 - 20);
+        resetPivotPosition(MAX_WRIST_ANGLE);
     }
 
     @Override

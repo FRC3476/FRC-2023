@@ -6,13 +6,13 @@ import org.jetbrains.annotations.NotNull;
 
 public class MechanismStateManager extends AbstractSubsystem {
 
-    record MechanismStateSubsystemPositions(double elevatorPositionMeters, double telescopingArmPositionMeters, double grabberAngleDegrees) {
+    public record MechanismStateSubsystemPositions(double elevatorPositionMeters, double telescopingArmPositionMeters, double grabberAngleDegrees) {
         public double grabberAngleRadians() {
             return Math.toRadians(grabberAngleDegrees);
         }
     }
 
-    record MechanismStateCoordinates(double xMeters, double yMeters, double grabberAngleDegrees) {
+    public record MechanismStateCoordinates(double xMeters, double yMeters, double grabberAngleDegrees) {
         public double grabberAngleRadians() {
             return Math.toRadians(grabberAngleDegrees);
         }
@@ -48,7 +48,7 @@ public class MechanismStateManager extends AbstractSubsystem {
      * in meters with an orgin at the grabber position with a completely retracted arm and completely lowered elevator and a
      * horizontally level wrist. Origin measured from the tip of the grabber in the center.
      */
-    private static MechanismStateSubsystemPositions coordinatesToSubsystemPositions(MechanismStateCoordinates mechanismState) {
+    public static MechanismStateSubsystemPositions coordinatesToSubsystemPositions(MechanismStateCoordinates mechanismState) {
 
         // Move elevator second to satisfy y keeping in mind that wrist already satisfies some of y
         double elevatorYOnlyMovement =
@@ -67,7 +67,7 @@ public class MechanismStateManager extends AbstractSubsystem {
         return new MechanismStateSubsystemPositions(elevatorRealMovement, telescopingArmMovement, mechanismState.grabberAngleDegrees);
     }
 
-    private static MechanismStateCoordinates limitCoordinates(MechanismStateCoordinates mechanismState) {
+    public static MechanismStateCoordinates limitCoordinates(MechanismStateCoordinates mechanismState) {
         double mutableX = mechanismState.xMeters;
         double mutableY = mechanismState.yMeters;
         double mutableWristAngle = mechanismState.grabberAngleDegrees;
@@ -104,7 +104,7 @@ public class MechanismStateManager extends AbstractSubsystem {
         double dynamicMaxX = Constants.BASE_MAX_X + (mutableY / Math.tan(Constants.ELEVATOR_TILT_RADIANS));
 
         // Add constraints for allowed x for certain wrist angles
-        if (mutableWristAngle > 90 && mutableWristAngle < 270) {
+        if (mutableWristAngle > 90 || mutableWristAngle < -90) {
             if (mutableX > dynamicMaxX + wristX) {
                 mutableX = dynamicMaxX + wristX;
             } else if (mutableX < dynamicMinX) {
