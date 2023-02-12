@@ -205,6 +205,9 @@ public final class Constants {
     public static final double GRABBER_ROLLER_VOLTAGE = -6;
     public static final double GRABBER_ROLLER_IDLE = -1;
 
+    // TODO: FIND ACTUAL GRABBER LENGTH
+    public static final double GRABBER_LENGTH = 0;
+
     public enum KinematicLimits {
         /**
          * Normal acceleration limit while driving. This ensures that the driver can't tip the robot.
