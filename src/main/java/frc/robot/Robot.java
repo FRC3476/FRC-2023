@@ -84,8 +84,8 @@ public class Robot extends LoggedRobot {
     public void robotInit() {
         Logger.getInstance().recordMetadata("ProjectName", "FRC2023"); // Set a metadata value
 
-        if (isReal() || true) {
-            Logger.getInstance().addDataReceiver(new WPILOGWriter("/home/lvuser/"));
+        if (isReal()) {
+            Logger.getInstance().addDataReceiver(new WPILOGWriter("/home/lvuser/logs"));
             Logger.getInstance().addDataReceiver(new NT4Publisher()); // Publish data to NetworkTables
             new PowerDistribution(1, ModuleType.kRev); // Enables power distribution logging
 
@@ -229,23 +229,23 @@ public class Robot extends LoggedRobot {
             teleopDrivingAutoAlignPosition = null;
         }
 
-        if (xbox.getRawButton(XboxButtons.START)) { //Should be remapped to one of the back buttons
-            if (xbox.getRisingEdge(XboxButtons.START) || teleopDrivingAutoAlignPosition == null) {
-                updateTeleopDrivingTarget(scoringPositionManager);
-                assert teleopDrivingAutoAlignPosition != null;
-            }
-
-            if (!drive.driveToPosition(
-                    teleopDrivingAutoAlignPosition.getTranslation(),
-                    teleopDrivingAutoAlignPosition.getRotation(),
-                    getControllerDriveInputs()
-            )) {
-                // We failed to generate a trajectory
-                wantedRumble = 1;
-            }
-        } else {
-            drive.swerveDriveFieldRelative(getControllerDriveInputs());
-        }
+//        if (xbox.getRawButton(XboxButtons.START)) { //Should be remapped to one of the back buttons
+//            if (xbox.getRisingEdge(XboxButtons.START) || teleopDrivingAutoAlignPosition == null) {
+//                updateTeleopDrivingTarget(scoringPositionManager);
+//                assert teleopDrivingAutoAlignPosition != null;
+//            }
+//
+//            if (!drive.driveToPosition(
+//                    teleopDrivingAutoAlignPosition.getTranslation(),
+//                    teleopDrivingAutoAlignPosition.getRotation(),
+//                    getControllerDriveInputs()
+//            )) {
+//                // We failed to generate a trajectory
+//                wantedRumble = 1;
+//            }
+//        } else {
+//            drive.swerveDriveFieldRelative(getControllerDriveInputs());
+//        }
 
         if (xbox.getRisingEdge(XboxButtons.A)) {
             robotTracker.resetPose(new Pose2d(robotTracker.getLatestPose().getTranslation(), new Rotation2d()));

@@ -87,7 +87,7 @@ public class Elevator extends AbstractSubsystem {
         }
         currentTime = 100000000;
         TrapezoidProfile.State state = trapezoidProfile.calculate(currentTime - trapezoidProfileStartTime);
-        double acceleration = (state.velocity - pastVelocity) / (currentTime - pastTime);
+        double acceleration = 0; //(state.velocity - pastVelocity) / (currentTime - pastTime);
         double arbFFVoltage = Constants.ELEVATOR_FEEDFORWARD.calculate(state.velocity, acceleration);
         io.setElevatorPosition(state.position, arbFFVoltage);
 

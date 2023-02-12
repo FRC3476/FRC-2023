@@ -55,7 +55,8 @@ public class ElevatorIOSparkMax extends ElevatorIO {
 
         inputs.elevatorCurrent = new double[]{elevatorMain.getOutputCurrent(), elevatorFollower.getOutputCurrent()};
         inputs.elevatorTemp = new double[]{elevatorMain.getMotorTemperature(), elevatorFollower.getMotorTemperature()};
-        inputs.elevatorVoltage = new double[]{elevatorMain.getAppliedOutput(), elevatorFollower.getAppliedOutput()};
+        inputs.elevatorVoltage = new double[]{elevatorMain.getAppliedOutput() * elevatorMain.getBusVoltage(),
+                elevatorFollower.getAppliedOutput() * elevatorFollower.getBusVoltage()};
     }
 
     @Override

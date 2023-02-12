@@ -14,19 +14,21 @@ public class Grabber extends AbstractSubsystem {
     public Grabber(GrabberIO grabberIO) {
         super(5);
         this.io = grabberIO;
+        trapezoidProfile = new TrapezoidProfile(Constants.GRABBER_PIVOT_CONSTRAINTS, new TrapezoidProfile.State(56 + 90 - 20, 0));
     }
 
-    private TrapezoidProfile trapezoidProfile =
-            new TrapezoidProfile(Constants.GRABBER_PIVOT_CONSTRAINTS, new TrapezoidProfile.State());
+    private TrapezoidProfile trapezoidProfile;
     private double trapezoidProfileStartTime = 0;
+    private double finalGoalPosition = 0;
 
     /**
      * @param position The position to set the grabber (degrees)
      */
     public void setPosition(double position) {
+        finalGoalPosition = position;
         trapezoidProfile = new TrapezoidProfile(Constants.GRABBER_PIVOT_CONSTRAINTS, new TrapezoidProfile.State(position, 0),
-                new TrapezoidProfile.State(inputs.grabberPosition, inputs.grabberVelocity));
-        trapezoidProfileStartTime = Timer.getFPGATimestamp();
+                new TrapezoidProfile.State(inputs.pivotPosition, inputs.pivotVelocity));
+        trapezoidProfileStartTime = -1;
         Logger.getInstance().recordOutput("Pivot/Goal position", position);
     }
 
@@ -41,12 +43,17 @@ public class Grabber extends AbstractSubsystem {
         if (trapezoidProfileStartTime == -1) {
             trapezoidProfileStartTime = currentTime;
         }
+        currentTime = 100000000;
         TrapezoidProfile.State state = trapezoidProfile.calculate(currentTime - trapezoidProfileStartTime);
-        double acceleration = (state.velocity - pastVelocity) / (currentTime - pastTime);
+        double acceleration = 0; // (state.velocity - pastVelocity) / (currentTime - pastTime);
 
         double arbFFVoltage = Constants.GRABBER_FEEDFORWARD.calculate(Math.toRadians(inputs.pivotPosition),
                 state.velocity, acceleration);
-        io.setPivotPosition(state.position, arbFFVoltage);
+        if (Math.abs(inputs.pivotPosition - state.position) > 1) {
+            io.setPivotPosition(state.position, arbFFVoltage);
+        } else {
+            io.setPivotVoltage(arbFFVoltage);
+        }
 
         pastVelocity = state.velocity;
         pastTime = currentTime;
@@ -57,22 +64,22 @@ public class Grabber extends AbstractSubsystem {
         Logger.getInstance().recordOutput("Pivot/Total trapezoidProfile time", trapezoidProfile.totalTime());
         Logger.getInstance().recordOutput("Pivot/Profile length", currentTime - trapezoidProfileStartTime);
         Logger.getInstance().recordOutput("Pivot/TrapezoidProfile error", state.position - inputs.pivotPosition);
-        Logger.getInstance().recordOutput("Pivot/Arb FF voltage", arbFFVoltage);
+        Logger.getInstance().recordOutput("Pivot/Arb FF current", arbFFVoltage);
     }
 
     public enum GrabState {
         OPEN(-3),
         GRAB_CUBE(3),
         GRAB_CONE(6);
-        final double voltage;
+        final double current;
 
-        GrabState(double voltage) {
-            this.voltage = voltage;
+        GrabState(double current) {
+            this.current = current;
         }
     }
 
     public void setGrabState(GrabState grabState) {
-        io.setGrabberVoltage(grabState.voltage);
+        io.setGrabberCurrent(grabState.current);
     }
 
     public void setRollerVoltage(double voltage) {
