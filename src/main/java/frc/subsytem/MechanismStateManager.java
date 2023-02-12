@@ -58,7 +58,7 @@ public class MechanismStateManager extends AbstractSubsystem {
         double telescopingArmMovement = x - elevatorXOnlyMovement
                 - Constants.GRABBER_LENGTH * Math.cos(Math.toRadians(wristAngleDegrees));
 
-        return new MechanismState(elevatorRealMovement, telescopingArmMovement, wristAngleDegrees)
+        return new MechanismState(elevatorRealMovement, telescopingArmMovement, wristAngleDegrees);
     }
 
     @Override
