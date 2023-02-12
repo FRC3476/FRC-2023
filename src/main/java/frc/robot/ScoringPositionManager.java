@@ -129,7 +129,7 @@ public class ScoringPositionManager {
             isCone.set(true);
             isCube.set(false);
             doesWantedPositionTypeMatchSelectedPositionType.set(doesWantedPositionTypeMatchSelectedPositionType());
-        } else if (buttonPanel.getRisingEdge(5)) {
+        } else if (buttonPanel.getRisingEdge(8)) {
             wantedPositionType = PositionType.CUBE;
             isCone.set(false);
             isCube.set(true);

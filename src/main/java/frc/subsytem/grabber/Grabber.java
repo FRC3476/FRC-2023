@@ -68,9 +68,9 @@ public class Grabber extends AbstractSubsystem {
     }
 
     public enum GrabState {
-        OPEN(-3),
-        GRAB_CUBE(3),
-        GRAB_CONE(6);
+        OPEN(1),
+        GRAB_CUBE(-1),
+        GRAB_CONE(-3);
         final double current;
 
         GrabState(double current) {

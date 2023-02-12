@@ -296,15 +296,17 @@ public class Robot extends LoggedRobot {
             isGrabberOpen = !isGrabberOpen;
 
             if (isGrabberOpen) {
+                grabber.setGrabState(GrabState.OPEN);
+            } else {
                 if (scoringPositionManager.getWantedPositionType() == PositionType.CONE) {
                     grabber.setGrabState(GrabState.GRAB_CONE);
                 } else {
                     grabber.setGrabState(GrabState.GRAB_CUBE);
                 }
-            } else {
-                grabber.setGrabState(GrabState.OPEN);
             }
         }
+
+        Logger.getInstance().recordOutput("Robot/Is Grabber Open", isGrabberOpen);
 
         if ((wantedMechanismState == WantedMechanismState.FLOOR_PICKUP || wantedMechanismState == WantedMechanismState.STATION_PICKUP)
                 && isGrabberOpen) {

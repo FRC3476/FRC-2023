@@ -193,9 +193,9 @@ public final class Constants {
     public static final double PIVOT_ROTATIONS_PER_DEGREE = 1 / 5.4;
     public static final double PIVOT_IZONE = 10;
     public static final double GRABBER_NOMINAL_VOLTAGE = 9;
-    public static final int GRABBER_SMART_CURRENT_LIMIT = 10;
+    public static final int GRABBER_SMART_CURRENT_LIMIT = 30;
     public static final int PIVOT_SMART_CURRENT_LIMIT = 40;
-    public static final int GRABBER_ROLLER_SMART_CURRENT_LIMIT = 5;
+    public static final int GRABBER_ROLLER_SMART_CURRENT_LIMIT = 30;
 
     public static final int GRABBER_PIVOT_CAN_ID = 50;
     public static final int GRABBER_CAN_ID = 51;
@@ -203,7 +203,7 @@ public final class Constants {
     public static final int GRABBER_ROLLER_FOLLOWER_CAN_ID = 53;
 
     public static final double GRABBER_ROLLER_VOLTAGE = -6;
-    public static final double GRABBER_ROLLER_IDLE = -1;
+    public static final double GRABBER_ROLLER_IDLE = -0;
 
     public enum KinematicLimits {
         /**
