@@ -1,4 +1,4 @@
-package frc.subsytem;
+package frc.subsytem.vision;
 
 import com.dacubeking.AutoBuilder.robot.drawable.Drawable;
 import com.dacubeking.AutoBuilder.robot.drawable.Line;
@@ -15,11 +15,12 @@ import edu.wpi.first.math.numbers.N3;
 import edu.wpi.first.networktables.NetworkTable;
 import edu.wpi.first.networktables.NetworkTableEvent.Kind;
 import edu.wpi.first.networktables.NetworkTableInstance;
-import edu.wpi.first.networktables.NetworkTableValue;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.util.Color8Bit;
-import frc.robot.Constants;
+import frc.robot.Robot;
+import frc.subsytem.AbstractSubsystem;
 import org.jetbrains.annotations.NotNull;
+import org.littletonrobotics.junction.Logger;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -76,26 +77,17 @@ public class VisionHandler extends AbstractSubsystem {
 
     private final Translation3d cameraOffset = new Translation3d(0, 0, 0);
 
-    // Network tables
-    private final @NotNull NetworkTableInstance networkTableInstance;
-    private final @NotNull NetworkTable visionTable;
-    private final @NotNull NetworkTable visionMiscTable;
-    private final @NotNull NetworkTable configTable;
 
-    private static final VisionHandler INSTANCE = new VisionHandler();
+    VisionInputs visionInputs = new VisionInputs();
 
-    public static VisionHandler getInstance() {
-        return INSTANCE;
-    }
-
-    private VisionHandler() {
-        super(Constants.VISION_HANDLER_PERIOD);
-
+    public VisionHandler() {
+        super();
         // Network table init
-        networkTableInstance = NetworkTableInstance.getDefault();
-        visionTable = networkTableInstance.getTable("Vision");
-        visionMiscTable = networkTableInstance.getTable("Vision Misc");
-        configTable = networkTableInstance.getTable("Vision Config");
+        // Network tables
+        @NotNull NetworkTableInstance networkTableInstance = NetworkTableInstance.getDefault();
+        @NotNull NetworkTable visionTable = networkTableInstance.getTable("Vision");
+        @NotNull var visionMiscTable = networkTableInstance.getTable("Vision Misc");
+        @NotNull var configTable = networkTableInstance.getTable("Vision Config");
 
         // Send out connection flag to april tags processor
         visionMiscTable.getEntry("Connection Flag").setBoolean(true);
@@ -113,42 +105,30 @@ public class VisionHandler extends AbstractSubsystem {
             int finalI = i;
             NetworkTableInstance.getDefault().addListener(table.getTopic(),
                     EnumSet.of(Kind.kValueRemote),
-                    (event) -> processNewTagPosition(event.valueData.value, finalI));
+                    (event) -> {
+                        var visionUpdate = new VisionUpdate(event.valueData.value.getDoubleArray(), finalI);
+                        synchronized (this) {
+                            visionInputs.visionUpdates.add(visionUpdate);
+                        }
+                    });
         }
     }
 
-    private void processNewTagPosition(NetworkTableValue value, int tagId) {
-        final var expectedTagPosition = fieldLayout.getTagPose(tagId).orElseThrow(); // We should never get an unknown tag
+    private void processNewTagPosition(VisionUpdate data) {
+        final var expectedTagPosition = fieldLayout.getTagPose(data.tagId).orElseThrow(); // We should never get an
+        // unknown tag
 
-        // pos:
-        // x,y,z
-        // rot:
-        // w, x, y, z
-        // latency
-        final var data = value.getDoubleArray();
-        final var posX = data[0];
-        final var posY = data[1];
-        final var posZ = data[2];
-
-        final var rotX = data[3];
-        final var rotY = data[4];
-        final var rotZ = data[5];
-        final var rotW = data[6];
-        final var latency = data[7];
-
-
-        final var translation = new Translation3d(posX, posY, posZ)
+        final var translation = new Translation3d(data.posX, data.posY, data.posZ)
                 .rotateBy(POSITIVE_Y_90)
                 .rotateBy(POSITIVE_X_NEGATIVE_90);
-        final var rotation = new Rotation3d(new Quaternion(rotW, -rotZ, -rotX, rotY));
-        final var timestamp = Timer.getFPGATimestamp() - (latency / 1000.0);
+        final var rotation = new Rotation3d(new Quaternion(data.rotW, -data.rotZ, -data.rotX, data.rotY));
 
 
         //The translation is now from the center of the robot to the center of the tag relative to the rotation of the robot
         final var robotToTagRobotRelative = translation.plus(cameraOffset);
 
 
-        Rotation3d gyroAngle = RobotTracker.getInstance().getGyroAngleAtTime(timestamp);
+        Rotation3d gyroAngle = Robot.getRobotTracker().getGyroAngleAtTime(data.timestamp);
 
         var calculatedTranslationFromGyro =
                 expectedTagPosition.getTranslation()
@@ -190,10 +170,13 @@ public class VisionHandler extends AbstractSubsystem {
         );
 
         RobotPositionSender.addRobotPosition(
-                new RobotState(poseToFeedToRobotTracker, timestamp, "Fed Vision Pose Tag: " + tagId));
+                new RobotState(poseToFeedToRobotTracker, data.timestamp, "Fed Vision Pose Tag: " + data.tagId));
         RobotPositionSender.addRobotPosition(
-                new RobotState(visionOnlyPose, timestamp, "Vision Only Pose Tag: " + tagId));
-        RobotTracker.getInstance().addVisionMeasurement(poseToFeedToRobotTracker, timestamp);
+                new RobotState(visionOnlyPose, data.timestamp, "Vision Only Pose Tag: " + data.tagId));
+        Robot.getRobotTracker().addVisionMeasurement(poseToFeedToRobotTracker, data.timestamp);
+
+        Logger.getInstance().recordOutput("VisionHandler/VisionOnlyPose/" + data.tagId, visionOnlyPose);
+        Logger.getInstance().recordOutput("VisionHandler/FedPoses/" + data.tagId, poseToFeedToRobotTracker);
 
 
         // Draw the tag on the field
@@ -209,5 +192,45 @@ public class VisionHandler extends AbstractSubsystem {
                 (float) (expectedTagPosition.getY()),
                 new Color8Bit(255, 255, 0));
         Renderer.render(drawables);
+    }
+
+    @Override
+    public synchronized void update() {
+        Logger.getInstance().processInputs("VisionHandler", visionInputs);
+
+        // Process vision updates
+        for (var visionUpdate : visionInputs.visionUpdates) {
+            processNewTagPosition(visionUpdate);
+        }
+        visionInputs.visionUpdates.clear();
+    }
+
+    record VisionUpdate(double posX, double posY, double posZ, double rotW, double rotX, double rotY, double rotZ,
+                        double timestamp, int tagId) {
+        /**
+         * This treats the data as a double array in the following order: posX, posY, posZ, rotW, rotX, rotY, rotZ, latency
+         *
+         * @param data the data
+         * @param id   the tagId of the tag
+         */
+        public VisionUpdate(double[] data, int id) {
+            this(data[0], data[1], data[2], data[3], data[4], data[5], data[6],
+                    Timer.getFPGATimestamp() - (data[7] / 1000.0), id);
+        }
+
+        public double[] toArray() {
+            return new double[]{posX, posY, posZ, rotW, rotX, rotY, rotZ, timestamp, tagId};
+        }
+
+        /**
+         * This treats the data as a double array in the following order: posX, posY, posZ, rotW, rotX, rotY, rotZ, timestamp,
+         * tagId
+         *
+         * @return a new VisionUpdate object
+         */
+        public static VisionUpdate fromArray(double[] array) {
+            return new VisionUpdate(array[0], array[1], array[2], array[3], array[4], array[5], array[6], array[7],
+                    (int) Math.round(array[8]));
+        }
     }
 }

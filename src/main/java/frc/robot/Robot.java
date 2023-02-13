@@ -9,22 +9,36 @@ import com.dacubeking.AutoBuilder.robot.robotinterface.AutonomousContainer;
 import com.dacubeking.AutoBuilder.robot.robotinterface.CommandTranslator;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
-import edu.wpi.first.networktables.NetworkTable;
-import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.wpilibj.GenericHID.RumbleType;
-import edu.wpi.first.wpilibj.TimedRobot;
+import edu.wpi.first.wpilibj.PowerDistribution;
+import edu.wpi.first.wpilibj.PowerDistribution.ModuleType;
 import edu.wpi.first.wpilibj.Timer;
-import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
-import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
-import frc.subsytem.Drive;
-import frc.subsytem.Drive.DriveState;
-import frc.subsytem.RobotTracker;
-import frc.subsytem.VisionHandler;
+import frc.subsytem.AbstractSubsystem;
+import frc.subsytem.Elevator.Elevator;
+import frc.subsytem.Elevator.ElevatorIO;
+import frc.subsytem.Elevator.ElevatorIOSparkMax;
+import frc.subsytem.drive.Drive;
+import frc.subsytem.drive.DriveIO;
+import frc.subsytem.drive.DriveIOSparkMax;
+import frc.subsytem.grabber.Grabber;
+import frc.subsytem.grabber.GrabberIO;
+import frc.subsytem.grabber.GrabberIOSparkMax;
+import frc.subsytem.robottracker.RobotTracker;
+import frc.subsytem.telescopingarm.TelescopingArm;
+import frc.subsytem.telescopingarm.TelescopingArmIO;
+import frc.subsytem.vision.VisionHandler;
 import frc.utility.Controller;
 import frc.utility.Controller.XboxButtons;
 import frc.utility.ControllerDriveInputs;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.littletonrobotics.junction.LogFileUtil;
+import org.littletonrobotics.junction.LoggedRobot;
+import org.littletonrobotics.junction.Logger;
+import org.littletonrobotics.junction.networktables.LoggedDashboardChooser;
+import org.littletonrobotics.junction.networktables.NT4Publisher;
+import org.littletonrobotics.junction.wpilog.WPILOGReader;
+import org.littletonrobotics.junction.wpilog.WPILOGWriter;
 
 import static frc.robot.Constants.*;
 
@@ -34,13 +48,18 @@ import static frc.robot.Constants.*;
  * TimedRobot documentation. If you change the name of this class or the package after creating this project, you must also update
  * the build.gradle file in the project.
  */
-public class Robot extends TimedRobot {
+public class Robot extends LoggedRobot {
 
     private double disabledTime = 0;
 
-    private @NotNull Drive drive;
-    private @NotNull RobotTracker robotTracker;
-    private @NotNull VisionHandler visionHandler;
+    private @NotNull static Drive drive;
+    private @NotNull static RobotTracker robotTracker;
+    private @NotNull static VisionHandler visionHandler;
+
+    private @NotNull static Elevator elevator;
+    private @NotNull static TelescopingArm telescopingArm;
+    private @NotNull static Grabber grabber;
+
 
     private @NotNull Controller xbox;
     private @NotNull Controller stick;
@@ -48,23 +67,55 @@ public class Robot extends TimedRobot {
     private @NotNull Controller buttonPanel;
 
     // Autonomous
-    private final SendableChooser<String> autoChooser = new SendableChooser<>();
+    private final LoggedDashboardChooser<String> autoChooser = new LoggedDashboardChooser<>("AutoChooser");
 
-    public static final SendableChooser<String> sideChooser = new SendableChooser<>();
+    public static final LoggedDashboardChooser<String> sideChooser = new LoggedDashboardChooser<>("SideChooser");
 
     /**
      * This method is run when the robot is first started up and should be used for any initialization code.
      */
     @Override
     public void robotInit() {
-        drive = Drive.getInstance();
-        robotTracker = RobotTracker.getInstance();
-        visionHandler = VisionHandler.getInstance();
+        Logger.getInstance().recordMetadata("ProjectName", "FRC2023"); // Set a metadata value
+
+        if (isReal()) {
+            Logger.getInstance().addDataReceiver(new WPILOGWriter("/home/lvuser/logs"));
+            Logger.getInstance().addDataReceiver(new NT4Publisher()); // Publish data to NetworkTables
+            new PowerDistribution(1, ModuleType.kRev); // Enables power distribution logging
+
+            drive = new Drive(new DriveIOSparkMax());
+            elevator = new Elevator(new ElevatorIOSparkMax());
+            telescopingArm = new TelescopingArm(new TelescopingArmIO());
+            grabber = new Grabber(new GrabberIOSparkMax());
+        } else {
+            setUseTiming(false); // Run as fast as possible
+            String logPath = LogFileUtil.findReplayLog(); // Pull the replay log from AdvantageScope (or prompt the user)
+            Logger.getInstance().setReplaySource(new WPILOGReader(logPath)); // Read replay log
+            Logger.getInstance().addDataReceiver(
+                    new WPILOGWriter(LogFileUtil.addPathSuffix(logPath, "_sim"))); // Save outputs to a new log
+
+            drive = new Drive(new DriveIO() {});
+            elevator = new Elevator(new ElevatorIO() {});
+            telescopingArm = new TelescopingArm(new TelescopingArmIO() {});
+            grabber = new Grabber(new GrabberIO() {});
+        }
+
+        Logger.getInstance().start(); // Start logging! No more data receivers, replay sources, or metadata values may be added
+
+        robotTracker = new RobotTracker();
+        visionHandler = new VisionHandler();
+
+        visionHandler.start();
+        robotTracker.start();
+        elevator.start();
+        telescopingArm.start();
+        grabber.start();
+        drive.start();
+
         xbox = new Controller(0);
         stick = new Controller(1);
         buttonPanel = new Controller(2);
 
-        startSubsystems();
         AutonomousContainer.getInstance().setDebugPrints(true);
         AutonomousContainer.getInstance().initialize(
                 true,
@@ -83,11 +134,8 @@ public class Robot extends TimedRobot {
         );
         AutonomousContainer.getInstance().getAutonomousNames().forEach(name -> autoChooser.addOption(name, name));
 
-        sideChooser.setDefaultOption("Blue", "blue");
+        sideChooser.addDefaultOption("Blue", "blue");
         sideChooser.addOption("Red", "red");
-
-        SmartDashboard.putData("Auto choices", autoChooser);
-        SmartDashboard.putData("Red or Blue", sideChooser);
 
         if (IS_PRACTICE) {
             for (int i = 0; i < 10; i++) {
@@ -106,15 +154,16 @@ public class Robot extends TimedRobot {
      */
     @Override
     public void robotPeriodic() {
+        AbstractSubsystem.tick();
     }
 
 
     @Override
     public void autonomousInit() {
-        drive.configBrake();
-        String autoName = autoChooser.getSelected();
+        drive.setBrakeMode(true);
+        String autoName = autoChooser.get();
         if (autoName != null) {
-            AutonomousContainer.getInstance().runAutonomous(autoName, sideChooser.getSelected(), true);
+            AutonomousContainer.getInstance().runAutonomous(autoName, sideChooser.get(), true);
         }
     }
 
@@ -133,16 +182,16 @@ public class Robot extends TimedRobot {
      */
     @Override
     public void teleopInit() {
-        drive.configBrake();
+        drive.setBrakeMode(true);
     }
 
 
     private @Nullable Pose2d teleopDrivingAutoAlignPosition = new Pose2d();
 
     {
-        logData("Auto Align Y", teleopDrivingAutoAlignPosition.getY());
-        logData("Auto Align X", teleopDrivingAutoAlignPosition.getX());
-        logData("Auto Align Angle", teleopDrivingAutoAlignPosition.getRotation().getDegrees());
+        Logger.getInstance().recordOutput("Auto Align Y", teleopDrivingAutoAlignPosition.getY());
+        Logger.getInstance().recordOutput("Auto Align X", teleopDrivingAutoAlignPosition.getX());
+        Logger.getInstance().recordOutput("Auto Align Angle", teleopDrivingAutoAlignPosition.getRotation().getDegrees());
     }
 
     /**
@@ -218,9 +267,9 @@ public class Robot extends TimedRobot {
             }
         }
 
-        logData("Auto Align Y", y);
-        logData("Auto Align X", x);
-        logData("Auto Align Angle", rotation.getDegrees());
+        Logger.getInstance().recordOutput("Auto Align Y", y);
+        Logger.getInstance().recordOutput("Auto Align X", x);
+        Logger.getInstance().recordOutput("Auto Align Angle", rotation.getDegrees());
 
         teleopDrivingAutoAlignPosition = new Pose2d(x, y, rotation);
     }
@@ -242,7 +291,7 @@ public class Robot extends TimedRobot {
     @Override
     public void disabledPeriodic() {
         if (Timer.getFPGATimestamp() - disabledTime > Constants.COAST_AFTER_DISABLE_TIME) {
-            drive.configCoast();
+            drive.setBrakeMode(false);
         }
     }
 
@@ -252,7 +301,6 @@ public class Robot extends TimedRobot {
      */
     @Override
     public void testInit() {
-        drive.setDriveState(DriveState.TELEOP);
     }
 
 
@@ -264,14 +312,8 @@ public class Robot extends TimedRobot {
         xbox.update();
         if (xbox.getRawButton(XboxButtons.X) && xbox.getRawButton(XboxButtons.B)
                 && xbox.getRisingEdge(XboxButtons.X) && xbox.getRisingEdge(XboxButtons.B)) {
-            drive.setAbsoluteZeros();
+            drive.resetAbsoluteZeros();
         }
-    }
-
-    public void startSubsystems() {
-        drive.start();
-        robotTracker.start();
-        visionHandler.start();
     }
 
     private ControllerDriveInputs getControllerDriveInputs() {
@@ -284,14 +326,31 @@ public class Robot extends TimedRobot {
         }
     }
 
-
-    NetworkTable loggingTable = NetworkTableInstance.getDefault().getTable("Robot");
-
-    public void logData(@NotNull String key, @NotNull Object value) {
-        loggingTable.getEntry(key).setValue(value);
+    public boolean isRed() {
+        return sideChooser.get().equals("red");
     }
 
-    public boolean isRed() {
-        return sideChooser.getSelected().equals("red");
+    public static @NotNull Drive getDrive() {
+        return drive;
+    }
+
+    public static @NotNull RobotTracker getRobotTracker() {
+        return robotTracker;
+    }
+
+    public static @NotNull VisionHandler getVisionHandler() {
+        return visionHandler;
+    }
+
+    public static @NotNull Grabber getGrabber() {
+        return grabber;
+    }
+
+    public static @NotNull TelescopingArm getTelescopingArm() {
+        return telescopingArm;
+    }
+
+    public static @NotNull Elevator getElevator() {
+        return elevator;
     }
 }
