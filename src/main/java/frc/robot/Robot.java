@@ -46,6 +46,7 @@ import org.littletonrobotics.junction.wpilog.WPILOGReader;
 import org.littletonrobotics.junction.wpilog.WPILOGWriter;
 
 import static frc.robot.Constants.*;
+import static java.lang.Math.abs;
 
 
 /**
@@ -213,6 +214,12 @@ public class Robot extends LoggedRobot {
 
     private boolean isGrabberOpen = false;
 
+    private double wantedX = -0.489;
+    private double wantedY = 0.249;
+    private double wantedAngle = MAX_WRIST_ANGLE - 2;
+
+    private final boolean arcadeMode = true;
+
     /**
      * This method is called periodically during operator control.
      */
@@ -275,20 +282,44 @@ public class Robot extends LoggedRobot {
             }
         }
 
-        switch (wantedMechanismState) {
-            case STOWED -> mechanismStateManager.setState(MechanismStates.STOWED);
-            case SCORING -> {
-                int level = scoringPositionManager.getSelectedPosition().getLevel();
-                if (level == 0) {
-                    mechanismStateManager.setState(MechanismStates.LOW_SCORING);
-                } else if (level == 1) {
-                    mechanismStateManager.setState(MechanismStates.MIDDLE_SCORING);
-                } else if (level == 2) {
-                    mechanismStateManager.setState(MechanismStates.HIGH_SCORING);
+        if (!arcadeMode) {
+            switch (wantedMechanismState) {
+                case STOWED -> mechanismStateManager.setState(MechanismStates.STOWED);
+                case SCORING -> {
+                    int level = scoringPositionManager.getSelectedPosition().getLevel();
+                    if (level == 0) {
+                        mechanismStateManager.setState(MechanismStates.LOW_SCORING);
+                    } else if (level == 1) {
+                        mechanismStateManager.setState(MechanismStates.MIDDLE_SCORING);
+                    } else if (level == 2) {
+                        mechanismStateManager.setState(MechanismStates.HIGH_SCORING);
+                    }
                 }
+                case FLOOR_PICKUP -> mechanismStateManager.setState(MechanismStates.FLOOR_PICKUP);
+                case STATION_PICKUP -> mechanismStateManager.setState(MechanismStates.STATION_PICKUP);
             }
-            case FLOOR_PICKUP -> mechanismStateManager.setState(MechanismStates.FLOOR_PICKUP);
-            case STATION_PICKUP -> mechanismStateManager.setState(MechanismStates.STATION_PICKUP);
+        } else {
+            var inputs = new ControllerDriveInputs(stick.getRawAxis(0), stick.getRawAxis(1), stick.getRawAxis(3));
+            inputs.applyDeadZone(0.2, 0.2, 0.25, 0.2);
+            inputs.squareInputs();
+            wantedAngle += inputs.getY();
+            var dx = -buttonPanel.getRawAxis(0);
+            var dy = buttonPanel.getRawAxis(1);
+
+            if (abs(dx) < 0.1) dx = 0;
+            if (abs(dy) < 0.1) dy = 0;
+            wantedX += dx / 50.0;
+            wantedY += dy / 50.0;
+
+            var wantedMechState = new MechanismStateManager.MechanismStateCoordinates(wantedX, wantedY, wantedAngle);
+            var limitedMechState = MechanismStateManager.limitCoordinates(wantedMechState);
+            wantedX = limitedMechState.xMeters();
+            wantedY = limitedMechState.yMeters();
+            wantedAngle = limitedMechState.grabberAngleDegrees();
+            mechanismStateManager.setState(new MechanismStateManager.MechanismStateCoordinates(wantedX, wantedY, wantedAngle));
+            Logger.getInstance().recordOutput("Robot/Wanted X", wantedX);
+            Logger.getInstance().recordOutput("Robot/Wanted Y", wantedY);
+            Logger.getInstance().recordOutput("Robot/Wanted Angle", wantedAngle);
         }
         Logger.getInstance().recordOutput("Robot/Wanted Mechanism State", wantedMechanismState.name());
 
