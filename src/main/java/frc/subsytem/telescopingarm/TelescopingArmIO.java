@@ -2,7 +2,7 @@ package frc.subsytem.telescopingarm;
 
 import org.littletonrobotics.junction.AutoLog;
 
-public class TelescopingArmIO {
+public abstract class TelescopingArmIO {
     @AutoLog
     public static class TelescopingArmInputs {
         double position = 0.0;
@@ -17,4 +17,6 @@ public class TelescopingArmIO {
     public void setTelescopingArmVoltage(double voltage) {}
 
     public void setTelescopingArmPosition(double position, double arbFFVoltage) {}
+
+    public void resetTelescopingArmPosition(double position) {}
 }

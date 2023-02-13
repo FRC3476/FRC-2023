@@ -15,10 +15,10 @@ import edu.wpi.first.math.numbers.N3;
 import edu.wpi.first.networktables.NetworkTable;
 import edu.wpi.first.networktables.NetworkTableEvent.Kind;
 import edu.wpi.first.networktables.NetworkTableInstance;
-import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.util.Color8Bit;
 import frc.robot.Robot;
 import frc.subsytem.AbstractSubsystem;
+import frc.subsytem.robottracker.RobotTracker;
 import org.jetbrains.annotations.NotNull;
 import org.littletonrobotics.junction.Logger;
 
@@ -26,9 +26,9 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.EnumSet;
 
-import static frc.robot.Constants.FIELD_HEIGHT_METERS;
-import static frc.robot.Constants.FIELD_WIDTH_METERS;
+import static frc.robot.Constants.*;
 import static java.lang.Math.cos;
+import static org.joml.Math.tan;
 
 /**
  * Gives pose estimates based on april tag vision
@@ -173,7 +173,12 @@ public class VisionHandler extends AbstractSubsystem {
                 new RobotState(poseToFeedToRobotTracker, data.timestamp, "Fed Vision Pose Tag: " + data.tagId));
         RobotPositionSender.addRobotPosition(
                 new RobotState(visionOnlyPose, data.timestamp, "Vision Only Pose Tag: " + data.tagId));
-        Robot.getRobotTracker().addVisionMeasurement(poseToFeedToRobotTracker, data.timestamp);
+        var defaultDevs = RobotTracker.DEFAULT_VISION_DEVIATIONS;
+        var distanceToTag = translation.getNorm();
+        var devs = VecBuilder.fill(defaultDevs.get(1, 1) * distanceToTag,
+                defaultDevs.get(1, 2) * distanceToTag,
+                Math.atan(tan(defaultDevs.get(1, 3)) * distanceToTag));
+        Robot.getRobotTracker().addVisionMeasurement(poseToFeedToRobotTracker, data.timestamp, devs);
 
         Logger.getInstance().recordOutput("VisionHandler/VisionOnlyPose/" + data.tagId, visionOnlyPose);
         Logger.getInstance().recordOutput("VisionHandler/FedPoses/" + data.tagId, poseToFeedToRobotTracker);
@@ -215,7 +220,7 @@ public class VisionHandler extends AbstractSubsystem {
          */
         public VisionUpdate(double[] data, int id) {
             this(data[0], data[1], data[2], data[3], data[4], data[5], data[6],
-                    Timer.getFPGATimestamp() - (data[7] / 1000.0), id);
+                    (Logger.getInstance().getRealTimestamp() * SECONDS_PER_MICROSECOND) - (data[7] / 1000.0), id);
         }
 
         public double[] toArray() {

@@ -88,11 +88,9 @@ public class DriveIOSparkMax extends DriveIO {
             swerveCanCoders = null;
         }
 
+
         for (int i = 0; i < 4; i++) {
-            if (isReal()) {
-                swerveMotors[i].restoreFactoryDefaults();
-                swerveDriveMotors[i].restoreFactoryDefaults();
-            }
+
             // Sets swerveMotors PID
             swerveMotors[i].getPIDController().setP(Constants.SWERVE_DRIVE_P);
             swerveMotors[i].getPIDController().setD(Constants.SWERVE_DRIVE_D);
@@ -141,6 +139,7 @@ public class DriveIOSparkMax extends DriveIO {
         }
     }
 
+    @Override
     protected void updateInputs(DriveInputsAutoLogged inputs) {
         inputs.driveMotorPositions = new double[4];
         inputs.driveMotorVelocities = new double[4];
@@ -159,7 +158,7 @@ public class DriveIOSparkMax extends DriveIO {
             inputs.driveMotorCurrents[i] = swerveDriveMotors[i].getOutputCurrent();
             inputs.driveMotorTemps[i] = swerveDriveMotors[i].getMotorTemperature();
             inputs.driveMotorVoltages[i] = swerveDriveMotors[i].getBusVoltage();
-            
+
             if (USE_CANCODERS) {
                 inputs.swerveMotorAbsolutePositions[i] = swerveCanCoders[i].getAbsolutePosition();
             } else {
@@ -234,6 +233,7 @@ public class DriveIOSparkMax extends DriveIO {
                 swerveSparkAbsoluteEncoder.setZeroOffset(
                         -(swerveSparkAbsoluteEncoder.getPosition() - swerveSparkAbsoluteEncoder.getZeroOffset())
                 );
+                swerveMotors[i].burnFlash();
             }
         }
     }

@@ -23,6 +23,7 @@ public final class Constants {
 
     public static final boolean IS_PRACTICE = Files.exists(new File("/home/lvuser/practice").toPath());
     public static final boolean USE_CANCODERS = false;
+    public static final double SECONDS_PER_MICROSECOND = 1e-6;
 
     // 2048 sensor units per revolution
     public static final double FALCON_ENCODER_TICKS_PER_ROTATIONS = 2048;
@@ -135,7 +136,7 @@ public final class Constants {
 
     public static final double EXPECTED_TELEOP_DRIVE_DT = 0.02;
 
-    public static final double EXPECTED_DRIVE_DT = NOMINAL_DT_MS / 1000.0;
+    public static final double NOMINAL_DT = NOMINAL_DT_MS / 1000.0;
 
     public static final int MAX_TELEOP_TURN_SPEED = 7;
     /**
@@ -147,41 +148,65 @@ public final class Constants {
     public static final double FIELD_HEIGHT_METERS = 8.0137;
     public static final double FIELD_WIDTH_METERS = 16.54175;
 
-    public static final double ALLOWED_SWERVE_ANGLE_ERROR = 2;
+    public static final double ALLOWED_SWERVE_ANGLE_ERROR = 0;
     public static final TrapezoidProfile.Constraints ELEVATOR_CONSTRAINTS
-            = new TrapezoidProfile.Constraints(3, 3);
-    public static final ElevatorFeedforward ELEVATOR_FEEDFORWARD = new ElevatorFeedforward(0, 0, 0, 0);
-    public static final double ELEVATOR_P = 5;
-    public static final double ELEVATOR_I = 5;
-    public static final double ELEVATOR_D = 5;
-    public static final double ELEVATOR_ROTATIONS_PER_METER = 5;
+            = new TrapezoidProfile.Constraints(3, 10);
+    public static final ElevatorFeedforward ELEVATOR_FEEDFORWARD = new ElevatorFeedforward(0, 0.58, 0, 0);
+
+    // 1 Meter divided by the circumference of the sprocket in meters
+    public static final double ELEVATOR_ROTATIONS_PER_METER = 1 / ((2 * Math.PI) / 39.37);
+    public static final double ELEVATOR_REDUCTION = 1.0 / 5.0;
+    public static final double ELEVATOR_P = 6;
+    public static final double ELEVATOR_I = .001;
+    public static final int ELEVATOR_D = 20;
+    public static final double ELEVATOR_IZONE = .05;
+
+    public static final double ELEVATOR_LOWER_LIMIT = .01;
+    public static final double ELEVATOR_UPPER_LIMIT = 1.20;
     public static final double ELEVATOR_NOMINAL_VOLTAGE = 9;
     public static final int ELEVATOR_SMART_CURRENT_LIMIT = 40;
-    public static final int ELEVATOR_MAIN_CAN_ID = 41;
+
+    // TODO: Figure out how much the elevator is angled at
+    public static final double ELEVATOR_TILT_RADIANS = Math.toRadians(64.24203436);
+    public static final double ELEVATOR_STALLING_CURRENT = 12;
+    public static final double ELEVATOR_MIN_HOME_TIME = 0.5;
+    public static final double MOTOR_SPEED_DECREASING_RATE = -0.1;
+
+    public static final int ELEVATOR_MAIN_CAN_ID = 40;
     public static final int ELEVATOR_FOLLOWER_CAN_ID = 42;
     public static final TrapezoidProfile.Constraints TELESCOPING_ARM_CONSTRAINTS
             = new TrapezoidProfile.Constraints(3, 3);
     public static final ElevatorFeedforward TELESCOPING_ARM_FEEDFORWARD = new ElevatorFeedforward(0, 0, 0, 0);
-    public static final int TELESCOPING_ARM_P = 5;
-    public static final int TELESCOPING_ARM_I = 5;
-    public static final int TELESCOPING_ARM_D = 5;
-    public static final int TELESCOPING_ARM_ROTATIONS_PER_METER = 5;
-    public static final int TELESCOPING_ARM_NOMINAL_VOLTAGE = 9;
-    public static final int TELESCOPING_ARM_SMART_CURRENT_LIMIT = 40;
-    public static final int TELESCOPING_ARM_CAN_ID = 43;
-    public static final ArmFeedforward GRABBER_FEEDFORWARD = new ArmFeedforward(0, 0, 0, 0);
+    public static final double TELESCOPING_ARM_P = 10;
+    public static final double TELESCOPING_ARM_I = 0.0;
+    public static final double TELESCOPING_ARM_D = 30.0;
+    public static final double TELESCOPING_ARM_ROTATIONS_PER_METER = 96.664 / (Math.PI);
+    public static final double TELESCOPING_ARM_NOMINAL_VOLTAGE = 9;
+    public static final int TELESCOPING_ARM_SMART_CURRENT_LIMIT = 30;
+    public static final int TELESCOPING_ARM_CAN_ID = 60;
+    public static final ArmFeedforward GRABBER_FEEDFORWARD = new ArmFeedforward(0.32, 0.34, 0, 0);
     public static final TrapezoidProfile.Constraints GRABBER_PIVOT_CONSTRAINTS
-            = new TrapezoidProfile.Constraints(3, 3);
-    public static final double GRABBER_P = 5;
-    public static final double GRABBER_I = 5;
-    public static final double GRABBER_D = 5;
-    public static final double GRABBER_ROTATIONS_PER_DEGREE = 5;
+            = new TrapezoidProfile.Constraints(10, 10);
+    public static final double PIVOT_P = 0.1;
+    public static final double PIVOT_I = 0.00;
+    public static final double PIVOT_D = 2;
+    public static final double PIVOT_ROTATIONS_PER_DEGREE = 1 / 5.4;
+    public static final double PIVOT_IZONE = 10;
     public static final double GRABBER_NOMINAL_VOLTAGE = 9;
-    public static final int GRABBER_SMART_CURRENT_LIMIT = 40;
+    public static final int GRABBER_SMART_CURRENT_LIMIT = 30;
     public static final int PIVOT_SMART_CURRENT_LIMIT = 40;
+    public static final int GRABBER_ROLLER_SMART_CURRENT_LIMIT = 30;
 
-    public static final int GRABBER_PIVOT_CAN_ID = 44;
-    public static final int GRABBER_CAN_ID = 45;
+    public static final int GRABBER_PIVOT_CAN_ID = 50;
+    public static final int GRABBER_CAN_ID = 51;
+    public static final int GRABBER_ROLLER_MAIN_CAN_ID = 52;
+    public static final int GRABBER_ROLLER_FOLLOWER_CAN_ID = 53;
+
+    public static final double GRABBER_ROLLER_VOLTAGE = -6;
+    public static final double GRABBER_ROLLER_IDLE = -0;
+
+    // TODO: FIND ACTUAL GRABBER LENGTH
+    public static final double GRABBER_LENGTH = .308;
 
     public enum KinematicLimits {
         /**
@@ -244,4 +269,13 @@ public final class Constants {
 
     public static final double PICKUP_POSITION_Y = -3.4199;
     public static final double PICKUP_POSITION_X_OFFSET_FROM_WALL = 0.7635;
+
+    // Constraints
+    // TODO: FIND REAL CONSTRAINTS
+    public static final double MAX_WRIST_ANGLE = 126;
+    public static final double MIN_WRIST_ANGLE = -90;
+    public static final double BASE_MIN_X = -.49;
+    public static final double BASE_MAX_X = .43;
+    public static final double MIN_Y = -0.03;
+    public static final double MAX_Y = 1.05;
 }

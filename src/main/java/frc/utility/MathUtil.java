@@ -45,4 +45,13 @@ public final class MathUtil {
 
         return (radians + Math.PI) % (2 * Math.PI) - Math.PI;
     }
+
+
+    public static double avg(double... values) {
+        double sum = 0;
+        for (double value : values) {
+            sum += value;
+        }
+        return sum / values.length;
+    }
 }

@@ -34,6 +34,9 @@ deploy {
                     jvmArgs.add("-Dcom.sun.management.jmxremote.ssl=false")
                     jvmArgs.add("-Dcom.sun.management.jmxremote.authenticate=false")
                     jvmArgs.add("-Djava.rmi.server.hostname=10.34.76.2")
+                    jvmArgs.add("-XX:+UnlockExperimentalVMOptions")
+                    jvmArgs.add("-Xmx30M")
+                    jvmArgs.add("-Xms30M")
                     jvmArgs.add("-Djoml.fastmath=true")
                 }
 
@@ -84,7 +87,7 @@ dependencies {
     implementation 'org.apache.commons:commons-math3:3.6.1'
     implementation 'com.google.guava:guava:31.1-jre'
 
-    implementation "com.dacubeking:autobuilder-robot:2.2.1"
+    implementation "com.dacubeking:autobuilder-robot:2.2.3"
     implementation 'org.joml:joml:1.10.4'
 
 

@@ -43,11 +43,16 @@ public class TelescopingArm extends AbstractSubsystem {
         if (trapezoidProfileStartTime == -1) {
             trapezoidProfileStartTime = currentTime;
         }
+        currentTime = 100000000;
         TrapezoidProfile.State state = trapezoidProfile.calculate(currentTime - trapezoidProfileStartTime);
-        double acceleration = (state.velocity - pastVelocity) / (currentTime - pastTime);
+        double acceleration = 0; // (state.velocity - pastVelocity) / (currentTime - pastTime);
 
-        io.setTelescopingArmPosition(state.position,
-                Constants.TELESCOPING_ARM_FEEDFORWARD.calculate(state.velocity, acceleration));
+        if (Math.abs(state.position - inputs.position) > 0.0001) {
+            io.setTelescopingArmPosition(state.position,
+                    Constants.TELESCOPING_ARM_FEEDFORWARD.calculate(state.velocity, acceleration));
+        } else {
+            io.setTelescopingArmVoltage(Constants.TELESCOPING_ARM_FEEDFORWARD.calculate(state.velocity, acceleration));
+        }
 
         pastVelocity = state.velocity;
         pastTime = currentTime;
@@ -63,5 +68,9 @@ public class TelescopingArm extends AbstractSubsystem {
     @Override
     public void selfTest() {
 
+    }
+
+    public double getPosition() {
+        return inputs.position;
     }
 }

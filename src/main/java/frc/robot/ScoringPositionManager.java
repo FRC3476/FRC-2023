@@ -6,6 +6,8 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.joml.Intersectiond;
 import org.joml.Vector2d;
+import org.littletonrobotics.junction.networktables.LoggedDashboardBoolean;
+import org.littletonrobotics.junction.networktables.LoggedDashboardString;
 
 import static frc.robot.Constants.*;
 
@@ -43,7 +45,6 @@ public class ScoringPositionManager {
      * On the blue alliance, the LEFT is a more positive Y value, and the RIGHT is a more negative Y value.
      */
     public enum SelectedPosition {
-        // TODO: make sure these are correct
         BOTTOM_LEFT(1, PositionType.BOTH),
         BOTTOM_MIDDLE(2, PositionType.BOTH),
         BOTTOM_RIGHT(3, PositionType.BOTH),
@@ -52,9 +53,9 @@ public class ScoringPositionManager {
         MIDDLE_MIDDLE(6, PositionType.CUBE),
         MIDDLE_RIGHT(7, PositionType.CONE),
 
-        TOP_LEFT(9, PositionType.CONE),
-        TOP_MIDDLE(10, PositionType.CUBE),
-        TOP_RIGHT(11, PositionType.CONE);
+        TOP_LEFT(11, PositionType.CONE),
+        TOP_MIDDLE(12, PositionType.CUBE),
+        TOP_RIGHT(9, PositionType.CONE);
 
 
         /**
@@ -82,6 +83,35 @@ public class ScoringPositionManager {
 
     private SelectedPosition selectedPosition = SelectedPosition.TOP_LEFT;
 
+    private final LoggedDashboardBoolean[] selectedPositions = new LoggedDashboardBoolean[9];
+
+    {
+        for (SelectedPosition value : SelectedPosition.values()) {
+            selectedPositions[value.ordinal()] = new LoggedDashboardBoolean("Selected Position " + value.name(), false);
+        }
+    }
+
+    private PositionType wantedPositionType = PositionType.CONE;
+
+    LoggedDashboardBoolean isCone = new LoggedDashboardBoolean("Is Cone", true);
+    LoggedDashboardBoolean isCube = new LoggedDashboardBoolean("Is Cube", false);
+    LoggedDashboardString wantedScoringPosition = new LoggedDashboardString("Wanted Scoring Position", selectedPosition.name());
+
+    LoggedDashboardBoolean doesWantedPositionTypeMatchSelectedPositionType =
+            new LoggedDashboardBoolean("Does Wanted Position Type Match Selected Position Type", true);
+
+
+    public PositionType getWantedPositionType() {
+        return wantedPositionType;
+    }
+
+    public boolean doesWantedPositionTypeMatchSelectedPositionType() {
+        if (wantedPositionType == PositionType.BOTH) {
+            return true;
+        }
+        return wantedPositionType == selectedPosition.positionType;
+    }
+
     /**
      * @param buttonPanel the controller that is used to select the position
      * @return if the position was changed
@@ -92,6 +122,26 @@ public class ScoringPositionManager {
             if (buttonPanel.getRisingEdge(value.buttonPanelIndex)) {
                 selectedPosition = value;
             }
+        }
+
+        if (buttonPanel.getRisingEdge(4)) {
+            wantedPositionType = PositionType.CONE;
+            isCone.set(true);
+            isCube.set(false);
+            doesWantedPositionTypeMatchSelectedPositionType.set(doesWantedPositionTypeMatchSelectedPositionType());
+        } else if (buttonPanel.getRisingEdge(8)) {
+            wantedPositionType = PositionType.CUBE;
+            isCone.set(false);
+            isCube.set(true);
+            doesWantedPositionTypeMatchSelectedPositionType.set(doesWantedPositionTypeMatchSelectedPositionType());
+        }
+
+        wantedScoringPosition.set(selectedPosition.name());
+
+        if (oldSelectedPosition != selectedPosition) {
+            selectedPositions[oldSelectedPosition.ordinal()].set(false);
+            selectedPositions[selectedPosition.ordinal()].set(true);
+            doesWantedPositionTypeMatchSelectedPositionType.set(doesWantedPositionTypeMatchSelectedPositionType());
         }
         return oldSelectedPosition != selectedPosition;
     }

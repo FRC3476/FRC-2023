@@ -13,19 +13,24 @@ import edu.wpi.first.wpilibj.GenericHID.RumbleType;
 import edu.wpi.first.wpilibj.PowerDistribution;
 import edu.wpi.first.wpilibj.PowerDistribution.ModuleType;
 import edu.wpi.first.wpilibj.Timer;
+import frc.robot.ScoringPositionManager.PositionType;
 import frc.subsytem.AbstractSubsystem;
 import frc.subsytem.Elevator.Elevator;
 import frc.subsytem.Elevator.ElevatorIO;
 import frc.subsytem.Elevator.ElevatorIOSparkMax;
+import frc.subsytem.MechanismStateManager;
+import frc.subsytem.MechanismStateManager.MechanismStates;
 import frc.subsytem.drive.Drive;
 import frc.subsytem.drive.DriveIO;
 import frc.subsytem.drive.DriveIOSparkMax;
 import frc.subsytem.grabber.Grabber;
+import frc.subsytem.grabber.Grabber.GrabState;
 import frc.subsytem.grabber.GrabberIO;
 import frc.subsytem.grabber.GrabberIOSparkMax;
 import frc.subsytem.robottracker.RobotTracker;
 import frc.subsytem.telescopingarm.TelescopingArm;
 import frc.subsytem.telescopingarm.TelescopingArmIO;
+import frc.subsytem.telescopingarm.TelescopingArmIOSparkMax;
 import frc.subsytem.vision.VisionHandler;
 import frc.utility.Controller;
 import frc.utility.Controller.XboxButtons;
@@ -41,6 +46,7 @@ import org.littletonrobotics.junction.wpilog.WPILOGReader;
 import org.littletonrobotics.junction.wpilog.WPILOGWriter;
 
 import static frc.robot.Constants.*;
+import static java.lang.Math.abs;
 
 
 /**
@@ -59,6 +65,7 @@ public class Robot extends LoggedRobot {
     private @NotNull static Elevator elevator;
     private @NotNull static TelescopingArm telescopingArm;
     private @NotNull static Grabber grabber;
+    private @NotNull static MechanismStateManager mechanismStateManager;
 
 
     private @NotNull Controller xbox;
@@ -85,7 +92,7 @@ public class Robot extends LoggedRobot {
 
             drive = new Drive(new DriveIOSparkMax());
             elevator = new Elevator(new ElevatorIOSparkMax());
-            telescopingArm = new TelescopingArm(new TelescopingArmIO());
+            telescopingArm = new TelescopingArm(new TelescopingArmIOSparkMax());
             grabber = new Grabber(new GrabberIOSparkMax());
         } else {
             setUseTiming(false); // Run as fast as possible
@@ -104,13 +111,17 @@ public class Robot extends LoggedRobot {
 
         robotTracker = new RobotTracker();
         visionHandler = new VisionHandler();
+        mechanismStateManager = new MechanismStateManager();
+
 
         visionHandler.start();
         robotTracker.start();
+        mechanismStateManager.start();
         elevator.start();
         telescopingArm.start();
         grabber.start();
         drive.start();
+        ScoringPositionManager.getInstance();
 
         xbox = new Controller(0);
         stick = new Controller(1);
@@ -194,12 +205,28 @@ public class Robot extends LoggedRobot {
         Logger.getInstance().recordOutput("Auto Align Angle", teleopDrivingAutoAlignPosition.getRotation().getDegrees());
     }
 
+
+    enum WantedMechanismState {
+        STOWED, SCORING, FLOOR_PICKUP, STATION_PICKUP
+    }
+
+    private WantedMechanismState wantedMechanismState = WantedMechanismState.STOWED;
+
+    private boolean isGrabberOpen = false;
+
+    private double wantedX = -0.489;
+    private double wantedY = 0.249;
+    private double wantedAngle = MAX_WRIST_ANGLE - 2;
+
+    private final boolean arcadeMode = true;
+
     /**
      * This method is called periodically during operator control.
      */
     @Override
     public void teleopPeriodic() {
         xbox.update();
+        stick.update();
         buttonPanel.update();
         double wantedRumble = 0;
 
@@ -209,26 +236,116 @@ public class Robot extends LoggedRobot {
             teleopDrivingAutoAlignPosition = null;
         }
 
-        if (xbox.getRawButton(XboxButtons.START)) { //Should be remapped to one of the back buttons
-            if (xbox.getRisingEdge(XboxButtons.START) || teleopDrivingAutoAlignPosition == null) {
-                updateTeleopDrivingTarget(scoringPositionManager);
-                assert teleopDrivingAutoAlignPosition != null;
-            }
-
-            if (!drive.driveToPosition(
-                    teleopDrivingAutoAlignPosition.getTranslation(),
-                    teleopDrivingAutoAlignPosition.getRotation(),
-                    getControllerDriveInputs()
-            )) {
-                // We failed to generate a trajectory
-                wantedRumble = 1;
-            }
-        } else {
-            drive.swerveDriveFieldRelative(getControllerDriveInputs());
-        }
+//        if (xbox.getRawButton(XboxButtons.START)) { //Should be remapped to one of the back buttons
+//            if (xbox.getRisingEdge(XboxButtons.START) || teleopDrivingAutoAlignPosition == null) {
+//                updateTeleopDrivingTarget(scoringPositionManager);
+//                assert teleopDrivingAutoAlignPosition != null;
+//            }
+//
+//            if (!drive.driveToPosition(
+//                    teleopDrivingAutoAlignPosition.getTranslation(),
+//                    teleopDrivingAutoAlignPosition.getRotation(),
+//                    getControllerDriveInputs()
+//            )) {
+//                // We failed to generate a trajectory
+//                wantedRumble = 1;
+//            }
+//        } else {
+//            drive.swerveDriveFieldRelative(getControllerDriveInputs());
+//        }
 
         if (xbox.getRisingEdge(XboxButtons.A)) {
             robotTracker.resetPose(new Pose2d(robotTracker.getLatestPose().getTranslation(), new Rotation2d()));
+        }
+
+        if (stick.getRisingEdge(7)) {
+            if (wantedMechanismState == WantedMechanismState.STOWED) {
+                wantedMechanismState = WantedMechanismState.SCORING;
+            } else {
+                wantedMechanismState = WantedMechanismState.STOWED;
+            }
+        }
+
+        if (stick.getRisingEdge(9)) {
+            if (wantedMechanismState == WantedMechanismState.STOWED) {
+                wantedMechanismState = WantedMechanismState.FLOOR_PICKUP;
+            } else {
+                wantedMechanismState = WantedMechanismState.STOWED;
+            }
+        }
+
+        if (stick.getRisingEdge(11)) {
+            if (wantedMechanismState == WantedMechanismState.STOWED) {
+                wantedMechanismState = WantedMechanismState.STATION_PICKUP;
+            } else {
+                wantedMechanismState = WantedMechanismState.STOWED;
+            }
+        }
+
+        if (!arcadeMode) {
+            switch (wantedMechanismState) {
+                case STOWED -> mechanismStateManager.setState(MechanismStates.STOWED);
+                case SCORING -> {
+                    int level = scoringPositionManager.getSelectedPosition().getLevel();
+                    if (level == 0) {
+                        mechanismStateManager.setState(MechanismStates.LOW_SCORING);
+                    } else if (level == 1) {
+                        mechanismStateManager.setState(MechanismStates.MIDDLE_SCORING);
+                    } else if (level == 2) {
+                        mechanismStateManager.setState(MechanismStates.HIGH_SCORING);
+                    }
+                }
+                case FLOOR_PICKUP -> mechanismStateManager.setState(MechanismStates.FLOOR_PICKUP);
+                case STATION_PICKUP -> mechanismStateManager.setState(MechanismStates.STATION_PICKUP);
+            }
+        } else {
+            var inputs = new ControllerDriveInputs(stick.getRawAxis(0), stick.getRawAxis(1), stick.getRawAxis(3));
+            inputs.applyDeadZone(0.2, 0.2, 0.25, 0.2);
+            inputs.squareInputs();
+            wantedAngle += inputs.getY();
+            var dx = -buttonPanel.getRawAxis(0);
+            var dy = buttonPanel.getRawAxis(1);
+
+            if (abs(dx) < 0.1) dx = 0;
+            if (abs(dy) < 0.1) dy = 0;
+            wantedX += dx / 50.0;
+            wantedY += dy / 50.0;
+
+            var wantedMechState = new MechanismStateManager.MechanismStateCoordinates(wantedX, wantedY, wantedAngle);
+            var limitedMechState = MechanismStateManager.limitCoordinates(wantedMechState);
+            wantedX = limitedMechState.xMeters();
+            wantedY = limitedMechState.yMeters();
+            wantedAngle = limitedMechState.grabberAngleDegrees();
+            mechanismStateManager.setState(new MechanismStateManager.MechanismStateCoordinates(wantedX, wantedY, wantedAngle));
+            Logger.getInstance().recordOutput("Robot/Wanted X", wantedX);
+            Logger.getInstance().recordOutput("Robot/Wanted Y", wantedY);
+            Logger.getInstance().recordOutput("Robot/Wanted Angle", wantedAngle);
+        }
+        Logger.getInstance().recordOutput("Robot/Wanted Mechanism State", wantedMechanismState.name());
+
+        if (xbox.getRisingEdge(XboxButtons.B)) {
+            isGrabberOpen = !isGrabberOpen;
+
+            if (isGrabberOpen) {
+                grabber.setGrabState(GrabState.OPEN);
+            } else {
+                if (scoringPositionManager.getWantedPositionType() == PositionType.CONE) {
+                    grabber.setGrabState(GrabState.GRAB_CONE);
+                } else {
+                    grabber.setGrabState(GrabState.GRAB_CUBE);
+                }
+            }
+        }
+
+        Logger.getInstance().recordOutput("Robot/Is Grabber Open", isGrabberOpen);
+
+        if ((wantedMechanismState == WantedMechanismState.FLOOR_PICKUP || wantedMechanismState == WantedMechanismState.STATION_PICKUP)
+                && isGrabberOpen) {
+            grabber.setRollerVoltage(GRABBER_ROLLER_VOLTAGE);
+        } else if (!isGrabberOpen) {
+            grabber.setRollerVoltage(GRABBER_ROLLER_IDLE);
+        } else {
+            grabber.setRollerVoltage(0);
         }
 
         xbox.setRumble(RumbleType.kBothRumble, wantedRumble);
