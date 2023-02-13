@@ -64,11 +64,11 @@ public class Grabber extends AbstractSubsystem {
         Logger.getInstance().recordOutput("Pivot/Total trapezoidProfile time", trapezoidProfile.totalTime());
         Logger.getInstance().recordOutput("Pivot/Profile length", currentTime - trapezoidProfileStartTime);
         Logger.getInstance().recordOutput("Pivot/TrapezoidProfile error", state.position - inputs.pivotPosition);
-        Logger.getInstance().recordOutput("Pivot/Arb FF current", arbFFVoltage);
+        Logger.getInstance().recordOutput("Pivot/Arb FF", arbFFVoltage);
     }
 
     public enum GrabState {
-        OPEN(1),
+        OPEN(2),
         GRAB_CUBE(-1),
         GRAB_CONE(-3);
         final double current;
