@@ -61,10 +61,12 @@ public class MechanismStateManager extends AbstractSubsystem {
      * lowered elevator and a horizontally level wrist. Origin measured from the tip of the grabber in the center.
      */
     public static MechanismStateSubsystemPositions coordinatesToSubsystemPositions(MechanismStateCoordinates mechanismState) {
+        double x = mechanismState.xMeters() + Constants.GRABBER_LENGTH;
+        double y = mechanismState.yMeters();
+        double angleRad = mechanismState.grabberAngleRadians();
 
         // Move elevator second to satisfy y keeping in mind that wrist already satisfies some of y
-        double elevatorYOnlyMovement =
-                mechanismState.yMeters - Constants.GRABBER_LENGTH * Math.sin(mechanismState.grabberAngleRadians());
+        double elevatorYOnlyMovement = y - Constants.GRABBER_LENGTH * Math.sin(angleRad);
 
         // Converts the y component of the elevator into an the actual amount the elevator needs to drive on the tilt
         double elevatorRealMovement = elevatorYOnlyMovement / Math.sin(Constants.ELEVATOR_TILT_RADIANS);
@@ -73,11 +75,9 @@ public class MechanismStateManager extends AbstractSubsystem {
         double elevatorXOnlyMovement = elevatorYOnlyMovement / Math.tan(Constants.ELEVATOR_TILT_RADIANS);
 
         // Move arm third to satisfy x keeping in mind that the elevator and grabber already satisfies some of x
-        double telescopingArmMovement = mechanismState.xMeters - elevatorXOnlyMovement
-                - Constants.GRABBER_LENGTH * Math.cos(mechanismState.grabberAngleRadians());
+        double telescopingArmMovement = x - elevatorXOnlyMovement - Constants.GRABBER_LENGTH * Math.cos(angleRad);
 
-        return new MechanismStateSubsystemPositions(elevatorRealMovement, telescopingArmMovement,
-                mechanismState.grabberAngleDegrees);
+        return new MechanismStateSubsystemPositions(elevatorRealMovement, telescopingArmMovement, angleRad);
     }
 
     public static MechanismStateCoordinates limitCoordinates(MechanismStateCoordinates mechanismState) {
@@ -92,44 +92,30 @@ public class MechanismStateManager extends AbstractSubsystem {
         }
 
         // Check to make sure desires x, y, and wristAngle are not outside of the allowed range
+
         double wristX = Constants.GRABBER_LENGTH * Math.cos(Math.toRadians(mutableWristAngle));
         double wristY = Constants.GRABBER_LENGTH * Math.sin(Math.toRadians(mutableWristAngle));
 
         // Add constraints for allowed y for certain wrist angles
-        if (mutableWristAngle > 0) {
-            if (mutableY > Constants.MAX_Y) {
-                mutableY = Constants.MAX_Y;
-            } else if (mutableY < Constants.MAX_Y + wristY) {
-                // Makes sure that elevator doesn't try to go below allowed amount so it can tilt the grabber down to meet the max y
-                mutableY = Constants.MAX_Y + wristY;
-            }
-        } else {
-            if (mutableY > Constants.MAX_Y - wristY) {
-                // Makes sure that elevator doesn't try to go above allowed amount so it can tilt the grabber up to meet the min y
-                mutableY = Constants.MAX_Y - wristY;
-            } else if (mutableY < Constants.MIN_Y) {
-                mutableY = Constants.MIN_Y;
-            }
+        if (mutableY > Constants.MAX_Y + wristY) {
+            mutableY = Constants.MAX_Y + wristY;
+        } else if (mutableY < Constants.MIN_Y) {
+            // Makes sure that elevator doesn't try to go below allowed amount so it can tilt the grabber down to meet the max y
+            mutableY = Constants.MAX_Y;
+        } else if (mutableY < wristY) {
+            mutableY = wristY;
         }
 
-        // Calculate the minX and maxX based on desired y
-        double dynamicMinX = Constants.BASE_MIN_X + (mutableY / Math.tan(Constants.ELEVATOR_TILT_RADIANS));
-        double dynamicMaxX = Constants.BASE_MAX_X + (mutableY / Math.tan(Constants.ELEVATOR_TILT_RADIANS));
 
-        // Add constraints for allowed x for certain wrist angles
-        if (mutableWristAngle > 90 || mutableWristAngle < -90) {
-            if (mutableX > dynamicMaxX + wristX) {
-                mutableX = dynamicMaxX + wristX;
-            } else if (mutableX < dynamicMinX) {
-                // Makes sure that elevator doesn't try to go below allowed amount so it can tilt the grabber up to meet the min X
-                mutableX = dynamicMinX;
-            }
-        } else {
-            if (mutableX > dynamicMaxX) {
-                mutableX = dynamicMaxX;
-            } else if (mutableX < dynamicMinX - wristX) {
-                mutableX = dynamicMinX - wristX;
-            }
+        // Calculate the minX and maxX based on desired y
+        double dynamicMinX = (mutableY / Math.tan(Constants.ELEVATOR_TILT_RADIANS)) - Constants.GRABBER_LENGTH + wristX;
+        double dynamicMaxX = (mutableY / Math.tan(Constants.ELEVATOR_TILT_RADIANS)) - Constants.GRABBER_LENGTH + wristX;
+
+
+        if (mutableX < dynamicMinX) {
+            mutableX = dynamicMinX;
+        } else if (mutableX > dynamicMaxX) {
+            mutableX = dynamicMaxX;
         }
 
         return new MechanismStateCoordinates(mutableX, mutableY, mutableWristAngle);
@@ -140,7 +126,7 @@ public class MechanismStateManager extends AbstractSubsystem {
      */
     private MechanismStateCoordinates getCurrentCoordinates() {
         // Find x coordinate
-        double x = 0;
+        double x = -Constants.GRABBER_LENGTH;
 
         // Determine how much the elevator contributes to x
         x += Math.cos(Constants.ELEVATOR_TILT_RADIANS) * Robot.getElevator().getPosition();
