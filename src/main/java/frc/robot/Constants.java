@@ -206,7 +206,7 @@ public final class Constants {
     public static final double GRABBER_ROLLER_IDLE = -0;
 
     // TODO: FIND ACTUAL GRABBER LENGTH
-    public static final double GRABBER_LENGTH = .368;
+    public static final double GRABBER_LENGTH = .308;
 
     public enum KinematicLimits {
         /**
@@ -273,9 +273,9 @@ public final class Constants {
     // Constraints
     // TODO: FIND REAL CONSTRAINTS
     public static final double MAX_WRIST_ANGLE = 126;
-    public static final double MIN_WRIST_ANGLE = -45;
-    public static final double BASE_MIN_X = -.1;
-    public static final double BASE_MAX_X = 1;
-    public static final double MIN_Y = 0;
-    public static final double MAX_Y = 1;
+    public static final double MIN_WRIST_ANGLE = -90;
+    public static final double BASE_MIN_X = -.49;
+    public static final double BASE_MAX_X = .43;
+    public static final double MIN_Y = -0.03;
+    public static final double MAX_Y = 1.05;
 }
