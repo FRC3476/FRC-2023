@@ -64,7 +64,7 @@ public class MechanismStateManager extends AbstractSubsystem {
 
         // Move elevator second to satisfy y keeping in mind that wrist already satisfies some of y
         double elevatorYOnlyMovement =
-                mechanismState.yMeters - Constants.GRABBER_LENGTH * Math.sin(Math.toRadians(mechanismState.grabberAngleDegrees));
+                mechanismState.yMeters - Constants.GRABBER_LENGTH * Math.sin(mechanismState.grabberAngleRadians());
 
         // Converts the y component of the elevator into an the actual amount the elevator needs to drive on the tilt
         double elevatorRealMovement = elevatorYOnlyMovement / Math.sin(Constants.ELEVATOR_TILT_RADIANS);
@@ -74,7 +74,7 @@ public class MechanismStateManager extends AbstractSubsystem {
 
         // Move arm third to satisfy x keeping in mind that the elevator and grabber already satisfies some of x
         double telescopingArmMovement = mechanismState.xMeters - elevatorXOnlyMovement
-                - Constants.GRABBER_LENGTH * Math.cos(Math.toRadians(mechanismState.grabberAngleDegrees));
+                - Constants.GRABBER_LENGTH * Math.cos(mechanismState.grabberAngleRadians());
 
         return new MechanismStateSubsystemPositions(elevatorRealMovement, telescopingArmMovement,
                 mechanismState.grabberAngleDegrees);
@@ -146,7 +146,10 @@ public class MechanismStateManager extends AbstractSubsystem {
         x += Math.cos(Constants.ELEVATOR_TILT_RADIANS) * Robot.getElevator().getPosition();
 
         // Determine how much the grabber contributes to x
-        x += Constants.GRABBER_LENGTH * Math.cos(Math.toDegrees(Robot.getGrabber().getPivotDegrees()));
+        x += Constants.GRABBER_LENGTH * Math.cos(Math.toRadians(Robot.getGrabber().getPivotDegrees()));
+
+        // Determine how much the telescoping arm contributes y
+        x += Robot.getTelescopingArm().getPosition();
 
         // Find y coordinate
         double y = 0;
@@ -154,11 +157,8 @@ public class MechanismStateManager extends AbstractSubsystem {
         // Determine how much the elevator contributes to y
         y += Math.sin(Constants.ELEVATOR_TILT_RADIANS) * Robot.getElevator().getPosition();
 
-        // Determine how much the telescoping arm contributes y
-        y += Robot.getTelescopingArm().getPosition();
-
         // Determine how much the grabber contributes to y
-        y += Constants.GRABBER_LENGTH * Math.sin(Math.toDegrees(Robot.getGrabber().getPivotDegrees()));
+        y += Constants.GRABBER_LENGTH * Math.sin(Math.toRadians(Robot.getGrabber().getPivotDegrees()));
 
         double wristAngle = Robot.getGrabber().getPivotDegrees();
 
@@ -195,5 +195,13 @@ public class MechanismStateManager extends AbstractSubsystem {
         Logger.getInstance().recordOutput("MechanismStateManager/Current Y", getCurrentCoordinates().yMeters);
         Logger.getInstance().recordOutput("MechanismStateManager/Current Grabber Degrees",
                 getCurrentCoordinates().grabberAngleDegrees);
+
+        MechanismStateSubsystemPositions currentPositions = coordinatesToSubsystemPositions(getCurrentCoordinates());
+        Logger.getInstance().recordOutput("MechanismStateManager/Recalculated Elevator Position",
+                currentPositions.elevatorPositionMeters);
+        Logger.getInstance().recordOutput("MechanismStateManager/Recalculated Telescoping Position",
+                currentPositions.telescopingArmPositionMeters());
+        Logger.getInstance().recordOutput("MechanismStateManager/Recalculated Grabber Angle",
+                currentPositions.grabberAngleDegrees);
     }
 }
