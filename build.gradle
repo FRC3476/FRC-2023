@@ -35,7 +35,8 @@ deploy {
                     jvmArgs.add("-Dcom.sun.management.jmxremote.authenticate=false")
                     jvmArgs.add("-Djava.rmi.server.hostname=10.34.76.2")
                     jvmArgs.add("-XX:+UnlockExperimentalVMOptions")
-                    jvmArgs.add("-Xmx128M")
+                    jvmArgs.add("-Xmx30M")
+                    jvmArgs.add("-Xms30M")
                     jvmArgs.add("-Djoml.fastmath=true")
                 }
 
