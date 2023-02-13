@@ -24,8 +24,14 @@ public class ElevatorIOSparkMax extends ElevatorIO {
         pidController.setD(Constants.ELEVATOR_D);
         pidController.setIZone(Constants.ELEVATOR_IZONE);
 
+        resetPosition(0);
+
         //initializeMotor(elevatorFollower);
         elevatorFollower.follow(elevatorMain);
+        if (isReal()) {
+            elevatorMain.burnFlash();
+            elevatorFollower.burnFlash();
+        }
     }
 
     private void initializeMotor(CANSparkMax motor) {
@@ -39,11 +45,6 @@ public class ElevatorIOSparkMax extends ElevatorIO {
         motor.getEncoder().setPositionConversionFactor(ELEVATOR_REDUCTION / ELEVATOR_ROTATIONS_PER_METER);
         motor.getEncoder().setVelocityConversionFactor((ELEVATOR_REDUCTION / ELEVATOR_ROTATIONS_PER_METER) / SECONDS_PER_MINUTE);
         motor.setInverted(false);
-
-
-        if (isReal()) {
-            motor.burnFlash();
-        }
     }
 
     @Override
