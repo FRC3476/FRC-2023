@@ -49,7 +49,7 @@ public final class RobotTracker extends AbstractSubsystem {
     private double angularRate = 0;
 
 
-    private final Matrix<N3, N1> defaultVisionMeasurementStdDevs = VecBuilder.fill(0.9, 0.9, 0.9);
+    public static final Matrix<N3, N1> DEFAULT_VISION_DEVIATIONS = VecBuilder.fill(0.03, 0.03, Math.toRadians(3));
 
     private final SwerveDrivePoseEstimator swerveDriveOdometry;
 
@@ -95,8 +95,8 @@ public final class RobotTracker extends AbstractSubsystem {
                 gyroInputs.rotation2d,
                 Robot.getDrive().getModulePositions(),
                 new Pose2d(),
-                VecBuilder.fill(0.1, 0.1, 0.1),
-                defaultVisionMeasurementStdDevs
+                VecBuilder.fill(0.1, 0.1, 0.01),
+                DEFAULT_VISION_DEVIATIONS
         );
 
         new ScheduledThreadPoolExecutor(1).scheduleAtFixedRate(this::updateGyroHistory, 0, 1,
@@ -206,7 +206,7 @@ public final class RobotTracker extends AbstractSubsystem {
 
         for (VisionMeasurement visionMeasurement : visionMeasurementsCopy) {
             swerveDriveOdometry.addVisionMeasurement(visionMeasurement.pose(), visionMeasurement.timestamp(),
-                    visionMeasurement.visionMeasurementStds().orElse(defaultVisionMeasurementStdDevs));
+                    visionMeasurement.visionMeasurementStds().orElse(DEFAULT_VISION_DEVIATIONS));
         }
 
         @Nullable Translation2d velocity = null;
