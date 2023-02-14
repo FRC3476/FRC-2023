@@ -13,6 +13,7 @@ import com.revrobotics.SparkMaxAbsoluteEncoder.Type;
 import frc.robot.Constants;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.littletonrobotics.junction.Logger;
 
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -151,6 +152,8 @@ public class DriveIOSparkMax extends DriveIO {
         inputs.swerveMotorTemps = new double[4];
         inputs.driveMotorVoltages = new double[4];
         inputs.swerveMotorVoltages = new double[4];
+
+        inputs.driveIoTimestamp = Logger.getInstance().getRealTimestamp() * SECONDS_PER_MICROSECOND;
 
         for (int i = 0; i < 4; i++) {
             inputs.driveMotorPositions[i] = swerveDriveMotors[i].getEncoder().getPosition();

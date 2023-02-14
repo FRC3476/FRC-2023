@@ -592,4 +592,11 @@ public final class Drive extends AbstractSubsystem {
     public synchronized void setBrakeMode(boolean brake) {
         io.setBrakeMode(brake);
     }
+
+    /**
+     * @return the timestamp of the last IO update in seconds
+     */
+    public synchronized double getIoTimestamp() {
+        return inputs.driveIoTimestamp;
+    }
 }

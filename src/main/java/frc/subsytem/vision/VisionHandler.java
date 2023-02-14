@@ -10,7 +10,10 @@ import edu.wpi.first.apriltag.AprilTagFieldLayout;
 import edu.wpi.first.apriltag.AprilTagFields;
 import edu.wpi.first.math.VecBuilder;
 import edu.wpi.first.math.Vector;
-import edu.wpi.first.math.geometry.*;
+import edu.wpi.first.math.geometry.Pose3d;
+import edu.wpi.first.math.geometry.Quaternion;
+import edu.wpi.first.math.geometry.Rotation3d;
+import edu.wpi.first.math.geometry.Translation3d;
 import edu.wpi.first.math.numbers.N3;
 import edu.wpi.first.networktables.NetworkTable;
 import edu.wpi.first.networktables.NetworkTableEvent.Kind;
@@ -159,25 +162,26 @@ public class VisionHandler extends AbstractSubsystem {
         // Use position we calculated from the gyro, but use the rotation we calculated from the tag
         // the position we calculated from the gyro is more accurate,
         // but still pass the rotation we calculated from the tag, so we can use it to compensate for the gyro drift
-        var poseToFeedToRobotTracker = new Pose2d(
-                calculatedTranslationFromGyro.toTranslation2d(), // 2d pos on the field
-                rotationFromTag.toRotation2d() //Returns the rotation of the robot around the z axis
+        var poseToFeedToRobotTracker = new Pose3d(
+                calculatedTranslationFromGyro, // 3d pos on the field
+                rotationFromTag
         );
 
-        var visionOnlyPose = new Pose2d(
-                calculatedTranslationFromTagOrientation.toTranslation2d(), // 2d pos on the field
-                rotationFromTag.toRotation2d() //Returns the rotation of the robot around the z axis
+        var visionOnlyPose = new Pose3d(
+                calculatedTranslationFromTagOrientation, // 3d pos on the field
+                rotationFromTag
         );
 
         RobotPositionSender.addRobotPosition(
-                new RobotState(poseToFeedToRobotTracker, data.timestamp, "Fed Vision Pose Tag: " + data.tagId));
+                new RobotState(poseToFeedToRobotTracker.toPose2d(), data.timestamp, "Fed Vision Pose Tag: " + data.tagId));
         RobotPositionSender.addRobotPosition(
-                new RobotState(visionOnlyPose, data.timestamp, "Vision Only Pose Tag: " + data.tagId));
+                new RobotState(visionOnlyPose.toPose2d(), data.timestamp, "Vision Only Pose Tag: " + data.tagId));
         var defaultDevs = RobotTracker.DEFAULT_VISION_DEVIATIONS;
         var distanceToTag = translation.getNorm();
         var devs = VecBuilder.fill(defaultDevs.get(0, 0) * distanceToTag,
                 defaultDevs.get(1, 0) * distanceToTag,
-                Math.atan(tan(defaultDevs.get(2, 0)) * distanceToTag));
+                defaultDevs.get(2, 0) * distanceToTag,
+                Math.atan(tan(defaultDevs.get(3, 0)) * distanceToTag));
         Robot.getRobotTracker().addVisionMeasurement(poseToFeedToRobotTracker, data.timestamp, devs);
 
         Logger.getInstance().recordOutput("VisionHandler/VisionOnlyPose/" + data.tagId, visionOnlyPose);

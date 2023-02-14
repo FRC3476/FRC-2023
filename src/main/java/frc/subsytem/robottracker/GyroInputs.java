@@ -6,10 +6,13 @@ import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Rotation3d;
 import edu.wpi.first.math.geometry.Translation3d;
 import org.littletonrobotics.junction.LogTable;
+import org.littletonrobotics.junction.Logger;
 import org.littletonrobotics.junction.inputs.LoggableInputs;
 
 import java.util.ArrayList;
 import java.util.List;
+
+import static frc.robot.Constants.SECONDS_PER_MICROSECOND;
 
 public class GyroInputs implements LoggableInputs {
     record Entry<U>(double timestamp, U value) {}
@@ -23,8 +26,14 @@ public class GyroInputs implements LoggableInputs {
 
     protected Rotation2d rotation2d = new Rotation2d();
 
+    protected Rotation3d rotation3d = new Rotation3d();
+
+    protected double gyroTime = 0.0;
+
     // Created here to avoid creating a new array every time
     private final double[] xyz_dps = new double[3];
+    private final double[] rot = new double[4];
+
 
     public void updateInputs(WPI_Pigeon2 pigeon2) {
         pigeon2.getRawGyro(xyz_dps);
@@ -33,6 +42,10 @@ public class GyroInputs implements LoggableInputs {
         gyroPitchVelocity = xyz_dps[1];
 
         rotation2d = pigeon2.getRotation2d();
+        pigeon2.get6dQuaternion(rot);
+        rotation3d = new Rotation3d(getQuaternion(rot));
+
+        gyroTime = Logger.getInstance().getRealTimestamp() * SECONDS_PER_MICROSECOND;
     }
 
     @Override
@@ -67,6 +80,15 @@ public class GyroInputs implements LoggableInputs {
         table.put("GyroRollVelocity", gyroRollVelocity);
         table.put("GyroPitchVelocity", gyroPitchVelocity);
         table.put("GyroYaw", rotation2d.getDegrees());
+
+
+        var quat = rotation3d.getQuaternion();
+        table.put("RotationW", quat.getW());
+        table.put("RotationX", quat.getX());
+        table.put("RotationY", quat.getY());
+        table.put("RotationZ", quat.getZ());
+
+        table.put("GyroTime", gyroTime);
     }
 
     @Override
@@ -89,5 +111,36 @@ public class GyroInputs implements LoggableInputs {
         gyroRollVelocity = table.getDouble("GyroRollVelocity", 0.0);
         gyroPitchVelocity = table.getDouble("GyroPitchVelocity", 0.0);
         rotation2d = Rotation2d.fromDegrees(table.getDouble("GyroYaw", 0.0));
+
+        rotation3d = new Rotation3d(new Quaternion(
+                table.getDouble("RotationW", 0.0),
+                table.getDouble("RotationX", 0.0),
+                table.getDouble("RotationY", 0.0),
+                table.getDouble("RotationZ", 0.0)
+        ));
+
+        gyroTime = table.getDouble("GyroTime", 0.0);
+    }
+
+    /**
+     * @param wxyz the quaternion in the format [w, x, y, z] from the pigeon
+     * @return the quaternion in the format [w, x, y, z] that aligns with the axis convention of the robot
+     */
+    public static Quaternion getQuaternion(double[] wxyz) {
+        var rotW = wxyz[0];
+        var rotX = wxyz[1];
+        var rotY = wxyz[2];
+        var rotZ = wxyz[3];
+
+        // we need to transform the axis:
+        // axis that we want <- what it is on the pigeon
+        // these follow the right hand rule
+        // x <- y
+        // y <- -x
+        // z <- z
+
+        // axis convention of the pigeon: https://store.ctr-electronics.com/content/user-manual/Pigeon2%20User's%20Guide.pdf#page=20,
+
+        return new Quaternion(rotW, rotY, -rotX, rotZ);
     }
 }

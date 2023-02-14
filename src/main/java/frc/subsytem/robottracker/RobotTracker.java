@@ -6,18 +6,18 @@ import com.dacubeking.AutoBuilder.robot.sender.pathpreview.RobotState;
 import edu.wpi.first.math.Matrix;
 import edu.wpi.first.math.VecBuilder;
 import edu.wpi.first.math.Vector;
-import edu.wpi.first.math.estimator.SwerveDrivePoseEstimator;
 import edu.wpi.first.math.geometry.*;
 import edu.wpi.first.math.interpolation.TimeInterpolatableBuffer;
-import edu.wpi.first.math.kinematics.SwerveDriveOdometry;
 import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.numbers.N1;
 import edu.wpi.first.math.numbers.N3;
-import edu.wpi.first.wpilibj.Timer;
+import edu.wpi.first.math.numbers.N4;
 import frc.robot.Robot;
 import frc.subsytem.AbstractSubsystem;
 import frc.subsytem.robottracker.GyroInputs.Entry;
 import frc.utility.geometry.MutableTranslation2d;
+import frc.utility.wpimodified.SwerveDriveOdometry;
+import frc.utility.wpimodified.SwerveDrivePoseEstimator;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.littletonrobotics.junction.Logger;
@@ -46,10 +46,12 @@ public final class RobotTracker extends AbstractSubsystem {
     private @NotNull Rotation2d gyroOffset = new Rotation2d();
 
     private @NotNull Rotation2d rotation2d = new Rotation2d();
+    private @NotNull Rotation3d rotation3d = new Rotation3d();
+
     private double angularRate = 0;
 
 
-    public static final Matrix<N3, N1> DEFAULT_VISION_DEVIATIONS = VecBuilder.fill(0.03, 0.03, Math.toRadians(3));
+    public static final Matrix<N4, N1> DEFAULT_VISION_DEVIATIONS = VecBuilder.fill(0.03, 0.03, 0.03, Math.toRadians(3));
 
     private final SwerveDrivePoseEstimator swerveDriveOdometry;
 
@@ -86,16 +88,16 @@ public final class RobotTracker extends AbstractSubsystem {
         Logger.getInstance().processInputs("Gyro", gyroInputs);
         noVisionOdometry = new SwerveDriveOdometry(
                 SWERVE_DRIVE_KINEMATICS,
-                gyroInputs.rotation2d,
+                gyroInputs.rotation3d,
                 Robot.getDrive().getModulePositions()
         );
 
         swerveDriveOdometry = new SwerveDrivePoseEstimator(
                 SWERVE_DRIVE_KINEMATICS,
-                gyroInputs.rotation2d,
+                gyroInputs.rotation3d,
                 Robot.getDrive().getModulePositions(),
-                new Pose2d(),
-                VecBuilder.fill(0.1, 0.1, 0.01),
+                new Pose3d(),
+                VecBuilder.fill(0.1, 0.1, 0.05, 0.01),
                 DEFAULT_VISION_DEVIATIONS
         );
 
@@ -104,16 +106,16 @@ public final class RobotTracker extends AbstractSubsystem {
     }
 
 
-    private record VisionMeasurement(Pose2d pose, double timestamp, Optional<Matrix<N3, N1>> visionMeasurementStds) {
+    private record VisionMeasurement(Pose3d pose, double timestamp, Optional<Matrix<N4, N1>> visionMeasurementStds) {
     }
 
     private final List<VisionMeasurement> visionMeasurements = Collections.synchronizedList(new ArrayList<>());
 
-    public void addVisionMeasurement(@NotNull Pose2d visionMeasurement, double timestamp) {
+    public void addVisionMeasurement(@NotNull Pose3d visionMeasurement, double timestamp) {
         visionMeasurements.add(new VisionMeasurement(visionMeasurement, timestamp, Optional.empty()));
     }
 
-    public void addVisionMeasurement(@NotNull Pose2d visionMeasurement, double timestamp, Matrix<N3, N1> visionMeasurementStds) {
+    public void addVisionMeasurement(@NotNull Pose3d visionMeasurement, double timestamp, Matrix<N4, N1> visionMeasurementStds) {
         visionMeasurements.add(new VisionMeasurement(visionMeasurement, timestamp, Optional.of(visionMeasurementStds)));
     }
 
@@ -133,21 +135,8 @@ public final class RobotTracker extends AbstractSubsystem {
         gyroSensor.get6dQuaternion(quaternion);
         gyroSensor.getBiasedAccelerometer(ba_xyz);
 
-        var rotW = quaternion[0];
-        var rotX = quaternion[1];
-        var rotY = quaternion[2];
-        var rotZ = quaternion[3];
-
-        // we need to transform the axis:
-        // axis that we want <- what it is on the pigeon
-        // these follow the right hand rule
-        // x <- y
-        // y <- -x
-        // z <- z
-
-        // axis convention of the pigeon: https://store.ctr-electronics.com/content/user-manual/Pigeon2%20User's%20Guide.pdf#page=20,
-
-        var rotationFieldToRobot = new Rotation3d(new Quaternion(rotW, rotY, -rotX, rotZ));
+        var rotationFieldToRobot = new Rotation3d(GyroInputs.getQuaternion(quaternion)); // rotation from field to robot (robot
+        // frame)
 
         //ba_xyz is in fixed point notation (Q2.14) in units of g
         var x = toFloat(ba_xyz[0]) * GRAVITY;
@@ -169,8 +158,12 @@ public final class RobotTracker extends AbstractSubsystem {
         }
     }
 
+    private double maxAllowedPoseError = 0.5;
+
     @Override
     public void update() {
+        double timestamp = Robot.getDrive().getIoTimestamp();
+
         synchronized (gyroInputs) {
             gyroInputs.updateInputs(gyroSensor);
             Logger.getInstance().processInputs("Gyro", gyroInputs);
@@ -186,16 +179,16 @@ public final class RobotTracker extends AbstractSubsystem {
                 gyroInputs.rotations.clear();
 
                 angularRate = gyroInputs.gyroYawVelocity;
-                acceleration = accelerationHistory.getInternalBuffer().lastEntry().getValue();
-                rotation2d = gyroInputs.rotation2d;
+                acceleration = accelerationHistory.getSample(timestamp).orElse(new Translation3d());
+                rotation3d = gyroHistory.getSample(timestamp).orElse(gyroInputs.rotation3d);
+                rotation2d = rotation3d.toRotation2d();
             } finally {
                 lock.writeLock().unlock();
             }
         }
 
-        double timestamp = Timer.getFPGATimestamp();
         SwerveModulePosition[] modulePositions = Robot.getDrive().getModulePositions();
-        swerveDriveOdometry.updateWithTime(timestamp, rotation2d, modulePositions);
+        swerveDriveOdometry.updateWithTime(timestamp, rotation3d, modulePositions);
 
         // Copy the vision measurements into a local variable so that we don't have to lock the list
         final VisionMeasurement[] visionMeasurementsCopy;
@@ -205,6 +198,10 @@ public final class RobotTracker extends AbstractSubsystem {
         }
 
         for (VisionMeasurement visionMeasurement : visionMeasurementsCopy) {
+            double poseError = visionMeasurement.pose.getTranslation().getDistance(visionMeasurement.pose.getTranslation());
+            if (poseError > maxAllowedPoseError) {
+                continue;
+            }
             swerveDriveOdometry.addVisionMeasurement(visionMeasurement.pose(), visionMeasurement.timestamp(),
                     visionMeasurement.visionMeasurementStds().orElse(DEFAULT_VISION_DEVIATIONS));
         }
