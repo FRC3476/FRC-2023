@@ -211,18 +211,9 @@ public final class RobotTracker extends AbstractSubsystem {
         noVisionOdometry.update(rotation2d, modulePositions);
         lock.readLock().lock();
         try {
-            var pastPose = poseBufferForVelocity.getSample(timestamp - VELOCITY_MEASUREMENT_WINDOW);
-            if (pastPose.isPresent()) {
-                var currentPose = noVisionOdometry.getPoseMeters3d();
-                var avgVelocity = pastPose.get().getTranslation().minus(currentPose.getTranslation());
-                var averageVelocity = avgVelocity.div(VELOCITY_MEASUREMENT_WINDOW);
-
-                // The change in velocity over our measurement window
-                var deltaVelocity = getChangeInVelocity(timestamp - VELOCITY_MEASUREMENT_WINDOW, timestamp);
-
-                // https://www.desmos.com/calculator/szqs5g5d6i
-
-                velocity = averageVelocity.plus(deltaVelocity.times(0.5))
+            var velocityOptional = getVelocityAtTime(timestamp);
+            if (velocityOptional.isPresent()) {
+                velocity = velocityOptional.get()
                         .rotateBy(swerveDriveOdometry.getEstimatedPosition3d().getRotation().minus(rotation3d));
             }
         } finally {
@@ -409,5 +400,28 @@ public final class RobotTracker extends AbstractSubsystem {
 
         // The deltaVelocity over our measurement window
         return mutDeltaVelocity.getTranslation3d();
+    }
+
+    /**
+     * Gets the velocity of the robot at a given time
+     *
+     * @param timestamp the time to get the velocity at
+     * @return the velocity of the robot at the given time relative to the startup angle of the robot
+     */
+    private Optional<Translation3d> getVelocityAtTime(double timestamp) {
+        var pastPose = poseBufferForVelocity.getSample(timestamp - VELOCITY_MEASUREMENT_WINDOW);
+        var currentPose = poseBufferForVelocity.getSample(timestamp);
+        if (pastPose.isPresent() && currentPose.isPresent()) {
+            var avgVelocity = pastPose.get().getTranslation().minus(currentPose.get().getTranslation());
+            var averageVelocity = avgVelocity.div(VELOCITY_MEASUREMENT_WINDOW);
+
+            // The change in velocity over our measurement window
+            var deltaVelocity = getChangeInVelocity(timestamp - VELOCITY_MEASUREMENT_WINDOW, timestamp);
+
+            // https://www.desmos.com/calculator/szqs5g5d6i
+
+            return Optional.of(averageVelocity.plus(deltaVelocity.times(0.5)));
+        }
+        return Optional.empty();
     }
 }
