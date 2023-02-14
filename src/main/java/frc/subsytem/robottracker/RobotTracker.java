@@ -15,7 +15,7 @@ import edu.wpi.first.math.numbers.N4;
 import frc.robot.Robot;
 import frc.subsytem.AbstractSubsystem;
 import frc.subsytem.robottracker.GyroInputs.Entry;
-import frc.utility.geometry.MutableTranslation2d;
+import frc.utility.geometry.MutableTranslation3d;
 import frc.utility.wpimodified.SwerveDriveOdometry;
 import frc.utility.wpimodified.SwerveDrivePoseEstimator;
 import org.jetbrains.annotations.NotNull;
@@ -59,8 +59,8 @@ public final class RobotTracker extends AbstractSubsystem {
 
     private static final double VELOCITY_MEASUREMENT_WINDOW = 0.5;
 
-    private final TimeInterpolatableBuffer<Pose2d> poseBufferForVelocity = TimeInterpolatableBuffer.createBuffer(
-            Pose2d::interpolate, 1.5);
+    private final TimeInterpolatableBuffer<Pose3d> poseBufferForVelocity = TimeInterpolatableBuffer.createBuffer(
+            Pose3d::interpolate, 1.5);
 
 
     /**
@@ -71,7 +71,7 @@ public final class RobotTracker extends AbstractSubsystem {
     /**
      * Velocity of the robot in field relative coordinates
      */
-    private @NotNull Translation2d velocity = new Translation2d();
+    private @NotNull Translation3d velocity = new Translation3d();
 
     private double lastTimestamp = 0;
     private final @NotNull TimeInterpolatableBuffer<Rotation3d> gyroHistory
@@ -160,6 +160,7 @@ public final class RobotTracker extends AbstractSubsystem {
 
     private double maxAllowedPoseError = 0.5;
 
+
     @Override
     public void update() {
         double timestamp = Robot.getDrive().getIoTimestamp();
@@ -190,23 +191,20 @@ public final class RobotTracker extends AbstractSubsystem {
         SwerveModulePosition[] modulePositions = Robot.getDrive().getModulePositions();
         swerveDriveOdometry.updateWithTime(timestamp, rotation3d, modulePositions);
 
-        // Copy the vision measurements into a local variable so that we don't have to lock the list
-        final VisionMeasurement[] visionMeasurementsCopy;
         synchronized (visionMeasurements) {
-            visionMeasurementsCopy = visionMeasurements.toArray(new VisionMeasurement[0]);
+            for (VisionMeasurement visionMeasurement : visionMeasurements) {
+                double poseError = visionMeasurement.pose.getTranslation().getDistance(visionMeasurement.pose.getTranslation());
+                if (poseError > maxAllowedPoseError) {
+                    continue;
+                }
+                swerveDriveOdometry.addVisionMeasurement(visionMeasurement.pose(), visionMeasurement.timestamp(),
+                        visionMeasurement.visionMeasurementStds().orElse(DEFAULT_VISION_DEVIATIONS));
+            }
             visionMeasurements.clear();
         }
 
-        for (VisionMeasurement visionMeasurement : visionMeasurementsCopy) {
-            double poseError = visionMeasurement.pose.getTranslation().getDistance(visionMeasurement.pose.getTranslation());
-            if (poseError > maxAllowedPoseError) {
-                continue;
-            }
-            swerveDriveOdometry.addVisionMeasurement(visionMeasurement.pose(), visionMeasurement.timestamp(),
-                    visionMeasurement.visionMeasurementStds().orElse(DEFAULT_VISION_DEVIATIONS));
-        }
 
-        @Nullable Translation2d velocity = null;
+        @Nullable Translation3d velocity = null;
 
         // Calculate the velocity of the robot
         //noVisionOdometry is always relative to the startup angle of the robot
@@ -215,50 +213,17 @@ public final class RobotTracker extends AbstractSubsystem {
         try {
             var pastPose = poseBufferForVelocity.getSample(timestamp - VELOCITY_MEASUREMENT_WINDOW);
             if (pastPose.isPresent()) {
-                var currentPose = noVisionOdometry.getPoseMeters();
+                var currentPose = noVisionOdometry.getPoseMeters3d();
                 var avgVelocity = pastPose.get().getTranslation().minus(currentPose.getTranslation());
                 var averageVelocity = avgVelocity.div(VELOCITY_MEASUREMENT_WINDOW);
 
-                // Create mutable objects to avoid creating new objects
-                final var mutDeltaVelocity = new MutableTranslation2d();
-                final var tempAccel = new MutableTranslation2d();
-                final var lastAccel = new MutableTranslation2d();
-                double lastTime = timestamp - VELOCITY_MEASUREMENT_WINDOW;
-
-
-                final var optionalInitialAccel = accelerationHistory.getSample(lastTime);
-                optionalInitialAccel.ifPresent(translation3d -> lastAccel.set(translation3d.getX(), translation3d.getY()));
-
-                // Calculate the average deltaVelocity over the last 0.5 seconds
-                for (var entry : accelerationHistory.getInternalBuffer().tailMap(lastTime, false).entrySet()) {
-                    double time = Math.max(entry.getKey(), timestamp); // Don't go into the future
-                    if (time < lastTime) { // if for some reason the times are out of order
-                        continue;
-                    }
-                    var accel = entry.getValue();
-                    tempAccel.set(accel.getX(), accel.getY()).plus(lastAccel).times(1.0 / 2.0).times(time - lastTime);
-                    mutDeltaVelocity.plus(tempAccel);
-
-                    lastAccel.set(accel.getX(), accel.getY());
-                    lastTime = time;
-                }
-
-                if (lastTime < timestamp) {
-                    // Add the last bit of deltaVelocity (assume it's constant from the last sample to now)
-                    tempAccel.set(acceleration.getX(), acceleration.getY());
-
-                    tempAccel.times(timestamp - lastTime);
-                    mutDeltaVelocity.plus(tempAccel);
-                }
-
-
-                // The average deltaVelocity over our measurement window
-                var deltaVelocity = mutDeltaVelocity.getTranslation2d();
+                // The change in velocity over our measurement window
+                var deltaVelocity = getChangeInVelocity(timestamp - VELOCITY_MEASUREMENT_WINDOW, timestamp);
 
                 // https://www.desmos.com/calculator/szqs5g5d6i
 
-                velocity = averageVelocity.plus(deltaVelocity.times(VELOCITY_MEASUREMENT_WINDOW / 2))
-                        .rotateBy(swerveDriveOdometry.getEstimatedPosition().getRotation().minus(rotation2d));
+                velocity = averageVelocity.plus(deltaVelocity.times(0.5))
+                        .rotateBy(swerveDriveOdometry.getEstimatedPosition3d().getRotation().minus(rotation3d));
             }
         } finally {
             lock.readLock().unlock();
@@ -270,7 +235,7 @@ public final class RobotTracker extends AbstractSubsystem {
             if (velocity != null) {
                 this.velocity = velocity;
             }
-            Pose2d noVisionPose = noVisionOdometry.getPoseMeters();
+            Pose3d noVisionPose = noVisionOdometry.getPoseMeters3d();
             poseBufferForVelocity.addSample(timestamp, noVisionPose);
             this.lastTimestamp = timestamp;
         } finally {
@@ -298,7 +263,7 @@ public final class RobotTracker extends AbstractSubsystem {
     public @NotNull Translation2d getVelocity() {
         lock.readLock().lock();
         try {
-            return velocity;
+            return velocity.toTranslation2d();
         } finally {
             lock.readLock().unlock();
         }
@@ -398,5 +363,51 @@ public final class RobotTracker extends AbstractSubsystem {
 
         RobotPositionSender.addRobotPosition(new RobotState(getLatestPose(), getVelocity().getX(),
                 getVelocity().getY(), getAngularVelocity(), lastTimestamp));
+    }
+
+
+    private Translation3d getChangeInVelocity(double startTime, double endTime) {
+        // Create mutable objects to avoid creating new objects
+        final var mutDeltaVelocity = new MutableTranslation3d();
+        final var tempAccel = new MutableTranslation3d();
+        final var lastAccel = new MutableTranslation3d();
+
+
+        final var optionalInitialAccel = accelerationHistory.getSample(startTime);
+        optionalInitialAccel.ifPresent(
+                translation3d -> lastAccel.set(translation3d.getX(), translation3d.getY(), translation3d.getZ()));
+
+        for (var entry : accelerationHistory.getInternalBuffer().tailMap(startTime, false).entrySet()) {
+            double time = entry.getKey();
+
+            var accel = entry.getValue();
+
+            if (time > endTime) { // We've gone past the end time
+                accel = accelerationHistory.getSample(endTime).orElse(accel); // Interpolates the accel to the end time
+                time = endTime;
+            }
+
+            tempAccel.set(accel.getX(), accel.getY(), accel.getZ()).plus(lastAccel).times(0.5).times(time - startTime);
+            mutDeltaVelocity.plus(tempAccel);
+
+            lastAccel.set(accel.getX(), accel.getY(), accel.getZ());
+            startTime = time;
+
+            if (time >= endTime) {
+                break;
+            }
+        }
+
+        if (startTime < endTime) {
+            // Add the last bit of deltaVelocity (assume it's constant from the last sample to now)
+            tempAccel.set(lastAccel);
+
+            tempAccel.times(endTime - startTime);
+            mutDeltaVelocity.plus(tempAccel);
+        }
+
+
+        // The deltaVelocity over our measurement window
+        return mutDeltaVelocity.getTranslation3d();
     }
 }
