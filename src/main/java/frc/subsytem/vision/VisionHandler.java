@@ -175,9 +175,9 @@ public class VisionHandler extends AbstractSubsystem {
                 new RobotState(visionOnlyPose, data.timestamp, "Vision Only Pose Tag: " + data.tagId));
         var defaultDevs = RobotTracker.DEFAULT_VISION_DEVIATIONS;
         var distanceToTag = translation.getNorm();
-        var devs = VecBuilder.fill(defaultDevs.get(1, 1) * distanceToTag,
-                defaultDevs.get(1, 2) * distanceToTag,
-                Math.atan(tan(defaultDevs.get(1, 3)) * distanceToTag));
+        var devs = VecBuilder.fill(defaultDevs.get(0, 0) * distanceToTag,
+                defaultDevs.get(1, 0) * distanceToTag,
+                Math.atan(tan(defaultDevs.get(2, 0)) * distanceToTag));
         Robot.getRobotTracker().addVisionMeasurement(poseToFeedToRobotTracker, data.timestamp, devs);
 
         Logger.getInstance().recordOutput("VisionHandler/VisionOnlyPose/" + data.tagId, visionOnlyPose);
