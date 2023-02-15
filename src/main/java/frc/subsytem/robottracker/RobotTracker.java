@@ -286,7 +286,7 @@ public final class RobotTracker extends AbstractSubsystem {
                         }
 
                         if (swerveDriveOdometry.rollbackOdometry(timestamp - MISMATCH_LOOK_BACK_TIME)) {
-                            // Update the curent velocity to not use the wheel measurements
+                            // Update the current velocity to not use the wheel measurements
                             velocity = oldVelocityOptional.get().plus(velocityChangeToPresent).rotateBy(startUpRotationToField);
 
                             MutableTranslation3d oldVelocity = new MutableTranslation3d(oldVelocityOptional.get());
@@ -330,7 +330,6 @@ public final class RobotTracker extends AbstractSubsystem {
                         }
                     }
                 }
-                Logger.getInstance().recordOutput("Velocity Mismatch", isVelocityMismatched);
             }
         } finally {
             lock.readLock().unlock();
@@ -467,6 +466,9 @@ public final class RobotTracker extends AbstractSubsystem {
         Logger.getInstance().recordOutput("RobotTracker/accelerationY", getAcceleration().getY());
         Logger.getInstance().recordOutput("RobotTracker/accelerationZ", getAcceleration().getZ());
         Logger.getInstance().recordOutput("RobotTracker/Velocity", getVelocity().getNorm());
+        Logger.getInstance().recordOutput("RobotTracker/Is Velocity Mismatched", isVelocityMismatched);
+        Logger.getInstance().recordOutput("RobotTracker/Velocity Mismatch Time", velocityMismatchTime);
+
 
         RobotPositionSender.addRobotPosition(new RobotState(getLatestPose(), getVelocity().getX(),
                 getVelocity().getY(), getAngularVelocity(), lastTimestamp));
