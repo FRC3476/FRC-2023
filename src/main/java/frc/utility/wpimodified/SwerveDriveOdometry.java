@@ -7,7 +7,6 @@ package frc.utility.wpimodified;
 import edu.wpi.first.math.MathSharedStore;
 import edu.wpi.first.math.MathUsageId;
 import edu.wpi.first.math.geometry.*;
-import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
 import edu.wpi.first.math.kinematics.SwerveModulePosition;
 
@@ -224,22 +223,22 @@ public class SwerveDriveOdometry {
      * the change in distance from a velocity. This also takes in an angle parameter which is used instead of the angular rate
      * that is calculated from forward kinematics.
      *
-     * @param currentTimeSeconds The current time in seconds.
-     * @param gyroAngle          The angle reported by the gyroscope.
-     * @param dt                 Change in time in seconds.
+     * @param velocity  Velocity of the robot
+     * @param gyroAngle The angle reported by the gyroscope.
+     * @param dt        Change in time in seconds.
      * @return The new pose of the robot.
      */
     public Pose3d updateWithTime(
-            Rotation3d gyroAngle, ChassisSpeeds chassisSpeeds, double dt) {
+            Rotation3d gyroAngle, Translation3d velocity, double dt) {
         var period = dt < 0 ? 0 : dt;
         var angle = gyroAngle.plus(m_gyroOffset);
         var angle_difference = angle.minus(m_previousAngle).getQuaternion().toRotationVector();
 
         var twist =
                 new Twist3d(
-                        chassisSpeeds.vxMetersPerSecond * period,
-                        chassisSpeeds.vyMetersPerSecond * period,
-                        0,
+                        velocity.getX(),
+                        velocity.getY(),
+                        velocity.getZ(),
                         angle_difference.get(0, 0),
                         angle_difference.get(1, 0),
                         angle_difference.get(2, 0));

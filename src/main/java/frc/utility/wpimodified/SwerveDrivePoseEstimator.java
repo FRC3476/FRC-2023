@@ -9,7 +9,6 @@ import edu.wpi.first.math.Nat;
 import edu.wpi.first.math.VecBuilder;
 import edu.wpi.first.math.geometry.*;
 import edu.wpi.first.math.interpolation.TimeInterpolatableBuffer;
-import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
 import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.numbers.N1;
@@ -474,14 +473,14 @@ public class SwerveDrivePoseEstimator {
      *
      * @param currentTimeSeconds Time at which this method was called, in seconds.
      * @param gyroAngle          The current gyroscope angle.
-     * @param chassisSpeeds      The current chassis speeds.
+     * @param velocity           The velocity of the robot.
      * @return The estimated pose of the robot in meters.
      */
     public Pose3d updateWithTime(
-            double currentTimeSeconds, Rotation3d gyroAngle, ChassisSpeeds chassisSpeeds, double dt) {
+            double currentTimeSeconds, Rotation3d gyroAngle, Translation3d velocity, double dt) {
 
         var lastOdom = m_odometry.getPoseMeters3d();
-        var currOdom = m_odometry.updateWithTime(gyroAngle, chassisSpeeds, dt);
+        var currOdom = m_odometry.updateWithTime(gyroAngle, velocity, dt);
         m_poseBuffer.addSample(currentTimeSeconds, currOdom);
 
         m_poseEstimate = m_poseEstimate.exp(lastOdom.log(currOdom));
