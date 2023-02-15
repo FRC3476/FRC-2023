@@ -45,6 +45,11 @@ import org.littletonrobotics.junction.networktables.NT4Publisher;
 import org.littletonrobotics.junction.wpilog.WPILOGReader;
 import org.littletonrobotics.junction.wpilog.WPILOGWriter;
 
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.util.Arrays;
+
 import static frc.robot.Constants.*;
 import static java.lang.Math.abs;
 
@@ -86,6 +91,40 @@ public class Robot extends LoggedRobot {
         Logger.getInstance().recordMetadata("ProjectName", "FRC2023"); // Set a metadata value
 
         if (isReal()) {
+            var directory = new File("/home/lvuser/logs");
+            if (!directory.exists()) {
+                directory.mkdir();
+            }
+
+            // ensure that there is enough space on the roboRIO to log data
+            if (directory.getFreeSpace() < MIN_FREE_SPACE) {
+                var files = directory.listFiles();
+                if (files != null) {
+                    files = Arrays.stream(files).sorted().toArray(File[]::new);
+
+                    long bytesToDelete = MIN_FREE_SPACE - directory.getFreeSpace();
+
+                    for (File file : files) {
+                        if (file.getName().endsWith(".wpilog")) {
+                            try {
+                                bytesToDelete -= Files.size(file.toPath());
+                            } catch (IOException e) {
+                                System.out.println("Failed to get size of file " + file.getName());
+                                continue;
+                            }
+                            if (file.delete()) {
+                                System.out.println("Deleted " + file.getName() + " to free up space");
+                            } else {
+                                System.out.println("Failed to delete " + file.getName());
+                            }
+                            if (bytesToDelete <= 0) {
+                                break;
+                            }
+                        }
+                    }
+                }
+            }
+
             Logger.getInstance().addDataReceiver(new WPILOGWriter("/home/lvuser/logs"));
             Logger.getInstance().addDataReceiver(new NT4Publisher()); // Publish data to NetworkTables
             new PowerDistribution(1, ModuleType.kRev); // Enables power distribution logging
