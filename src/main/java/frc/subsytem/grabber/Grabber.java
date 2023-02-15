@@ -12,7 +12,7 @@ public class Grabber extends AbstractSubsystem {
     private final GrabberInputsAutoLogged inputs = new GrabberInputsAutoLogged();
 
     public Grabber(GrabberIO grabberIO) {
-        super(5);
+        super();
         this.io = grabberIO;
         trapezoidProfile = new TrapezoidProfile(Constants.GRABBER_PIVOT_CONSTRAINTS, new TrapezoidProfile.State(56 + 90 - 20, 0));
     }
