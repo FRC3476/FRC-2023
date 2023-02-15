@@ -43,6 +43,11 @@ public final class RobotTracker extends AbstractSubsystem {
      */
     private @NotNull Pose2d latestPose = new Pose2d();
 
+    /**
+     * The 3d pose of the robot at the last time the odometry was updated.
+     */
+    private @NotNull Pose3d latestPose3d = new Pose3d();
+
     private @NotNull Rotation2d gyroOffset = new Rotation2d();
 
     private @NotNull Rotation2d rotation2d = new Rotation2d();
@@ -222,7 +227,8 @@ public final class RobotTracker extends AbstractSubsystem {
 
         lock.writeLock().lock();
         try {
-            latestPose = swerveDriveOdometry.getEstimatedPosition();
+            latestPose3d = swerveDriveOdometry.getEstimatedPosition3d();
+            latestPose = latestPose3d.toPose2d();
             if (velocity != null) {
                 this.velocity = velocity;
             }
@@ -243,6 +249,20 @@ public final class RobotTracker extends AbstractSubsystem {
         lock.readLock().lock();
         try {
             return latestPose;
+        } finally {
+            lock.readLock().unlock();
+        }
+    }
+
+    /**
+     * Get the latest pose of the robot. This pose is updated every 20ms and is corrected for drift using vision measurements.
+     *
+     * @return The latest pose of the robot.
+     */
+    public @NotNull Pose3d getLatestPose3d() {
+        lock.readLock().lock();
+        try {
+            return latestPose3d;
         } finally {
             lock.readLock().unlock();
         }
@@ -345,6 +365,8 @@ public final class RobotTracker extends AbstractSubsystem {
         Logger.getInstance().recordOutput("RobotTracker/y", getLatestPose().getTranslation().getY());
         Logger.getInstance().recordOutput("RobotTracker/NoVisionPose", noVisionOdometry.getPoseMeters());
         Logger.getInstance().recordOutput("RobotTracker/VisionPose", getLatestPose());
+        Logger.getInstance().recordOutput("RobotTracker/NoVisionPose3d", noVisionOdometry.getPoseMeters3d());
+        Logger.getInstance().recordOutput("RobotTracker/VisionPose3d", getLatestPose3d());
         Logger.getInstance().recordOutput("RobotTracker/velocityX", getVelocity().getX());
         Logger.getInstance().recordOutput("RobotTracker/velocityY", getVelocity().getY());
         Logger.getInstance().recordOutput("RobotTracker/accelerationX", getAcceleration().getX());
