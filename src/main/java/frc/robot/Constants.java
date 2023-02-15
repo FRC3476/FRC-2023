@@ -19,6 +19,8 @@ import java.nio.file.Files;
 
 public final class Constants {
 
+    public static final String LOG_DIRECTORY = "/home/lvuser/logs";
+
     public static final double SECONDS_PER_MINUTE = 60;
 
     public static final boolean IS_PRACTICE = Files.exists(new File("/home/lvuser/practice").toPath());

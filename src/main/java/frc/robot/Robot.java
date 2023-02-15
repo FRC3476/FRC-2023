@@ -91,7 +91,7 @@ public class Robot extends LoggedRobot {
         Logger.getInstance().recordMetadata("ProjectName", "FRC2023"); // Set a metadata value
 
         if (isReal()) {
-            var directory = new File("/home/lvuser/logs");
+            var directory = new File(LOG_DIRECTORY);
             if (!directory.exists()) {
                 directory.mkdir();
             }
@@ -100,6 +100,7 @@ public class Robot extends LoggedRobot {
             if (directory.getFreeSpace() < MIN_FREE_SPACE) {
                 var files = directory.listFiles();
                 if (files != null) {
+                    // Sorting the files by name will ensure that the oldest files are deleted first
                     files = Arrays.stream(files).sorted().toArray(File[]::new);
 
                     long bytesToDelete = MIN_FREE_SPACE - directory.getFreeSpace();
@@ -125,7 +126,7 @@ public class Robot extends LoggedRobot {
                 }
             }
 
-            Logger.getInstance().addDataReceiver(new WPILOGWriter("/home/lvuser/logs"));
+            Logger.getInstance().addDataReceiver(new WPILOGWriter(LOG_DIRECTORY));
             Logger.getInstance().addDataReceiver(new NT4Publisher()); // Publish data to NetworkTables
             new PowerDistribution(1, ModuleType.kRev); // Enables power distribution logging
 
