@@ -13,7 +13,7 @@ import java.util.List;
 
 public abstract class AbstractSubsystem {
     private final int loggingInterval;
-    private int logInterval;
+    private int ticksSinceLastLog;
     private @NotNull ThreadSignal signal = ThreadSignal.PAUSED;
     public final @NotNull String subsystemName;
     private @Nullable Thread thisThread;
@@ -62,10 +62,10 @@ public abstract class AbstractSubsystem {
             if (subsystem.signal == ThreadSignal.ALIVE) {
                 subsystem.update();
 
-                subsystem.logInterval++;
-                if (subsystem.logInterval > subsystem.loggingInterval) {
+                subsystem.ticksSinceLastLog++;
+                if (subsystem.ticksSinceLastLog > subsystem.loggingInterval) {
                     subsystem.logData();
-                    subsystem.logInterval = 0;
+                    subsystem.ticksSinceLastLog = 0;
                 }
             }
             double executionTimeMS = (Logger.getInstance().getRealTimestamp() - startTime) * 0.001; //micoseconds to ms
