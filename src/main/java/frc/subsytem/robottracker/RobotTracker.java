@@ -83,7 +83,7 @@ public final class RobotTracker extends AbstractSubsystem {
             = TimeInterpolatableBuffer.createBuffer(Translation3d::interpolate, 1.5); //abt 1.5 seconds (ms * 300)
 
     public RobotTracker() {
-        super(3);
+        super();
 
 
         gyroInputs.updateInputs(gyroSensor);
