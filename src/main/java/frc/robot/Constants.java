@@ -29,12 +29,7 @@ public final class Constants {
     public static final double FALCON_ENCODER_TICKS_PER_ROTATIONS = 2048;
     public static final double FALCON_ENCODER_TICKS_PER_100_MS_TO_RPM = 600 / 2048.0d;
     public static final double SWERVE_MOTOR_POSITION_CONVERSION_FACTOR = 1 / 12.8;
-
-    // Logging Period
-    /**
-     * Every subsystem will log one for every 20 update periods
-     */
-    public static final int DEFAULT_PERIODS_PER_LOG = 20;
+    public static final int DEFAULT_PERIODS_PER_LOG = 0;
     private static final int NOMINAL_DT_MS = 20;
 
     //Drive Constants

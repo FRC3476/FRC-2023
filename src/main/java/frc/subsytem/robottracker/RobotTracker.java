@@ -40,6 +40,11 @@ public final class RobotTracker extends AbstractSubsystem {
      */
     private @NotNull Pose2d latestPose = new Pose2d();
 
+    /**
+     * The 3d pose of the robot at the last time the odometry was updated.
+     */
+    private @NotNull Pose3d latestPose3d = new Pose3d();
+
     private @NotNull Rotation2d gyroOffset = new Rotation2d();
 
     private @NotNull Rotation2d rotation2d = new Rotation2d();
@@ -78,7 +83,7 @@ public final class RobotTracker extends AbstractSubsystem {
             = TimeInterpolatableBuffer.createBuffer(Translation3d::interpolate, 1.5); //abt 1.5 seconds (ms * 300)
 
     public RobotTracker() {
-        super(3);
+        super();
 
 
         gyroInputs.updateInputs(gyroSensor);
@@ -125,8 +130,12 @@ public final class RobotTracker extends AbstractSubsystem {
 
     // Created here to avoid garbage collection
     private final short[] ba_xyz = new short[3];
+    private final double[] g_xyz = new double[3];
     private final double[] quaternion = new double[4];
 
+    private final short[] last_ba_xyz = new short[3];
+    private final double[] last_g_xyz = new double[3];
+    private final double[] last_quaternion = new double[4];
     private @Nullable Rotation3d lastRotation;
     private @Nullable Translation3d lastAcceleration;
 
@@ -135,15 +144,36 @@ public final class RobotTracker extends AbstractSubsystem {
 
         gyroSensor.get6dQuaternion(quaternion);
         gyroSensor.getBiasedAccelerometer(ba_xyz);
+        gyroSensor.getGravityVector(g_xyz);
+
+        if (Arrays.equals(quaternion, last_quaternion) && Arrays.equals(ba_xyz, last_ba_xyz)
+                && Arrays.equals(g_xyz, last_g_xyz)) {
+            // Exit early if nothing has changed (don't create new objects)
+            return;
+        }
+
+        System.arraycopy(quaternion, 0, last_quaternion, 0, 4);
+        System.arraycopy(ba_xyz, 0, last_ba_xyz, 0, 3);
+        System.arraycopy(g_xyz, 0, last_g_xyz, 0, 3);
+
 
         var rotationFieldToRobot = new Rotation3d(GyroInputs.getQuaternion(quaternion)); // rotation from field to robot (robot
         // frame)
+
+
+        var g_x = g_xyz[0];
+        var g_y = g_xyz[1];
+        var g_z = g_xyz[2];
+
+        var gravity = new Translation3d(g_y, -g_x, g_z); // transform the axis (see above) (robot frame)
+        gravity = gravity.times(GRAVITY / gravity.getNorm());
 
         //ba_xyz is in fixed point notation (Q2.14) in units of g
         var x = toFloat(ba_xyz[0]) * GRAVITY;
         var y = toFloat(ba_xyz[1]) * GRAVITY;
         var z = toFloat(ba_xyz[2]) * GRAVITY;
         var accel = new Translation3d(y, -x, z) // transform the axis (see above) (robot frame)
+                .minus(gravity)
                 .rotateBy(rotationFieldToRobot.unaryMinus()); // rotate the acceleration to the field frame
 
         synchronized (gyroInputs) {
@@ -337,7 +367,8 @@ public final class RobotTracker extends AbstractSubsystem {
 
         lock.writeLock().lock();
         try {
-            latestPose = swerveDriveOdometry.getEstimatedPosition();
+            latestPose3d = swerveDriveOdometry.getEstimatedPosition3d();
+            latestPose = latestPose3d.toPose2d();
             if (velocity != null) {
                 this.velocity = velocity;
             }
@@ -358,6 +389,20 @@ public final class RobotTracker extends AbstractSubsystem {
         lock.readLock().lock();
         try {
             return latestPose;
+        } finally {
+            lock.readLock().unlock();
+        }
+    }
+
+    /**
+     * Get the latest pose of the robot. This pose is updated every 20ms and is corrected for drift using vision measurements.
+     *
+     * @return The latest pose of the robot.
+     */
+    public @NotNull Pose3d getLatestPose3d() {
+        lock.readLock().lock();
+        try {
+            return latestPose3d;
         } finally {
             lock.readLock().unlock();
         }
@@ -460,6 +505,8 @@ public final class RobotTracker extends AbstractSubsystem {
         Logger.getInstance().recordOutput("RobotTracker/y", getLatestPose().getTranslation().getY());
         Logger.getInstance().recordOutput("RobotTracker/NoVisionPose", noVisionOdometry.getPoseMeters());
         Logger.getInstance().recordOutput("RobotTracker/VisionPose", getLatestPose());
+        Logger.getInstance().recordOutput("RobotTracker/NoVisionPose3d", noVisionOdometry.getPoseMeters3d());
+        Logger.getInstance().recordOutput("RobotTracker/VisionPose3d", getLatestPose3d());
         Logger.getInstance().recordOutput("RobotTracker/velocityX", getVelocity().getX());
         Logger.getInstance().recordOutput("RobotTracker/velocityY", getVelocity().getY());
         Logger.getInstance().recordOutput("RobotTracker/accelerationX", getAcceleration().getX());

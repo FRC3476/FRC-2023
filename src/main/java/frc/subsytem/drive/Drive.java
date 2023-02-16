@@ -79,7 +79,7 @@ public final class Drive extends AbstractSubsystem {
 
 
     public Drive(DriveIO driveIO) {
-        super(0);
+        super();
         this.io = driveIO;
 
         setDriveState(DriveState.TELEOP);
