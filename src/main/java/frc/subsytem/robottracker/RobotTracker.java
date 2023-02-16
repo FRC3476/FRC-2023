@@ -22,10 +22,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.littletonrobotics.junction.Logger;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
@@ -129,8 +126,12 @@ public final class RobotTracker extends AbstractSubsystem {
 
     // Created here to avoid garbage collection
     private final short[] ba_xyz = new short[3];
+    private final double[] g_xyz = new double[3];
     private final double[] quaternion = new double[4];
 
+    private final short[] last_ba_xyz = new short[3];
+    private final double[] last_g_xyz = new double[3];
+    private final double[] last_quaternion = new double[4];
     private @Nullable Rotation3d lastRotation;
     private @Nullable Translation3d lastAcceleration;
 
@@ -139,15 +140,36 @@ public final class RobotTracker extends AbstractSubsystem {
 
         gyroSensor.get6dQuaternion(quaternion);
         gyroSensor.getBiasedAccelerometer(ba_xyz);
+        gyroSensor.getGravityVector(g_xyz);
+
+        if (Arrays.equals(quaternion, last_quaternion) && Arrays.equals(ba_xyz, last_ba_xyz)
+                && Arrays.equals(g_xyz, last_g_xyz)) {
+            // Exit early if nothing has changed (don't create new objects)
+            return;
+        }
+
+        System.arraycopy(quaternion, 0, last_quaternion, 0, 4);
+        System.arraycopy(ba_xyz, 0, last_ba_xyz, 0, 3);
+        System.arraycopy(g_xyz, 0, last_g_xyz, 0, 3);
+
 
         var rotationFieldToRobot = new Rotation3d(GyroInputs.getQuaternion(quaternion)); // rotation from field to robot (robot
         // frame)
+
+
+        var g_x = g_xyz[0];
+        var g_y = g_xyz[1];
+        var g_z = g_xyz[2];
+
+        var gravity = new Translation3d(g_y, -g_x, g_z); // transform the axis (see above) (robot frame)
+        gravity = gravity.times(GRAVITY / gravity.getNorm());
 
         //ba_xyz is in fixed point notation (Q2.14) in units of g
         var x = toFloat(ba_xyz[0]) * GRAVITY;
         var y = toFloat(ba_xyz[1]) * GRAVITY;
         var z = toFloat(ba_xyz[2]) * GRAVITY;
         var accel = new Translation3d(y, -x, z) // transform the axis (see above) (robot frame)
+                .minus(gravity)
                 .rotateBy(rotationFieldToRobot.unaryMinus()); // rotate the acceleration to the field frame
 
         synchronized (gyroInputs) {
