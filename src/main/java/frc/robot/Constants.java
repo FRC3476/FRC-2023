@@ -19,11 +19,14 @@ import java.nio.file.Files;
 
 public final class Constants {
 
+    public static final String LOG_DIRECTORY = "/home/lvuser/logs";
+
     public static final double SECONDS_PER_MINUTE = 60;
 
     public static final boolean IS_PRACTICE = Files.exists(new File("/home/lvuser/practice").toPath());
     public static final boolean USE_CANCODERS = false;
     public static final double SECONDS_PER_MICROSECOND = 1e-6;
+    public static final long MIN_FREE_SPACE = 30000000; // 30 MB
 
     // 2048 sensor units per revolution
     public static final double FALCON_ENCODER_TICKS_PER_ROTATIONS = 2048;
