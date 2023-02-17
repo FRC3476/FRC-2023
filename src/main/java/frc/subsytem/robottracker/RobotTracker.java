@@ -225,25 +225,29 @@ public final class RobotTracker extends AbstractSubsystem {
                 }
 
                 angularRate = gyroInputs.gyroYawVelocity;
-                gyroInputs.accelerations.clear();
-                gyroInputs.rotations.clear();
 
                 acceleration = accelerationHistory.getSample(timestamp).orElse(new Translation3d());
                 gyroAngle3d = gyroHistory.getSample(timestamp).orElse(gyroInputs.rotation3d);
                 gyroAngle2d = gyroAngle3d.toRotation2d();
 
-
+                // Integrate the acceleration to get the velocity for the velocity history
                 var lastVelocityEntry = velocityHistory.getInternalBuffer().lastEntry();
-                var lastEntry = accelerationHistory.getInternalBuffer().lastEntry();
-                var gyroTime = lastEntry != null ? lastEntry.getKey() : timestamp;
-                if (lastVelocityEntry == null) {
-                    velocityHistory.addSample(gyroTime, new Translation3d());
-                } else {
-                    var lastVelocity = lastVelocityEntry.getValue();
-                    var changeInVelocity = getChangeInVelocity(lastVelocityEntry.getKey(), gyroTime);
-                    var newVelocity = lastVelocity.plus(changeInVelocity);
-                    velocityHistory.addSample(gyroTime, newVelocity);
+                for (Entry<Translation3d> velocityEntry : gyroInputs.accelerations) {
+                    double accelerationTime = velocityEntry.timestamp();
+                    if (lastVelocityEntry == null) {
+                        velocityHistory.addSample(accelerationTime, new Translation3d());
+                    } else {
+                        var lastVelocity = lastVelocityEntry.getValue();
+                        var changeInVelocity = getChangeInVelocity(lastVelocityEntry.getKey(), accelerationTime);
+                        var newVelocity = lastVelocity.plus(changeInVelocity);
+                        velocityHistory.addSample(accelerationTime, newVelocity);
+                        lastVelocityEntry = velocityHistory.getInternalBuffer().lastEntry();
+                    }
                 }
+
+                // Clear the gyro histories
+                gyroInputs.accelerations.clear();
+                gyroInputs.rotations.clear();
             } finally {
                 lock.writeLock().unlock();
             }
