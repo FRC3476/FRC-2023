@@ -275,4 +275,11 @@ public final class Constants {
     public static final double BASE_MAX_X = .43;
     public static final double MIN_Y = -0.03;
     public static final double MAX_Y = 1.05;
+
+
+    //RobotTracker
+
+    public static final double MISMATCH_LOOK_BACK_TIME = 0.15;
+    public static final double MISMATCH_VELOCITY_ERROR_THRESHOLD = Double.MAX_VALUE;
+    public static final double MAX_VELOCITY_MISMATCH_TIME = 5;
 }

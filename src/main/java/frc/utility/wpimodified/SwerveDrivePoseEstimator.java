@@ -517,4 +517,35 @@ public class SwerveDrivePoseEstimator {
         m_poseBuffer.getInternalBuffer().tailMap(timestampSeconds, false).clear();
         return true;
     }
+
+
+    public void undoVisionMeasurement(Pose3d preUpdatePose, double timestampSeconds) {
+        // Step 0: If this measurement is old enough to be outside the pose buffer's timespan, skip.
+        if (m_poseBuffer.getInternalBuffer().lastKey() - kBufferDuration > timestampSeconds) {
+            return;
+        }
+
+        // Step 1: Get the pose odometry measured at the moment the vision measurement was made.
+        var sample = m_poseBuffer.getSample(timestampSeconds);
+
+        if (sample.isEmpty()) {
+            return;
+        }
+
+        var record = sample.get();
+
+        var odometry_backtrack = m_odometry.getPoseMeters3d().log(record);
+        var odometry_fastforward =
+                new Twist3d(
+                        -odometry_backtrack.dx,
+                        -odometry_backtrack.dy,
+                        -odometry_backtrack.dz,
+                        -odometry_backtrack.rx,
+                        -odometry_backtrack.ry,
+                        -odometry_backtrack.rz);
+
+        var old_estimate = preUpdatePose;
+
+        m_poseEstimate = old_estimate.exp(odometry_fastforward);
+    }
 }

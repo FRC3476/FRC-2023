@@ -192,7 +192,7 @@ public class MutableTranslation3d extends Translation3d {
      * @param other The translation to add.
      * @return The sum of the translations.
      */
-    public Translation3d plus(Translation3d other) {
+    public MutableTranslation3d plus(Translation3d other) {
         return set(m_x + other.getX(), m_y + other.getY(), m_z + other.getZ());
     }
 
@@ -205,7 +205,7 @@ public class MutableTranslation3d extends Translation3d {
      * @param other The translation to subtract.
      * @return The difference between the two translations.
      */
-    public Translation3d minus(Translation3d other) {
+    public MutableTranslation3d minus(Translation3d other) {
         return set(m_x - other.getX(), m_y - other.getY(), m_z - other.getZ());
     }
 
@@ -214,7 +214,7 @@ public class MutableTranslation3d extends Translation3d {
      *
      * @return The inverse of the current translation.
      */
-    public Translation3d unaryMinus() {
+    public MutableTranslation3d unaryMinus() {
         return set(-m_x, -m_y, -m_z);
     }
 
@@ -226,7 +226,7 @@ public class MutableTranslation3d extends Translation3d {
      * @param scalar The scalar to multiply by.
      * @return The scaled translation.
      */
-    public Translation3d times(double scalar) {
+    public MutableTranslation3d times(double scalar) {
         return set(m_x * scalar, m_y * scalar, m_z * scalar);
     }
 
@@ -238,7 +238,7 @@ public class MutableTranslation3d extends Translation3d {
      * @param scalar The scalar to multiply by.
      * @return The reference to the new mutated object.
      */
-    public Translation3d div(double scalar) {
+    public MutableTranslation3d div(double scalar) {
         return set(m_x / scalar, m_y / scalar, m_z / scalar);
     }
 
