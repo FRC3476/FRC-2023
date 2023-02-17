@@ -98,7 +98,7 @@ public class GrabberIOSparkMax extends GrabberIO {
     }
 
     @Override
-    public void setGrabberCurrent(double current) {
+    public void setGrabberVoltage(double current) {
         grabberSparkMax.getPIDController().setReference(current, ControlType.kVoltage);
     }
 
