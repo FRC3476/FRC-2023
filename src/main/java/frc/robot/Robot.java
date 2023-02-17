@@ -258,7 +258,7 @@ public class Robot extends LoggedRobot {
     private double wantedY = 0.249;
     private double wantedAngle = MAX_WRIST_ANGLE - 2;
 
-    private final boolean arcadeMode = true;
+    private final boolean arcadeMode = false;
 
     /**
      * This method is called periodically during operator control.
@@ -276,23 +276,23 @@ public class Robot extends LoggedRobot {
             teleopDrivingAutoAlignPosition = null;
         }
 
-//        if (xbox.getRawButton(XboxButtons.START)) { //Should be remapped to one of the back buttons
-//            if (xbox.getRisingEdge(XboxButtons.START) || teleopDrivingAutoAlignPosition == null) {
-//                updateTeleopDrivingTarget(scoringPositionManager);
-//                assert teleopDrivingAutoAlignPosition != null;
-//            }
-//
-//            if (!drive.driveToPosition(
-//                    teleopDrivingAutoAlignPosition.getTranslation(),
-//                    teleopDrivingAutoAlignPosition.getRotation(),
-//                    getControllerDriveInputs()
-//            )) {
-//                // We failed to generate a trajectory
-//                wantedRumble = 1;
-//            }
-//        } else {
-//            drive.swerveDriveFieldRelative(getControllerDriveInputs());
-//        }
+        if (xbox.getRawButton(XboxButtons.START) && false) { //Should be remapped to one of the back buttons
+            if (xbox.getRisingEdge(XboxButtons.START) || teleopDrivingAutoAlignPosition == null) {
+                updateTeleopDrivingTarget(scoringPositionManager);
+                assert teleopDrivingAutoAlignPosition != null;
+            }
+
+            if (!drive.driveToPosition(
+                    teleopDrivingAutoAlignPosition.getTranslation(),
+                    teleopDrivingAutoAlignPosition.getRotation(),
+                    getControllerDriveInputs()
+            )) {
+                // We failed to generate a trajectory
+                wantedRumble = 1;
+            }
+        } else {
+            drive.swerveDriveFieldRelative(getControllerDriveInputs());
+        }
 
         if (xbox.getRisingEdge(XboxButtons.A)) {
             robotTracker.resetPose(new Pose2d(robotTracker.getLatestPose().getTranslation(), new Rotation2d()));
@@ -474,13 +474,19 @@ public class Robot extends LoggedRobot {
     }
 
     private ControllerDriveInputs getControllerDriveInputs() {
+        var inputs = new ControllerDriveInputs(-xbox.getRawAxis(1), -xbox.getRawAxis(0), -xbox.getRawAxis(4));
         if (xbox.getRawButton(Controller.XboxButtons.X)) {
-            return new ControllerDriveInputs(xbox.getRawAxis(1), xbox.getRawAxis(0), xbox.getRawAxis(4))
-                    .applyDeadZone(0.2, 0.2, 0.2, 0.2).squareInputs();
+            inputs.applyDeadZone(0.2, 0.2, 0.2, 0.2);
         } else {
-            return new ControllerDriveInputs(xbox.getRawAxis(1), xbox.getRawAxis(0), xbox.getRawAxis(4))
-                    .applyDeadZone(0.05, 0.05, 0.2, 0.2).squareInputs();
+            inputs.applyDeadZone(0.05, 0.05, 0.2, 0.2);
         }
+
+        inputs.squareInputs();
+        Logger.getInstance().recordOutput("Robot/Controller X", inputs.getX());
+        Logger.getInstance().recordOutput("Robot/Controller Y", inputs.getY());
+        Logger.getInstance().recordOutput("Robot/Controller Rotation", inputs.getRotation());
+
+        return inputs;
     }
 
     public boolean isRed() {

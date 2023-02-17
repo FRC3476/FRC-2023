@@ -141,8 +141,9 @@ public final class Drive extends AbstractSubsystem {
                 DRIVE_HIGH_SPEED_M * inputs.getX(),
                 DRIVE_HIGH_SPEED_M * inputs.getY(),
                 inputs.getRotation() * MAX_TELEOP_TURN_SPEED,
-                Robot.getRobotTracker().getGyroAngle()
-                        .plus(new Rotation2d(Robot.getRobotTracker().getAngularVelocity() * EXPECTED_TELEOP_DRIVE_DT / 2)));
+                Robot.getRobotTracker().getGyroAngleAtTime(getIoTimestamp()).toRotation2d()
+                        .plus(Rotation2d.fromDegrees(
+                                Robot.getRobotTracker().getAngularVelocity() * (EXPECTED_TELEOP_DRIVE_DT / 2))));
         kinematicLimit = KinematicLimits.NORMAL_DRIVING.kinematicLimit;
     }
 

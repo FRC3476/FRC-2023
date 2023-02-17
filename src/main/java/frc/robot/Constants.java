@@ -119,8 +119,8 @@ public final class Constants {
      */
     public static final double MAX_TURN_ERROR = 30;
 
-    public static final int SWERVE_MOTOR_CURRENT_LIMIT = 15;
-    public static final int SWERVE_DRIVE_MOTOR_CURRENT_LIMIT = 15;
+    public static final int SWERVE_MOTOR_CURRENT_LIMIT = 30;
+    public static final int SWERVE_DRIVE_MOTOR_CURRENT_LIMIT = 30;
     public static final int SWERVE_DRIVE_VOLTAGE_LIMIT = 12;
 
     public static final double SWERVE_DRIVE_MOTOR_REDUCTION = 1 / 6.75; // L2 gear ratio
@@ -190,7 +190,7 @@ public final class Constants {
     public static final double PIVOT_ROTATIONS_PER_DEGREE = 1 / 5.4;
     public static final double PIVOT_IZONE = 10;
     public static final double GRABBER_NOMINAL_VOLTAGE = 9;
-    public static final int GRABBER_SMART_CURRENT_LIMIT = 30;
+    public static final int GRABBER_SMART_CURRENT_LIMIT = 20;
     public static final int PIVOT_SMART_CURRENT_LIMIT = 40;
     public static final int GRABBER_ROLLER_SMART_CURRENT_LIMIT = 30;
 
@@ -274,5 +274,12 @@ public final class Constants {
     public static final double BASE_MIN_X = -.49;
     public static final double BASE_MAX_X = .43;
     public static final double MIN_Y = -0.03;
-    public static final double MAX_Y = 1.05;
+    public static final double MAX_Y = 1.05 + Units.inchesToMeters(2.1);
+
+
+    //RobotTracker
+
+    public static final double MISMATCH_LOOK_BACK_TIME = 0.15;
+    public static final double MISMATCH_VELOCITY_ERROR_THRESHOLD = Double.MAX_VALUE;
+    public static final double MAX_VELOCITY_MISMATCH_TIME = 5;
 }
