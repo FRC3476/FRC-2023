@@ -280,6 +280,6 @@ public final class Constants {
     //RobotTracker
 
     public static final double MISMATCH_LOOK_BACK_TIME = 0.15;
-    public static final double MISMATCH_VELOCITY_ERROR_THRESHOLD = 0.1;
+    public static final double MISMATCH_VELOCITY_ERROR_THRESHOLD = Double.MAX_VALUE;
     public static final double MAX_VELOCITY_MISMATCH_TIME = 5;
 }

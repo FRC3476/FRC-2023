@@ -33,6 +33,11 @@ public final class RobotTracker extends AbstractSubsystem {
 
     private final ReentrantReadWriteLock lock = new ReentrantReadWriteLock();
     private final @NotNull WPI_Pigeon2 gyroSensor = new WPI_Pigeon2(PIGEON_CAN_ID, "rio");
+
+    {
+        gyroSensor.configMountPose(0, 0, 0);
+    }
+
     private final @NotNull Rotation3d ROTATION_IDENTITY = new Rotation3d();
 
     /**
@@ -44,11 +49,8 @@ public final class RobotTracker extends AbstractSubsystem {
      * The 3d pose of the robot at the last time the odometry was updated.
      */
     private @NotNull Pose3d latestPose3d = new Pose3d();
-
-    private @NotNull Rotation2d gyroOffset = new Rotation2d();
-
-    private @NotNull Rotation2d rotation2d = new Rotation2d();
-    private @NotNull Rotation3d rotation3d = new Rotation3d();
+    private @NotNull Rotation2d gyroAngle2d = new Rotation2d();
+    private @NotNull Rotation3d gyroAngle3d = new Rotation3d();
 
     private double angularRate = 0;
 
@@ -59,12 +61,12 @@ public final class RobotTracker extends AbstractSubsystem {
 
     private final SwerveDriveOdometry noVisionOdometry;
 
-    private static final double VELOCITY_MEASUREMENT_WINDOW = 0.5;
+    private static final double VELOCITY_MEASUREMENT_WINDOW = 0.2;
 
     private final TimeInterpolatableBuffer<Pose3d> poseBufferForVelocity = TimeInterpolatableBuffer.createBuffer(
             Pose3d::interpolate, 1.5);
 
-
+    private @NotNull Rotation3d gyroOffset = new Rotation3d();
     /**
      * Acceleration of the robot in field relative coordinates.
      */
@@ -77,10 +79,15 @@ public final class RobotTracker extends AbstractSubsystem {
 
     private double lastTimestamp = 0;
     private final @NotNull TimeInterpolatableBuffer<Rotation3d> gyroHistory
-            = TimeInterpolatableBuffer.createBuffer(Rotation3d::interpolate, 1.5); //abt 1.5 seconds (ms * 300)
+            = TimeInterpolatableBuffer.createBuffer(Rotation3d::interpolate, 1.5);
 
     private final @NotNull TimeInterpolatableBuffer<Translation3d> accelerationHistory
-            = TimeInterpolatableBuffer.createBuffer(Translation3d::interpolate, 1.5); //abt 1.5 seconds (ms * 300)
+            = TimeInterpolatableBuffer.createBuffer(Translation3d::interpolate, 1.5);
+
+    private final @NotNull TimeInterpolatableBuffer<Translation3d> velocityHistory
+            = TimeInterpolatableBuffer.createBuffer(Translation3d::interpolate, 15);
+    private final @NotNull TimeInterpolatableBuffer<Translation3d> velocityOffsetHistory
+            = TimeInterpolatableBuffer.createBuffer(Translation3d::interpolate, 15);
 
     public RobotTracker() {
         super();
@@ -194,6 +201,9 @@ public final class RobotTracker extends AbstractSubsystem {
     private boolean isVelocityMismatched = false;
     private double velocityMismatchTime = 0;
 
+    private Translation3d velocityOffset = new Translation3d();
+    private Translation3d accumulatedVelocityError = new Translation3d();
+
     {
         Logger.getInstance().recordOutput("Velocity Mismatch Count", mismatchedVelocityCount);
     }
@@ -207,35 +217,50 @@ public final class RobotTracker extends AbstractSubsystem {
             Logger.getInstance().processInputs("Gyro", gyroInputs);
             lock.writeLock().lock();
             try {
-                for (Entry<Translation3d> translation3dEntry : gyroInputs.accelerations) {
-                    accelerationHistory.addSample(translation3dEntry.timestamp(), translation3dEntry.value());
-                }
                 for (Entry<Rotation3d> rotation3dEntry : gyroInputs.rotations) {
                     gyroHistory.addSample(rotation3dEntry.timestamp(), rotation3dEntry.value());
                 }
+                for (Entry<Translation3d> translation3dEntry : gyroInputs.accelerations) {
+                    accelerationHistory.addSample(translation3dEntry.timestamp(), translation3dEntry.value());
+                }
+
+                angularRate = gyroInputs.gyroYawVelocity;
                 gyroInputs.accelerations.clear();
                 gyroInputs.rotations.clear();
 
-                angularRate = gyroInputs.gyroYawVelocity;
                 acceleration = accelerationHistory.getSample(timestamp).orElse(new Translation3d());
-                rotation3d = gyroHistory.getSample(timestamp).orElse(gyroInputs.rotation3d);
-                rotation2d = rotation3d.toRotation2d();
+                gyroAngle3d = gyroHistory.getSample(timestamp).orElse(gyroInputs.rotation3d);
+                gyroAngle2d = gyroAngle3d.toRotation2d();
+
+
+                var lastVelocityEntry = velocityHistory.getInternalBuffer().lastEntry();
+                var lastEntry = accelerationHistory.getInternalBuffer().lastEntry();
+                var gyroTime = lastEntry != null ? lastEntry.getKey() : timestamp;
+                if (lastVelocityEntry == null) {
+                    velocityHistory.addSample(gyroTime, new Translation3d());
+                } else {
+                    var lastVelocity = lastVelocityEntry.getValue();
+                    var changeInVelocity = getChangeInVelocity(lastVelocityEntry.getKey(), gyroTime);
+                    var newVelocity = lastVelocity.plus(changeInVelocity);
+                    velocityHistory.addSample(gyroTime, newVelocity);
+                }
             } finally {
                 lock.writeLock().unlock();
             }
         }
 
+        Rotation3d startUpRotationToField = swerveDriveOdometry.getEstimatedPosition3d().getRotation().minus(gyroAngle3d);
+
         SwerveModulePosition[] modulePositions = Robot.getDrive().getModulePositions();
         if (isVelocityMismatched) {
-            var oldVelocity = velocity;
-            var newVelocity = velocity.plus(getChangeInVelocity(lastTimestamp, timestamp));
-            var averageVelocity = oldVelocity.plus(newVelocity).times(0.5);
+            var averageVelocity = velocityHistory.getSample((lastTimestamp + timestamp) / 2).orElse(new Translation3d())
+                    .rotateBy(startUpRotationToField);
 
-            swerveDriveOdometry.updateWithTime(timestamp, rotation3d, averageVelocity, lastTimestamp - timestamp);
+            swerveDriveOdometry.updateWithTime(timestamp, gyroAngle3d, averageVelocity, lastTimestamp - timestamp);
 
             velocityMismatchTime += timestamp - lastTimestamp;
         } else {
-            swerveDriveOdometry.updateWithTime(timestamp, rotation3d, modulePositions);
+            swerveDriveOdometry.updateWithTime(timestamp, gyroAngle3d, modulePositions);
         }
 
         synchronized (visionMeasurements) {
@@ -262,105 +287,141 @@ public final class RobotTracker extends AbstractSubsystem {
         pastVisionMeasurements.headMap(timestamp - MISMATCH_LOOK_BACK_TIME).clear();
 
 
-        @Nullable Translation3d velocity = null;
+        @Nullable Translation3d velocity;
 
         // Calculate the velocity of the robot
         //noVisionOdometry is always relative to the startup angle of the robot
-        noVisionOdometry.update(rotation2d, modulePositions);
+        noVisionOdometry.update(gyroAngle3d, modulePositions);
         lock.readLock().lock();
         try {
-            Rotation3d startUpRotationToField = swerveDriveOdometry.getEstimatedPosition3d().getRotation().minus(rotation3d);
-            var velocityOdometryBackedOptional = getVelocityAtTime(timestamp);
+            var averageVelocity = getVelocityAverageVelocityInPeriodFromOdometry(
+                    timestamp - VELOCITY_MEASUREMENT_WINDOW, timestamp)
+                    .orElse(new Translation3d())
+                    .rotateBy(startUpRotationToField);
+            var averageVelocityAcceleration = getVelocityAverageVelocityInPeriodFromAcceleration(
+                    timestamp - VELOCITY_MEASUREMENT_WINDOW, timestamp)
+                    .rotateBy(startUpRotationToField)
+                    .plus(velocityOffset);
 
-            if (isVelocityMismatched) {
-                velocity = this.velocity.plus(getChangeInVelocity(lastTimestamp, timestamp));
+            Logger.getInstance().recordOutput("RobotTracker/Average Velocity", averageVelocity.getNorm());
+            Logger.getInstance().recordOutput("RobotTracker/Average Velocity X", averageVelocity.getX());
+            Logger.getInstance().recordOutput("RobotTracker/Average Velocity Y", averageVelocity.getY());
+            Logger.getInstance().recordOutput("RobotTracker/Average Velocity Z", averageVelocity.getZ());
 
-                if (velocityOdometryBackedOptional.isPresent()) {
-                    var velocityError = velocityOdometryBackedOptional.get().minus(velocity);
-                    var velocityErrorMagnitude = velocityError.getNorm();
-                    Logger.getInstance().recordOutput("Velocity Error", velocityErrorMagnitude);
+            var velocityError = averageVelocity.minus(averageVelocityAcceleration);
+            var velocityErrorMagnitude = velocityError.getNorm();
 
-                    if (velocityErrorMagnitude < MISMATCH_VELOCITY_ERROR_THRESHOLD || velocityMismatchTime > MAX_VELOCITY_MISMATCH_TIME) {
-                        isVelocityMismatched = false;
-                        velocityMismatchTime = 0;
+            Logger.getInstance().recordOutput("RobotTracker/Velocity Error", velocityErrorMagnitude);
+            Logger.getInstance().recordOutput("RobotTracker/Velocity Error X", velocityError.getX());
+            Logger.getInstance().recordOutput("RobotTracker/Velocity Error Y", velocityError.getY());
+            Logger.getInstance().recordOutput("RobotTracker/Velocity Error Z", velocityError.getZ());
+            if (isVelocityMismatched && false) {
+                if (velocityErrorMagnitude < MISMATCH_VELOCITY_ERROR_THRESHOLD || velocityMismatchTime > MAX_VELOCITY_MISMATCH_TIME) {
+                    isVelocityMismatched = false;
+                    if (velocityMismatchTime > MAX_VELOCITY_MISMATCH_TIME) {
+                        // we have been mismatched for too long, so we should reset the velocity offset
+                        velocityOffset = velocityOffset.plus(velocityError);
+                        velocityOffsetHistory.addSample(timestamp, velocityOffset);
                     }
+                    velocityMismatchTime = 0;
+                    accumulatedVelocityError = accumulatedVelocityError.times(0);
                 }
             } else {
-                if (velocityOdometryBackedOptional.isPresent()) {
-                    velocity = velocityOdometryBackedOptional.get().rotateBy(startUpRotationToField);
-                }
+                accumulatedVelocityError = accumulatedVelocityError.times(0.95); // Decay accumulated error
+                accumulatedVelocityError = accumulatedVelocityError.plus(velocityError); // Add new error
 
-                var oldVelocityOptional = getVelocityAtTime(timestamp - MISMATCH_LOOK_BACK_TIME);
+                var accumulatedVelocityErrorMagnitude = accumulatedVelocityError.getNorm();
 
-                if (oldVelocityOptional.isPresent() && velocityOdometryBackedOptional.isPresent()) {
-                    var velocityChangeToPresent = getChangeInVelocity(timestamp - MISMATCH_LOOK_BACK_TIME, timestamp);
-                    var expectedPresentVelocity = oldVelocityOptional.get().plus(velocityChangeToPresent);
-                    var velocityError = expectedPresentVelocity.minus(velocityOdometryBackedOptional.get());
-                    var velocityErrorMagnitude = velocityError.getNorm();
-                    Logger.getInstance().recordOutput("Velocity Error", velocityErrorMagnitude);
+                velocityOffset = velocityOffset.plus(velocityError.times(1)); // Add new error to offset
+                // (theoretically, we would want to scale this by some factor, less than 1, but the accelerometer isn't centered
+                // around the rotation axis, so we get a lot of error that accumulates, when we are rotating if we do that, so we
+                // just add the error to the offset. By scaling it by 1, we're essentially doing the same thing we were trying
+                // to do earlier with velocity latency compensation, but it's actually implemented correctly, this time.
 
-                    if (velocityErrorMagnitude > MISMATCH_VELOCITY_ERROR_THRESHOLD) {
-                        mismatchedVelocityCount++;
-                        Logger.getInstance().recordOutput("Velocity Mismatch Count", mismatchedVelocityCount);
+                velocityOffsetHistory.addSample(timestamp, velocityOffset);
 
-                        isVelocityMismatched = true;
-                        velocityMismatchTime = 0;
+                var oldVelocityOptional = velocityHistory.getSample(timestamp - MISMATCH_LOOK_BACK_TIME);
+                @Nullable var oldVelocityOffset =
+                        velocityOffsetHistory.getInternalBuffer().lowerEntry(timestamp - MISMATCH_LOOK_BACK_TIME);
 
-                        var lastVisionUpdateToUndo = pastVisionMeasurements.firstEntry();
-                        if (lastVisionUpdateToUndo != null) {
-                            swerveDriveOdometry.undoVisionMeasurement(lastVisionUpdateToUndo.getValue().get(0).pose(),
-                                    lastVisionUpdateToUndo.getKey());
-                            // If the key exists, then the array list can't be empty, so it is safe to get the first element
-                            // The first element is the list is also the first vision measurement applied at that time, so it is the
-                            // one to undo with.
+                if (oldVelocityOptional.isPresent() &&
+                        oldVelocityOffset != null && accumulatedVelocityErrorMagnitude > MISMATCH_VELOCITY_ERROR_THRESHOLD) {
+                    mismatchedVelocityCount++;
+                    Logger.getInstance().recordOutput("RobotTracker/Velocity Mismatch Count", mismatchedVelocityCount);
+
+                    isVelocityMismatched = true;
+                    velocityMismatchTime = 0;
+
+                    // Clear velocity updates from the odometry in the past MISMATCH_LOOK_BACK_TIME
+                    velocityOffset = oldVelocityOffset.getValue();
+                    velocityOffsetHistory.getInternalBuffer().tailMap(timestamp - MISMATCH_LOOK_BACK_TIME, false).clear();
+
+                    // Undo the vision measurements that were applied during the mismatch
+                    var lastVisionUpdateToUndo = pastVisionMeasurements.firstEntry();
+                    if (lastVisionUpdateToUndo != null) {
+                        swerveDriveOdometry.undoVisionMeasurement(lastVisionUpdateToUndo.getValue().get(0).pose(),
+                                lastVisionUpdateToUndo.getKey());
+                        // If the key exists, then the array list can't be empty, so it is safe to get the first element
+                        // The first element is the list is also the first vision measurement applied at that time, so it is the
+                        // one to undo with.
+                    }
+
+                    if (swerveDriveOdometry.rollbackOdometry(timestamp - MISMATCH_LOOK_BACK_TIME)) {
+                        MutableTranslation3d newVelocity = new MutableTranslation3d();
+                        double lastTime = timestamp - MISMATCH_LOOK_BACK_TIME;
+                        // Bring the odometry up to the present time
+                        for (double time = lastTime + NOMINAL_DT; time < timestamp; time += NOMINAL_DT) {
+                            newVelocity.set(velocityHistory.getSample((time + lastTime) / 2).orElse(new Translation3d())
+                                    // The velocity from the history method is relative to the robot's startup angle,
+                                    // so we need to rotate it to the field frame
+                                    .rotateBy(startUpRotationToField)
+                                    .plus(velocityOffset));
+
+                            swerveDriveOdometry.updateWithTime(time, getGyroAngleAtTime(time), newVelocity.getTranslation3d(),
+                                    time - lastTime);
+
+                            lastTime = time;
                         }
 
-                        if (swerveDriveOdometry.rollbackOdometry(timestamp - MISMATCH_LOOK_BACK_TIME)) {
-                            // Update the current velocity to not use the wheel measurements
-                            velocity = oldVelocityOptional.get().plus(velocityChangeToPresent).rotateBy(startUpRotationToField);
+                        // Add the last sample
+                        newVelocity.set(velocityHistory.getSample((lastTime + timestamp) / 2).orElse(new Translation3d())
+                                // The velocity from the history method is relative to the robot's startup angle,
+                                // so we need to rotate it to the field frame
+                                .rotateBy(startUpRotationToField)
+                                .plus(velocityOffset));
+                        swerveDriveOdometry.updateWithTime(timestamp, getGyroAngleAtTime(timestamp),
+                                newVelocity.getTranslation3d(),
+                                timestamp - lastTime);
 
-                            MutableTranslation3d oldVelocity = new MutableTranslation3d(oldVelocityOptional.get());
-                            // The velocity from the getVelocityAtTime method is relative to the robot's startup angle, so we need to
-                            // rotate it to the field frame
-                            oldVelocity.rotateBy(startUpRotationToField);
-
-                            MutableTranslation3d newVelocity = new MutableTranslation3d();
-                            MutableTranslation3d avgVelocity = new MutableTranslation3d();
-
-                            double lastTime = timestamp - MISMATCH_LOOK_BACK_TIME;
-                            // Bring the odometry up to the present time
-                            for (double time = lastTime + NOMINAL_DT; time < timestamp; time += NOMINAL_DT) {
-                                newVelocity.set(getChangeInVelocity(lastTime, time))
-                                        // The velocity from the getChangeInVelocity method is relative to the robot's startup angle,
-                                        // so we need to rotate it to the field frame
-                                        .rotateBy(startUpRotationToField)
-                                        .plus(oldVelocity); // Add the old velocity to get the new velocity (already in the field frame)
-                                avgVelocity.set(oldVelocity).plus(newVelocity).times(0.5);
-
-                                swerveDriveOdometry.updateWithTime(time, rotation3d, avgVelocity.getTranslation3d(),
-                                        time - lastTime);
-
-                                oldVelocity.set(newVelocity);
-                                lastTime = time;
-                            }
-
-                            // Add the last sample
-                            newVelocity.set(velocity).plus(oldVelocity);
-                            avgVelocity.set(oldVelocity).plus(newVelocity).times(0.5);
-                            swerveDriveOdometry.updateWithTime(timestamp, rotation3d, avgVelocity.getTranslation3d(),
-                                    timestamp - lastTime);
-
-                            // Reapply the vision measurements
-                            for (var entry : pastVisionMeasurements.entrySet()) {
-                                for (var visionMeasurement : entry.getValue()) {
-                                    swerveDriveOdometry.addVisionMeasurement(visionMeasurement.pose(), entry.getKey(),
-                                            visionMeasurement.visionMeasurementStds());
-                                }
+                        // Reapply the vision measurements
+                        for (var entry : pastVisionMeasurements.entrySet()) {
+                            for (var visionMeasurement : entry.getValue()) {
+                                swerveDriveOdometry.addVisionMeasurement(visionMeasurement.pose(), entry.getKey(),
+                                        visionMeasurement.visionMeasurementStds());
                             }
                         }
                     }
                 }
             }
+
+            velocity = velocityHistory.getSample(timestamp).orElse(new Translation3d())
+                    .rotateBy(startUpRotationToField)
+                    .plus(velocityOffset);
+
+            Logger.getInstance().recordOutput("RobotTracker/Velocity Offset X", velocityOffset.getX());
+            Logger.getInstance().recordOutput("RobotTracker/Velocity Offset Y", velocityOffset.getY());
+            Logger.getInstance().recordOutput("RobotTracker/Velocity Offset Z", velocityOffset.getZ());
+
+            var rawVelocity = velocityHistory.getSample(timestamp).orElse(new Translation3d())
+                    .rotateBy(startUpRotationToField);
+
+            Logger.getInstance().recordOutput("RobotTracker/Raw Velocity X", rawVelocity.getX());
+            Logger.getInstance().recordOutput("RobotTracker/Raw Velocity Y", rawVelocity.getY());
+            Logger.getInstance().recordOutput("RobotTracker/Raw Velocity Z", rawVelocity.getZ());
+
+            Logger.getInstance().recordOutput("RobotTracker/Accumulated Error X", accumulatedVelocityError.getX());
+            Logger.getInstance().recordOutput("RobotTracker/Accumulated Error Y", accumulatedVelocityError.getY());
+            Logger.getInstance().recordOutput("RobotTracker/Accumulated Error Z", accumulatedVelocityError.getZ());
         } finally {
             lock.readLock().unlock();
         }
@@ -374,6 +435,7 @@ public final class RobotTracker extends AbstractSubsystem {
             }
             Pose3d noVisionPose = noVisionOdometry.getPoseMeters3d();
             poseBufferForVelocity.addSample(timestamp, noVisionPose);
+            gyroOffset = latestPose3d.getRotation().minus(gyroInputs.rotation3d);
             this.lastTimestamp = timestamp;
         } finally {
             lock.writeLock().unlock();
@@ -435,7 +497,7 @@ public final class RobotTracker extends AbstractSubsystem {
     public @NotNull Rotation2d getGyroAngle() {
         lock.readLock().lock();
         try {
-            return rotation2d.plus(gyroOffset);
+            return gyroAngle3d.plus(gyroOffset).toRotation2d();
         } finally {
             lock.readLock().unlock();
         }
@@ -447,7 +509,7 @@ public final class RobotTracker extends AbstractSubsystem {
         lock.readLock().lock();
         try {
             return gyroHistory.getSample(time).orElse(ROTATION_IDENTITY)
-                    .plus(new Rotation3d(POSITIVE_Z, gyroOffset.getRadians()));
+                    .plus(gyroOffset);
         } finally {
             lock.readLock().unlock();
         }
@@ -457,7 +519,7 @@ public final class RobotTracker extends AbstractSubsystem {
     public @NotNull Translation3d getAcceleration() {
         lock.readLock().lock();
         try {
-            return acceleration;
+            return acceleration.rotateBy(gyroOffset);
         } finally {
             lock.readLock().unlock();
         }
@@ -467,14 +529,19 @@ public final class RobotTracker extends AbstractSubsystem {
         return getAcceleration().toTranslation2d();
     }
 
-    public void resetPose(@NotNull Pose2d pose) {
+    public void resetPose(@NotNull Pose3d pose) {
         lock.writeLock().lock();
         try {
-            swerveDriveOdometry.resetPosition(rotation2d, Robot.getDrive().getModulePositions(), pose);
-            gyroOffset = pose.getRotation().minus(rotation2d);
+            swerveDriveOdometry.resetPosition(gyroInputs.rotation3d, Robot.getDrive().getModulePositions(), pose);
+            gyroOffset = pose.getRotation().minus(gyroInputs.rotation3d);
         } finally {
             lock.writeLock().unlock();
         }
+    }
+
+
+    public void resetPose(@NotNull Pose2d pose2d) {
+        resetPose(new Pose3d(pose2d));
     }
 
     public boolean isOnRedSide() {
@@ -570,23 +637,64 @@ public final class RobotTracker extends AbstractSubsystem {
     /**
      * Gets the velocity of the robot at a given time
      *
-     * @param timestamp the time to get the velocity at
+     * @param startTime the time to start the measurement window
+     * @param endTime   the time to end the measurement window
      * @return the velocity of the robot at the given time relative to the startup angle of the robot
      */
-    private Optional<Translation3d> getVelocityAtTime(double timestamp) {
-        var pastPose = poseBufferForVelocity.getSample(timestamp - VELOCITY_MEASUREMENT_WINDOW);
-        var currentPose = poseBufferForVelocity.getSample(timestamp);
+    private Optional<Translation3d> getVelocityAverageVelocityInPeriodFromOdometry(double startTime, double endTime) {
+        var pastPose = poseBufferForVelocity.getSample(startTime);
+        var currentPose = poseBufferForVelocity.getSample(endTime);
         if (pastPose.isPresent() && currentPose.isPresent()) {
             var avgVelocity = pastPose.get().getTranslation().minus(currentPose.get().getTranslation());
             var averageVelocity = avgVelocity.div(VELOCITY_MEASUREMENT_WINDOW);
-
-            // The change in velocity over our measurement window
-            var deltaVelocity = getChangeInVelocity(timestamp - VELOCITY_MEASUREMENT_WINDOW, timestamp);
-
-            // https://www.desmos.com/calculator/szqs5g5d6i
-
-            return Optional.of(averageVelocity.plus(deltaVelocity.times(0.5)));
+            return Optional.of(averageVelocity);
         }
         return Optional.empty();
+    }
+
+    private Translation3d getVelocityAverageVelocityInPeriodFromAcceleration(double startTime, double endTime) {
+        double deltaTime = endTime - startTime;
+        // Create mutable objects to avoid creating new objects
+        final var mutDeltaPosition = new MutableTranslation3d();
+        final var tempVelocity = new MutableTranslation3d();
+        final var lastVelocity = new MutableTranslation3d();
+
+
+        final var optionalInitialAccel = velocityHistory.getSample(startTime);
+        optionalInitialAccel.ifPresent(
+                translation3d -> lastVelocity.set(translation3d.getX(), translation3d.getY(), translation3d.getZ()));
+
+        for (var entry : velocityHistory.getInternalBuffer().tailMap(startTime, false).entrySet()) {
+            double time = entry.getKey();
+
+            var accel = entry.getValue();
+
+            if (time > endTime) { // We've gone past the end time
+                accel = velocityHistory.getSample(endTime).orElse(accel); // Interpolates the accel to the end time
+                time = endTime;
+            }
+
+            tempVelocity.set(accel.getX(), accel.getY(), accel.getZ()).plus(lastVelocity).times(0.5).times(time - startTime);
+            mutDeltaPosition.plus(tempVelocity);
+
+            lastVelocity.set(accel.getX(), accel.getY(), accel.getZ());
+            startTime = time;
+
+            if (time >= endTime) {
+                break;
+            }
+        }
+
+        if (startTime < endTime) {
+            // Add the last bit of deltaVelocity (assume it's constant from the last sample to now)
+            tempVelocity.set(lastVelocity);
+
+            tempVelocity.times(endTime - startTime);
+            mutDeltaPosition.plus(tempVelocity);
+        }
+
+
+        // The deltaVelocity over our measurement window
+        return mutDeltaPosition.div(deltaTime).getTranslation3d();
     }
 }
