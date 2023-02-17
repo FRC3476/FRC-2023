@@ -30,8 +30,6 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 import static frc.robot.Constants.*;
 
 public final class RobotTracker extends AbstractSubsystem {
-
-    public static final double ACUMULATED_ERROR_DECAY = 0.95;
     private final ReentrantReadWriteLock lock = new ReentrantReadWriteLock();
     private final @NotNull WPI_Pigeon2 gyroSensor = new WPI_Pigeon2(PIGEON_CAN_ID, "rio");
 
@@ -292,7 +290,7 @@ public final class RobotTracker extends AbstractSubsystem {
                     .orElse(new Translation3d())
                     .rotateBy(startUpRotationToField);
 
-            // Get the velocity of the robot from the acceleration (double integration)
+            // Get the velocity of the robot from the acceleration (first integration)
             var averageVelocityAcceleration = getVelocityAverageVelocityInPeriodFromAcceleration(
                     timestamp - VELOCITY_MEASUREMENT_WINDOW, timestamp)
                     .rotateBy(startUpRotationToField)
@@ -329,7 +327,7 @@ public final class RobotTracker extends AbstractSubsystem {
                     accumulatedVelocityError = accumulatedVelocityError.times(0);
                 }
             } else {
-                accumulatedVelocityError = accumulatedVelocityError.times(ACUMULATED_ERROR_DECAY); // Decay accumulated error
+                accumulatedVelocityError = accumulatedVelocityError.times(ACCUMULATED_ERROR_DECAY); // Decay accumulated error
                 accumulatedVelocityError = accumulatedVelocityError.plus(velocityError); // Add new error
 
                 var accumulatedVelocityErrorMagnitude = accumulatedVelocityError.getNorm();
@@ -349,7 +347,7 @@ public final class RobotTracker extends AbstractSubsystem {
                         velocityOffsetHistory.getInternalBuffer().lowerEntry(timestamp - MISMATCH_LOOK_BACK_TIME);
 
                 if (oldVelocityOptional.isPresent() &&
-                        oldVelocityOffset != null && accumulatedVelocityErrorMagnitude > MISMATCH_VELOCITY_ERROR_THRESHOLD) {
+                        oldVelocityOffset != null && accumulatedVelocityErrorMagnitude > MISMATCH_ACCUMULATED_VELOCITY_ERROR_THRESHOLD) {
                     mismatchedVelocityCount++;
                     Logger.getInstance().recordOutput("RobotTracker/Velocity Mismatch Count", mismatchedVelocityCount);
 

@@ -280,6 +280,17 @@ public final class Constants {
     //RobotTracker
 
     public static final double MISMATCH_LOOK_BACK_TIME = 0.15;
+    
+    /**
+     * The maximum velocity error at which we consider the velocity to be matched.
+     */
     public static final double MISMATCH_VELOCITY_ERROR_THRESHOLD = Double.MAX_VALUE;
+
+    /**
+     * The maximum accumulated error before we consider the velocity to be mismatched.
+     */
+    public static final double MISMATCH_ACCUMULATED_VELOCITY_ERROR_THRESHOLD = Double.MAX_VALUE;
+
     public static final double MAX_VELOCITY_MISMATCH_TIME = 5;
+    public static final double ACCUMULATED_ERROR_DECAY = 0.95;
 }
