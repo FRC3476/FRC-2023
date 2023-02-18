@@ -9,6 +9,7 @@ import com.dacubeking.AutoBuilder.robot.robotinterface.AutonomousContainer;
 import com.dacubeking.AutoBuilder.robot.robotinterface.CommandTranslator;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.trajectory.TrapezoidProfile.State;
 import edu.wpi.first.wpilibj.GenericHID.RumbleType;
 import edu.wpi.first.wpilibj.PowerDistribution;
 import edu.wpi.first.wpilibj.PowerDistribution.ModuleType;
@@ -290,6 +291,15 @@ public class Robot extends LoggedRobot {
                 // We failed to generate a trajectory
                 wantedRumble = 1;
             }
+        } else if (xbox.getRawButton(XboxButtons.Y)) {
+            drive.autoBalance(getControllerDriveInputs());
+        } else if (xbox.getRawButton(XboxButtons.BACK)) {
+            updateTeleopDrivingTarget(scoringPositionManager);
+            assert teleopDrivingAutoAlignPosition != null;
+            drive.setTurn(
+                    getControllerDriveInputs(),
+                    new State(teleopDrivingAutoAlignPosition.getRotation().getRadians(), 0),
+                    0);
         } else {
             drive.swerveDriveFieldRelative(getControllerDriveInputs());
         }

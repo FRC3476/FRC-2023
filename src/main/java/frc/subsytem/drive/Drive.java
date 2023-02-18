@@ -86,7 +86,7 @@ public final class Drive extends AbstractSubsystem {
     }
 
     public enum DriveState {
-        TELEOP, TURN, HOLD, DONE, RAMSETE, STOP, WAITING_FOR_PATH
+        TELEOP, TURN, HOLD, DONE, RAMSETE, STOP, WAITING_FOR_PATH, AUTO_BALANCE
     }
 
     private void resetAuto() {
@@ -111,7 +111,7 @@ public final class Drive extends AbstractSubsystem {
         return inputs.driveMotorVelocities[motorNum];
     }
 
-    private synchronized void setDriveState(@NotNull DriveState driveState) {
+    public synchronized void setDriveState(@NotNull DriveState driveState) {
         this.driveState = driveState;
     }
 
@@ -415,6 +415,7 @@ public final class Drive extends AbstractSubsystem {
                 kinematicLimit = KinematicLimits.NORMAL_DRIVING.kinematicLimit;
             }
             case RAMSETE -> updateRamsete();
+            case AUTO_BALANCE -> autoBalance(ControllerDriveInputs.ZERO);
         }
         if (driveState != DriveState.HOLD && !DriverStation.isTest() && DriverStation.isEnabled()) {
             swerveDrive(nextChassisSpeeds, kinematicLimit, NOMINAL_DT);
@@ -445,7 +446,7 @@ public final class Drive extends AbstractSubsystem {
      * @param goal                  The target state at the end of the turn (in radians, radians/s)
      * @param turnErrorRadians      The error in radians that the robot can be off by and still be considered done turning
      */
-    private synchronized void setTurn(ControllerDriveInputs controllerDriveInputs, State goal, double turnErrorRadians) {
+    public synchronized void setTurn(ControllerDriveInputs controllerDriveInputs, State goal, double turnErrorRadians) {
         TurnInputs.controllerDriveInputs = controllerDriveInputs;
         TurnInputs.goal = goal;
         TurnInputs.turnErrorRadians = turnErrorRadians;
