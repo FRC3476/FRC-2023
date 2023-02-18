@@ -258,13 +258,17 @@ public class Robot extends LoggedRobot {
 
     private WantedMechanismState wantedMechanismState = WantedMechanismState.STOWED;
 
-    private boolean isGrabberOpen = false;
+    private boolean isGrabberOpen = true;
 
     private double wantedX = -0.489;
     private double wantedY = 0.249;
     private double wantedAngle = MAX_WRIST_ANGLE - 2;
 
-    private final boolean arcadeMode = false;
+    private boolean arcadeMode = false;
+
+    {
+        Logger.getInstance().recordOutput("Robot/Arcade Mode", arcadeMode);
+    }
 
     /**
      * This method is called periodically during operator control.
@@ -276,6 +280,10 @@ public class Robot extends LoggedRobot {
         buttonPanel.update();
         double wantedRumble = 0;
 
+        if (stick.getRisingEdge(3)) {
+            arcadeMode = !arcadeMode;
+            Logger.getInstance().recordOutput("Robot/Arcade Mode", arcadeMode);
+        }
 
         var scoringPositionManager = ScoringPositionManager.getInstance();
         if (scoringPositionManager.updateSelectedPosition(buttonPanel)) {
@@ -516,8 +524,12 @@ public class Robot extends LoggedRobot {
         return inputs;
     }
 
-    public boolean isRed() {
+    public static boolean isRed() {
         return sideChooser.get().equals("red");
+    }
+
+    public static boolean isOnAllianceSide() {
+        return isRed() == robotTracker.isOnRedSide();
     }
 
     public static @NotNull Drive getDrive() {
@@ -542,5 +554,9 @@ public class Robot extends LoggedRobot {
 
     public static @NotNull Elevator getElevator() {
         return elevator;
+    }
+
+    public static @NotNull MechanismStateManager getMechanismStateManager() {
+        return mechanismStateManager;
     }
 }

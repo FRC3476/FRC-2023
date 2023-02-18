@@ -54,4 +54,12 @@ public final class MathUtil {
         }
         return sum / values.length;
     }
+
+    public static double max(double... values) {
+        double max = values[0];
+        for (double value : values) {
+            max = Math.max(max, value);
+        }
+        return max;
+    }
 }

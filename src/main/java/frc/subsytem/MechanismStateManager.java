@@ -6,7 +6,9 @@ import frc.robot.Robot;
 import org.jetbrains.annotations.NotNull;
 import org.littletonrobotics.junction.Logger;
 
+import static frc.robot.Constants.GRABBER_LENGTH;
 import static frc.robot.Constants.MAX_WRIST_ANGLE;
+import static frc.utility.MathUtil.max;
 
 public class MechanismStateManager extends AbstractSubsystem {
 
@@ -39,7 +41,7 @@ public class MechanismStateManager extends AbstractSubsystem {
         LOW_SCORING(new MechanismStateCoordinates(Units.inchesToMeters(12), Units.inchesToMeters(6), 0)),
         MIDDLE_SCORING(new MechanismStateCoordinates(Units.inchesToMeters(16), Units.inchesToMeters(46), 10)),
         HIGH_SCORING(new MechanismStateCoordinates(Units.inchesToMeters(36), Units.inchesToMeters(57), 55)),
-        STATION_PICKUP(new MechanismStateCoordinates(0.1, .7, 0)),
+        STATION_PICKUP(new MechanismStateCoordinates(0.531, 1.33, 5.9)),
         FLOOR_PICKUP(new MechanismStateCoordinates(0, 0, -7));
         private final MechanismStateCoordinates state;
 
@@ -88,9 +90,55 @@ public class MechanismStateManager extends AbstractSubsystem {
     }
 
     public static MechanismStateCoordinates limitCoordinates(MechanismStateCoordinates mechanismState) {
+        return limitCoordinates(mechanismState, Robot.getMechanismStateManager().getCurrentCoordinates());
+    }
+
+    private static final double GRABBER_ZERO_X_OFFSET = GRABBER_LENGTH;
+
+    public static MechanismStateCoordinates limitCoordinates(MechanismStateCoordinates mechanismState,
+                                                             MechanismStateCoordinates currentMechanismState) {
         double mutableX = mechanismState.xMeters;
         double mutableY = mechanismState.yMeters;
         double mutableWristAngle = mechanismState.grabberAngleDegrees;
+
+
+        double maxXGivenCurrentY;
+        double minYGivenCurrentX;
+
+        double currWristX = Constants.GRABBER_LENGTH * Math.cos(Math.toRadians(currentMechanismState.grabberAngleRadians()));
+        double currWristY = Constants.GRABBER_LENGTH * Math.sin(Math.toRadians(currentMechanismState.grabberAngleRadians()));
+
+
+        double minYOfCurrentArm = Math.min(
+                currentMechanismState.yMeters,
+                currentMechanismState.yMeters - currWristY
+        );
+        if (Robot.isOnAllianceSide()) {
+            if (minYOfCurrentArm < Units.inchesToMeters(24)) {
+                mutableX = Math.min(0.087, mutableX);
+                double targetArmHeight = mutableY - currWristY;
+                mutableWristAngle = 90;
+                mutableY = targetArmHeight + Math.sin(Math.toRadians(mutableWristAngle));
+            }
+
+            if (Math.max(currentMechanismState.xMeters, currentMechanismState.xMeters - currWristX) > 0.87) {
+                mutableY = max(Units.inchesToMeters(24) + currWristY, Units.inchesToMeters(24), mutableY);
+            }
+        } else {
+            if (minYOfCurrentArm < Units.inchesToMeters(3 * 12 + 2)) {
+                mutableX = Math.min(0, mutableX);
+                double targetArmHeight = mutableY - currWristY;
+                mutableWristAngle = 90;
+                mutableY = targetArmHeight + Math.sin(Math.toRadians(mutableWristAngle));
+            }
+
+            if (currentMechanismState.xMeters + currWristX > 1.02) {
+                mutableY = max(Units.inchesToMeters(3 * 12 + 2) - currWristY,
+                        Units.inchesToMeters(3 * 12 + 2),
+                        mutableY);
+            }
+        }
+
 
         if (mutableWristAngle > MAX_WRIST_ANGLE) {
             mutableWristAngle = MAX_WRIST_ANGLE;
@@ -169,7 +217,9 @@ public class MechanismStateManager extends AbstractSubsystem {
 
     @Override
     public void update() {
-        MechanismStateCoordinates limitedStateCoordinates = limitCoordinates(currentWantedState);
+
+        MechanismStateCoordinates currentCoordinates = getCurrentCoordinates();
+        MechanismStateCoordinates limitedStateCoordinates = limitCoordinates(currentWantedState, currentCoordinates);
 
         Logger.getInstance().recordOutput("MechanismStateManager/Desired State X", currentWantedState.xMeters);
         Logger.getInstance().recordOutput("MechanismStateManager/Desired State Y", currentWantedState.yMeters);
@@ -203,12 +253,12 @@ public class MechanismStateManager extends AbstractSubsystem {
 
         lastRequestedState = limitedStateCoordinates;
 
-        Logger.getInstance().recordOutput("MechanismStateManager/Current X", getCurrentCoordinates().xMeters);
-        Logger.getInstance().recordOutput("MechanismStateManager/Current Y", getCurrentCoordinates().yMeters);
+        Logger.getInstance().recordOutput("MechanismStateManager/Current X", currentCoordinates.xMeters);
+        Logger.getInstance().recordOutput("MechanismStateManager/Current Y", currentCoordinates.yMeters);
         Logger.getInstance().recordOutput("MechanismStateManager/Current Grabber Degrees",
-                getCurrentCoordinates().grabberAngleDegrees);
+                currentCoordinates.grabberAngleDegrees);
 
-        MechanismStateSubsystemPositions currentPositions = coordinatesToSubsystemPositions(getCurrentCoordinates());
+        MechanismStateSubsystemPositions currentPositions = coordinatesToSubsystemPositions(currentCoordinates);
         Logger.getInstance().recordOutput("MechanismStateManager/Recalculated Elevator Position",
                 currentPositions.elevatorPositionMeters);
         Logger.getInstance().recordOutput("MechanismStateManager/Recalculated Telescoping Position",
