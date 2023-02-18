@@ -19,6 +19,8 @@ import java.nio.file.Files;
 
 public final class Constants {
 
+    private static final boolean GRAVITY_LESS_MODE = false;
+
     public static final String LOG_DIRECTORY = "/home/lvuser/logs";
 
     public static final double SECONDS_PER_MINUTE = 60;
@@ -36,7 +38,7 @@ public final class Constants {
     private static final int NOMINAL_DT_MS = 20;
 
     //Drive Constants
-    public static final double AUTO_BALANCING_VELOCITY = 0.5;
+    public static final double AUTO_BALANCING_VELOCITY = 1;
     public static final int DRIVE_LEFT_FRONT_ID = 11;
     public static final int DRIVE_LEFT_BACK_ID = 12;
     public static final int DRIVE_RIGHT_FRONT_ID = 13;
@@ -72,10 +74,10 @@ public final class Constants {
      * 3 -> Right Back
      */
     public static final SimpleMotorFeedforward[] DRIVE_FEEDFORWARD = {
-            new SimpleMotorFeedforward(0.17763, 2.7731, 0.0),
-            new SimpleMotorFeedforward(0.17763, 2.7731, 0.0),
-            new SimpleMotorFeedforward(0.17763, 2.7731, 0.0),
-            new SimpleMotorFeedforward(0.17763, 2.7731, 0.0)};
+            new SimpleMotorFeedforward(0.33255, 2.95258, 0.0),
+            new SimpleMotorFeedforward(0.33255, 2.95258, 0.0),
+            new SimpleMotorFeedforward(0.33255, 2.95258, 0.0),
+            new SimpleMotorFeedforward(0.33255, 2.95258, 0.0)};
 
 
     /**
@@ -119,7 +121,7 @@ public final class Constants {
      */
     public static final double MAX_TURN_ERROR = 30;
 
-    public static final int SWERVE_MOTOR_CURRENT_LIMIT = 30;
+    public static final int SWERVE_MOTOR_CURRENT_LIMIT = 20;
     public static final int SWERVE_DRIVE_MOTOR_CURRENT_LIMIT = 30;
     public static final int SWERVE_DRIVE_VOLTAGE_LIMIT = 12;
 
@@ -190,7 +192,7 @@ public final class Constants {
     public static final double PIVOT_ROTATIONS_PER_DEGREE = 1 / 5.4;
     public static final double PIVOT_IZONE = 10;
     public static final double GRABBER_NOMINAL_VOLTAGE = 9;
-    public static final int GRABBER_SMART_CURRENT_LIMIT = 20;
+    public static final int GRABBER_SMART_CURRENT_LIMIT = 25;
     public static final int PIVOT_SMART_CURRENT_LIMIT = 40;
     public static final int GRABBER_ROLLER_SMART_CURRENT_LIMIT = 30;
 
@@ -209,7 +211,7 @@ public final class Constants {
         /**
          * Normal acceleration limit while driving. This ensures that the driver can't tip the robot.
          */
-        NORMAL_DRIVING(new KinematicLimit(4, 5000, Math.PI * 2 * 10));
+        NORMAL_DRIVING(new KinematicLimit(2, 5000, Math.PI * 2 * 10));
         public final KinematicLimit kinematicLimit;
 
         KinematicLimits(KinematicLimit kinematicLimit) {
