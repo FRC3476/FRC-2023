@@ -36,7 +36,7 @@ public abstract class GrabberIO {
 
     public void setPivotPosition(double position, double arbFFVoltage) {}
 
-    public void setGrabberCurrent(double current) {}
+    public void setGrabberVoltage(double current) {}
 
     public void resetPivotPosition(double position) {}
 

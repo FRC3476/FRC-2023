@@ -70,16 +70,19 @@ public class Grabber extends AbstractSubsystem {
     public enum GrabState {
         OPEN(2),
         GRAB_CUBE(-1),
-        GRAB_CONE(-3);
-        final double current;
+        GRAB_CONE(-3),
+        IDLE(0);
+        final double voltage;
 
-        GrabState(double current) {
-            this.current = current;
+        GrabState(double voltage) {
+            this.voltage = voltage;
         }
     }
 
     public void setGrabState(GrabState grabState) {
-        io.setGrabberCurrent(grabState.current);
+        io.setGrabberVoltage(grabState.voltage);
+        Logger.getInstance().recordOutput("Grabber/Grabber voltage", grabState.voltage);
+        Logger.getInstance().recordOutput("Grabber/Grabber state", grabState.name());
     }
 
     public void setRollerVoltage(double voltage) {

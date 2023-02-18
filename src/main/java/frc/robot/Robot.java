@@ -193,6 +193,11 @@ public class Robot extends LoggedRobot {
                 System.out.println("USING PRACTICE BOT CONFIG");
             }
         }
+
+        // Set the initial states of the mechanisms
+        // TODO: Change this to CLOSED when we're confident the grabber won't try to tear itself apart when it's trying to close
+        grabber.setGrabState(GrabState.IDLE);
+        mechanismStateManager.setState(MechanismStates.STOWED);
     }
 
 
@@ -302,7 +307,7 @@ public class Robot extends LoggedRobot {
             if (wantedMechanismState == WantedMechanismState.STOWED) {
                 wantedMechanismState = WantedMechanismState.SCORING;
             } else {
-                wantedMechanismState = WantedMechanismState.STOWED;
+                setStowed();
             }
         }
 
@@ -310,7 +315,7 @@ public class Robot extends LoggedRobot {
             if (wantedMechanismState == WantedMechanismState.STOWED) {
                 wantedMechanismState = WantedMechanismState.FLOOR_PICKUP;
             } else {
-                wantedMechanismState = WantedMechanismState.STOWED;
+                setStowed();
             }
         }
 
@@ -318,7 +323,7 @@ public class Robot extends LoggedRobot {
             if (wantedMechanismState == WantedMechanismState.STOWED) {
                 wantedMechanismState = WantedMechanismState.STATION_PICKUP;
             } else {
-                wantedMechanismState = WantedMechanismState.STOWED;
+                setStowed();
             }
         }
 
@@ -365,15 +370,19 @@ public class Robot extends LoggedRobot {
 
         if (xbox.getRisingEdge(XboxButtons.B)) {
             isGrabberOpen = !isGrabberOpen;
+        }
 
-            if (isGrabberOpen) {
-                grabber.setGrabState(GrabState.OPEN);
+        if (isGrabberOpen) {
+            if (wantedMechanismState == WantedMechanismState.STOWED) {
+                grabber.setGrabState(GrabState.IDLE);
             } else {
-                if (scoringPositionManager.getWantedPositionType() == PositionType.CONE) {
-                    grabber.setGrabState(GrabState.GRAB_CONE);
-                } else {
-                    grabber.setGrabState(GrabState.GRAB_CUBE);
-                }
+                grabber.setGrabState(GrabState.OPEN);
+            }
+        } else {
+            if (scoringPositionManager.getWantedPositionType() == PositionType.CONE) {
+                grabber.setGrabState(GrabState.GRAB_CONE);
+            } else {
+                grabber.setGrabState(GrabState.GRAB_CUBE);
             }
         }
 
@@ -389,6 +398,14 @@ public class Robot extends LoggedRobot {
         }
 
         xbox.setRumble(RumbleType.kBothRumble, wantedRumble);
+    }
+
+    /**
+     * Sets the mechanism state to stowed and closes the grabber
+     */
+    private void setStowed() {
+        wantedMechanismState = WantedMechanismState.STOWED;
+        isGrabberOpen = false;
     }
 
     private void updateTeleopDrivingTarget(ScoringPositionManager scoringPositionManager) {
