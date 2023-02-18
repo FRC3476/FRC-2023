@@ -365,14 +365,14 @@ public class Robot extends LoggedRobot {
             var inputs = new ControllerDriveInputs(stick.getRawAxis(0), stick.getRawAxis(1), stick.getRawAxis(3));
             inputs.applyDeadZone(0.2, 0.2, 0.25, 0.2);
             inputs.squareInputs();
-            wantedAngle += inputs.getY();
+            wantedAngle += inputs.getY() * ARCADE_WRIST_ANGLE_SPEED * NOMINAL_DT;
             var dx = -buttonPanel.getRawAxis(0);
             var dy = buttonPanel.getRawAxis(1);
 
             if (abs(dx) < 0.1) dx = 0;
             if (abs(dy) < 0.1) dy = 0;
-            wantedX += dx / 50.0;
-            wantedY += dy / 50.0;
+            wantedX += dx * ARCADE_MODE_TRANSLATION_SPEED * NOMINAL_DT;
+            wantedY += dy * ARCADE_MODE_TRANSLATION_SPEED * NOMINAL_DT;
 
             var wantedMechState = new MechanismStateManager.MechanismStateCoordinates(wantedX, wantedY, wantedAngle);
             var limitedMechState = MechanismStateManager.limitCoordinates(wantedMechState);

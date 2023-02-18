@@ -295,4 +295,12 @@ public final class Constants {
 
     public static final double MAX_VELOCITY_MISMATCH_TIME = 5;
     public static final double ACCUMULATED_ERROR_DECAY = 0.95;
+
+
+    // Controller Settings
+    /**
+     * Max speed of the wrist in degrees/s
+     */
+    public static final double ARCADE_WRIST_ANGLE_SPEED = 360;
+    public static final double ARCADE_MODE_TRANSLATION_SPEED = 1;
 }
