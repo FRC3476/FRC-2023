@@ -6,6 +6,7 @@ import java.util.Objects;
 
 public class ControllerDriveInputs {
 
+    public static final ControllerDriveInputs ZERO = new ControllerDriveInputs(0, 0, 0);
     private double x, y, rotation;
 
     public ControllerDriveInputs(double x, double y, double rotation) {
