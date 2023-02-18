@@ -195,7 +195,8 @@ public class Robot extends LoggedRobot {
         }
 
         // Set the initial states of the mechanisms
-        grabber.setGrabState(Grabber.GrabState.OPEN);
+        // TODO: Change this to CLOSED when we're confident the grabber won't try to tear itself apart when it's trying to close
+        grabber.setGrabState(GrabState.IDLE);
         mechanismStateManager.setState(MechanismStates.STOWED);
     }
 
