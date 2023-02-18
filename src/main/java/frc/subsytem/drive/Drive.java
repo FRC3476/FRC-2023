@@ -141,7 +141,7 @@ public final class Drive extends AbstractSubsystem {
                 DRIVE_HIGH_SPEED_M * inputs.getX(),
                 DRIVE_HIGH_SPEED_M * inputs.getY(),
                 inputs.getRotation() * MAX_TELEOP_TURN_SPEED,
-                Robot.getRobotTracker().getGyroAngleAtTime(getIoTimestamp()).toRotation2d()
+                Robot.getRobotTracker().getGyroAngle()
                         .plus(Rotation2d.fromDegrees(
                                 Robot.getRobotTracker().getAngularVelocity() * (EXPECTED_TELEOP_DRIVE_DT / 2))));
         kinematicLimit = KinematicLimits.NORMAL_DRIVING.kinematicLimit;
@@ -572,6 +572,8 @@ public final class Drive extends AbstractSubsystem {
         var angle = Robot.getRobotTracker().getGyroAngleAtTime(Timer.getFPGATimestamp());
         double angleMeasure = angle.getY();
         angleMeasure = Math.toDegrees(angleMeasure);
+        Logger.getInstance().recordOutput("Drive/Auto Balance Angle", angleMeasure);
+
         double xVelocity = 0;
 
         if (angleMeasure >= AUTO_BALANCE_COMPLETE_THRESHOLD) {
