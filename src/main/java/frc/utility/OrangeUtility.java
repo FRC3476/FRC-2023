@@ -265,4 +265,10 @@ public final class OrangeUtility {
             Thread.sleep(10);
         }
     }
+
+    public static void assertTrue(boolean assertion) {
+        if (!assertion) {
+            throw new RuntimeException("Assertion Failed");
+        }
+    }
 }

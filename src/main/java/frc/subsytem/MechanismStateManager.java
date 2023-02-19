@@ -6,6 +6,7 @@ import frc.robot.Robot;
 import org.jetbrains.annotations.NotNull;
 import org.littletonrobotics.junction.Logger;
 
+import static frc.robot.Constants.GRABBER_LENGTH;
 import static frc.robot.Constants.MAX_WRIST_ANGLE;
 
 public class MechanismStateManager extends AbstractSubsystem {
@@ -37,9 +38,9 @@ public class MechanismStateManager extends AbstractSubsystem {
     public enum MechanismStates {
         STOWED(new MechanismStateCoordinates(-0.489, 0.249, MAX_WRIST_ANGLE - 2)),
         LOW_SCORING(new MechanismStateCoordinates(Units.inchesToMeters(12), Units.inchesToMeters(6), 0)),
-        MIDDLE_SCORING(new MechanismStateCoordinates(Units.inchesToMeters(16), Units.inchesToMeters(46), 10)),
+        MIDDLE_SCORING(new MechanismStateCoordinates(Units.inchesToMeters(16), Units.inchesToMeters(45), -5)),
         HIGH_SCORING(new MechanismStateCoordinates(Units.inchesToMeters(36), Units.inchesToMeters(57), 55)),
-        STATION_PICKUP(new MechanismStateCoordinates(0.1, .7, 0)),
+        STATION_PICKUP(new MechanismStateCoordinates(0.531, 2.3 - 0.015, 5.9)),
         FLOOR_PICKUP(new MechanismStateCoordinates(0, 0, -7));
         private final MechanismStateCoordinates state;
 
@@ -55,8 +56,18 @@ public class MechanismStateManager extends AbstractSubsystem {
         currentWantedState = state.state;
     }
 
+
+    public MechanismStateCoordinates getCurrentWantedState() {
+        return currentWantedState;
+    }
+
+    MechanismStateCoordinates lastNotStowState = MechanismStates.STOWED.state;
+
     public void setState(@NotNull MechanismStateCoordinates state) {
         currentWantedState = state;
+        if (state.equals(MechanismStates.STOWED.state)) {
+            lastNotStowState = state;
+        }
     }
 
     private @NotNull MechanismStateManager.MechanismStateCoordinates lastRequestedState = new MechanismStateCoordinates(-1, -1,
@@ -88,9 +99,60 @@ public class MechanismStateManager extends AbstractSubsystem {
     }
 
     public static MechanismStateCoordinates limitCoordinates(MechanismStateCoordinates mechanismState) {
+        return limitCoordinates(mechanismState, Robot.getMechanismStateManager().getCurrentCoordinates());
+    }
+
+    private static final double GRABBER_ZERO_X_OFFSET = GRABBER_LENGTH;
+
+    public static MechanismStateCoordinates limitCoordinates(MechanismStateCoordinates mechanismState,
+                                                             MechanismStateCoordinates currentMechanismState) {
         double mutableX = mechanismState.xMeters;
         double mutableY = mechanismState.yMeters;
         double mutableWristAngle = mechanismState.grabberAngleDegrees;
+
+
+        double maxXGivenCurrentY;
+        double minYGivenCurrentX;
+
+        double currWristX = Constants.GRABBER_LENGTH * Math.cos(Math.toRadians(currentMechanismState.grabberAngleRadians()));
+        double currWristY = Constants.GRABBER_LENGTH * Math.sin(Math.toRadians(currentMechanismState.grabberAngleRadians()));
+
+
+        double minYOfCurrentArm =
+                currentMechanismState.yMeters - currWristY;
+        if (!Robot.getMechanismStateManager().lastNotStowState.equals(MechanismStates.FLOOR_PICKUP.state)) {
+            if (!Robot.getMechanismStateManager().lastNotStowState.equals(MechanismStates.STATION_PICKUP.state)) {
+                double targetArmHeight = mutableY - Math.sin(Math.toRadians(mutableWristAngle));
+
+                if (minYOfCurrentArm < Units.inchesToMeters(24)) {
+                    mutableX = Math.min(0.087, mutableX);
+                    mutableWristAngle = Math.max(mutableWristAngle, 90);
+                }
+
+                mutableY = targetArmHeight + Math.sin(currentMechanismState.grabberAngleRadians());
+
+                if (Math.max(currentMechanismState.xMeters, currentMechanismState.xMeters - currWristX) > 0.087) {
+                    mutableY = Math.max(Units.inchesToMeters(24) + currWristY, mutableY);
+                    mutableY = Math.max(Units.inchesToMeters(24), mutableY);
+                }
+            } else {
+                if (minYOfCurrentArm < Units.inchesToMeters(3 * 12 + 4)) {
+                    mutableX = Math.min(0, mutableX);
+                }
+
+                double targetArmHeight = mutableY - Math.sin(Math.toRadians(mutableWristAngle));
+
+                if (currentMechanismState.xMeters + currWristX > 1.02) {
+                    mutableY = Math.max(Units.inchesToMeters(3 * 12 + 2) - currWristY, mutableY);
+                    mutableY = Math.max(Units.inchesToMeters(3 * 12 + 2), mutableY);
+                    targetArmHeight = mutableY - Math.sin(Math.toRadians(mutableWristAngle));
+                    mutableWristAngle = Math.max(mutableWristAngle, 90);
+                }
+
+                mutableY = targetArmHeight + Math.sin(currentMechanismState.grabberAngleRadians());
+            }
+        }
+
 
         if (mutableWristAngle > MAX_WRIST_ANGLE) {
             mutableWristAngle = MAX_WRIST_ANGLE;
@@ -169,7 +231,9 @@ public class MechanismStateManager extends AbstractSubsystem {
 
     @Override
     public void update() {
-        MechanismStateCoordinates limitedStateCoordinates = limitCoordinates(currentWantedState);
+
+        MechanismStateCoordinates currentCoordinates = getCurrentCoordinates();
+        MechanismStateCoordinates limitedStateCoordinates = limitCoordinates(currentWantedState, currentCoordinates);
 
         Logger.getInstance().recordOutput("MechanismStateManager/Desired State X", currentWantedState.xMeters);
         Logger.getInstance().recordOutput("MechanismStateManager/Desired State Y", currentWantedState.yMeters);
@@ -203,12 +267,12 @@ public class MechanismStateManager extends AbstractSubsystem {
 
         lastRequestedState = limitedStateCoordinates;
 
-        Logger.getInstance().recordOutput("MechanismStateManager/Current X", getCurrentCoordinates().xMeters);
-        Logger.getInstance().recordOutput("MechanismStateManager/Current Y", getCurrentCoordinates().yMeters);
+        Logger.getInstance().recordOutput("MechanismStateManager/Current X", currentCoordinates.xMeters);
+        Logger.getInstance().recordOutput("MechanismStateManager/Current Y", currentCoordinates.yMeters);
         Logger.getInstance().recordOutput("MechanismStateManager/Current Grabber Degrees",
-                getCurrentCoordinates().grabberAngleDegrees);
+                currentCoordinates.grabberAngleDegrees);
 
-        MechanismStateSubsystemPositions currentPositions = coordinatesToSubsystemPositions(getCurrentCoordinates());
+        MechanismStateSubsystemPositions currentPositions = coordinatesToSubsystemPositions(currentCoordinates);
         Logger.getInstance().recordOutput("MechanismStateManager/Recalculated Elevator Position",
                 currentPositions.elevatorPositionMeters);
         Logger.getInstance().recordOutput("MechanismStateManager/Recalculated Telescoping Position",

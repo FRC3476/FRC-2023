@@ -13,6 +13,7 @@ import com.revrobotics.SparkMaxAbsoluteEncoder.Type;
 import frc.robot.Constants;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.littletonrobotics.junction.Logger;
 
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -103,6 +104,7 @@ public class DriveIOSparkMax extends DriveIO {
 
             // Sets current limits for motors
             swerveMotors[i].setSmartCurrentLimit(SWERVE_MOTOR_CURRENT_LIMIT);
+            swerveMotors[i].setSecondaryCurrentLimit(100);
             swerveMotors[i].enableVoltageCompensation(Constants.SWERVE_DRIVE_VOLTAGE_LIMIT);
             swerveMotors[i].getEncoder().setPositionConversionFactor(
                     Constants.SWERVE_MOTOR_POSITION_CONVERSION_FACTOR * 360);
@@ -110,6 +112,7 @@ public class DriveIOSparkMax extends DriveIO {
                     Constants.SWERVE_MOTOR_POSITION_CONVERSION_FACTOR * 360 / SECONDS_PER_MINUTE);
 
             swerveDriveMotors[i].setSmartCurrentLimit(SWERVE_DRIVE_MOTOR_CURRENT_LIMIT);
+            swerveDriveMotors[i].setSecondaryCurrentLimit(100);
             swerveDriveMotors[i].enableVoltageCompensation(Constants.SWERVE_DRIVE_VOLTAGE_LIMIT);
             swerveDriveMotors[i].getEncoder().setPositionConversionFactor(
                     SWERVE_DRIVE_MOTOR_REDUCTION * SWERVE_METER_PER_ROTATION);
@@ -152,12 +155,14 @@ public class DriveIOSparkMax extends DriveIO {
         inputs.driveMotorVoltages = new double[4];
         inputs.swerveMotorVoltages = new double[4];
 
+        inputs.driveIoTimestamp = Logger.getInstance().getRealTimestamp() * SECONDS_PER_MICROSECOND;
+
         for (int i = 0; i < 4; i++) {
             inputs.driveMotorPositions[i] = swerveDriveMotors[i].getEncoder().getPosition();
             inputs.driveMotorVelocities[i] = swerveDriveMotors[i].getEncoder().getVelocity();
             inputs.driveMotorCurrents[i] = swerveDriveMotors[i].getOutputCurrent();
             inputs.driveMotorTemps[i] = swerveDriveMotors[i].getMotorTemperature();
-            inputs.driveMotorVoltages[i] = swerveDriveMotors[i].getBusVoltage();
+            inputs.driveMotorVoltages[i] = swerveDriveMotors[i].getBusVoltage() * swerveDriveMotors[i].getAppliedOutput();
 
             if (USE_CANCODERS) {
                 inputs.swerveMotorAbsolutePositions[i] = swerveCanCoders[i].getAbsolutePosition();
@@ -170,6 +175,8 @@ public class DriveIOSparkMax extends DriveIO {
             inputs.swerveMotorTemps[i] = swerveMotors[i].getMotorTemperature();
             inputs.swerveMotorVoltages[i] = swerveMotors[i].getBusVoltage();
             inputs.swerveMotorRelativePositions[i] = swerveMotors[i].getEncoder().getPosition();
+            inputs.driveMotorFaults[i] = swerveDriveMotors[i].getStickyFaults();
+            inputs.swerveMotorFaults[i] = swerveMotors[i].getStickyFaults();
         }
     }
 

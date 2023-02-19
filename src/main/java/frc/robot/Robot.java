@@ -42,7 +42,7 @@ import org.littletonrobotics.junction.LogFileUtil;
 import org.littletonrobotics.junction.LoggedRobot;
 import org.littletonrobotics.junction.Logger;
 import org.littletonrobotics.junction.networktables.LoggedDashboardChooser;
-import org.littletonrobotics.junction.networktables.NT4Publisher;
+import org.littletonrobotics.junction.rlog.RLOGServer;
 import org.littletonrobotics.junction.wpilog.WPILOGReader;
 import org.littletonrobotics.junction.wpilog.WPILOGWriter;
 
@@ -128,7 +128,7 @@ public class Robot extends LoggedRobot {
             }
 
             Logger.getInstance().addDataReceiver(new WPILOGWriter(LOG_DIRECTORY));
-            Logger.getInstance().addDataReceiver(new NT4Publisher()); // Publish data to NetworkTables
+            Logger.getInstance().addDataReceiver(new RLOGServer(5800)); // Publish data to NetworkTables
             new PowerDistribution(1, ModuleType.kRev); // Enables power distribution logging
 
             drive = new Drive(new DriveIOSparkMax());
@@ -257,14 +257,20 @@ public class Robot extends LoggedRobot {
     }
 
     private WantedMechanismState wantedMechanismState = WantedMechanismState.STOWED;
+    private @Nullable WantedMechanismState lastWantedMechanismState = null;
 
-    private boolean isGrabberOpen = false;
+
+    private boolean isGrabberOpen = true;
 
     private double wantedX = -0.489;
     private double wantedY = 0.249;
     private double wantedAngle = MAX_WRIST_ANGLE - 2;
 
-    private final boolean arcadeMode = false;
+    private boolean arcadeMode = false;
+
+    {
+        Logger.getInstance().recordOutput("Robot/Arcade Mode", arcadeMode);
+    }
 
     /**
      * This method is called periodically during operator control.
@@ -276,13 +282,17 @@ public class Robot extends LoggedRobot {
         buttonPanel.update();
         double wantedRumble = 0;
 
+        if (stick.getRisingEdge(3)) {
+            arcadeMode = !arcadeMode;
+            Logger.getInstance().recordOutput("Robot/Arcade Mode", arcadeMode);
+        }
 
         var scoringPositionManager = ScoringPositionManager.getInstance();
         if (scoringPositionManager.updateSelectedPosition(buttonPanel)) {
             teleopDrivingAutoAlignPosition = null;
         }
 
-        if (xbox.getRawButton(XboxButtons.START) && false) { //Should be remapped to one of the back buttons
+        if (xbox.getRawButton(XboxButtons.START)) { //Should be remapped to one of the back buttons
             if (xbox.getRisingEdge(XboxButtons.START) || teleopDrivingAutoAlignPosition == null) {
                 updateTeleopDrivingTarget(scoringPositionManager);
                 assert teleopDrivingAutoAlignPosition != null;
@@ -324,6 +334,7 @@ public class Robot extends LoggedRobot {
         if (stick.getRisingEdge(9)) {
             if (wantedMechanismState == WantedMechanismState.STOWED) {
                 wantedMechanismState = WantedMechanismState.FLOOR_PICKUP;
+                isGrabberOpen = true;
             } else {
                 setStowed();
             }
@@ -332,12 +343,14 @@ public class Robot extends LoggedRobot {
         if (stick.getRisingEdge(11)) {
             if (wantedMechanismState == WantedMechanismState.STOWED) {
                 wantedMechanismState = WantedMechanismState.STATION_PICKUP;
+                isGrabberOpen = true;
             } else {
                 setStowed();
             }
         }
 
-        if (!arcadeMode) {
+
+        if (wantedMechanismState != lastWantedMechanismState) {
             switch (wantedMechanismState) {
                 case STOWED -> mechanismStateManager.setState(MechanismStates.STOWED);
                 case SCORING -> {
@@ -353,29 +366,40 @@ public class Robot extends LoggedRobot {
                 case FLOOR_PICKUP -> mechanismStateManager.setState(MechanismStates.FLOOR_PICKUP);
                 case STATION_PICKUP -> mechanismStateManager.setState(MechanismStates.STATION_PICKUP);
             }
-        } else {
-            var inputs = new ControllerDriveInputs(stick.getRawAxis(0), stick.getRawAxis(1), stick.getRawAxis(3));
-            inputs.applyDeadZone(0.2, 0.2, 0.25, 0.2);
-            inputs.squareInputs();
-            wantedAngle += inputs.getY();
-            var dx = -buttonPanel.getRawAxis(0);
-            var dy = buttonPanel.getRawAxis(1);
-
-            if (abs(dx) < 0.1) dx = 0;
-            if (abs(dy) < 0.1) dy = 0;
-            wantedX += dx / 50.0;
-            wantedY += dy / 50.0;
-
-            var wantedMechState = new MechanismStateManager.MechanismStateCoordinates(wantedX, wantedY, wantedAngle);
-            var limitedMechState = MechanismStateManager.limitCoordinates(wantedMechState);
-            wantedX = limitedMechState.xMeters();
-            wantedY = limitedMechState.yMeters();
-            wantedAngle = limitedMechState.grabberAngleDegrees();
-            mechanismStateManager.setState(new MechanismStateManager.MechanismStateCoordinates(wantedX, wantedY, wantedAngle));
-            Logger.getInstance().recordOutput("Robot/Wanted X", wantedX);
-            Logger.getInstance().recordOutput("Robot/Wanted Y", wantedY);
-            Logger.getInstance().recordOutput("Robot/Wanted Angle", wantedAngle);
         }
+
+        lastWantedMechanismState = wantedMechanismState;
+
+
+        var limitedMechCoords = MechanismStateManager.limitCoordinates(mechanismStateManager.getCurrentWantedState());
+
+        Logger.getInstance().recordOutput("Robot/Wanted X", wantedX);
+        Logger.getInstance().recordOutput("Robot/Wanted Y", wantedY);
+        Logger.getInstance().recordOutput("Robot/Wanted Angle", wantedAngle);
+
+        var inputs = new ControllerDriveInputs(stick.getRawAxis(0), stick.getRawAxis(1), stick.getRawAxis(3));
+        inputs.applyDeadZone(0.1, 0.1, 0.25, 0.2);
+        inputs.squareInputs();
+
+        var dx = -buttonPanel.getRawAxis(0);
+        var dy = buttonPanel.getRawAxis(1);
+
+        if (abs(dx) < 0.1) dx = 0;
+        if (abs(dy) < 0.1) dy = 0;
+
+        if (inputs.getX() != 0 || dx != 0 || dy != 0) {
+            wantedX = limitedMechCoords.xMeters();
+            wantedY = limitedMechCoords.yMeters();
+            wantedAngle = limitedMechCoords.grabberAngleDegrees();
+
+            wantedAngle += inputs.getY() * ARCADE_WRIST_ANGLE_SPEED * NOMINAL_DT;
+
+            wantedX += dx * ARCADE_MODE_TRANSLATION_SPEED * NOMINAL_DT;
+            wantedY += dy * ARCADE_MODE_TRANSLATION_SPEED * NOMINAL_DT;
+
+            mechanismStateManager.setState(new MechanismStateManager.MechanismStateCoordinates(wantedX, wantedY, wantedAngle));
+        }
+
         Logger.getInstance().recordOutput("Robot/Wanted Mechanism State", wantedMechanismState.name());
 
         if (xbox.getRisingEdge(XboxButtons.B)) {
@@ -516,8 +540,12 @@ public class Robot extends LoggedRobot {
         return inputs;
     }
 
-    public boolean isRed() {
+    public static boolean isRed() {
         return sideChooser.get().equals("red");
+    }
+
+    public static boolean isOnAllianceSide() {
+        return isRed() == robotTracker.isOnRedSide();
     }
 
     public static @NotNull Drive getDrive() {
@@ -542,5 +570,9 @@ public class Robot extends LoggedRobot {
 
     public static @NotNull Elevator getElevator() {
         return elevator;
+    }
+
+    public static @NotNull MechanismStateManager getMechanismStateManager() {
+        return mechanismStateManager;
     }
 }

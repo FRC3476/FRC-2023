@@ -19,6 +19,8 @@ import java.nio.file.Files;
 
 public final class Constants {
 
+    private static final boolean GRAVITY_LESS_MODE = false;
+
     public static final String LOG_DIRECTORY = "/home/lvuser/logs";
 
     public static final double SECONDS_PER_MINUTE = 60;
@@ -26,7 +28,7 @@ public final class Constants {
     public static final boolean IS_PRACTICE = Files.exists(new File("/home/lvuser/practice").toPath());
     public static final boolean USE_CANCODERS = false;
     public static final double SECONDS_PER_MICROSECOND = 1e-6;
-    public static final long MIN_FREE_SPACE = 30000000; // 30 MB
+    public static final long MIN_FREE_SPACE = 60000000; // 30 MB
 
     // 2048 sensor units per revolution
     public static final double FALCON_ENCODER_TICKS_PER_ROTATIONS = 2048;
@@ -40,7 +42,7 @@ public final class Constants {
     public static final double BALANCE_D = 0;
 
     //Drive Constants
-    public static final double AUTO_BALANCING_VELOCITY = 0.5;
+    public static final double AUTO_BALANCING_VELOCITY = 1;
     public static final int DRIVE_LEFT_FRONT_ID = 11;
     public static final int DRIVE_LEFT_BACK_ID = 12;
     public static final int DRIVE_RIGHT_FRONT_ID = 13;
@@ -76,10 +78,10 @@ public final class Constants {
      * 3 -> Right Back
      */
     public static final SimpleMotorFeedforward[] DRIVE_FEEDFORWARD = {
-            new SimpleMotorFeedforward(0.17763, 2.7731, 0.0),
-            new SimpleMotorFeedforward(0.17763, 2.7731, 0.0),
-            new SimpleMotorFeedforward(0.17763, 2.7731, 0.0),
-            new SimpleMotorFeedforward(0.17763, 2.7731, 0.0)};
+            new SimpleMotorFeedforward(0.33255, 2.95258, 0.0),
+            new SimpleMotorFeedforward(0.33255, 2.95258, 0.0),
+            new SimpleMotorFeedforward(0.33255, 2.95258, 0.0),
+            new SimpleMotorFeedforward(0.33255, 2.95258, 0.0)};
 
 
     /**
@@ -123,7 +125,7 @@ public final class Constants {
      */
     public static final double MAX_TURN_ERROR = 30;
 
-    public static final int SWERVE_MOTOR_CURRENT_LIMIT = 30;
+    public static final int SWERVE_MOTOR_CURRENT_LIMIT = 20;
     public static final int SWERVE_DRIVE_MOTOR_CURRENT_LIMIT = 30;
     public static final int SWERVE_DRIVE_VOLTAGE_LIMIT = 12;
 
@@ -213,7 +215,7 @@ public final class Constants {
         /**
          * Normal acceleration limit while driving. This ensures that the driver can't tip the robot.
          */
-        NORMAL_DRIVING(new KinematicLimit(4, 5000, Math.PI * 2 * 10));
+        NORMAL_DRIVING(new KinematicLimit(3.5, 5000, Math.PI * 2 * 10));
         public final KinematicLimit kinematicLimit;
 
         KinematicLimits(KinematicLimit kinematicLimit) {
@@ -284,6 +286,25 @@ public final class Constants {
     //RobotTracker
 
     public static final double MISMATCH_LOOK_BACK_TIME = 0.15;
+
+    /**
+     * The maximum velocity error at which we consider the velocity to be matched.
+     */
     public static final double MISMATCH_VELOCITY_ERROR_THRESHOLD = Double.MAX_VALUE;
+
+    /**
+     * The maximum accumulated error before we consider the velocity to be mismatched.
+     */
+    public static final double MISMATCH_ACCUMULATED_VELOCITY_ERROR_THRESHOLD = Double.MAX_VALUE;
+
     public static final double MAX_VELOCITY_MISMATCH_TIME = 5;
+    public static final double ACCUMULATED_ERROR_DECAY = 0.95;
+
+
+    // Controller Settings
+    /**
+     * Max speed of the wrist in degrees/s
+     */
+    public static final double ARCADE_WRIST_ANGLE_SPEED = 360;
+    public static final double ARCADE_MODE_TRANSLATION_SPEED = 1;
 }
