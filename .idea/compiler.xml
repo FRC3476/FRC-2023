@@ -5,7 +5,7 @@
       <profile name="Gradle Imported" enabled="true">
         <outputRelativeToContentRoot value="true" />
         <processorPath useClasspath="false">
-          <entry name="$USER_HOME$/.gradle/caches/modules-2/files-2.1/org.littletonrobotics.akit.junction/junction-autolog/2.1.2/49b4dcc98676e1e18d08cfa3a3cfa5f1f6e52190/junction-autolog-2.1.2.jar" />
+          <entry name="$USER_HOME$/.gradle/caches/modules-2/files-2.1/org.littletonrobotics.akit.junction/junction-autolog/2.2.0/49b4dcc98676e1e18d08cfa3a3cfa5f1f6e52190/junction-autolog-2.2.0.jar" />
           <entry name="$USER_HOME$/.gradle/caches/modules-2/files-2.1/com.squareup/javapoet/1.13.0/d6562d385049f35eb50403fa86bb11cce76b866a/javapoet-1.13.0.jar" />
         </processorPath>
         <module name="FRC2023.main" />
