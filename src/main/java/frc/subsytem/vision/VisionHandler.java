@@ -145,7 +145,7 @@ public class VisionHandler extends AbstractSubsystem {
 
         var rotationFromTag = expectedTagPosition.getRotation()
                 .plus(POSITIVE_Z_180)
-                .plus(tagRotation);
+                .minus(tagRotation);
 
 
         var calculatedTranslationFromTagOrientation =
@@ -179,10 +179,11 @@ public class VisionHandler extends AbstractSubsystem {
         var defaultDevs = RobotTracker.DEFAULT_VISION_DEVIATIONS;
         var distanceToTag = tagTranslation.getNorm();
         if (distanceToTag == 0) return;
-        var devs = VecBuilder.fill(defaultDevs.get(0, 0) * distanceToTag,
-                defaultDevs.get(1, 0) * distanceToTag,
-                defaultDevs.get(2, 0) * distanceToTag,
-                Math.atan(tan(defaultDevs.get(3, 0)) * distanceToTag));
+        var distanceToTag2 = distanceToTag * distanceToTag;
+        var devs = VecBuilder.fill(defaultDevs.get(0, 0) * distanceToTag2,
+                defaultDevs.get(1, 0) * distanceToTag2,
+                defaultDevs.get(2, 0) * distanceToTag2,
+                Math.atan(tan(defaultDevs.get(3, 0)) * distanceToTag * distanceToTag * distanceToTag));
         Robot.getRobotTracker().addVisionMeasurement(poseToFeedToRobotTracker, data.timestamp, devs);
 
         Logger.getInstance().recordOutput("VisionHandler/VisionOnlyPose/" + data.tagId, visionOnlyPose);
