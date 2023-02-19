@@ -8,7 +8,6 @@ import org.littletonrobotics.junction.Logger;
 
 import static frc.robot.Constants.GRABBER_LENGTH;
 import static frc.robot.Constants.MAX_WRIST_ANGLE;
-import static frc.utility.MathUtil.max;
 
 public class MechanismStateManager extends AbstractSubsystem {
 
@@ -39,9 +38,9 @@ public class MechanismStateManager extends AbstractSubsystem {
     public enum MechanismStates {
         STOWED(new MechanismStateCoordinates(-0.489, 0.249, MAX_WRIST_ANGLE - 2)),
         LOW_SCORING(new MechanismStateCoordinates(Units.inchesToMeters(12), Units.inchesToMeters(6), 0)),
-        MIDDLE_SCORING(new MechanismStateCoordinates(Units.inchesToMeters(16), Units.inchesToMeters(46), 10)),
+        MIDDLE_SCORING(new MechanismStateCoordinates(Units.inchesToMeters(16), Units.inchesToMeters(45), -15)),
         HIGH_SCORING(new MechanismStateCoordinates(Units.inchesToMeters(36), Units.inchesToMeters(57), 55)),
-        STATION_PICKUP(new MechanismStateCoordinates(0.531, 1.33, 5.9)),
+        STATION_PICKUP(new MechanismStateCoordinates(0.531, 2.3 - 0.0025, 5.9)),
         FLOOR_PICKUP(new MechanismStateCoordinates(0, 0, -7));
         private final MechanismStateCoordinates state;
 
@@ -57,8 +56,13 @@ public class MechanismStateManager extends AbstractSubsystem {
         currentWantedState = state.state;
     }
 
+    MechanismStateCoordinates lastNotStowState = MechanismStates.STOWED.state;
+
     public void setState(@NotNull MechanismStateCoordinates state) {
         currentWantedState = state;
+        if (state.equals(MechanismStates.STOWED.state)) {
+            lastNotStowState = state;
+        }
     }
 
     private @NotNull MechanismStateManager.MechanismStateCoordinates lastRequestedState = new MechanismStateCoordinates(-1, -1,
@@ -109,33 +113,37 @@ public class MechanismStateManager extends AbstractSubsystem {
         double currWristY = Constants.GRABBER_LENGTH * Math.sin(Math.toRadians(currentMechanismState.grabberAngleRadians()));
 
 
-        double minYOfCurrentArm = Math.min(
-                currentMechanismState.yMeters,
-                currentMechanismState.yMeters - currWristY
-        );
-        if (Robot.isOnAllianceSide()) {
-            if (minYOfCurrentArm < Units.inchesToMeters(24)) {
-                mutableX = Math.min(0.087, mutableX);
-                double targetArmHeight = mutableY - currWristY;
-                mutableWristAngle = 90;
-                mutableY = targetArmHeight + Math.sin(Math.toRadians(mutableWristAngle));
-            }
+        double minYOfCurrentArm =
+                currentMechanismState.yMeters - currWristY;
+        if (!Robot.getMechanismStateManager().lastNotStowState.equals(MechanismStates.FLOOR_PICKUP.state)) {
+            if (!Robot.getMechanismStateManager().lastNotStowState.equals(MechanismStates.STATION_PICKUP.state)) {
+                double targetArmHeight = mutableY - Math.sin(Math.toRadians(mutableWristAngle));
 
-            if (Math.max(currentMechanismState.xMeters, currentMechanismState.xMeters - currWristX) > 0.87) {
-                mutableY = max(Units.inchesToMeters(24) + currWristY, Units.inchesToMeters(24), mutableY);
-            }
-        } else {
-            if (minYOfCurrentArm < Units.inchesToMeters(3 * 12 + 2)) {
-                mutableX = Math.min(0, mutableX);
-                double targetArmHeight = mutableY - currWristY;
-                mutableWristAngle = 90;
-                mutableY = targetArmHeight + Math.sin(Math.toRadians(mutableWristAngle));
-            }
+                if (minYOfCurrentArm < Units.inchesToMeters(24)) {
+                    mutableX = Math.min(0.087, mutableX);
+                    mutableWristAngle = Math.max(mutableWristAngle, 90);
+                }
 
-            if (currentMechanismState.xMeters + currWristX > 1.02) {
-                mutableY = max(Units.inchesToMeters(3 * 12 + 2) - currWristY,
-                        Units.inchesToMeters(3 * 12 + 2),
-                        mutableY);
+                mutableY = targetArmHeight + Math.sin(currentMechanismState.grabberAngleRadians());
+
+                if (Math.max(currentMechanismState.xMeters, currentMechanismState.xMeters - currWristX) > 0.087) {
+                    mutableY = Math.max(Units.inchesToMeters(24) + currWristY, mutableY);
+                    mutableY = Math.max(Units.inchesToMeters(24), mutableY);
+                }
+            } else {
+                if (minYOfCurrentArm < Units.inchesToMeters(3 * 12 + 4)) {
+                    mutableX = Math.min(0, mutableX);
+                }
+
+                double targetArmHeight = mutableY - Math.sin(Math.toRadians(mutableWristAngle));
+
+                if (currentMechanismState.xMeters + currWristX > 1.02) {
+                    mutableY = Math.max(Units.inchesToMeters(3 * 12 + 2) - currWristY, mutableY);
+                    mutableY = Math.max(Units.inchesToMeters(3 * 12 + 2), mutableY);
+                    mutableWristAngle = Math.max(mutableWristAngle, 90);
+                }
+
+                mutableY = targetArmHeight + Math.sin(currentMechanismState.grabberAngleRadians());
             }
         }
 

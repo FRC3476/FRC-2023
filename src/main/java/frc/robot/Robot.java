@@ -42,7 +42,7 @@ import org.littletonrobotics.junction.LogFileUtil;
 import org.littletonrobotics.junction.LoggedRobot;
 import org.littletonrobotics.junction.Logger;
 import org.littletonrobotics.junction.networktables.LoggedDashboardChooser;
-import org.littletonrobotics.junction.networktables.NT4Publisher;
+import org.littletonrobotics.junction.rlog.RLOGServer;
 import org.littletonrobotics.junction.wpilog.WPILOGReader;
 import org.littletonrobotics.junction.wpilog.WPILOGWriter;
 
@@ -128,7 +128,7 @@ public class Robot extends LoggedRobot {
             }
 
             Logger.getInstance().addDataReceiver(new WPILOGWriter(LOG_DIRECTORY));
-            Logger.getInstance().addDataReceiver(new NT4Publisher()); // Publish data to NetworkTables
+            Logger.getInstance().addDataReceiver(new RLOGServer(5800)); // Publish data to NetworkTables
             new PowerDistribution(1, ModuleType.kRev); // Enables power distribution logging
 
             drive = new Drive(new DriveIOSparkMax());
@@ -332,6 +332,7 @@ public class Robot extends LoggedRobot {
         if (stick.getRisingEdge(9)) {
             if (wantedMechanismState == WantedMechanismState.STOWED) {
                 wantedMechanismState = WantedMechanismState.FLOOR_PICKUP;
+                isGrabberOpen = true;
             } else {
                 setStowed();
             }
@@ -340,6 +341,7 @@ public class Robot extends LoggedRobot {
         if (stick.getRisingEdge(11)) {
             if (wantedMechanismState == WantedMechanismState.STOWED) {
                 wantedMechanismState = WantedMechanismState.STATION_PICKUP;
+                isGrabberOpen = true;
             } else {
                 setStowed();
             }

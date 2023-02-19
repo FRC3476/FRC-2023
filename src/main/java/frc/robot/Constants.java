@@ -192,7 +192,7 @@ public final class Constants {
     public static final double PIVOT_ROTATIONS_PER_DEGREE = 1 / 5.4;
     public static final double PIVOT_IZONE = 10;
     public static final double GRABBER_NOMINAL_VOLTAGE = 9;
-    public static final int GRABBER_SMART_CURRENT_LIMIT = 25;
+    public static final int GRABBER_SMART_CURRENT_LIMIT = 20;
     public static final int PIVOT_SMART_CURRENT_LIMIT = 40;
     public static final int GRABBER_ROLLER_SMART_CURRENT_LIMIT = 30;
 
@@ -211,7 +211,7 @@ public final class Constants {
         /**
          * Normal acceleration limit while driving. This ensures that the driver can't tip the robot.
          */
-        NORMAL_DRIVING(new KinematicLimit(2, 5000, Math.PI * 2 * 10));
+        NORMAL_DRIVING(new KinematicLimit(3.5, 5000, Math.PI * 2 * 10));
         public final KinematicLimit kinematicLimit;
 
         KinematicLimits(KinematicLimit kinematicLimit) {
