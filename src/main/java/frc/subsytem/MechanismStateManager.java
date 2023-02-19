@@ -38,9 +38,9 @@ public class MechanismStateManager extends AbstractSubsystem {
     public enum MechanismStates {
         STOWED(new MechanismStateCoordinates(-0.489, 0.249, MAX_WRIST_ANGLE - 2)),
         LOW_SCORING(new MechanismStateCoordinates(Units.inchesToMeters(12), Units.inchesToMeters(6), 0)),
-        MIDDLE_SCORING(new MechanismStateCoordinates(Units.inchesToMeters(16), Units.inchesToMeters(45), -15)),
+        MIDDLE_SCORING(new MechanismStateCoordinates(Units.inchesToMeters(16), Units.inchesToMeters(45), -5)),
         HIGH_SCORING(new MechanismStateCoordinates(Units.inchesToMeters(36), Units.inchesToMeters(57), 55)),
-        STATION_PICKUP(new MechanismStateCoordinates(0.531, 2.3 - 0.0025, 5.9)),
+        STATION_PICKUP(new MechanismStateCoordinates(0.531, 2.3 - 0.015, 5.9)),
         FLOOR_PICKUP(new MechanismStateCoordinates(0, 0, -7));
         private final MechanismStateCoordinates state;
 
@@ -54,6 +54,11 @@ public class MechanismStateManager extends AbstractSubsystem {
 
     public void setState(@NotNull MechanismStates state) {
         currentWantedState = state.state;
+    }
+
+
+    public MechanismStateCoordinates getCurrentWantedState() {
+        return currentWantedState;
     }
 
     MechanismStateCoordinates lastNotStowState = MechanismStates.STOWED.state;
@@ -140,6 +145,7 @@ public class MechanismStateManager extends AbstractSubsystem {
                 if (currentMechanismState.xMeters + currWristX > 1.02) {
                     mutableY = Math.max(Units.inchesToMeters(3 * 12 + 2) - currWristY, mutableY);
                     mutableY = Math.max(Units.inchesToMeters(3 * 12 + 2), mutableY);
+                    targetArmHeight = mutableY - Math.sin(Math.toRadians(mutableWristAngle));
                     mutableWristAngle = Math.max(mutableWristAngle, 90);
                 }
 

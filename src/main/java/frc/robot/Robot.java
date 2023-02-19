@@ -257,6 +257,8 @@ public class Robot extends LoggedRobot {
     }
 
     private WantedMechanismState wantedMechanismState = WantedMechanismState.STOWED;
+    private @Nullable WantedMechanismState lastWantedMechanismState = null;
+
 
     private boolean isGrabberOpen = true;
 
@@ -290,7 +292,7 @@ public class Robot extends LoggedRobot {
             teleopDrivingAutoAlignPosition = null;
         }
 
-        if (xbox.getRawButton(XboxButtons.START) && false) { //Should be remapped to one of the back buttons
+        if (xbox.getRawButton(XboxButtons.START)) { //Should be remapped to one of the back buttons
             if (xbox.getRisingEdge(XboxButtons.START) || teleopDrivingAutoAlignPosition == null) {
                 updateTeleopDrivingTarget(scoringPositionManager);
                 assert teleopDrivingAutoAlignPosition != null;
@@ -347,7 +349,8 @@ public class Robot extends LoggedRobot {
             }
         }
 
-        if (!arcadeMode) {
+
+        if (wantedMechanismState != lastWantedMechanismState) {
             switch (wantedMechanismState) {
                 case STOWED -> mechanismStateManager.setState(MechanismStates.STOWED);
                 case SCORING -> {
@@ -363,29 +366,40 @@ public class Robot extends LoggedRobot {
                 case FLOOR_PICKUP -> mechanismStateManager.setState(MechanismStates.FLOOR_PICKUP);
                 case STATION_PICKUP -> mechanismStateManager.setState(MechanismStates.STATION_PICKUP);
             }
-        } else {
-            var inputs = new ControllerDriveInputs(stick.getRawAxis(0), stick.getRawAxis(1), stick.getRawAxis(3));
-            inputs.applyDeadZone(0.2, 0.2, 0.25, 0.2);
-            inputs.squareInputs();
-            wantedAngle += inputs.getY() * ARCADE_WRIST_ANGLE_SPEED * NOMINAL_DT;
-            var dx = -buttonPanel.getRawAxis(0);
-            var dy = buttonPanel.getRawAxis(1);
+        }
 
-            if (abs(dx) < 0.1) dx = 0;
-            if (abs(dy) < 0.1) dy = 0;
+        lastWantedMechanismState = wantedMechanismState;
+
+
+        var limitedMechCoords = MechanismStateManager.limitCoordinates(mechanismStateManager.getCurrentWantedState());
+
+        Logger.getInstance().recordOutput("Robot/Wanted X", wantedX);
+        Logger.getInstance().recordOutput("Robot/Wanted Y", wantedY);
+        Logger.getInstance().recordOutput("Robot/Wanted Angle", wantedAngle);
+
+        var inputs = new ControllerDriveInputs(stick.getRawAxis(0), stick.getRawAxis(1), stick.getRawAxis(3));
+        inputs.applyDeadZone(0.1, 0.1, 0.25, 0.2);
+        inputs.squareInputs();
+
+        var dx = -buttonPanel.getRawAxis(0);
+        var dy = buttonPanel.getRawAxis(1);
+
+        if (abs(dx) < 0.1) dx = 0;
+        if (abs(dy) < 0.1) dy = 0;
+
+        if (inputs.getX() != 0 || dx != 0 || dy != 0) {
+            wantedX = limitedMechCoords.xMeters();
+            wantedY = limitedMechCoords.yMeters();
+            wantedAngle = limitedMechCoords.grabberAngleDegrees();
+
+            wantedAngle += inputs.getY() * ARCADE_WRIST_ANGLE_SPEED * NOMINAL_DT;
+
             wantedX += dx * ARCADE_MODE_TRANSLATION_SPEED * NOMINAL_DT;
             wantedY += dy * ARCADE_MODE_TRANSLATION_SPEED * NOMINAL_DT;
 
-            var wantedMechState = new MechanismStateManager.MechanismStateCoordinates(wantedX, wantedY, wantedAngle);
-            var limitedMechState = MechanismStateManager.limitCoordinates(wantedMechState);
-            wantedX = limitedMechState.xMeters();
-            wantedY = limitedMechState.yMeters();
-            wantedAngle = limitedMechState.grabberAngleDegrees();
             mechanismStateManager.setState(new MechanismStateManager.MechanismStateCoordinates(wantedX, wantedY, wantedAngle));
-            Logger.getInstance().recordOutput("Robot/Wanted X", wantedX);
-            Logger.getInstance().recordOutput("Robot/Wanted Y", wantedY);
-            Logger.getInstance().recordOutput("Robot/Wanted Angle", wantedAngle);
         }
+
         Logger.getInstance().recordOutput("Robot/Wanted Mechanism State", wantedMechanismState.name());
 
         if (xbox.getRisingEdge(XboxButtons.B)) {
