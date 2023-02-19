@@ -15,6 +15,7 @@ import edu.wpi.first.math.geometry.Quaternion;
 import edu.wpi.first.math.geometry.Rotation3d;
 import edu.wpi.first.math.geometry.Translation3d;
 import edu.wpi.first.math.numbers.N3;
+import edu.wpi.first.math.util.Units;
 import edu.wpi.first.networktables.NetworkTable;
 import edu.wpi.first.networktables.NetworkTableEvent.Kind;
 import edu.wpi.first.networktables.NetworkTableInstance;
@@ -78,7 +79,9 @@ public class VisionHandler extends AbstractSubsystem {
         }
     }
 
-    private final Translation3d cameraOffset = new Translation3d(0, 0, 0);
+    private final Pose3d cameraPose = new Pose3d(new Translation3d(Units.inchesToMeters(3.44), Units.inchesToMeters(-3.44),
+            Units.inchesToMeters(52.425)),
+            new Rotation3d(VecBuilder.fill(0, 1, 0), Math.toRadians(-28)));
 
 
     VisionInputs visionInputs = new VisionInputs();
@@ -121,14 +124,11 @@ public class VisionHandler extends AbstractSubsystem {
         final var expectedTagPosition = fieldLayout.getTagPose(data.tagId).orElseThrow(); // We should never get an
         // unknown tag
 
-        final var translation = new Translation3d(data.posX, data.posY, data.posZ)
-                .rotateBy(POSITIVE_Y_90)
-                .rotateBy(POSITIVE_X_NEGATIVE_90);
-        final var rotation = new Rotation3d(new Quaternion(data.rotW, -data.rotZ, -data.rotX, data.rotY));
-
-
-        //The translation is now from the center of the robot to the center of the tag relative to the rotation of the robot
-        final var robotToTagRobotRelative = translation.plus(cameraOffset);
+        final var tagTranslation = new Translation3d(data.posZ, -data.posX, -data.posY)
+                .rotateBy(cameraPose.getRotation().unaryMinus())
+                .plus(cameraPose.getTranslation());
+        final var tagRotation = new Rotation3d(new Quaternion(data.rotW, data.rotZ, -data.rotX, -data.rotY))
+                .rotateBy(cameraPose.getRotation().unaryMinus());
 
 
         Rotation3d gyroAngle = Robot.getRobotTracker().getGyroAngleAtTime(data.timestamp);
@@ -136,7 +136,7 @@ public class VisionHandler extends AbstractSubsystem {
         var calculatedTranslationFromGyro =
                 expectedTagPosition.getTranslation()
                         .plus(
-                                robotToTagRobotRelative
+                                tagTranslation
                                         // Rotate the translation by the gyro angle (to make it relative to the field)
                                         .rotateBy(gyroAngle)
                                         // Make the vector from the tag to the robot (instead of the robot to the tag)
@@ -145,13 +145,13 @@ public class VisionHandler extends AbstractSubsystem {
 
         var rotationFromTag = expectedTagPosition.getRotation()
                 .plus(POSITIVE_Z_180)
-                .plus(rotation);
+                .plus(tagRotation);
 
 
         var calculatedTranslationFromTagOrientation =
                 expectedTagPosition.getTranslation()
                         .plus(
-                                robotToTagRobotRelative
+                                tagTranslation
                                         // Rotate the translation by the tag orientation (to make it relative to the field)
                                         .rotateBy(rotationFromTag)
                                         // Make the vector from the tag to the robot (instead of the robot to the tag)
@@ -177,7 +177,8 @@ public class VisionHandler extends AbstractSubsystem {
         RobotPositionSender.addRobotPosition(
                 new RobotState(visionOnlyPose.toPose2d(), data.timestamp, "Vision Only Pose Tag: " + data.tagId));
         var defaultDevs = RobotTracker.DEFAULT_VISION_DEVIATIONS;
-        var distanceToTag = translation.getNorm();
+        var distanceToTag = tagTranslation.getNorm();
+        if (distanceToTag == 0) return;
         var devs = VecBuilder.fill(defaultDevs.get(0, 0) * distanceToTag,
                 defaultDevs.get(1, 0) * distanceToTag,
                 defaultDevs.get(2, 0) * distanceToTag,
@@ -185,6 +186,20 @@ public class VisionHandler extends AbstractSubsystem {
         Robot.getRobotTracker().addVisionMeasurement(poseToFeedToRobotTracker, data.timestamp, devs);
 
         Logger.getInstance().recordOutput("VisionHandler/VisionOnlyPose/" + data.tagId, visionOnlyPose);
+        Logger.getInstance().recordOutput("VisionHandler/VisionOnlyPoseAngles/" + data.tagId + "/X",
+                Math.toDegrees(tagRotation.getX()));
+        Logger.getInstance().recordOutput("VisionHandler/VisionOnlyPoseAngles/" + data.tagId + "/Y",
+                Math.toDegrees(tagRotation.getY()));
+        Logger.getInstance().recordOutput("VisionHandler/VisionOnlyPoseAngles/" + data.tagId + "/Z",
+                Math.toDegrees(tagRotation.getZ()));
+
+        Logger.getInstance().recordOutput("VisionHandler/VisionOnlyPose/" + data.tagId, visionOnlyPose);
+        Logger.getInstance().recordOutput("VisionHandler/VisionOnlyPosePosition/" + data.tagId + "/X",
+                tagTranslation.getX());
+        Logger.getInstance().recordOutput("VisionHandler/VisionOnlyPosePosition/" + data.tagId + "/Y",
+                tagTranslation.getY());
+        Logger.getInstance().recordOutput("VisionHandler/VisionOnlyPosePosition/" + data.tagId + "/Z",
+                tagTranslation.getZ());
         Logger.getInstance().recordOutput("VisionHandler/FedPoses/" + data.tagId, poseToFeedToRobotTracker);
 
 
@@ -207,6 +222,7 @@ public class VisionHandler extends AbstractSubsystem {
     public synchronized void update() {
         Logger.getInstance().processInputs("VisionHandler", visionInputs);
 
+        Logger.getInstance().recordOutput("Vision Handler/Tags Updates", visionInputs.visionUpdates.size());
         // Process vision updates
         for (var visionUpdate : visionInputs.visionUpdates) {
             processNewTagPosition(visionUpdate);
@@ -214,7 +230,7 @@ public class VisionHandler extends AbstractSubsystem {
         visionInputs.visionUpdates.clear();
     }
 
-    record VisionUpdate(double posX, double posY, double posZ, double rotW, double rotX, double rotY, double rotZ,
+    record VisionUpdate(double posX, double posY, double posZ, double rotX, double rotY, double rotZ, double rotW,
                         double timestamp, int tagId) {
         /**
          * This treats the data as a double array in the following order: posX, posY, posZ, rotW, rotX, rotY, rotZ, latency

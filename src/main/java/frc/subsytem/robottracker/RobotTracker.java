@@ -63,7 +63,7 @@ public final class RobotTracker extends AbstractSubsystem {
 
     private final SwerveDriveOdometry noVisionOdometry;
 
-    private static final double VELOCITY_MEASUREMENT_WINDOW = 0.2;
+    private static final double VELOCITY_MEASUREMENT_WINDOW = 0.4;
 
     private final TimeInterpolatableBuffer<Pose3d> poseBufferForVelocity = TimeInterpolatableBuffer.createBuffer(
             Pose3d::interpolate, 1.5);
@@ -485,7 +485,7 @@ public final class RobotTracker extends AbstractSubsystem {
             }
             Pose3d noVisionPose = noVisionOdometry.getPoseMeters3d();
             poseBufferForVelocity.addSample(timestamp, noVisionPose);
-            gyroOffset = latestPose3d.getRotation().minus(gyroInputs.rotation3d);
+            gyroOffset = startUpRotationToField;
             this.lastTimestamp = timestamp;
         } finally {
             lock.writeLock().unlock();
@@ -547,7 +547,7 @@ public final class RobotTracker extends AbstractSubsystem {
     public @NotNull Rotation2d getGyroAngle() {
         lock.readLock().lock();
         try {
-            return gyroAngle3d.plus(gyroOffset).toRotation2d();
+            return latestPose.getRotation();
         } finally {
             lock.readLock().unlock();
         }
@@ -617,7 +617,8 @@ public final class RobotTracker extends AbstractSubsystem {
 
     @Override
     public void logData() {
-        Logger.getInstance().recordOutput("RobotTracker/rotation", getGyroAngle().getDegrees());
+        Logger.getInstance().recordOutput("RobotTracker/Rotation", getGyroAngle().getDegrees());
+        Logger.getInstance().recordOutput("RobotTracker/Rotation Rad", getGyroAngle().getRadians());
         Logger.getInstance().recordOutput("RobotTracker/x", getLatestPose().getTranslation().getX());
         Logger.getInstance().recordOutput("RobotTracker/y", getLatestPose().getTranslation().getY());
         Logger.getInstance().recordOutput("RobotTracker/NoVisionPose", noVisionOdometry.getPoseMeters());

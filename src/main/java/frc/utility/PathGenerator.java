@@ -24,8 +24,8 @@ public class PathGenerator {
     private PathGenerator() {}
 
     //set initial velocity, copy it then
-    private static final double MAX_VELOCITY = 4;
-    private static final double MAX_ACCELERATION = 3;
+    private static final double MAX_VELOCITY = 3;
+    private static final double MAX_ACCELERATION = 1;
 
     private static final ArrayList<TrajectoryConstraint> constraints = new ArrayList<>();
 
