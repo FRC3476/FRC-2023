@@ -37,7 +37,7 @@ deploy {
                     jvmArgs.add("-XX:+UnlockExperimentalVMOptions")
                     jvmArgs.add("-Xmx30M")
                     jvmArgs.add("-Xms30M")
-                    jvmArgs.add("-Djoml.fastmath=true")
+                    jvmArgs.add("-Djoml.fastmath=false")
                 }
 
                 // Static files artifact
