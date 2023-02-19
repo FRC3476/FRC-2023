@@ -555,7 +555,7 @@ public final class RobotTracker extends AbstractSubsystem {
     public double getAngularAcceleration() {
         lock.readLock().lock();
         try {
-
+            return angularAcceleration;
         } finally {
             lock.readLock().unlock();
         }

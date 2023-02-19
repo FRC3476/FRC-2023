@@ -38,7 +38,7 @@ public final class Constants {
     public static final int DEFAULT_PERIODS_PER_LOG = 0;
     private static final int NOMINAL_DT_MS = 20;
 
-    public static final double BALANCE_P = .05;
+    public static final double BALANCE_P = .1;
     public static final double BALANCE_I = 0;
     public static final double BALANCE_D = 0;
 
