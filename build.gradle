@@ -1,7 +1,7 @@
 plugins {
     id "java"
     id "com.peterabeles.gversion" version "1.10"
-    id "edu.wpi.first.GradleRIO" version "2023.3.2"
+    id "edu.wpi.first.GradleRIO" version "2023.4.1"
 }
 
 sourceCompatibility = JavaVersion.VERSION_17
@@ -37,7 +37,7 @@ deploy {
                     jvmArgs.add("-XX:+UnlockExperimentalVMOptions")
                     jvmArgs.add("-Xmx30M")
                     jvmArgs.add("-Xms30M")
-                    jvmArgs.add("-Djoml.fastmath=true")
+                    jvmArgs.add("-Djoml.fastmath=false")
                 }
 
                 // Static files artifact
@@ -87,7 +87,7 @@ dependencies {
     implementation 'org.apache.commons:commons-math3:3.6.1'
     implementation 'com.google.guava:guava:31.1-jre'
 
-    implementation "com.dacubeking:autobuilder-robot:2.2.3"
+    implementation "com.dacubeking:autobuilder-robot:2.2.4-beta.2"
     implementation 'org.joml:joml:1.10.4'
 
 
