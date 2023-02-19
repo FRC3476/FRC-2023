@@ -47,6 +47,7 @@ public final class Drive extends AbstractSubsystem {
     private final @NotNull LiveEditableValue<Double> turnD = new LiveEditableValue<>(DEFAULT_TURN_D, SmartDashboard.getEntry(
             "TurnPIDD"));
     private final @NotNull PIDController turnPID;
+    private final @NotNull PIDController balancePID;
 
     private double autoStartTime;
     private boolean swerveAutoControllerInitialized = false;
@@ -72,6 +73,12 @@ public final class Drive extends AbstractSubsystem {
         turnPID = new PIDController(turnP.get(), turnI.get(), turnD.get());
         turnPID.enableContinuousInput(-Math.PI, Math.PI);
         turnPID.setIntegratorRange(-Math.PI * 2 * 4, Math.PI * 2 * 4);
+    }
+
+    {
+        // Balance PID takes in degrees of rotation on the axis parallel to the wide edge of the charging station and returns a velocity in meters per second
+        balancePID = new PIDController(Constants.BALANCE_P, Constants.BALANCE_I, Constants.BALANCE_D);
+        balancePID.setSetpoint(0);
     }
 
     private final DriveIO io;
@@ -572,12 +579,14 @@ public final class Drive extends AbstractSubsystem {
         var angle = Robot.getRobotTracker().getGyroAngleAtTime(Timer.getFPGATimestamp());
         double angleMeasure = angle.getY();
         angleMeasure = Math.toDegrees(angleMeasure);
-        double xVelocity = 0;
 
-        if (angleMeasure >= AUTO_BALANCE_COMPLETE_THRESHOLD) {
-            xVelocity = AUTO_BALANCING_VELOCITY;
-        } else if (angleMeasure <= -AUTO_BALANCE_COMPLETE_THRESHOLD) {
-            xVelocity = -AUTO_BALANCING_VELOCITY;
+        double xVelocity;
+
+        if (angleMeasure <= AUTO_BALANCE_COMPLETE_THRESHOLD && angleMeasure >= -AUTO_BALANCE_COMPLETE_THRESHOLD) {
+            // Stops PID if within this range
+            xVelocity = 0;
+        } else {
+            xVelocity = balancePID.calculate(angleMeasure);
         }
 
         nextChassisSpeeds = ChassisSpeeds.fromFieldRelativeSpeeds(

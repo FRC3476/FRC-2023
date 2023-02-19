@@ -35,6 +35,10 @@ public final class Constants {
     public static final int DEFAULT_PERIODS_PER_LOG = 0;
     private static final int NOMINAL_DT_MS = 20;
 
+    public static final double BALANCE_P = .05;
+    public static final double BALANCE_I = 0;
+    public static final double BALANCE_D = 0;
+
     //Drive Constants
     public static final double AUTO_BALANCING_VELOCITY = 0.5;
     public static final int DRIVE_LEFT_FRONT_ID = 11;
@@ -59,7 +63,7 @@ public final class Constants {
     public static final double SWERVE_DRIVE_I = 0.00;
     public static final double SWERVE_DRIVE_F = 0.00;
     public static final double SWERVE_DRIVE_INTEGRAL_ZONE = 0.00;
-    public static final double AUTO_BALANCE_COMPLETE_THRESHOLD = 9;
+    public static final double AUTO_BALANCE_COMPLETE_THRESHOLD = 1.5;
     /**
      * Feed forward constants for the drivetrain.
      * <p>
