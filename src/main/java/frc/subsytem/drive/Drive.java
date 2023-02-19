@@ -581,13 +581,19 @@ public final class Drive extends AbstractSubsystem {
         angleMeasure = Math.toDegrees(angleMeasure);
         Logger.getInstance().recordOutput("Drive/Auto Balance Angle", angleMeasure);
 
+        double angularAcceleration = Robot.getRobotTracker().getAngularAcceleration();
+        Logger.getInstance().recordOutput("Drive/Auto Balance Angular Acceleration", angularAcceleration);
+
         double xVelocity;
 
         if (angleMeasure <= AUTO_BALANCE_COMPLETE_THRESHOLD && angleMeasure >= -AUTO_BALANCE_COMPLETE_THRESHOLD) {
             // Stops PID if within this range
             xVelocity = 0;
+        } else if(Math.abs(angularAcceleration) > Constants.ANGULAR_ACCELERATION_BALANCE_THRESHHOLD){
+            // Stops PID if accelerated too high
+            xVelocity = 0;
         } else {
-            xVelocity = balancePID.calculate(angleMeasure);
+            xVelocity = -balancePID.calculate(angleMeasure);
         }
 
         nextChassisSpeeds = ChassisSpeeds.fromFieldRelativeSpeeds(

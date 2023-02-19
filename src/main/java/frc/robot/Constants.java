@@ -19,6 +19,7 @@ import java.nio.file.Files;
 
 public final class Constants {
 
+    public static final double ANGULAR_ACCELERATION_BALANCE_THRESHHOLD = 2;
     private static final boolean GRAVITY_LESS_MODE = false;
 
     public static final String LOG_DIRECTORY = "/home/lvuser/logs";
@@ -65,7 +66,7 @@ public final class Constants {
     public static final double SWERVE_DRIVE_I = 0.00;
     public static final double SWERVE_DRIVE_F = 0.00;
     public static final double SWERVE_DRIVE_INTEGRAL_ZONE = 0.00;
-    public static final double AUTO_BALANCE_COMPLETE_THRESHOLD = 1.5;
+    public static final double AUTO_BALANCE_COMPLETE_THRESHOLD = 9;
     /**
      * Feed forward constants for the drivetrain.
      * <p>

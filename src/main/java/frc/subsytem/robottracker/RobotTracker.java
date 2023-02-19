@@ -56,6 +56,11 @@ public final class RobotTracker extends AbstractSubsystem {
      */
     private double angularRate = 0;
 
+    /**
+     * Angular Acceleration in degrees per second squared
+     */
+    private double angularAcceleration = 0;
+
 
     public static final Matrix<N4, N1> DEFAULT_VISION_DEVIATIONS = VecBuilder.fill(0.2, 0.2, 0.2, Math.toRadians(15));
 
@@ -237,7 +242,10 @@ public final class RobotTracker extends AbstractSubsystem {
                     accelerationHistory.addSample(translation3dEntry.timestamp(), translation3dEntry.value());
                 }
 
+                // Finds angular acceleration using current and last gyro velocities
+                angularAcceleration = (gyroInputs.gyroYawVelocity - angularRate) / (timestamp - lastTimestamp);
                 angularRate = gyroInputs.gyroYawVelocity;
+
 
                 // Get the gyro measurements for the timestamp of our swerve module positions
                 acceleration = accelerationHistory.getSample(timestamp).orElse(new Translation3d());
@@ -539,6 +547,15 @@ public final class RobotTracker extends AbstractSubsystem {
         lock.readLock().lock();
         try {
             return angularRate;
+        } finally {
+            lock.readLock().unlock();
+        }
+    }
+
+    public double getAngularAcceleration() {
+        lock.readLock().lock();
+        try {
+
         } finally {
             lock.readLock().unlock();
         }
