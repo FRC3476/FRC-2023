@@ -25,6 +25,7 @@ import org.littletonrobotics.junction.Logger;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.EnumSet;
+import java.util.HashMap;
 
 import static frc.robot.Constants.*;
 import static org.joml.Math.tan;
@@ -42,6 +43,7 @@ public class VisionHandler extends AbstractSubsystem {
     static final Rotation3d POSITIVE_X_NEGATIVE_90 = new Rotation3d(POSITIVE_X, Math.toRadians(-90.0));
     static final Rotation3d POSITIVE_Z_180 = new Rotation3d(POSITIVE_Z, Math.toRadians(180));
     private static final @NotNull AprilTagFieldLayout fieldLayout;
+    private static final @NotNull HashMap<Integer, Pose3d> fieldTagCache;
 
     static {
         try {
@@ -62,6 +64,13 @@ public class VisionHandler extends AbstractSubsystem {
             }
 
             fieldLayout = new AprilTagFieldLayout(adjustedAprilTags, FIELD_HEIGHT_METERS, FIELD_WIDTH_METERS);
+
+            // Initialize Cache
+            fieldTagCache = new HashMap<>();
+
+            for(AprilTag tag : fieldLayout.getTags()) {
+                fieldTagCache.put(tag.ID, tag.pose);
+            }
 
 //            System.out.println("AprilTag Positions: ");
 //            for (AprilTag tag : fieldLayout.getTags()) {
@@ -117,7 +126,7 @@ public class VisionHandler extends AbstractSubsystem {
     }
 
     private void processNewTagPosition(VisionUpdate data) {
-        final var expectedTagPosition = fieldLayout.getTagPose(data.tagId).orElseThrow(); // We should never get an
+        final var expectedTagPosition = fieldTagCache.get(data.tagId); // We should never get an
         // unknown tag
 
         final var tagTranslation = new Translation3d(data.posZ, -data.posX, -data.posY);
