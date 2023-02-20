@@ -593,7 +593,7 @@ public final class Drive extends AbstractSubsystem {
             // Stops PID if accelerated too high
             xVelocity = 0;
         } else {
-            xVelocity = -balancePID.calculate(angleMeasure);
+            xVelocity = Math.copySign(balancePID.calculate(angleMeasure), angleMeasure);
         }
 
         nextChassisSpeeds = ChassisSpeeds.fromFieldRelativeSpeeds(
