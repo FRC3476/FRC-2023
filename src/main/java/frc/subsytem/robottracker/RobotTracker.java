@@ -630,6 +630,7 @@ public final class RobotTracker extends AbstractSubsystem {
         Logger.getInstance().recordOutput("RobotTracker/accelerationX", getAcceleration().getX());
         Logger.getInstance().recordOutput("RobotTracker/accelerationY", getAcceleration().getY());
         Logger.getInstance().recordOutput("RobotTracker/accelerationZ", getAcceleration().getZ());
+        Logger.getInstance().recordOutput("RobotTracker/acceleration", getAcceleration().getNorm());
         Logger.getInstance().recordOutput("RobotTracker/Velocity", getVelocity().getNorm());
         Logger.getInstance().recordOutput("RobotTracker/Is Velocity Mismatched", isVelocityMismatched);
         Logger.getInstance().recordOutput("RobotTracker/Velocity Mismatch Time", velocityMismatchTime);

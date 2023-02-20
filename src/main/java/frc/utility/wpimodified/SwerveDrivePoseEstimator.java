@@ -15,6 +15,7 @@ import edu.wpi.first.math.numbers.N1;
 import edu.wpi.first.math.numbers.N3;
 import edu.wpi.first.math.numbers.N4;
 import edu.wpi.first.util.WPIUtilJNI;
+import edu.wpi.first.wpilibj.DriverStation;
 
 /**
  * This class wraps {@link SwerveDriveOdometry Swerve Drive Odometry} to fuse latency-compensated vision measurements with swerve
@@ -292,54 +293,59 @@ public class SwerveDrivePoseEstimator {
      *                              sync the epochs.
      */
     public void addVisionMeasurement(Pose3d visionRobotPoseMeters, double timestampSeconds) {
-        // Step 0: If this measurement is old enough to be outside the pose buffer's timespan, skip.
-        if (m_poseBuffer.getInternalBuffer().lastKey() - kBufferDuration > timestampSeconds) {
-            return;
+        try {
+
+            // Step 0: If this measurement is old enough to be outside the pose buffer's timespan, skip.
+            if (m_poseBuffer.getInternalBuffer().lastKey() - kBufferDuration > timestampSeconds) {
+                return;
+            }
+
+            // Step 1: Get the pose odometry measured at the moment the vision measurement was made.
+            var sample = m_poseBuffer.getSample(timestampSeconds);
+
+            if (sample.isEmpty()) {
+                return;
+            }
+
+            var record = sample.get();
+
+            var odometry_backtrack = m_odometry.getPoseMeters3d().log(record);
+            var odometry_fastforward =
+                    new Twist3d(
+                            -odometry_backtrack.dx,
+                            -odometry_backtrack.dy,
+                            -odometry_backtrack.dz,
+                            -odometry_backtrack.rx,
+                            -odometry_backtrack.ry,
+                            -odometry_backtrack.rz);
+
+            var old_estimate = m_poseEstimate.exp(odometry_backtrack);
+
+            // Step 2: Measure the twist between the odometry pose and the vision pose.
+            var twist = old_estimate.log(visionRobotPoseMeters);
+
+            // Step 3: We should not trust the twist entirely, so instead we scale this twist by a Kalman
+            // gain matrix representing how much we trust vision measurements compared to our current pose.
+            var twist_rvec = VecBuilder.fill(twist.rx, twist.ry, twist.rz);
+            var twist_angle = twist_rvec.norm();
+            var k_times_twist = m_visionK.times(VecBuilder.fill(twist.dx, twist.dy, twist.dz, twist_angle));
+
+            // Step 4: Convert back to Twist3d.
+            var scaledTwist =
+                    new Twist3d(
+                            k_times_twist.get(0, 0),
+                            k_times_twist.get(1, 0),
+                            k_times_twist.get(2, 0),
+                            twist_rvec.get(0, 0) / twist_angle * k_times_twist.get(3, 0),
+                            twist_rvec.get(1, 0) / twist_angle * k_times_twist.get(3, 0),
+                            twist_rvec.get(2, 0) / twist_angle * k_times_twist.get(3, 0));
+
+            old_estimate = old_estimate.exp(scaledTwist);
+
+            m_poseEstimate = old_estimate.exp(odometry_fastforward);
+        } catch (IllegalArgumentException e) {
+            DriverStation.reportError("Failed to add Vision Measurement: " + e.getMessage(), e.getStackTrace());
         }
-
-        // Step 1: Get the pose odometry measured at the moment the vision measurement was made.
-        var sample = m_poseBuffer.getSample(timestampSeconds);
-
-        if (sample.isEmpty()) {
-            return;
-        }
-
-        var record = sample.get();
-
-        var odometry_backtrack = m_odometry.getPoseMeters3d().log(record);
-        var odometry_fastforward =
-                new Twist3d(
-                        -odometry_backtrack.dx,
-                        -odometry_backtrack.dy,
-                        -odometry_backtrack.dz,
-                        -odometry_backtrack.rx,
-                        -odometry_backtrack.ry,
-                        -odometry_backtrack.rz);
-
-        var old_estimate = m_poseEstimate.exp(odometry_backtrack);
-
-        // Step 2: Measure the twist between the odometry pose and the vision pose.
-        var twist = old_estimate.log(visionRobotPoseMeters);
-
-        // Step 3: We should not trust the twist entirely, so instead we scale this twist by a Kalman
-        // gain matrix representing how much we trust vision measurements compared to our current pose.
-        var twist_rvec = VecBuilder.fill(twist.rx, twist.ry, twist.rz);
-        var twist_angle = twist_rvec.norm();
-        var k_times_twist = m_visionK.times(VecBuilder.fill(twist.dx, twist.dy, twist.dz, twist_angle));
-
-        // Step 4: Convert back to Twist3d.
-        var scaledTwist =
-                new Twist3d(
-                        k_times_twist.get(0, 0),
-                        k_times_twist.get(1, 0),
-                        k_times_twist.get(2, 0),
-                        twist_rvec.get(0, 0) / twist_angle * k_times_twist.get(3, 0),
-                        twist_rvec.get(1, 0) / twist_angle * k_times_twist.get(3, 0),
-                        twist_rvec.get(2, 0) / twist_angle * k_times_twist.get(3, 0));
-
-        old_estimate = old_estimate.exp(scaledTwist);
-
-        m_poseEstimate = old_estimate.exp(odometry_fastforward);
     }
 
     /**
