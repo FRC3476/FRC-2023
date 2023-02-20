@@ -29,7 +29,7 @@ public class LiveEditableValue<T> {
         this.entry = entry;
         entry.setValue(onWrite.apply(defaultValue));
         NetworkTableInstance.getDefault().addListener(entry, EnumSet.of(NetworkTableEvent.Kind.kValueRemote),
-                (NetworkTableEvent) -> value = onNTChange.apply(entry.getValue()));
+                (NetworkTableEvent) -> value = onNTChange.apply(entry.getValue().getValue()));
     }
 
     /**
