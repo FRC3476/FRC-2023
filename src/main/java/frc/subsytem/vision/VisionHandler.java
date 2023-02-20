@@ -1,8 +1,5 @@
 package frc.subsytem.vision;
 
-import com.dacubeking.AutoBuilder.robot.drawable.Drawable;
-import com.dacubeking.AutoBuilder.robot.drawable.Line;
-import com.dacubeking.AutoBuilder.robot.drawable.Renderer;
 import com.dacubeking.AutoBuilder.robot.sender.pathpreview.RobotPositionSender;
 import com.dacubeking.AutoBuilder.robot.sender.pathpreview.RobotState;
 import edu.wpi.first.apriltag.AprilTag;
@@ -19,7 +16,6 @@ import edu.wpi.first.math.util.Units;
 import edu.wpi.first.networktables.NetworkTable;
 import edu.wpi.first.networktables.NetworkTableEvent.Kind;
 import edu.wpi.first.networktables.NetworkTableInstance;
-import edu.wpi.first.wpilibj.util.Color8Bit;
 import frc.robot.Robot;
 import frc.subsytem.AbstractSubsystem;
 import frc.subsytem.robottracker.RobotTracker;
@@ -31,7 +27,6 @@ import java.util.ArrayList;
 import java.util.EnumSet;
 
 import static frc.robot.Constants.*;
-import static java.lang.Math.cos;
 import static org.joml.Math.tan;
 
 /**
@@ -209,18 +204,18 @@ public class VisionHandler extends AbstractSubsystem {
 
 
         // Draw the tag on the field
-        var drawables = new Drawable[2];
-        int j = 0;
-        drawables[j++] = new Line((float) expectedTagPosition.getX(),
-                (float) (expectedTagPosition.getY() - 0.5),
-                (float) expectedTagPosition.getX(),
-                (float) (expectedTagPosition.getY() + 0.5), new Color8Bit(255, 255, 0));
-        drawables[j++] = new Line((float) expectedTagPosition.getX(),
-                (float) expectedTagPosition.getY(),
-                (float) (expectedTagPosition.getX() + cos(expectedTagPosition.getRotation().getZ()) * 0.1),
-                (float) (expectedTagPosition.getY()),
-                new Color8Bit(255, 255, 0));
-        Renderer.render(drawables);
+//        var drawables = new Drawable[2];
+//        int j = 0;
+//        drawables[j++] = new Line((float) expectedTagPosition.getX(),
+//                (float) (expectedTagPosition.getY() - 0.5),
+//                (float) expectedTagPosition.getX(),
+//                (float) (expectedTagPosition.getY() + 0.5), new Color8Bit(255, 255, 0));
+//        drawables[j++] = new Line((float) expectedTagPosition.getX(),
+//                (float) expectedTagPosition.getY(),
+//                (float) (expectedTagPosition.getX() + cos(expectedTagPosition.getRotation().getZ()) * 0.1),
+//                (float) (expectedTagPosition.getY()),
+//                new Color8Bit(255, 255, 0));
+//        Renderer.render(drawables);
     }
 
     @Override
