@@ -306,4 +306,7 @@ public final class Constants {
      */
     public static final double ARCADE_WRIST_ANGLE_SPEED = 360;
     public static final double ARCADE_MODE_TRANSLATION_SPEED = 1;
+
+    //Led Constants
+    public static final int LED_LENGTH = 5;
 }
