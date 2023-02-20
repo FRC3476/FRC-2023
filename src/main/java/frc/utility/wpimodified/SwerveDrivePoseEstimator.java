@@ -296,7 +296,8 @@ public class SwerveDrivePoseEstimator {
         try {
 
             // Step 0: If this measurement is old enough to be outside the pose buffer's timespan, skip.
-            if (m_poseBuffer.getInternalBuffer().lastKey() - kBufferDuration > timestampSeconds) {
+            var lastEntry = m_poseBuffer.getInternalBuffer().lastEntry();
+            if (lastEntry != null && lastEntry.getKey() - kBufferDuration > timestampSeconds) {
                 return;
             }
 
