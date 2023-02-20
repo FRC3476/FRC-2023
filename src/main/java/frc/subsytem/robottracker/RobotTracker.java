@@ -241,12 +241,8 @@ public final class RobotTracker extends AbstractSubsystem {
                     accelerationHistory.addSample(translation3dEntry.timestamp(), translation3dEntry.value());
                 }
 
-
-                // Finds angular acceleration using current and last gyro velocities
                 angularRollRate = gyroInputs.gyroRollVelocity;
-
                 angularRate = gyroInputs.gyroYawVelocity;
-
 
                 // Get the gyro measurements for the timestamp of our swerve module positions
                 acceleration = accelerationHistory.getSample(timestamp).orElse(new Translation3d());
