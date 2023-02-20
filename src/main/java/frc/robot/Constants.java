@@ -74,10 +74,10 @@ public final class Constants {
      * 3 -> Right Back
      */
     public static final SimpleMotorFeedforward[] DRIVE_FEEDFORWARD = {
-            new SimpleMotorFeedforward(0.33255, 2.95258, 0.0),
-            new SimpleMotorFeedforward(0.33255, 2.95258, 0.0),
-            new SimpleMotorFeedforward(0.33255, 2.95258, 0.0),
-            new SimpleMotorFeedforward(0.33255, 2.95258, 0.0)};
+            new SimpleMotorFeedforward(0.33255, 2.5, 0.0),
+            new SimpleMotorFeedforward(0.33255, 2.5, 0.0),
+            new SimpleMotorFeedforward(0.33255, 2.5, 0.0),
+            new SimpleMotorFeedforward(0.33255, 2.5, 0.0)};
 
 
     /**
@@ -126,9 +126,12 @@ public final class Constants {
     public static final int SWERVE_DRIVE_VOLTAGE_LIMIT = 12;
 
     public static final double SWERVE_DRIVE_MOTOR_REDUCTION = 1 / 6.75; // L2 gear ratio
+
+    public static final double ALLOWED_XY_ERROR_RAMSETE = 0.04;
+    public static final double MAX_VELOCITY_END_PATH = 0.02;
     // TurnPID
 
-    public static final double DEFAULT_TURN_P = 10.0;
+    public static final double DEFAULT_TURN_P = 3.0;
     public static final double DEFAULT_TURN_I = 0;
     public static final double DEFAULT_TURN_D = 0.4;
     public static final double TURN_SPEED_LIMIT_WHILE_AIMING = 4.0;
@@ -221,7 +224,7 @@ public final class Constants {
 
 
     // Realtime path generation
-    public static final double START_POS_PREDICT_AHEAD = 0.1;
+    public static final double START_POS_PREDICT_AHEAD = 0.2;
     public static final double END_VECTOR_LEN = 0.5;
     public static final int VELOCITY_VECTOR_LEN_SCALE = 1;
     public static final double MAX_VELOCITY_ERROR_NEW_PATH = 0.05;
@@ -247,9 +250,9 @@ public final class Constants {
     public static final float CHARGING_STATION_BLUE_LOWER_LEFT_X = 11.689f;
     public static final float CHARGING_STATION_LOWER_LEFT_Y = -0.047f;
 
-    public static final float ROBOT_WIDTH = 0.8128f;
+    public static final float ROBOT_WIDTH = 0.84f;
     public static final float HALF_ROBOT_WIDTH = ROBOT_WIDTH / 2;
-    public static final float ROBOT_LENGTH = 0.8128f;
+    public static final float ROBOT_LENGTH = 0.84f;
     public static final float HALF_ROBOT_LENGTH = ROBOT_LENGTH / 2;
 
 
@@ -266,8 +269,8 @@ public final class Constants {
     public static final Rotation2d PICKUP_ANGLE_RED = Rotation2d.fromDegrees(0);
     public static final Rotation2d PICKUP_ANGLE_BLUE = Rotation2d.fromDegrees(180);
 
-    public static final double PICKUP_POSITION_Y = -3.4199;
-    public static final double PICKUP_POSITION_X_OFFSET_FROM_WALL = 0.7635;
+    public static final double PICKUP_POSITION_Y = -3.4;
+    public static final double PICKUP_POSITION_X_OFFSET_FROM_WALL = 1.26;
 
     // Constraints
     // TODO: FIND REAL CONSTRAINTS

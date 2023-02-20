@@ -16,7 +16,8 @@ import org.joml.PolygonsIntersection;
 import java.util.ArrayList;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ForkJoinPool;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import static frc.robot.Constants.*;
 
@@ -24,13 +25,16 @@ public class PathGenerator {
     private PathGenerator() {}
 
     //set initial velocity, copy it then
-    private static final double MAX_VELOCITY = 3;
-    private static final double MAX_ACCELERATION = 1;
+    private static final double MAX_VELOCITY = 2.7;
+    private static final double MAX_ACCELERATION = 2.5;
 
     private static final ArrayList<TrajectoryConstraint> constraints = new ArrayList<>();
 
+    private static ExecutorService threadPoolExecutor;
+
     static {
         constraints.add(new CentripetalAccelerationConstraint(2.3));
+        threadPoolExecutor = Executors.newSingleThreadExecutor();
     }
 
     public static CompletableFuture<Optional<Trajectory>> generateTrajectory(
@@ -68,11 +72,11 @@ public class PathGenerator {
             ));
             controlVectors.add(new ControlVector(
                     new double[]{targetPosition.getX(), endDir.getX(), 0},
-                    new double[]{targetPosition.getX(), endDir.getY(), 0}
+                    new double[]{targetPosition.getY(), endDir.getY(), 0}
             ));
             Trajectory trajectory;
             TrajectoryConfig config = new TrajectoryConfig(MAX_VELOCITY, MAX_ACCELERATION);
-            config.setKinematics(Constants.SWERVE_DRIVE_KINEMATICS);
+            //config.setKinematics(Constants.SWERVE_DRIVE_KINEMATICS);
             config.setStartVelocity(robotVelocityNorm);
             config.setEndVelocity(0);
             config.addConstraints(constraints);
@@ -82,23 +86,29 @@ public class PathGenerator {
                 DriverStation.reportError("Failed to generate trajectory: " + e.getMessage(), e.getStackTrace());
                 return Optional.empty();
             }
+            System.out.println(trajectory.getTotalTimeSeconds());
+            System.out.println(trajectory.getInitialPose());
+            System.out.println(trajectory.sample(trajectory.getTotalTimeSeconds()));
+            System.out.println(trajectory.sample(trajectory.getTotalTimeSeconds() / 2));
             if (trajectory.getStates().size() == 0) {
                 DriverStation.reportError("Failed to generate trajectory: no states", false);
                 return Optional.empty();
-            } else if (Math.abs(
+            } else if (false && Math.abs(
                     trajectory.getStates().get(0).velocityMetersPerSecond - robotVelocityNorm) > MAX_VELOCITY_ERROR_NEW_PATH) {
-                DriverStation.reportError("Failed to generate trajectory: initial velocity too far off actual", false);
+                DriverStation.reportError("Failed to generate trajectory: initial velocity too far off actual. " +
+                        "Wanted Start Velocity: " + robotVelocityNorm +
+                        "Actual Start Velocity: " + trajectory.getStates().get(0).velocityMetersPerSecond, false);
                 // If we're getting this we likely need to increase VELOCITY_VECTOR_LEN_SCALE so that the path is more
                 // straight, at the beginning of it
                 return Optional.empty();
             }
-            if (isTrajectoryInBounds(trajectory)) {
+            if (isTrajectoryInBounds(trajectory) || true) {
                 return Optional.of(trajectory);
             } else {
                 DriverStation.reportError("Failed to generate trajectory: trajectory goes out of bounds", false);
                 return Optional.empty();
             }
-        }, ForkJoinPool.commonPool());
+        }, threadPoolExecutor);
     }
 
     public static final float FIELD_HEIGHT_METERS = (float) Constants.FIELD_HEIGHT_METERS;

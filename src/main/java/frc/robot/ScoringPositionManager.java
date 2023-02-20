@@ -4,7 +4,6 @@ import edu.wpi.first.math.geometry.Translation2d;
 import frc.utility.Controller;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
-import org.joml.Intersectiond;
 import org.joml.Vector2d;
 import org.littletonrobotics.junction.networktables.LoggedDashboardBoolean;
 import org.littletonrobotics.junction.networktables.LoggedDashboardString;
@@ -209,16 +208,18 @@ public class ScoringPositionManager {
         }
 
         Vector2d intersection = new Vector2d();
-        Intersectiond.intersectLineLine(
-                // Create a line that includes the robot's position and is in the direction of the robot's velocity
-                robotPosition.getX(), robotPosition.getY(),
-                robotPosition.getX() + robotVelocity.getX(), robotPosition.getY() + robotVelocity.getY(),
+//        Intersectiond.intersectLineLine(
+//                // Create a line that includes the robot's position and is in the direction of the robot's velocity
+//                robotPosition.getX(), robotPosition.getY(),
+//                robotPosition.getX() + robotVelocity.getX(), robotPosition.getY() + robotVelocity.getY(),
+//
+//                // Create a line  parallel to the y axis that is at the intersectionXLine
+//                intersectionXLine, 0,
+//                intersectionXLine, 3,
+//                intersection
+//        );
 
-                // Create a line  parallel to the y axis that is at the intersectionXLine
-                intersectionXLine, 0,
-                intersectionXLine, 3,
-                intersection
-        );
+        intersection.y = robotPosition.getY();
 
         double[] possibleYs = getPossibleFieldYs(selectedPosition, isRedAlliance);
 
