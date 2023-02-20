@@ -569,6 +569,15 @@ public final class RobotTracker extends AbstractSubsystem {
         }
     }
 
+    public double getAngularRollVelocity() {
+        lock.readLock().lock();
+        try {
+            return angularRollRate;
+        } finally {
+            lock.readLock().unlock();
+        }
+    }
+
     public @NotNull Rotation2d getGyroAngle() {
         lock.readLock().lock();
         try {
