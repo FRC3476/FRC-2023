@@ -139,7 +139,7 @@ public class Controller extends Joystick {
                 return currentAxis[axis];
             }
         } catch (ArrayIndexOutOfBoundsException e) {
-            System.out.println("Axis out of bounds " + axis + "/" + axisCount);
+            //System.out.println("Axis out of bounds " + axis + "/" + axisCount);
         }
         return 0;
     }
@@ -166,7 +166,7 @@ public class Controller extends Joystick {
                 return val;
             }
         } catch (ArrayIndexOutOfBoundsException e) { //noinspection ProhibitedExceptionCaught
-            System.out.println("Axes out of bounds " + x + " " + y + "/" + axisCount);
+            //System.out.println("Axes out of bounds " + x + " " + y + "/" + axisCount);
         }
         return -1;
     }
