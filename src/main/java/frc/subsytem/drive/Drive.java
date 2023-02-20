@@ -581,7 +581,8 @@ public final class Drive extends AbstractSubsystem {
         angleMeasure = Math.toDegrees(angleMeasure);
         Logger.getInstance().recordOutput("Drive/Auto Balance Angle", angleMeasure);
 
-        double angularAcceleration = Robot.getRobotTracker().getAngularAcceleration();
+        double angularAcceleration = Robot.getRobotTracker().getAngularRollAcceleration();
+        System.out.println(angularAcceleration);
         Logger.getInstance().recordOutput("Drive/Auto Balance Angular Acceleration", angularAcceleration);
 
         double xVelocity;

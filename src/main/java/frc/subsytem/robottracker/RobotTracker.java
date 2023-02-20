@@ -57,9 +57,14 @@ public final class RobotTracker extends AbstractSubsystem {
     private double angularRate = 0;
 
     /**
-     * Angular Acceleration in degrees per second squared
+     * Angular Roll Rate in degrees per second
      */
-    private double angularAcceleration = 0;
+    private double angularRollRate = 0;
+
+    /**
+     * Angular Roll Acceleration in degrees per second squared
+     */
+    private double angularRollAcceleration = 0;
 
 
     public static final Matrix<N4, N1> DEFAULT_VISION_DEVIATIONS = VecBuilder.fill(0.2, 0.2, 0.2, Math.toRadians(9));
@@ -242,8 +247,11 @@ public final class RobotTracker extends AbstractSubsystem {
                     accelerationHistory.addSample(translation3dEntry.timestamp(), translation3dEntry.value());
                 }
 
+                angularRollAcceleration = (gyroInputs.gyroRollVelocity - angularRollRate) - (timestamp = lastTimestamp);
+
                 // Finds angular acceleration using current and last gyro velocities
-                angularAcceleration = (gyroInputs.gyroYawVelocity - angularRate) / (timestamp - lastTimestamp);
+                angularRollRate = gyroInputs.gyroRollVelocity;
+
                 angularRate = gyroInputs.gyroYawVelocity;
 
 
@@ -552,10 +560,10 @@ public final class RobotTracker extends AbstractSubsystem {
         }
     }
 
-    public double getAngularAcceleration() {
+    public double getAngularRollAcceleration() {
         lock.readLock().lock();
         try {
-            return angularAcceleration;
+            return angularRollAcceleration;
         } finally {
             lock.readLock().unlock();
         }
