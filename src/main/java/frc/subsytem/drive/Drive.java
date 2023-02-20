@@ -17,6 +17,7 @@ import edu.wpi.first.math.trajectory.TrapezoidProfile;
 import edu.wpi.first.math.trajectory.TrapezoidProfile.State;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.Timer;
+import edu.wpi.first.wpilibj.smartdashboard.Field2d;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import frc.robot.Constants;
 import frc.robot.Robot;
@@ -245,17 +246,17 @@ public final class Drive extends AbstractSubsystem {
                 Rotation2d.fromRadians(desiredRobotRelativeSpeeds.omegaRadiansPerSecond * dt));
         Twist2d twist_vel = IDENTITY_POSE.log(robot_pose_vel);
 
-        try {
-            SwerveModuleState[] prevStates = (SwerveModuleState[]) m_moduleStates.get(SWERVE_DRIVE_KINEMATICS);
-            for (int i = 0; i < 4; i++) {
-                if (prevStates[i] == null) {
-                    prevStates[i] = new SwerveModuleState();
-                }
-            }
-            m_moduleStates.set(SWERVE_DRIVE_KINEMATICS, prevStates);
-        } catch (IllegalAccessException e) {
-            throw new RuntimeException(e);
-        }
+//        try {
+//            SwerveModuleState[] prevStates = (SwerveModuleState[]) m_moduleStates.get(SWERVE_DRIVE_KINEMATICS);
+//            for (int i = 0; i < 4; i++) {
+//                if (prevStates[i] == null) {
+//                    prevStates[i] = new SwerveModuleState();
+//                }
+//            }
+//            m_moduleStates.set(SWERVE_DRIVE_KINEMATICS, prevStates);
+//        } catch (IllegalAccessException e) {
+//            throw new RuntimeException(e);
+//        }
         ChassisSpeeds updated_chassis_speeds = new ChassisSpeeds(
                 twist_vel.dx / dt, twist_vel.dy / dt, twist_vel.dtheta / dt);
         var newSwerveSetpoint =

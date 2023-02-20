@@ -485,7 +485,10 @@ public class Robot extends LoggedRobot {
     private void updateTeleopDrivingTarget(ScoringPositionManager scoringPositionManager) {
         double x, y;
         Rotation2d rotation;
-        if (robotTracker.isOnRedSide() == isRed()) {
+
+        var predictedPose = robotTracker.getLatestPose().getTranslation().plus(robotTracker.getVelocity().times(3));
+        var isOnRedSide = predictedPose.getX() < FIELD_WIDTH_METERS / 2;
+        if (isOnRedSide == isRed()) {
             // We're on the same side as our alliance
             // Try to go to the scoring position
             y = ScoringPositionManager.getBestFieldY(
@@ -498,10 +501,10 @@ public class Robot extends LoggedRobot {
             Logger.getInstance().recordOutput("Robot/Wanted Y Auto Drive", y);
 
             if (isRed()) {
-                x = Constants.GRIDS_RED_X + HALF_ROBOT_WIDTH;
+                x = Constants.GRIDS_RED_X + HALF_ROBOT_WIDTH + SCORING_POSITION_OFFSET_FROM_WALL;
                 rotation = Constants.SCORING_ANGLE_RED;
             } else {
-                x = Constants.GRIDS_BLUE_X - HALF_ROBOT_WIDTH;
+                x = Constants.GRIDS_BLUE_X - HALF_ROBOT_WIDTH - SCORING_POSITION_OFFSET_FROM_WALL;
                 rotation = Constants.SCORING_ANGLE_BLUE;
             }
         } else {

@@ -25,8 +25,8 @@ public class PathGenerator {
     private PathGenerator() {}
 
     //set initial velocity, copy it then
-    private static final double MAX_VELOCITY = 2.7;
-    private static final double MAX_ACCELERATION = 2.5;
+    private static final double MAX_VELOCITY = 3.3;
+    private static final double MAX_ACCELERATION = 3;
 
     private static final ArrayList<TrajectoryConstraint> constraints = new ArrayList<>();
 
@@ -65,10 +65,17 @@ public class PathGenerator {
         return trajectoryFuture.completeAsync(() -> {
             var startPos = robotTranslation.plus(robotVelocity.times(startPosPredictAhead));
             double robotVelocityNorm = robotVelocity.getNorm();
+
+            var velocityToUse = robotVelocity;
+            if (robotVelocityNorm < 0.02) {
+                var posToTarget = robotTranslation.minus(targetPosition);
+                velocityToUse = posToTarget.div(posToTarget.getNorm() * 10); // Make the length 1/10
+            }
+
             ControlVectorList controlVectors = new ControlVectorList();
             controlVectors.add(new ControlVector(
-                    new double[]{startPos.getX(), robotVelocity.getX() * VELOCITY_VECTOR_LEN_SCALE, 0},
-                    new double[]{startPos.getY(), robotVelocity.getY() * VELOCITY_VECTOR_LEN_SCALE, 0}
+                    new double[]{startPos.getX(), velocityToUse.getX() * VELOCITY_VECTOR_LEN_SCALE, 0},
+                    new double[]{startPos.getY(), velocityToUse.getY() * VELOCITY_VECTOR_LEN_SCALE, 0}
             ));
             controlVectors.add(new ControlVector(
                     new double[]{targetPosition.getX(), endDir.getX(), 0},

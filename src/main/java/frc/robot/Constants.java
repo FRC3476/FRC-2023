@@ -214,7 +214,7 @@ public final class Constants {
         /**
          * Normal acceleration limit while driving. This ensures that the driver can't tip the robot.
          */
-        NORMAL_DRIVING(new KinematicLimit(3.5, 5000, Math.PI * 2 * 10));
+        NORMAL_DRIVING(new KinematicLimit(6, 5000, Math.PI * 2 * 10));
         public final KinematicLimit kinematicLimit;
 
         KinematicLimits(KinematicLimit kinematicLimit) {
@@ -271,6 +271,8 @@ public final class Constants {
 
     public static final double PICKUP_POSITION_Y = -3.4;
     public static final double PICKUP_POSITION_X_OFFSET_FROM_WALL = 1.26;
+
+    public static final float SCORING_POSITION_OFFSET_FROM_WALL = 0.1f;
 
     // Constraints
     // TODO: FIND REAL CONSTRAINTS
