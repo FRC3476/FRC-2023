@@ -62,7 +62,7 @@ public final class RobotTracker extends AbstractSubsystem {
     private double angularAcceleration = 0;
 
 
-    public static final Matrix<N4, N1> DEFAULT_VISION_DEVIATIONS = VecBuilder.fill(0.2, 0.2, 0.2, Math.toRadians(15));
+    public static final Matrix<N4, N1> DEFAULT_VISION_DEVIATIONS = VecBuilder.fill(0.2, 0.2, 0.2, Math.toRadians(9));
 
     private final SwerveDrivePoseEstimator swerveDriveOdometry;
 
