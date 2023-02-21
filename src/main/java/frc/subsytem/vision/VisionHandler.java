@@ -68,7 +68,7 @@ public class VisionHandler extends AbstractSubsystem {
             // Initialize Cache
             fieldTagCache = new HashMap<>();
 
-            for(AprilTag tag : fieldLayout.getTags()) {
+            for (AprilTag tag : fieldLayout.getTags()) {
                 fieldTagCache.put(tag.ID, tag.pose);
             }
 
@@ -84,7 +84,7 @@ public class VisionHandler extends AbstractSubsystem {
     }
 
     private final Pose3d cameraPose = new Pose3d(new Translation3d(Units.inchesToMeters(3.44 + 11.4375),
-            Units.inchesToMeters(-3.44),
+            Units.inchesToMeters(-3.44 - 0.44),
             Units.inchesToMeters(52.425)),
             new Rotation3d(VecBuilder.fill(0, 1, 0), Math.toRadians(-28)));
 

@@ -164,7 +164,9 @@ public class ScoringPositionManager {
      */
     @Contract(pure = true)
     public static double getGridRelativeY(@NotNull SelectedPosition selectedPosition, boolean isRedAlliance) {
-        double y = (selectedPosition.getSide() - 1) * CENTER_CUBE_SCORING_PLATFORM_TO_NODE_Y;
+        double offset = IS_PRACTICE ? 0.012 : 0;
+
+        double y = (selectedPosition.getSide() - 1) * CENTER_CUBE_SCORING_PLATFORM_TO_NODE_Y + offset;
         if (!isRedAlliance) {
             y *= -1;
         }

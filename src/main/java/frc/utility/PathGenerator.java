@@ -6,6 +6,7 @@ import edu.wpi.first.math.trajectory.Trajectory;
 import edu.wpi.first.math.trajectory.TrajectoryConfig;
 import edu.wpi.first.math.trajectory.TrajectoryGenerator;
 import edu.wpi.first.math.trajectory.TrajectoryGenerator.ControlVectorList;
+import edu.wpi.first.math.trajectory.constraint.CentripetalAccelerationConstraint;
 import edu.wpi.first.math.trajectory.constraint.TrajectoryConstraint;
 import edu.wpi.first.wpilibj.DriverStation;
 import frc.robot.Constants;
@@ -25,7 +26,7 @@ public class PathGenerator {
 
     public static final double CHARGING_STATION_CENTER_Y = 1.269;
     public static final double CREATE_EXTRA_POINT_X_THRESHOLD = 3.7;
-    public static final double EXTRA_POINT_VECTOR_LENGTH = 1.6015;
+    public static final double EXTRA_POINT_VECTOR_LENGTH = 2;
     public static final double EXTRA_POINT_X = 2.915;
 
     private PathGenerator() {}
@@ -39,7 +40,7 @@ public class PathGenerator {
     private static ExecutorService threadPoolExecutor;
 
     static {
-        // constraints.add(new CentripetalAccelerationConstraint(2.3));
+        constraints.add(new CentripetalAccelerationConstraint(5));
         threadPoolExecutor = Executors.newSingleThreadExecutor();
     }
 
@@ -128,7 +129,7 @@ public class PathGenerator {
             if (trajectory.getStates().size() == 0) {
                 DriverStation.reportError("Failed to generate trajectory: no states", false);
                 return Optional.empty();
-            } else if (Math.abs(
+            } else if (false && Math.abs(
                     trajectory.getStates().get(0).velocityMetersPerSecond - robotVelocityNorm) > MAX_VELOCITY_ERROR_NEW_PATH) {
                 DriverStation.reportError("Failed to generate trajectory: initial velocity too far off actual. " +
                         "Wanted Start Velocity: " + robotVelocityNorm +

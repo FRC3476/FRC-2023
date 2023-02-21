@@ -3,6 +3,7 @@ package frc.subsytem;
 import edu.wpi.first.math.util.Units;
 import frc.robot.Constants;
 import frc.robot.Robot;
+import frc.utility.OrangeUtility;
 import org.jetbrains.annotations.NotNull;
 import org.littletonrobotics.junction.Logger;
 
@@ -11,9 +12,10 @@ import static frc.robot.Constants.MAX_WRIST_ANGLE;
 
 public class MechanismStateManager extends AbstractSubsystem {
 
-    public static final double SCORING_KEEPOUT_Y = 1.15;
+    public static final double SCORING_KEEPOUT_Y = 0.92;
     public static final double SCORING_KEEPOUT_X = 0.21;
     public static final double PICKUP_KEEPOUT_ELEVATOR_DISTANCE = 1.17;
+    public static final double KEEPOUT_HYSTERESIS = 0.02;
 
     public record MechanismStateSubsystemPositions(double elevatorPositionMeters, double telescopingArmPositionMeters,
                                                    double grabberAngleDegrees) {
@@ -32,20 +34,38 @@ public class MechanismStateManager extends AbstractSubsystem {
             return Math.toRadians(grabberAngleDegrees);
         }
 
+        public double grabberX() {
+            return Math.cos(grabberAngleRadians()) * GRABBER_LENGTH;
+        }
+
+        public double grabberY() {
+            return Math.sin(grabberAngleRadians()) * GRABBER_LENGTH;
+        }
+
         @Override
         public String toString() {
             return "X: " + xMeters + " Y: " + yMeters + " Angle: " + grabberAngleDegrees;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+            MechanismStateCoordinates that = (MechanismStateCoordinates) o;
+            return OrangeUtility.doubleEqual(that.xMeters, xMeters, 0.01) &&
+                    OrangeUtility.doubleEqual(that.yMeters, yMeters, 0.01) &&
+                    OrangeUtility.doubleEqual(that.grabberAngleDegrees, grabberAngleDegrees, 0.01);
         }
     }
 
 
     public enum MechanismStates {
         STOWED(new MechanismStateCoordinates(-0.489, 0.249, MAX_WRIST_ANGLE - 2)),
-        LOW_SCORING(new MechanismStateCoordinates(Units.inchesToMeters(12), Units.inchesToMeters(6), 0)),
-        MIDDLE_SCORING(new MechanismStateCoordinates(Units.inchesToMeters(16), Units.inchesToMeters(45.5), 0)),
-        HIGH_SCORING(new MechanismStateCoordinates(Units.inchesToMeters(36), Units.inchesToMeters(57), 55)),
+        LOW_SCORING(new MechanismStateCoordinates(Units.inchesToMeters(12), Units.inchesToMeters(7.5), 0)),
+        MIDDLE_SCORING(new MechanismStateCoordinates(Units.inchesToMeters(16), Units.inchesToMeters(47.5), 0)),
+        HIGH_SCORING(new MechanismStateCoordinates(Units.inchesToMeters(36), Units.inchesToMeters(57), 65)),
         STATION_PICKUP(new MechanismStateCoordinates(0.531, 2.3 - 0.015, 12)),
-        FLOOR_PICKUP(new MechanismStateCoordinates(0, 0, -7));
+        FLOOR_PICKUP(new MechanismStateCoordinates(0.08, 0.06, 0));
         private final MechanismStateCoordinates state;
 
         MechanismStates(MechanismStateCoordinates state) {
@@ -57,7 +77,7 @@ public class MechanismStateManager extends AbstractSubsystem {
     private @NotNull MechanismStateManager.MechanismStateCoordinates currentWantedState = MechanismStates.STOWED.state;
 
     public void setState(@NotNull MechanismStates state) {
-        currentWantedState = state.state;
+        setState(state.state);
     }
 
 
@@ -69,7 +89,7 @@ public class MechanismStateManager extends AbstractSubsystem {
 
     public void setState(@NotNull MechanismStateCoordinates state) {
         currentWantedState = state;
-        if (state.equals(MechanismStates.STOWED.state)) {
+        if (!state.equals(MechanismStates.STOWED.state)) {
             lastNotStowState = state;
         }
     }
@@ -244,38 +264,40 @@ public class MechanismStateManager extends AbstractSubsystem {
 
 
         MechanismStateSubsystemPositions limitedStatePositions = coordinatesToSubsystemPositions(limitedStateCoordinates);
-
         if (!Robot.getMechanismStateManager().lastNotStowState.equals(MechanismStates.FLOOR_PICKUP.state)) {
             if (Robot.isOnAllianceSide()) {
                 // Use scoring keepouts
-                double y = limitedStateCoordinates.yMeters;
-                double x = limitedStateCoordinates.xMeters;
+                double armEndX = limitedStateCoordinates.xMeters - limitedStateCoordinates.grabberX();
+                double armEndY = limitedStateCoordinates.yMeters - limitedStateCoordinates.grabberY();
                 double grabberAngle = limitedStateCoordinates.grabberAngleDegrees;
 
-                double xPointToConsider = currentCoordinates.xMeters()
-                        - Math.cos(currentCoordinates.grabberAngleRadians()) * GRABBER_LENGTH;
+                double realArmEndX = currentCoordinates.xMeters() - currentCoordinates.grabberX();
+                double realArmEndY = currentCoordinates.yMeters() - currentCoordinates.grabberY();
 
-                double yPointToConsider = currentCoordinates.yMeters()
-                        - Math.sin(currentCoordinates.grabberAngleRadians()) * GRABBER_LENGTH;
+                if (realArmEndX > SCORING_KEEPOUT_X) {
+                    armEndY = Math.max(armEndY, SCORING_KEEPOUT_Y + KEEPOUT_HYSTERESIS);
+                }
+                if (realArmEndY < SCORING_KEEPOUT_Y) {
+                    armEndX = Math.min(armEndX, SCORING_KEEPOUT_X - KEEPOUT_HYSTERESIS);
 
-                if (xPointToConsider > SCORING_KEEPOUT_X) {
-                    y = Math.max(y, SCORING_KEEPOUT_Y);
-                } else if (yPointToConsider < SCORING_KEEPOUT_Y) {
-                    x = Math.min(x, SCORING_KEEPOUT_X);
-
-                    double remainingX = SCORING_KEEPOUT_X - x;
-                    double remainingY = Units.inchesToMeters(3 * 12 + 5) - yPointToConsider;
+                    double remainingX = Math.max(0, SCORING_KEEPOUT_X - realArmEndX - 0.25);
+                    double remainingY = SCORING_KEEPOUT_Y - realArmEndY + KEEPOUT_HYSTERESIS * 3;
+                    assert remainingY >= 0;
+                    assert remainingX >= 0;
 
                     double minAngleRad = Math.min(
-                            Math.acos(Math.min(1, remainingX / GRABBER_LENGTH)),
-                            Math.atan2(remainingY, remainingX)
+                            Math.acos(Math.min(1, remainingX / GRABBER_LENGTH)), //allow horizontal if far enough
+                            Math.atan2(remainingY, remainingX) //don't hit the corner of the keepouts
                     );
 
                     grabberAngle = Math.max(grabberAngle, Math.toDegrees(minAngleRad));
                 }
 
-                limitedStateCoordinates = new MechanismStateCoordinates(x, y, grabberAngle);
-                limitedStateCoordinates = limitCoordinates(limitedStateCoordinates);
+                limitedStateCoordinates = new MechanismStateCoordinates(
+                        armEndX + Math.cos(Math.toRadians(grabberAngle)) * GRABBER_LENGTH,
+                        armEndY + Math.sin(Math.toRadians(grabberAngle)) * GRABBER_LENGTH,
+                        grabberAngle);
+//                limitedStateCoordinates = limitCoordinates(limitedStateCoordinates);
                 limitedStatePositions = coordinatesToSubsystemPositions(limitedStateCoordinates);
             } else {
                 //use pickup keepouts
