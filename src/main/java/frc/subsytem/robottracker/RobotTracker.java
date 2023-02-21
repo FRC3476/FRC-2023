@@ -1,5 +1,6 @@
 package frc.subsytem.robottracker;
 
+import com.ctre.phoenix.sensors.PigeonIMU_StatusFrame;
 import com.ctre.phoenix.sensors.WPI_Pigeon2;
 import com.dacubeking.AutoBuilder.robot.sender.pathpreview.RobotPositionSender;
 import com.dacubeking.AutoBuilder.robot.sender.pathpreview.RobotState;
@@ -38,6 +39,11 @@ public final class RobotTracker extends AbstractSubsystem {
 
     {
         gyroSensor.configMountPose(0, 0, 0);
+        gyroSensor.setStatusFramePeriod(PigeonIMU_StatusFrame.CondStatus_10_SixDeg_Quat, 10, 100);
+        gyroSensor.setStatusFramePeriod(PigeonIMU_StatusFrame.BiasedStatus_6_Accel, 10, 100);
+        gyroSensor.setStatusFramePeriod(PigeonIMU_StatusFrame.CondStatus_6_SensorFusion, 10, 100);
+        gyroSensor.setStatusFramePeriod(PigeonIMU_StatusFrame.BiasedStatus_2_Gyro, 10, 100);
+        gyroSensor.setStatusFramePeriod(PigeonIMU_StatusFrame.CondStatus_3_GeneralAccel, 10, 100);
     }
 
     private final @NotNull Rotation3d ROTATION_IDENTITY = new Rotation3d();
@@ -223,6 +229,8 @@ public final class RobotTracker extends AbstractSubsystem {
         Logger.getInstance().recordOutput("Velocity Mismatch Count", mismatchedVelocityCount);
     }
 
+    long gyroUpdates = 0;
+
     @Override
     public void update() {
         double timestamp = Robot.getDrive().getIoTimestamp();
@@ -239,6 +247,8 @@ public final class RobotTracker extends AbstractSubsystem {
                 for (Entry<Translation3d> translation3dEntry : gyroInputs.accelerations) {
                     accelerationHistory.addSample(translation3dEntry.timestamp(), translation3dEntry.value());
                 }
+                gyroUpdates += gyroInputs.rotations.size();
+                Logger.getInstance().recordOutput("Robot Tracker/Angle Updates", gyroUpdates);
 
                 angularRate = gyroInputs.gyroYawVelocity;
 

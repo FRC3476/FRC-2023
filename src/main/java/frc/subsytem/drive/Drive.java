@@ -17,7 +17,6 @@ import edu.wpi.first.math.trajectory.TrapezoidProfile;
 import edu.wpi.first.math.trajectory.TrapezoidProfile.State;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.Timer;
-import edu.wpi.first.wpilibj.smartdashboard.Field2d;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import frc.robot.Constants;
 import frc.robot.Robot;
@@ -95,7 +94,6 @@ public final class Drive extends AbstractSubsystem {
         }
     }
 
-
     public Drive(DriveIO driveIO) {
         super();
         this.io = driveIO;
@@ -150,10 +148,14 @@ public final class Drive extends AbstractSubsystem {
                 DRIVE_HIGH_SPEED_M * inputs.getX(),
                 DRIVE_HIGH_SPEED_M * inputs.getY(),
                 inputs.getRotation() * MAX_TELEOP_TURN_SPEED,
-                Robot.getRobotTracker().getGyroAngle()
-                        .plus(Rotation2d.fromDegrees(
-                                Robot.getRobotTracker().getAngularVelocity() * (EXPECTED_TELEOP_DRIVE_DT / 2))));
+                getPredictedRobotAngleInLoopCenter());
         kinematicLimit = KinematicLimits.NORMAL_DRIVING.kinematicLimit;
+    }
+
+    private static Rotation2d getPredictedRobotAngleInLoopCenter() {
+        return Robot.getRobotTracker().getGyroAngleAtTime(Timer.getFPGATimestamp()).toRotation2d()
+                .plus(Rotation2d.fromDegrees(
+                        Robot.getRobotTracker().getAngularVelocity() * (EXPECTED_TELEOP_DRIVE_DT * 1.5)));
     }
 
     /**
@@ -203,22 +205,21 @@ public final class Drive extends AbstractSubsystem {
                                 DRIVE_HIGH_SPEED_M * inputs.getX(),
                                 DRIVE_HIGH_SPEED_M * inputs.getY(),
                                 inputs.getRotation() * MAX_TELEOP_TURN_SPEED,
-                                Robot.getRobotTracker().getGyroAngle()
-                                        .plus(new Rotation2d(Robot.getRobotTracker().getAngularVelocity()
-                                                * EXPECTED_TELEOP_DRIVE_DT / 2)));
+                                getPredictedRobotAngleInLoopCenter());
                         kinematicLimit = KinematicLimits.NORMAL_DRIVING.kinematicLimit;
                         return false;
                     }
                 }
             } else {
                 assert realtimeTrajectoryStartVelocity != null;
-                nextChassisSpeeds = ChassisSpeeds.fromFieldRelativeSpeeds(
-                        realtimeTrajectoryStartVelocity.getX(),
-                        realtimeTrajectoryStartVelocity.getY(),
+                setTurn(new ControllerDriveInputs(
+                                realtimeTrajectoryStartVelocity.getX() / DRIVE_HIGH_SPEED_M,
+                                realtimeTrajectoryStartVelocity.getY() / DRIVE_HIGH_SPEED_M,
+                                0
+                        ),
+                        new State(targetPosition.getAngle().getRadians(), 0),
                         0,
-                        Robot.getRobotTracker().getGyroAngle()
-                                .plus(Rotation2d.fromDegrees(
-                                        Robot.getRobotTracker().getAngularVelocity() * (EXPECTED_TELEOP_DRIVE_DT / 2))));
+                        false);
                 kinematicLimit = KinematicLimits.NORMAL_DRIVING.kinematicLimit;
             }
         }
@@ -323,6 +324,11 @@ public final class Drive extends AbstractSubsystem {
         double ffv = DRIVE_FEEDFORWARD[module].calculate(velocity, acceleration);
         // Converts ffv voltage to percent output and sets it to motor
         io.setDriveMotorVoltage(module, ffv);
+        Logger.getInstance().recordOutput("Drive/Out Volts Ks" + module, DRIVE_FEEDFORWARD[module].ks * Math.signum(velocity));
+        Logger.getInstance().recordOutput("Drive/Out Volts Kv" + module, DRIVE_FEEDFORWARD[module].kv * velocity);
+        Logger.getInstance().recordOutput("Drive/Out Volts Ka" + module, DRIVE_FEEDFORWARD[module].ka * acceleration);
+
+
         Logger.getInstance().recordOutput("Drive/Out Volts " + module, ffv);
         //swerveDriveMotors[module].setVoltage(10 * velocity/Constants.SWERVE_METER_PER_ROTATION);
     }
@@ -428,6 +434,7 @@ public final class Drive extends AbstractSubsystem {
      * @return The speed to turn at (in radians/s)
      */
     private double getTurnPidDeltaSpeed(@NotNull TrapezoidProfile.State rotationGoal, boolean limitSpeed) {
+        turnPID.setPID(turnP.get(), turnI.get(), turnD.get());
         turnPID.setSetpoint(rotationGoal.position);
 
         if (Timer.getFPGATimestamp() - 0.2 > lastTurnUpdate) {
@@ -461,7 +468,7 @@ public final class Drive extends AbstractSubsystem {
         Logger.getInstance().processInputs("Drive", inputs);
 
         switch (driveState) {
-            case TURN -> updateTurn();
+            case TURN, WAITING_FOR_PATH -> updateTurn();
             case HOLD -> setSwerveModuleStates(Constants.HOLD_MODULE_STATES);
             case STOP -> {
                 nextChassisSpeeds = new ChassisSpeeds();
@@ -493,10 +500,28 @@ public final class Drive extends AbstractSubsystem {
      * @param turnErrorRadians      The error in radians that the robot can be off by and still be considered done turning
      */
     public synchronized void setTurn(ControllerDriveInputs controllerDriveInputs, State goal, double turnErrorRadians) {
+        setTurn(controllerDriveInputs, goal, turnErrorRadians, true);
+    }
+
+
+    /**
+     * This method takes in x and y velocity as well as the target heading to calculate how much the robot needs to turn in order
+     * to face a target
+     * <p>
+     * xVelocity and yVelocity are in m/s
+     *
+     * @param controllerDriveInputs The x and y velocity of the robot (rotation is ignored)
+     * @param goal                  The target state at the end of the turn (in radians, radians/s)
+     * @param turnErrorRadians      The error in radians that the robot can be off by and still be considered done turning
+     */
+    private synchronized void setTurn(ControllerDriveInputs controllerDriveInputs, State goal, double turnErrorRadians,
+                                      boolean setTurn) {
         TurnInputs.controllerDriveInputs = controllerDriveInputs;
         TurnInputs.goal = goal;
         TurnInputs.turnErrorRadians = turnErrorRadians;
-        setDriveState(DriveState.TURN);
+        if (setTurn) {
+            setDriveState(DriveState.TURN);
+        }
     }
 
     private synchronized void updateTurn() {
@@ -539,19 +564,6 @@ public final class Drive extends AbstractSubsystem {
 
     @Override
     public synchronized void logData() {
-        for (int i = 0; i < 4; i++) {
-            double relPos = inputs.swerveMotorRelativePositions[i];
-            if (relPos < 0) relPos += 360;
-            Logger.getInstance().recordOutput("Drive/Swerve Motor " + i + " Relative Position", relPos);
-            Logger.getInstance().recordOutput("Drive/Swerve Motor " + i + " Absolute Position", getWheelRotation(i));
-            Logger.getInstance().recordOutput("Drive/Drive Motor " + i + " Velocity", getSwerveDriveVelocity(i));
-            Logger.getInstance().recordOutput("Drive/Drive Motor " + i + " Current", inputs.driveMotorCurrents[i]);
-            Logger.getInstance().recordOutput("Drive/Swerve Motor " + i + " Current", inputs.swerveMotorCurrents[i]);
-            Logger.getInstance().recordOutput("Drive/Swerve Motor " + i + " Temp", inputs.swerveMotorTemps[i]);
-            Logger.getInstance().recordOutput("Drive/Drive Motor " + i + " Temp", inputs.driveMotorTemps[i]);
-            Logger.getInstance().recordOutput("Drive/Swerve Motor " + i + " Voltage", inputs.swerveMotorVoltages[i]);
-            Logger.getInstance().recordOutput("Drive/Drive Motor " + i + " Voltage", inputs.driveMotorVoltages[i]);
-        }
         Logger.getInstance().recordOutput("Drive/Actual Swerve Module States", getModuleStates());
         Logger.getInstance().recordOutput("Drive/Drive State", driveState.toString());
     }

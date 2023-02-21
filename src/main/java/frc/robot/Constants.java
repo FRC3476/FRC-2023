@@ -74,10 +74,10 @@ public final class Constants {
      * 3 -> Right Back
      */
     public static final SimpleMotorFeedforward[] DRIVE_FEEDFORWARD = {
-            new SimpleMotorFeedforward(0.33255, 2.5, 0.0),
-            new SimpleMotorFeedforward(0.33255, 2.5, 0.0),
-            new SimpleMotorFeedforward(0.33255, 2.5, 0.0),
-            new SimpleMotorFeedforward(0.33255, 2.5, 0.0)};
+            new SimpleMotorFeedforward(0.13255, 2.5, 0.0),
+            new SimpleMotorFeedforward(0.13255, 2.5, 0.0),
+            new SimpleMotorFeedforward(0.13255, 2.5, 0.0),
+            new SimpleMotorFeedforward(0.13255, 2.5, 0.0)};
 
 
     /**
@@ -115,7 +115,7 @@ public final class Constants {
             SWERVE_MODULE_LOCATIONS
     );
 
-    public static final double DRIVE_HIGH_SPEED_M = 4.2;
+    public static final double DRIVE_HIGH_SPEED_M = DRIVE_FEEDFORWARD[0].maxAchievableVelocity(11.5, 0);
     /**
      * Allowed Turn Error in degrees.
      */
@@ -131,9 +131,9 @@ public final class Constants {
     public static final double MAX_VELOCITY_END_PATH = 0.02;
     // TurnPID
 
-    public static final double DEFAULT_TURN_P = 3.0;
+    public static final double DEFAULT_TURN_P = 4.5;
     public static final double DEFAULT_TURN_I = 0;
-    public static final double DEFAULT_TURN_D = 0.4;
+    public static final double DEFAULT_TURN_D = 0.3;
     public static final double TURN_SPEED_LIMIT_WHILE_AIMING = 4.0;
 
     public static final double EXPECTED_TELEOP_DRIVE_DT = 0.02;
