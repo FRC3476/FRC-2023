@@ -68,13 +68,14 @@ import static java.lang.Math.abs;
  */
 public class Robot extends LoggedRobot {
 
-    public static final int START_AUTO_DRIVE = XboxButtons.RIGHT_CLICK;
-    public static final int AUTO_BALENCE = XboxButtons.Y;
-    public static final int AUTO_ROTATE = XboxButtons.RIGHT_BUMPER;
-    public static final int RESET_HEADING = XboxButtons.A;
-    public static final int TOGGLE_SCORING = 7;
-    public static final int TOGGLE_FLOOR_PICKUP = 9;
-    public static final int TOGGLE_PICKUP = 11;
+    public static final int XBOX_START_AUTO_DRIVE = XboxButtons.RIGHT_CLICK;
+    public static final int XBOX_AUTO_BALENCE = XboxButtons.Y;
+    public static final int XBOX_AUTO_ROTATE = XboxButtons.RIGHT_BUMPER;
+    public static final int XBOX_RESET_HEADING = XboxButtons.A;
+    public static final int STICK_TOGGLE_SCORING = 7;
+    public static final int STICK_TOGGLE_FLOOR_PICKUP = 9;
+    public static final int STICK_TOGGLE_PICKUP = 11;
+    public static final int XBOX_TOGGLE_GRABBER = XboxButtons.B;
     private double disabledTime = 0;
 
     private @NotNull static Drive drive;
@@ -307,12 +308,6 @@ public class Robot extends LoggedRobot {
     private double wantedAngle = MAX_WRIST_ANGLE - 2;
     public boolean isTurnToTargetMode = false;
 
-    private boolean arcadeMode = false;
-
-    {
-        Logger.getInstance().recordOutput("Robot/Arcade Mode", arcadeMode);
-    }
-
     /**
      * This method is called periodically during operator control.
      */
@@ -323,23 +318,18 @@ public class Robot extends LoggedRobot {
         buttonPanel.update();
         double wantedRumble = 0;
 
-        if (stick.getRisingEdge(3)) {
-            arcadeMode = !arcadeMode;
-            Logger.getInstance().recordOutput("Robot/Arcade Mode", arcadeMode);
-        }
-
         var scoringPositionManager = ScoringPositionManager.getInstance();
         if (scoringPositionManager.updateSelectedPosition(buttonPanel)) {
             teleopDrivingAutoAlignPosition = null;
         }
 
-        if (xbox.getRisingEdge(AUTO_ROTATE)) {
+        if (xbox.getRisingEdge(XBOX_AUTO_ROTATE)) {
             isTurnToTargetMode = true;
             updateTeleopDrivingTarget(scoringPositionManager);
         }
 
-        if (xbox.getRawButton(START_AUTO_DRIVE)) { //Should be remapped to one of the back buttons
-            if (xbox.getRisingEdge(START_AUTO_DRIVE) || teleopDrivingAutoAlignPosition == null) {
+        if (xbox.getRawButton(XBOX_START_AUTO_DRIVE)) { //Should be remapped to one of the back buttons
+            if (xbox.getRisingEdge(XBOX_START_AUTO_DRIVE) || teleopDrivingAutoAlignPosition == null) {
                 updateTeleopDrivingTarget(scoringPositionManager);
                 assert teleopDrivingAutoAlignPosition != null;
             }
@@ -352,7 +342,7 @@ public class Robot extends LoggedRobot {
                 // We failed to generate a trajectory
                 wantedRumble = 1;
             }
-        } else if (xbox.getRawButton(AUTO_BALENCE)) {
+        } else if (xbox.getRawButton(XBOX_AUTO_BALENCE)) {
             drive.autoBalance(getControllerDriveInputs());
         } else {
             if (isTurnToTargetMode) {
@@ -370,11 +360,11 @@ public class Robot extends LoggedRobot {
             }
         }
 
-        if (xbox.getRisingEdge(RESET_HEADING)) {
+        if (xbox.getRisingEdge(XBOX_RESET_HEADING)) {
             robotTracker.resetPose(new Pose2d(robotTracker.getLatestPose().getTranslation(), new Rotation2d()));
         }
 
-        if (stick.getRisingEdge(TOGGLE_SCORING)) {
+        if (stick.getRisingEdge(STICK_TOGGLE_SCORING)) {
             if (wantedMechanismState == WantedMechanismState.STOWED) {
                 wantedMechanismState = WantedMechanismState.SCORING;
             } else {
@@ -382,7 +372,7 @@ public class Robot extends LoggedRobot {
             }
         }
 
-        if (stick.getRisingEdge(TOGGLE_FLOOR_PICKUP)) {
+        if (stick.getRisingEdge(STICK_TOGGLE_FLOOR_PICKUP)) {
             if (wantedMechanismState == WantedMechanismState.STOWED) {
                 wantedMechanismState = WantedMechanismState.FLOOR_PICKUP;
                 isGrabberOpen = true;
@@ -391,7 +381,7 @@ public class Robot extends LoggedRobot {
             }
         }
 
-        if (stick.getRisingEdge(TOGGLE_PICKUP)) {
+        if (stick.getRisingEdge(STICK_TOGGLE_PICKUP)) {
             if (wantedMechanismState == WantedMechanismState.STOWED) {
                 wantedMechanismState = WantedMechanismState.STATION_PICKUP;
                 isGrabberOpen = true;
@@ -453,7 +443,7 @@ public class Robot extends LoggedRobot {
 
         Logger.getInstance().recordOutput("Robot/Wanted Mechanism State", wantedMechanismState.name());
 
-        if (xbox.getRisingEdge(XboxButtons.B)) {
+        if (xbox.getRisingEdge(XBOX_TOGGLE_GRABBER)) {
             isGrabberOpen = !isGrabberOpen;
         }
 
@@ -576,8 +566,8 @@ public class Robot extends LoggedRobot {
     @Override
     public void testPeriodic() {
         xbox.update();
-        if (xbox.getRawButton(XboxButtons.X) && xbox.getRawButton(XboxButtons.B)
-                && xbox.getRisingEdge(XboxButtons.X) && xbox.getRisingEdge(XboxButtons.B)) {
+        if (xbox.getRawButton(XboxButtons.X) && xbox.getRawButton(XBOX_TOGGLE_GRABBER)
+                && xbox.getRisingEdge(XboxButtons.X) && xbox.getRisingEdge(XBOX_TOGGLE_GRABBER)) {
             drive.resetAbsoluteZeros();
         }
     }
