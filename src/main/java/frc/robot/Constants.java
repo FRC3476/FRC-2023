@@ -206,7 +206,7 @@ public final class Constants {
 
     public static final double GRABBER_ROLLER_VOLTAGE = -6;
     public static final double GRABBER_ROLLER_IDLE = -0;
-    public static boolean GRABBER_WHEELS_USED = true;
+    public static boolean GRABBER_WHEELS_USED = !IS_PRACTICE;
 
     // TODO: FIND ACTUAL GRABBER LENGTH
     public static final double GRABBER_LENGTH = .308;

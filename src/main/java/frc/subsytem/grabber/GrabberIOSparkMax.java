@@ -44,7 +44,6 @@ public class GrabberIOSparkMax extends GrabberIO {
         grabberSparkMax.setSmartCurrentLimit(Constants.GRABBER_SMART_CURRENT_LIMIT);
 
         if (GRABBER_WHEELS_USED) {
-
             rollerSparkMax1 = new CANSparkMax(GRABBER_ROLLER_MAIN_CAN_ID, CANSparkMaxLowLevel.MotorType.kBrushless);
             rollerSparkMax2 = new CANSparkMax(GRABBER_ROLLER_FOLLOWER_CAN_ID, CANSparkMaxLowLevel.MotorType.kBrushless);
 
@@ -79,8 +78,10 @@ public class GrabberIOSparkMax extends GrabberIO {
         inputs.grabberCurrent = grabberSparkMax.getOutputCurrent();
         inputs.grabberTemp = grabberSparkMax.getMotorTemperature();
         inputs.grabberVoltage = grabberSparkMax.getAppliedOutput() * grabberSparkMax.getBusVoltage();
-        
+
         if (GRABBER_WHEELS_USED) {
+            assert rollerSparkMax1 != null;
+            assert rollerSparkMax2 != null;
             inputs.rollerMainPosition = rollerSparkMax1.getEncoder().getPosition();
             inputs.rollerMainVelocity = rollerSparkMax1.getEncoder().getVelocity();
             inputs.rollerMainCurrent = rollerSparkMax1.getOutputCurrent();
@@ -118,6 +119,8 @@ public class GrabberIOSparkMax extends GrabberIO {
     @Override
     public void setRollerVoltage(double voltage) {
         if (GRABBER_WHEELS_USED) {
+            assert rollerSparkMax1 != null;
+            assert rollerSparkMax2 != null;
             rollerSparkMax1.getPIDController().setReference(voltage, CANSparkMax.ControlType.kVoltage);
             rollerSparkMax2.getPIDController().setReference(voltage, ControlType.kVoltage);
         }
