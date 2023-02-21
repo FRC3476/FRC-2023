@@ -305,6 +305,7 @@ public class Robot extends LoggedRobot {
     private double wantedX = -0.489;
     private double wantedY = 0.249;
     private double wantedAngle = MAX_WRIST_ANGLE - 2;
+    public boolean isTurnToTargetMode = false;
 
     private boolean arcadeMode = false;
 
@@ -332,6 +333,11 @@ public class Robot extends LoggedRobot {
             teleopDrivingAutoAlignPosition = null;
         }
 
+        if (xbox.getRisingEdge(AUTO_ROTATE)) {
+            isTurnToTargetMode = true;
+            updateTeleopDrivingTarget(scoringPositionManager);
+        }
+
         if (xbox.getRawButton(START_AUTO_DRIVE)) { //Should be remapped to one of the back buttons
             if (xbox.getRisingEdge(START_AUTO_DRIVE) || teleopDrivingAutoAlignPosition == null) {
                 updateTeleopDrivingTarget(scoringPositionManager);
@@ -348,15 +354,20 @@ public class Robot extends LoggedRobot {
             }
         } else if (xbox.getRawButton(AUTO_BALENCE)) {
             drive.autoBalance(getControllerDriveInputs());
-        } else if (xbox.getRawButton(AUTO_ROTATE)) {
-            updateTeleopDrivingTarget(scoringPositionManager);
-            assert teleopDrivingAutoAlignPosition != null;
-            drive.setTurn(
-                    getControllerDriveInputs(),
-                    new State(teleopDrivingAutoAlignPosition.getRotation().getRadians(), 0),
-                    0);
         } else {
-            drive.swerveDriveFieldRelative(getControllerDriveInputs());
+            if (isTurnToTargetMode) {
+                assert teleopDrivingAutoAlignPosition != null;
+                var controllerDriveInputs = getControllerDriveInputs();
+                drive.setTurn(controllerDriveInputs,
+                        new State(teleopDrivingAutoAlignPosition.getRotation().getRadians(), 0),
+                        0);
+
+                if (Math.abs(controllerDriveInputs.getRotation()) > 0) {
+                    isTurnToTargetMode = false;
+                }
+            } else {
+                drive.swerveDriveFieldRelative(getControllerDriveInputs());
+            }
         }
 
         if (xbox.getRisingEdge(RESET_HEADING)) {
@@ -486,7 +497,7 @@ public class Robot extends LoggedRobot {
         double x, y;
         Rotation2d rotation;
 
-        var predictedPose = robotTracker.getLatestPose().getTranslation().plus(robotTracker.getVelocity().times(3));
+        var predictedPose = robotTracker.getLatestPose().getTranslation().plus(robotTracker.getVelocity().times(0.5));
         var isOnRedSide = predictedPose.getX() < FIELD_WIDTH_METERS / 2;
         if (isOnRedSide == isRed()) {
             // We're on the same side as our alliance
