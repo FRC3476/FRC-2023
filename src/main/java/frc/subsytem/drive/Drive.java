@@ -40,7 +40,7 @@ import java.util.concurrent.CompletableFuture;
 
 import static frc.robot.Constants.*;
 
-public final class .Drive extends AbstractSubsystem {
+public final class Drive extends AbstractSubsystem {
     private static final Pose2d IDENTITY_POSE = new Pose2d();
     private final SwerveSetpointGenerator setpointGenerator = new SwerveSetpointGenerator(SWERVE_DRIVE_KINEMATICS);
     private final @NotNull LiveEditableValue<Double> turnP = new LiveEditableValue<>(DEFAULT_TURN_P, SmartDashboard.getEntry(
@@ -50,12 +50,16 @@ public final class .Drive extends AbstractSubsystem {
     private final @NotNull LiveEditableValue<Double> turnD = new LiveEditableValue<>(DEFAULT_TURN_D, SmartDashboard.getEntry(
             "TurnPIDD"));
     private final @NotNull PIDController turnPID;
-
+    private final DriveIO io;
+    private final DriveInputsAutoLogged inputs = new DriveInputsAutoLogged();
+    private final Field m_moduleStates;
+    LiveEditableValue<Double> autoP = new LiveEditableValue<>(2.0, SmartDashboard.getEntry("AutoP"));
+    LiveEditableValue<Double> autoD = new LiveEditableValue<>(0.0, SmartDashboard.getEntry("AutoD"));
+    @Nullable Trajectory.State lastGoal = null;
     private double autoStartTime;
     private boolean swerveAutoControllerInitialized = false;
     private Trajectory currentAutoTrajectory;
     private Rotation2d autoTargetHeading;
-
     private double lastTurnUpdate = 0;
     private boolean useRelativeEncoderPosition = false;
     private @NotNull DriveState driveState = DriveState.TELEOP;
@@ -70,6 +74,11 @@ public final class .Drive extends AbstractSubsystem {
             new double[]{0, 0, 0, 0});
     private @Nullable HolonomicDriveController swerveAutoController;
     private double nextAllowedPrintError = 0;
+    private @NotNull ChassisSpeeds nextChassisSpeeds = new ChassisSpeeds();
+    private KinematicLimit kinematicLimit = KinematicLimits.NORMAL_DRIVING.kinematicLimit;
+    private @Nullable CompletableFuture<Optional<Trajectory>> trajectoryToDrive = null;
+    private double realtimeTrajectoryStartTime = 0;
+    private @Nullable Translation2d realtimeTrajectoryStartVelocity = null;
 
     {
         turnPID = new PIDController(turnP.get(), turnI.get(), turnD.get());
@@ -77,8 +86,14 @@ public final class .Drive extends AbstractSubsystem {
         turnPID.setIntegratorRange(-Math.PI * 2 * 4, Math.PI * 2 * 4);
     }
 
-    private final DriveIO io;
-    private final DriveInputsAutoLogged inputs = new DriveInputsAutoLogged();
+    {
+        try {
+            m_moduleStates = SwerveDriveKinematics.class.getDeclaredField("m_moduleStates");
+            m_moduleStates.setAccessible(true);
+        } catch (NoSuchFieldException e) {
+            throw new RuntimeException(e);
+        }
+    }
 
 
     public Drive(DriveIO driveIO) {
@@ -87,14 +102,6 @@ public final class .Drive extends AbstractSubsystem {
 
         setDriveState(DriveState.TELEOP);
     }
-
-    public enum DriveState {
-        TELEOP, TURN, HOLD, DONE, RAMSETE, STOP, WAITING_FOR_PATH, AUTO_BALANCE
-    }
-
-    LiveEditableValue<Double> autoP = new LiveEditableValue<>(2.0, SmartDashboard.getEntry("AutoP"));
-    LiveEditableValue<Double> autoD = new LiveEditableValue<>(0.0, SmartDashboard.getEntry("AutoD"));
-
 
     private void resetAuto() {
         ProfiledPIDController autoTurnPIDController
@@ -111,7 +118,6 @@ public final class .Drive extends AbstractSubsystem {
                 new Pose2d(ALLOWED_XY_ERROR_RAMSETE, ALLOWED_XY_ERROR_RAMSETE, Rotation2d.fromDegrees(10))); //TODO: Tune
     }
 
-
     /**
      * @return Returns requested drive wheel velocity in Meters per second
      */
@@ -126,11 +132,6 @@ public final class .Drive extends AbstractSubsystem {
     public synchronized void doHold() {
         setDriveState(DriveState.HOLD);
     }
-
-
-    private @NotNull ChassisSpeeds nextChassisSpeeds = new ChassisSpeeds();
-    private KinematicLimit kinematicLimit = KinematicLimits.NORMAL_DRIVING.kinematicLimit;
-
 
     public synchronized void swerveDrive(@NotNull ControllerDriveInputs inputs) {
         setDriveState(DriveState.TELEOP);
@@ -154,10 +155,6 @@ public final class .Drive extends AbstractSubsystem {
                                 Robot.getRobotTracker().getAngularVelocity() * (EXPECTED_TELEOP_DRIVE_DT / 2))));
         kinematicLimit = KinematicLimits.NORMAL_DRIVING.kinematicLimit;
     }
-
-    private @Nullable CompletableFuture<Optional<Trajectory>> trajectoryToDrive = null;
-    private double realtimeTrajectoryStartTime = 0;
-    private @Nullable Translation2d realtimeTrajectoryStartVelocity = null;
 
     /**
      * Drive the robot to a given position using a trajectory
@@ -226,17 +223,6 @@ public final class .Drive extends AbstractSubsystem {
             }
         }
         return true;
-    }
-
-    private final Field m_moduleStates;
-
-    {
-        try {
-            m_moduleStates = SwerveDriveKinematics.class.getDeclaredField("m_moduleStates");
-            m_moduleStates.setAccessible(true);
-        } catch (NoSuchFieldException e) {
-            throw new RuntimeException(e);
-        }
     }
 
     private synchronized void swerveDrive(@NotNull ChassisSpeeds desiredRobotRelativeSpeeds, KinematicLimit kinematicLimit,
@@ -366,8 +352,6 @@ public final class .Drive extends AbstractSubsystem {
         Logger.getInstance().recordOutput("Drive/Trajectory", trajectory);
     }
 
-    @Nullable Trajectory.State lastGoal = null;
-
     @SuppressWarnings("ProhibitedExceptionCaught")
     private synchronized void updateRamsete() {
         if (!swerveAutoControllerInitialized) {
@@ -462,7 +446,6 @@ public final class .Drive extends AbstractSubsystem {
         return pidSpeed;
     }
 
-
     public synchronized void setAutoRotation(@NotNull Rotation2d rotation) {
         System.out.println("Auto Target Heading: " + rotation);
         autoTargetHeading = rotation;
@@ -492,18 +475,11 @@ public final class .Drive extends AbstractSubsystem {
         }
     }
 
-
     /**
      * For auto use
      */
     public synchronized void setRotation(double angle, double allowedError) {
         setTurn(new ControllerDriveInputs(), new State(Math.toRadians(angle), 0), allowedError);
-    }
-
-    static final class TurnInputs {
-        public static ControllerDriveInputs controllerDriveInputs;
-        public static State goal;
-        public static double turnErrorRadians;
     }
 
     /**
@@ -522,7 +498,6 @@ public final class .Drive extends AbstractSubsystem {
         TurnInputs.turnErrorRadians = turnErrorRadians;
         setDriveState(DriveState.TURN);
     }
-
 
     private synchronized void updateTurn() {
         double pidDeltaSpeed = getTurnPidDeltaSpeed(TurnInputs.goal,
@@ -672,5 +647,15 @@ public final class .Drive extends AbstractSubsystem {
      */
     public synchronized double getIoTimestamp() {
         return inputs.driveIoTimestamp;
+    }
+
+    public enum DriveState {
+        TELEOP, TURN, HOLD, DONE, RAMSETE, STOP, WAITING_FOR_PATH, AUTO_BALANCE
+    }
+
+    static final class TurnInputs {
+        public static ControllerDriveInputs controllerDriveInputs;
+        public static State goal;
+        public static double turnErrorRadians;
     }
 }

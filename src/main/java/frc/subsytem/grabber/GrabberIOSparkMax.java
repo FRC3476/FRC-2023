@@ -79,20 +79,21 @@ public class GrabberIOSparkMax extends GrabberIO {
         inputs.grabberCurrent = grabberSparkMax.getOutputCurrent();
         inputs.grabberTemp = grabberSparkMax.getMotorTemperature();
         inputs.grabberVoltage = grabberSparkMax.getAppliedOutput() * grabberSparkMax.getBusVoltage();
+        
+        if (GRABBER_WHEELS_USED) {
+            inputs.rollerMainPosition = rollerSparkMax1.getEncoder().getPosition();
+            inputs.rollerMainVelocity = rollerSparkMax1.getEncoder().getVelocity();
+            inputs.rollerMainCurrent = rollerSparkMax1.getOutputCurrent();
+            inputs.rollerMainTemp = rollerSparkMax1.getMotorTemperature();
+            inputs.rollerMainVoltage = rollerSparkMax1.getAppliedOutput() * rollerSparkMax1.getBusVoltage();
 
-        inputs.rollerMainPosition = rollerSparkMax1.getEncoder().getPosition();
-        inputs.rollerMainVelocity = rollerSparkMax1.getEncoder().getVelocity();
-        inputs.rollerMainCurrent = rollerSparkMax1.getOutputCurrent();
-        inputs.rollerMainTemp = rollerSparkMax1.getMotorTemperature();
-        inputs.rollerMainVoltage = rollerSparkMax1.getAppliedOutput() * rollerSparkMax1.getBusVoltage();
-
-        inputs.rollerFollowerPosition = rollerSparkMax2.getEncoder().getPosition();
-        inputs.rollerFollowerVelocity = rollerSparkMax2.getEncoder().getVelocity();
-        inputs.rollerFollowerCurrent = rollerSparkMax2.getOutputCurrent();
-        inputs.rollerFollowerTemp = rollerSparkMax2.getMotorTemperature();
-        inputs.rollerFollowerVoltage = rollerSparkMax2.getAppliedOutput() * rollerSparkMax2.getBusVoltage();
+            inputs.rollerFollowerPosition = rollerSparkMax2.getEncoder().getPosition();
+            inputs.rollerFollowerVelocity = rollerSparkMax2.getEncoder().getVelocity();
+            inputs.rollerFollowerCurrent = rollerSparkMax2.getOutputCurrent();
+            inputs.rollerFollowerTemp = rollerSparkMax2.getMotorTemperature();
+            inputs.rollerFollowerVoltage = rollerSparkMax2.getAppliedOutput() * rollerSparkMax2.getBusVoltage();
+        }
     }
-
 
     @Override
     public void setPivotVoltage(double voltage) {
