@@ -87,6 +87,7 @@ public class PathGenerator {
 
             double yCordToCreate = robotTranslation.getY() > CHARGING_STATION_CENTER_Y ? 3.2 : -0.7019;
 
+            // Create an extra point in between the charge station and wall if we're far enough away from the scoring zone
             if (isRedAlliance && endDir.getX() < 0) {
                 // We're trying to score on the red side
                 if (startPos.getX() > CREATE_EXTRA_POINT_X_THRESHOLD) {
@@ -112,7 +113,7 @@ public class PathGenerator {
             ));
             Trajectory trajectory;
             TrajectoryConfig config = new TrajectoryConfig(Math.max(MAX_VELOCITY, robotVelocityNorm), MAX_ACCELERATION);
-            //config.setKinematics(Constants.SWERVE_DRIVE_KINEMATICS);
+            //config.setKinematics(Constants.SWERVE_DRIVE_KINEMATICS); // The Kinematics has mutable state, so we can't use the same one
             config.setStartVelocity(robotVelocityNorm);
             config.setEndVelocity(0);
             config.addConstraints(constraints);

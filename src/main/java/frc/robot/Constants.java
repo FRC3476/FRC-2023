@@ -134,6 +134,10 @@ public final class Constants {
     public static final double DEFAULT_TURN_P = 4.5;
     public static final double DEFAULT_TURN_I = 0;
     public static final double DEFAULT_TURN_D = 0.3;
+
+    public static final double DEFAULT_AUTO_P = 2;
+    public static final double DEFAULT_AUTO_I = 0;
+    public static final double DEFAULT_AUTO_D = 00;
     public static final double TURN_SPEED_LIMIT_WHILE_AIMING = 4.0;
 
     public static final double EXPECTED_TELEOP_DRIVE_DT = 0.02;

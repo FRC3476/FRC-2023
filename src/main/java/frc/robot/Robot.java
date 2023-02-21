@@ -116,6 +116,9 @@ public class Robot extends LoggedRobot {
             }
         }
 
+        Logger.getInstance().disableDeterministicTimestamps(); // Disable deterministic timestamps (they cause issues wit the
+        // autoBuilder)
+
         if (isReal() || logPath == null) {
             var directory = new File(LOG_DIRECTORY);
             if (!directory.exists()) {
@@ -228,8 +231,10 @@ public class Robot extends LoggedRobot {
         grabber.setGrabState(GrabState.IDLE);
         mechanismStateManager.setState(MechanismStates.STOWED);
 
-        Class<PathGenerator> loadPathGenerator = PathGenerator.class;
+        Class<PathGenerator> loadPathGenerator = PathGenerator.class; // Load the PathGenerator class to ensure that it is
+        // initialized (and creates the thread to generate paths) before the robot starts
 
+        // TODO: Remove this when we're done optimizing our code
         try {
             Field watchDog = IterativeRobotBase.class.getDeclaredField("m_watchdog");
             watchDog.setAccessible(true);
@@ -418,25 +423,26 @@ public class Robot extends LoggedRobot {
         Logger.getInstance().recordOutput("Robot/Wanted Y", wantedY);
         Logger.getInstance().recordOutput("Robot/Wanted Angle", wantedAngle);
 
-        var inputs = new ControllerDriveInputs(stick.getRawAxis(0), stick.getRawAxis(1), stick.getRawAxis(3));
-        inputs.applyDeadZone(0.1, 0.1, 0.25, 0.2);
-        inputs.squareInputs();
+        var mechInputs = new ControllerDriveInputs(stick.getRawAxis(0), stick.getRawAxis(1), stick.getRawAxis(3));
+        mechInputs.applyDeadZone(0.1, 0.1, 0.25, 0.2);
+        mechInputs.squareInputs();
 
-        var dx = -buttonPanel.getRawAxis(0);
-        var dy = buttonPanel.getRawAxis(1);
+        var mechDx = -buttonPanel.getRawAxis(0);
+        var mechDy = buttonPanel.getRawAxis(1);
 
-        if (abs(dx) < 0.1) dx = 0;
-        if (abs(dy) < 0.1) dy = 0;
+        // Basic deadzone
+        if (abs(mechDx) < 0.1) mechDx = 0;
+        if (abs(mechDy) < 0.1) mechDy = 0;
 
-        if (inputs.getX() != 0 || dx != 0 || dy != 0) {
+        if (mechInputs.getX() != 0 || mechDx != 0 || mechDy != 0) {
             wantedX = limitedMechCoords.xMeters();
             wantedY = limitedMechCoords.yMeters();
             wantedAngle = limitedMechCoords.grabberAngleDegrees();
 
-            wantedAngle += inputs.getY() * ARCADE_WRIST_ANGLE_SPEED * NOMINAL_DT;
+            wantedAngle += mechInputs.getY() * ARCADE_WRIST_ANGLE_SPEED * NOMINAL_DT;
 
-            wantedX += dx * ARCADE_MODE_TRANSLATION_SPEED * NOMINAL_DT;
-            wantedY += dy * ARCADE_MODE_TRANSLATION_SPEED * NOMINAL_DT;
+            wantedX += mechDx * ARCADE_MODE_TRANSLATION_SPEED * NOMINAL_DT;
+            wantedY += mechDy * ARCADE_MODE_TRANSLATION_SPEED * NOMINAL_DT;
 
             mechanismStateManager.setState(new MechanismStateManager.MechanismStateCoordinates(wantedX, wantedY, wantedAngle));
         }

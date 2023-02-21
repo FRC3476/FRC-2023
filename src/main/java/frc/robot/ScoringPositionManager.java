@@ -4,11 +4,10 @@ import edu.wpi.first.math.geometry.Translation2d;
 import frc.utility.Controller;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
-import org.joml.Vector2d;
 import org.littletonrobotics.junction.networktables.LoggedDashboardBoolean;
 import org.littletonrobotics.junction.networktables.LoggedDashboardString;
 
-import static frc.robot.Constants.*;
+import static frc.robot.Constants.IS_PRACTICE;
 
 public class ScoringPositionManager {
 
@@ -205,36 +204,14 @@ public class ScoringPositionManager {
     @Contract(pure = true)
     public static double getBestFieldY(@NotNull SelectedPosition selectedPosition, boolean isRedAlliance,
                                        @NotNull Translation2d robotPosition, @NotNull Translation2d robotVelocity) {
-        double intersectionXLine;
 
-        if (isRedAlliance) {
-            intersectionXLine = GRIDS_RED_X + INTERSECTION_TEST_LINE_X_OFFSET;
-        } else {
-            intersectionXLine = GRIDS_BLUE_X - INTERSECTION_TEST_LINE_X_OFFSET;
-        }
-
-        Vector2d intersection = new Vector2d();
-//        Intersectiond.intersectLineLine(
-//                // Create a line that includes the robot's position and is in the direction of the robot's velocity
-//                robotPosition.getX(), robotPosition.getY(),
-//                robotPosition.getX() + robotVelocity.getX(), robotPosition.getY() + robotVelocity.getY(),
-//
-//                // Create a line  parallel to the y axis that is at the intersectionXLine
-//                intersectionXLine, 0,
-//                intersectionXLine, 3,
-//                intersection
-//        );
-
-        intersection.y = robotPosition.getY() + robotVelocity.getY() * (0.5);
-
-
+        var predictedRobotY = robotPosition.getY() + robotVelocity.getY() * 0.5;
         double[] possibleYs = CUBE_SCORING_Y_CENTER;
-
         double bestY = possibleYs[0];
 
         // Find the closest possible Y to the intersection that we found.
         for (double possibleY : possibleYs) {
-            if (Math.abs(possibleY - intersection.y) < Math.abs(bestY - intersection.y)) {
+            if (Math.abs(possibleY - predictedRobotY) < Math.abs(bestY - predictedRobotY)) {
                 bestY = possibleY;
             }
         }

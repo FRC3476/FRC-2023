@@ -52,8 +52,10 @@ public final class Drive extends AbstractSubsystem {
     private final DriveIO io;
     private final DriveInputsAutoLogged inputs = new DriveInputsAutoLogged();
     private final Field m_moduleStates;
-    LiveEditableValue<Double> autoP = new LiveEditableValue<>(2.0, SmartDashboard.getEntry("AutoP"));
-    LiveEditableValue<Double> autoD = new LiveEditableValue<>(0.0, SmartDashboard.getEntry("AutoD"));
+    private final LiveEditableValue<Double> autoP = new LiveEditableValue<>(DEFAULT_AUTO_P, SmartDashboard.getEntry("AutoP"));
+    private final LiveEditableValue<Double> autoI = new LiveEditableValue<>(DEFAULT_AUTO_I, SmartDashboard.getEntry("AutoI"));
+
+    private final LiveEditableValue<Double> autoD = new LiveEditableValue<>(DEFAULT_AUTO_D, SmartDashboard.getEntry("AutoD"));
     @Nullable Trajectory.State lastGoal = null;
     private double autoStartTime;
     private boolean swerveAutoControllerInitialized = false;
@@ -109,8 +111,8 @@ public final class Drive extends AbstractSubsystem {
         autoTurnPIDController.setTolerance(Math.toRadians(1));
 
         swerveAutoController = new HolonomicDriveController(
-                new PIDController(autoP.get(), 0, autoD.get()),
-                new PIDController(autoP.get(), 0, autoD.get()),
+                new PIDController(autoP.get(), autoI.get(), autoD.get()),
+                new PIDController(autoP.get(), autoI.get(), autoD.get()),
                 autoTurnPIDController);
         swerveAutoController.setTolerance(
                 new Pose2d(ALLOWED_XY_ERROR_RAMSETE, ALLOWED_XY_ERROR_RAMSETE, Rotation2d.fromDegrees(10))); //TODO: Tune
