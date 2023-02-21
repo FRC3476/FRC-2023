@@ -227,7 +227,7 @@ public final class Constants {
     // Realtime path generation
     public static final double START_POS_PREDICT_AHEAD = 0.2;
     public static final double END_VECTOR_LEN = 0.5;
-    public static final int VELOCITY_VECTOR_LEN_SCALE = 1;
+    public static final double VELOCITY_VECTOR_LEN_SCALE = 0.3;
     public static final double MAX_VELOCITY_ERROR_NEW_PATH = 0.05;
 
     public static final float GRIDS_RED_X = 1.373f;
