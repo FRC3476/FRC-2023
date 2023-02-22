@@ -5,13 +5,17 @@ import com.dacubeking.AutoBuilder.robot.sender.pathpreview.RobotState;
 import edu.wpi.first.apriltag.AprilTag;
 import edu.wpi.first.apriltag.AprilTagFieldLayout;
 import edu.wpi.first.apriltag.AprilTagFields;
+import edu.wpi.first.math.MatBuilder;
+import edu.wpi.first.math.Nat;
 import edu.wpi.first.math.VecBuilder;
 import edu.wpi.first.math.Vector;
 import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Quaternion;
 import edu.wpi.first.math.geometry.Rotation3d;
 import edu.wpi.first.math.geometry.Translation3d;
+import edu.wpi.first.math.numbers.N1;
 import edu.wpi.first.math.numbers.N3;
+import edu.wpi.first.math.numbers.N4;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.networktables.NetworkTable;
 import edu.wpi.first.networktables.NetworkTableEvent.Kind;
@@ -42,11 +46,11 @@ public class VisionHandler extends AbstractSubsystem {
     static final Rotation3d POSITIVE_Y_90 = new Rotation3d(POSITIVE_Y, Math.toRadians(90.0));
     static final Rotation3d POSITIVE_X_NEGATIVE_90 = new Rotation3d(POSITIVE_X, Math.toRadians(-90.0));
     static final Rotation3d POSITIVE_Z_180 = new Rotation3d(POSITIVE_Z, Math.toRadians(180));
-    private static final @NotNull AprilTagFieldLayout fieldLayout;
     private static final @NotNull HashMap<Integer, Pose3d> fieldTagCache;
 
     static {
         try {
+            @NotNull AprilTagFieldLayout fieldLayout;
             var wpiFieldLayout = AprilTagFieldLayout.loadFromResource(AprilTagFields.k2023ChargedUp.m_resourceFile);
 
             var adjustedAprilTags = new ArrayList<AprilTag>();
@@ -88,6 +92,11 @@ public class VisionHandler extends AbstractSubsystem {
             Units.inchesToMeters(52.425)),
             new Rotation3d(VecBuilder.fill(0, 1, 0), Math.toRadians(-28)));
 
+    private final Pose3d negativeCameraPose = new Pose3d(
+            cameraPose.getTranslation().unaryMinus(),
+            cameraPose.getRotation().unaryMinus()
+    );
+
 
     VisionInputs visionInputs = new VisionInputs();
 
@@ -125,22 +134,24 @@ public class VisionHandler extends AbstractSubsystem {
         }
     }
 
+    private final MatBuilder<N4, N1> visionStdMatBuilder = new MatBuilder<>(Nat.N4(), Nat.N1());
+
     private void processNewTagPosition(VisionUpdate data) {
         final var expectedTagPosition = fieldTagCache.get(data.tagId); // We should never get an
         // unknown tag
 
         final var tagTranslation = new Translation3d(data.posZ, -data.posX, -data.posY);
         var distanceToTag = tagTranslation.getNorm();
-
-
-        final var tagTranslationRobotCentric = new Translation3d(data.posZ, -data.posX, -data.posY)
-                .rotateBy(cameraPose.getRotation().unaryMinus())
+        
+        final var tagTranslationRobotCentric = tagTranslation
+                .rotateBy(negativeCameraPose.getRotation())
                 .plus(cameraPose.getTranslation());
         final var tagRotationRobotCentric = new Rotation3d(new Quaternion(data.rotW, data.rotZ, -data.rotX, -data.rotY))
-                .rotateBy(cameraPose.getRotation().unaryMinus());
+                .rotateBy(negativeCameraPose.getRotation());
 
 
         Rotation3d gyroAngle = Robot.getRobotTracker().getGyroAngleAtTime(data.timestamp);
+
 
         var calculatedTranslationFromGyro =
                 expectedTagPosition.getTranslation()
@@ -188,7 +199,8 @@ public class VisionHandler extends AbstractSubsystem {
         var defaultDevs = RobotTracker.DEFAULT_VISION_DEVIATIONS;
         if (distanceToTag == 0) return;
         var distanceToTag3 = distanceToTag * distanceToTag * distanceToTag;
-        var devs = VecBuilder.fill(defaultDevs.get(0, 0) * distanceToTag3,
+        var devs = visionStdMatBuilder.fill(
+                defaultDevs.get(0, 0) * distanceToTag3,
                 defaultDevs.get(1, 0) * distanceToTag3,
                 defaultDevs.get(2, 0) * distanceToTag3,
                 Math.atan(tan(defaultDevs.get(3, 0)) * distanceToTag3 * distanceToTag));
