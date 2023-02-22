@@ -5,15 +5,18 @@
 
 package frc.robot;
 
+import com.dacubeking.AutoBuilder.robot.reflection.ClassInformationSender;
 import com.dacubeking.AutoBuilder.robot.robotinterface.AutonomousContainer;
 import com.dacubeking.AutoBuilder.robot.robotinterface.CommandTranslator;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.trajectory.TrapezoidProfile.State;
 import edu.wpi.first.wpilibj.GenericHID.RumbleType;
+import edu.wpi.first.wpilibj.IterativeRobotBase;
 import edu.wpi.first.wpilibj.PowerDistribution;
 import edu.wpi.first.wpilibj.PowerDistribution.ModuleType;
 import edu.wpi.first.wpilibj.Timer;
+import edu.wpi.first.wpilibj.Watchdog;
 import frc.robot.ScoringPositionManager.PositionType;
 import frc.subsytem.AbstractSubsystem;
 import frc.subsytem.Elevator.Elevator;
@@ -36,20 +39,23 @@ import frc.subsytem.vision.VisionHandler;
 import frc.utility.Controller;
 import frc.utility.Controller.XboxButtons;
 import frc.utility.ControllerDriveInputs;
+import frc.utility.PathGenerator;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.littletonrobotics.junction.LogFileUtil;
 import org.littletonrobotics.junction.LoggedRobot;
 import org.littletonrobotics.junction.Logger;
 import org.littletonrobotics.junction.networktables.LoggedDashboardChooser;
-import org.littletonrobotics.junction.networktables.NT4Publisher;
+import org.littletonrobotics.junction.rlog.RLOGServer;
 import org.littletonrobotics.junction.wpilog.WPILOGReader;
 import org.littletonrobotics.junction.wpilog.WPILOGWriter;
 
 import java.io.File;
 import java.io.IOException;
+import java.lang.reflect.Field;
 import java.nio.file.Files;
 import java.util.Arrays;
+import java.util.NoSuchElementException;
 
 import static frc.robot.Constants.*;
 import static java.lang.Math.abs;
@@ -62,6 +68,14 @@ import static java.lang.Math.abs;
  */
 public class Robot extends LoggedRobot {
 
+    public static final int XBOX_START_AUTO_DRIVE = XboxButtons.RIGHT_CLICK;
+    public static final int XBOX_AUTO_BALENCE = XboxButtons.Y;
+    public static final int XBOX_AUTO_ROTATE = XboxButtons.RIGHT_BUMPER;
+    public static final int XBOX_RESET_HEADING = XboxButtons.A;
+    public static final int STICK_TOGGLE_SCORING = 7;
+    public static final int STICK_TOGGLE_FLOOR_PICKUP = 9;
+    public static final int STICK_TOGGLE_PICKUP = 11;
+    public static final int XBOX_TOGGLE_GRABBER = XboxButtons.B;
     private double disabledTime = 0;
 
     private @NotNull static Drive drive;
@@ -91,7 +105,21 @@ public class Robot extends LoggedRobot {
     public void robotInit() {
         Logger.getInstance().recordMetadata("ProjectName", "FRC2023"); // Set a metadata value
 
-        if (isReal()) {
+
+        String logPath = null;
+
+        if (!isReal()) {
+            try {
+                logPath = LogFileUtil.findReplayLog(); // Pull the replay log from AdvantageScope (or prompt the user)
+            } catch (NoSuchElementException e) {
+                System.out.println("Failed to Find a log file, not loading one");
+            }
+        }
+
+        Logger.getInstance().disableDeterministicTimestamps(); // Disable deterministic timestamps (they cause issues wit the
+        // autoBuilder)
+
+        if (isReal() || logPath == null) {
             var directory = new File(LOG_DIRECTORY);
             if (!directory.exists()) {
                 directory.mkdir();
@@ -128,7 +156,7 @@ public class Robot extends LoggedRobot {
             }
 
             Logger.getInstance().addDataReceiver(new WPILOGWriter(LOG_DIRECTORY));
-            Logger.getInstance().addDataReceiver(new NT4Publisher()); // Publish data to NetworkTables
+            Logger.getInstance().addDataReceiver(new RLOGServer(5800)); // Publish data to NetworkTables
             new PowerDistribution(1, ModuleType.kRev); // Enables power distribution logging
 
             drive = new Drive(new DriveIOSparkMax());
@@ -137,7 +165,6 @@ public class Robot extends LoggedRobot {
             grabber = new Grabber(new GrabberIOSparkMax());
         } else {
             setUseTiming(false); // Run as fast as possible
-            String logPath = LogFileUtil.findReplayLog(); // Pull the replay log from AdvantageScope (or prompt the user)
             Logger.getInstance().setReplaySource(new WPILOGReader(logPath)); // Read replay log
             Logger.getInstance().addDataReceiver(
                     new WPILOGWriter(LogFileUtil.addPathSuffix(logPath, "_sim"))); // Save outputs to a new log
@@ -186,6 +213,10 @@ public class Robot extends LoggedRobot {
         );
         AutonomousContainer.getInstance().getAutonomousNames().forEach(name -> autoChooser.addOption(name, name));
 
+        if (!isReal()) {
+            ClassInformationSender.updateReflectionInformation("frc");
+        }
+
         sideChooser.addDefaultOption("Blue", "blue");
         sideChooser.addOption("Red", "red");
 
@@ -199,6 +230,19 @@ public class Robot extends LoggedRobot {
         // TODO: Change this to CLOSED when we're confident the grabber won't try to tear itself apart when it's trying to close
         grabber.setGrabState(GrabState.IDLE);
         mechanismStateManager.setState(MechanismStates.STOWED);
+
+        Class<PathGenerator> loadPathGenerator = PathGenerator.class; // Load the PathGenerator class to ensure that it is
+        // initialized (and creates the thread to generate paths) before the robot starts
+
+        // TODO: Remove this when we're done optimizing our code
+        try {
+            Field watchDog = IterativeRobotBase.class.getDeclaredField("m_watchdog");
+            watchDog.setAccessible(true);
+            Watchdog actualWatchDog = (Watchdog) watchDog.get(this);
+            actualWatchDog.setTimeout(1);
+        } catch (NoSuchFieldException | IllegalAccessException e) {
+            throw new RuntimeException(e);
+        }
     }
 
 
@@ -219,9 +263,11 @@ public class Robot extends LoggedRobot {
     public void autonomousInit() {
         drive.setBrakeMode(true);
         String autoName = autoChooser.get();
-        if (autoName != null) {
-            AutonomousContainer.getInstance().runAutonomous(autoName, sideChooser.get(), true);
+        if (autoName == null) {
+            autoName = "";
         }
+
+        AutonomousContainer.getInstance().runAutonomous(autoName, sideChooser.get(), true);
     }
 
 
@@ -257,14 +303,15 @@ public class Robot extends LoggedRobot {
     }
 
     private WantedMechanismState wantedMechanismState = WantedMechanismState.STOWED;
+    private @Nullable WantedMechanismState lastWantedMechanismState = null;
 
-    private boolean isGrabberOpen = false;
+
+    private boolean isGrabberOpen = true;
 
     private double wantedX = -0.489;
     private double wantedY = 0.249;
     private double wantedAngle = MAX_WRIST_ANGLE - 2;
-
-    private final boolean arcadeMode = false;
+    public boolean isTurnToTargetMode = false;
 
     /**
      * This method is called periodically during operator control.
@@ -276,14 +323,18 @@ public class Robot extends LoggedRobot {
         buttonPanel.update();
         double wantedRumble = 0;
 
-
         var scoringPositionManager = ScoringPositionManager.getInstance();
         if (scoringPositionManager.updateSelectedPosition(buttonPanel)) {
             teleopDrivingAutoAlignPosition = null;
         }
 
-        if (xbox.getRawButton(XboxButtons.START) && false) { //Should be remapped to one of the back buttons
-            if (xbox.getRisingEdge(XboxButtons.START) || teleopDrivingAutoAlignPosition == null) {
+        if (xbox.getRisingEdge(XBOX_AUTO_ROTATE)) {
+            isTurnToTargetMode = true;
+            updateTeleopDrivingTarget(scoringPositionManager);
+        }
+
+        if (xbox.getRawButton(XBOX_START_AUTO_DRIVE)) { //Should be remapped to one of the back buttons
+            if (xbox.getRisingEdge(XBOX_START_AUTO_DRIVE) || teleopDrivingAutoAlignPosition == null) {
                 updateTeleopDrivingTarget(scoringPositionManager);
                 assert teleopDrivingAutoAlignPosition != null;
             }
@@ -296,24 +347,29 @@ public class Robot extends LoggedRobot {
                 // We failed to generate a trajectory
                 wantedRumble = 1;
             }
-        } else if (xbox.getRawButton(XboxButtons.Y)) {
+        } else if (xbox.getRawButton(XBOX_AUTO_BALENCE)) {
             drive.autoBalance(getControllerDriveInputs());
-        } else if (xbox.getRawButton(XboxButtons.BACK)) {
-            updateTeleopDrivingTarget(scoringPositionManager);
-            assert teleopDrivingAutoAlignPosition != null;
-            drive.setTurn(
-                    getControllerDriveInputs(),
-                    new State(teleopDrivingAutoAlignPosition.getRotation().getRadians(), 0),
-                    0);
         } else {
-            drive.swerveDriveFieldRelative(getControllerDriveInputs());
+            if (isTurnToTargetMode) {
+                assert teleopDrivingAutoAlignPosition != null;
+                var controllerDriveInputs = getControllerDriveInputs();
+                drive.setTurn(controllerDriveInputs,
+                        new State(teleopDrivingAutoAlignPosition.getRotation().getRadians(), 0),
+                        0);
+
+                if (Math.abs(controllerDriveInputs.getRotation()) > 0) {
+                    isTurnToTargetMode = false;
+                }
+            } else {
+                drive.swerveDriveFieldRelative(getControllerDriveInputs());
+            }
         }
 
-        if (xbox.getRisingEdge(XboxButtons.A)) {
+        if (xbox.getRisingEdge(XBOX_RESET_HEADING)) {
             robotTracker.resetPose(new Pose2d(robotTracker.getLatestPose().getTranslation(), new Rotation2d()));
         }
 
-        if (stick.getRisingEdge(7)) {
+        if (stick.getRisingEdge(STICK_TOGGLE_SCORING)) {
             if (wantedMechanismState == WantedMechanismState.STOWED) {
                 wantedMechanismState = WantedMechanismState.SCORING;
             } else {
@@ -321,23 +377,26 @@ public class Robot extends LoggedRobot {
             }
         }
 
-        if (stick.getRisingEdge(9)) {
+        if (stick.getRisingEdge(STICK_TOGGLE_FLOOR_PICKUP)) {
             if (wantedMechanismState == WantedMechanismState.STOWED) {
                 wantedMechanismState = WantedMechanismState.FLOOR_PICKUP;
+                isGrabberOpen = true;
             } else {
                 setStowed();
             }
         }
 
-        if (stick.getRisingEdge(11)) {
+        if (stick.getRisingEdge(STICK_TOGGLE_PICKUP)) {
             if (wantedMechanismState == WantedMechanismState.STOWED) {
                 wantedMechanismState = WantedMechanismState.STATION_PICKUP;
+                isGrabberOpen = true;
             } else {
                 setStowed();
             }
         }
 
-        if (!arcadeMode) {
+
+        if (wantedMechanismState != lastWantedMechanismState) {
             switch (wantedMechanismState) {
                 case STOWED -> mechanismStateManager.setState(MechanismStates.STOWED);
                 case SCORING -> {
@@ -353,32 +412,44 @@ public class Robot extends LoggedRobot {
                 case FLOOR_PICKUP -> mechanismStateManager.setState(MechanismStates.FLOOR_PICKUP);
                 case STATION_PICKUP -> mechanismStateManager.setState(MechanismStates.STATION_PICKUP);
             }
-        } else {
-            var inputs = new ControllerDriveInputs(stick.getRawAxis(0), stick.getRawAxis(1), stick.getRawAxis(3));
-            inputs.applyDeadZone(0.2, 0.2, 0.25, 0.2);
-            inputs.squareInputs();
-            wantedAngle += inputs.getY();
-            var dx = -buttonPanel.getRawAxis(0);
-            var dy = buttonPanel.getRawAxis(1);
-
-            if (abs(dx) < 0.1) dx = 0;
-            if (abs(dy) < 0.1) dy = 0;
-            wantedX += dx / 50.0;
-            wantedY += dy / 50.0;
-
-            var wantedMechState = new MechanismStateManager.MechanismStateCoordinates(wantedX, wantedY, wantedAngle);
-            var limitedMechState = MechanismStateManager.limitCoordinates(wantedMechState);
-            wantedX = limitedMechState.xMeters();
-            wantedY = limitedMechState.yMeters();
-            wantedAngle = limitedMechState.grabberAngleDegrees();
-            mechanismStateManager.setState(new MechanismStateManager.MechanismStateCoordinates(wantedX, wantedY, wantedAngle));
-            Logger.getInstance().recordOutput("Robot/Wanted X", wantedX);
-            Logger.getInstance().recordOutput("Robot/Wanted Y", wantedY);
-            Logger.getInstance().recordOutput("Robot/Wanted Angle", wantedAngle);
         }
+
+        lastWantedMechanismState = wantedMechanismState;
+
+
+        var limitedMechCoords = MechanismStateManager.limitCoordinates(mechanismStateManager.getCurrentWantedState());
+
+        Logger.getInstance().recordOutput("Robot/Wanted X", wantedX);
+        Logger.getInstance().recordOutput("Robot/Wanted Y", wantedY);
+        Logger.getInstance().recordOutput("Robot/Wanted Angle", wantedAngle);
+
+        var mechInputs = new ControllerDriveInputs(stick.getRawAxis(0), stick.getRawAxis(1), stick.getRawAxis(3));
+        mechInputs.applyDeadZone(0.1, 0.1, 0.25, 0.2);
+        mechInputs.squareInputs();
+
+        var mechDx = -buttonPanel.getRawAxis(0);
+        var mechDy = buttonPanel.getRawAxis(1);
+
+        // Basic deadzone
+        if (abs(mechDx) < 0.1) mechDx = 0;
+        if (abs(mechDy) < 0.1) mechDy = 0;
+
+        if (mechInputs.getX() != 0 || mechDx != 0 || mechDy != 0) {
+            wantedX = limitedMechCoords.xMeters();
+            wantedY = limitedMechCoords.yMeters();
+            wantedAngle = limitedMechCoords.grabberAngleDegrees();
+
+            wantedAngle += mechInputs.getY() * ARCADE_WRIST_ANGLE_SPEED * NOMINAL_DT;
+
+            wantedX += mechDx * ARCADE_MODE_TRANSLATION_SPEED * NOMINAL_DT;
+            wantedY += mechDy * ARCADE_MODE_TRANSLATION_SPEED * NOMINAL_DT;
+
+            mechanismStateManager.setState(new MechanismStateManager.MechanismStateCoordinates(wantedX, wantedY, wantedAngle));
+        }
+
         Logger.getInstance().recordOutput("Robot/Wanted Mechanism State", wantedMechanismState.name());
 
-        if (xbox.getRisingEdge(XboxButtons.B)) {
+        if (xbox.getRisingEdge(XBOX_TOGGLE_GRABBER)) {
             isGrabberOpen = !isGrabberOpen;
         }
 
@@ -421,7 +492,10 @@ public class Robot extends LoggedRobot {
     private void updateTeleopDrivingTarget(ScoringPositionManager scoringPositionManager) {
         double x, y;
         Rotation2d rotation;
-        if (robotTracker.isOnRedSide() == isRed()) {
+
+        var predictedPose = robotTracker.getLatestPose().getTranslation().plus(robotTracker.getVelocity().times(0.5));
+        var isOnRedSide = predictedPose.getX() < FIELD_WIDTH_METERS / 2;
+        if (isOnRedSide == isRed()) {
             // We're on the same side as our alliance
             // Try to go to the scoring position
             y = ScoringPositionManager.getBestFieldY(
@@ -431,11 +505,13 @@ public class Robot extends LoggedRobot {
                     robotTracker.getVelocity()
             );
 
+            Logger.getInstance().recordOutput("Robot/Wanted Y Auto Drive", y);
+
             if (isRed()) {
-                x = Constants.GRIDS_RED_X + HALF_ROBOT_WIDTH;
+                x = Constants.GRIDS_RED_X + HALF_ROBOT_WIDTH + SCORING_POSITION_OFFSET_FROM_WALL;
                 rotation = Constants.SCORING_ANGLE_RED;
             } else {
-                x = Constants.GRIDS_BLUE_X - HALF_ROBOT_WIDTH;
+                x = Constants.GRIDS_BLUE_X - HALF_ROBOT_WIDTH - SCORING_POSITION_OFFSET_FROM_WALL;
                 rotation = Constants.SCORING_ANGLE_BLUE;
             }
         } else {
@@ -443,10 +519,10 @@ public class Robot extends LoggedRobot {
             // Try to go to the pickup position
             y = PICKUP_POSITION_Y;
             if (isRed()) {
-                x = PICKUP_POSITION_X_OFFSET_FROM_WALL;
+                x = FIELD_WIDTH_METERS - PICKUP_POSITION_X_OFFSET_FROM_WALL;
                 rotation = PICKUP_ANGLE_RED;
             } else {
-                x = FIELD_WIDTH_METERS - PICKUP_POSITION_X_OFFSET_FROM_WALL;
+                x = PICKUP_POSITION_X_OFFSET_FROM_WALL;
                 rotation = PICKUP_ANGLE_BLUE;
             }
         }
@@ -464,7 +540,9 @@ public class Robot extends LoggedRobot {
      */
     @Override
     public void disabledInit() {
+        System.out.println("Trying to kill auto");
         AutonomousContainer.getInstance().killAuto();
+        System.out.println("Finished Killing Auto");
         disabledTime = Timer.getFPGATimestamp();
     }
 
@@ -494,8 +572,8 @@ public class Robot extends LoggedRobot {
     @Override
     public void testPeriodic() {
         xbox.update();
-        if (xbox.getRawButton(XboxButtons.X) && xbox.getRawButton(XboxButtons.B)
-                && xbox.getRisingEdge(XboxButtons.X) && xbox.getRisingEdge(XboxButtons.B)) {
+        if (xbox.getRawButton(XboxButtons.X) && xbox.getRawButton(XBOX_TOGGLE_GRABBER)
+                && xbox.getRisingEdge(XboxButtons.X) && xbox.getRisingEdge(XBOX_TOGGLE_GRABBER)) {
             drive.resetAbsoluteZeros();
         }
     }
@@ -516,8 +594,12 @@ public class Robot extends LoggedRobot {
         return inputs;
     }
 
-    public boolean isRed() {
+    public static boolean isRed() {
         return sideChooser.get().equals("red");
+    }
+
+    public static boolean isOnAllianceSide() {
+        return isRed() == robotTracker.isOnRedSide();
     }
 
     public static @NotNull Drive getDrive() {
@@ -542,5 +624,9 @@ public class Robot extends LoggedRobot {
 
     public static @NotNull Elevator getElevator() {
         return elevator;
+    }
+
+    public static @NotNull MechanismStateManager getMechanismStateManager() {
+        return mechanismStateManager;
     }
 }

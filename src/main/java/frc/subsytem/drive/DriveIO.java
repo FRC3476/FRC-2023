@@ -19,6 +19,12 @@ public abstract class DriveIO {
 
         double[] driveMotorVoltages = new double[4];
         double[] swerveMotorVoltages = new double[4];
+
+        double[] swerveMotorFaults = new double[4];
+        double[] driveMotorFaults = new double[4];
+
+
+        double driveIoTimestamp = 0.0;
     }
 
     /**

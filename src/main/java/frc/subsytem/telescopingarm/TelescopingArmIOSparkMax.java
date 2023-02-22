@@ -27,6 +27,7 @@ public class TelescopingArmIOSparkMax extends TelescopingArmIO {
         telescopingArmSparkMax.getEncoder().setVelocityConversionFactor(
                 (1.0 / TELESCOPING_ARM_ROTATIONS_PER_METER) / SECONDS_PER_MINUTE);
         resetTelescopingArmPosition(0);
+        telescopingArmSparkMax.getPIDController().setOutputRange(-0.5, 0.5);
         if (isReal()) {
             telescopingArmSparkMax.burnFlash();
         }

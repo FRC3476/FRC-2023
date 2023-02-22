@@ -10,27 +10,38 @@ import edu.wpi.first.math.trajectory.constraint.CentripetalAccelerationConstrain
 import edu.wpi.first.math.trajectory.constraint.TrajectoryConstraint;
 import edu.wpi.first.wpilibj.DriverStation;
 import frc.robot.Constants;
+import frc.robot.Robot;
 import org.joml.Intersectiond;
 import org.joml.PolygonsIntersection;
 
 import java.util.ArrayList;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ForkJoinPool;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import static frc.robot.Constants.*;
 
 public class PathGenerator {
+
+    public static final double CHARGING_STATION_CENTER_Y = 1.269;
+    public static final double CREATE_EXTRA_POINT_X_THRESHOLD = 3.7;
+    public static final double EXTRA_POINT_VECTOR_LENGTH = 2;
+    public static final double EXTRA_POINT_X = 2.915;
+
     private PathGenerator() {}
 
     //set initial velocity, copy it then
-    private static final double MAX_VELOCITY = 4;
+    private static final double MAX_VELOCITY = 3.5;
     private static final double MAX_ACCELERATION = 3;
 
     private static final ArrayList<TrajectoryConstraint> constraints = new ArrayList<>();
 
+    private static ExecutorService threadPoolExecutor;
+
     static {
-        constraints.add(new CentripetalAccelerationConstraint(2.3));
+        constraints.add(new CentripetalAccelerationConstraint(5));
+        threadPoolExecutor = Executors.newSingleThreadExecutor();
     }
 
     public static CompletableFuture<Optional<Trajectory>> generateTrajectory(
@@ -40,7 +51,7 @@ public class PathGenerator {
         double dir = targetPosition.getX() > Constants.FIELD_WIDTH_METERS / 2 ? END_VECTOR_LEN : -END_VECTOR_LEN; //based on
         // alliance flip end vector
         return generateTrajectory(robotVelocity, robotTranslation, targetPosition, new Translation2d(dir, 0),
-                startPosPredictAhead);
+                startPosPredictAhead, Robot.isRed());
     }
 
     /**
@@ -56,23 +67,53 @@ public class PathGenerator {
      */
     public static CompletableFuture<Optional<Trajectory>> generateTrajectory(
             Translation2d robotVelocity, Translation2d robotTranslation, Translation2d targetPosition, Translation2d endDir,
-            double startPosPredictAhead) {
+            double startPosPredictAhead, boolean isRedAlliance) {
         var trajectoryFuture = new CompletableFuture<Optional<Trajectory>>();
         return trajectoryFuture.completeAsync(() -> {
             var startPos = robotTranslation.plus(robotVelocity.times(startPosPredictAhead));
             double robotVelocityNorm = robotVelocity.getNorm();
+
+            var velocityToUse = robotVelocity;
+            if (robotVelocityNorm < 0.02) {
+                var posToTarget = robotTranslation.minus(targetPosition);
+                velocityToUse = posToTarget.div(posToTarget.getNorm() * 10); // Make the length 1/10
+            }
+
             ControlVectorList controlVectors = new ControlVectorList();
             controlVectors.add(new ControlVector(
-                    new double[]{startPos.getX(), robotVelocity.getX() * VELOCITY_VECTOR_LEN_SCALE, 0},
-                    new double[]{startPos.getY(), robotVelocity.getY() * VELOCITY_VECTOR_LEN_SCALE, 0}
+                    new double[]{startPos.getX(), velocityToUse.getX() * VELOCITY_VECTOR_LEN_SCALE, 0},
+                    new double[]{startPos.getY(), velocityToUse.getY() * VELOCITY_VECTOR_LEN_SCALE, 0}
             ));
+
+            double yCordToCreate = robotTranslation.getY() > CHARGING_STATION_CENTER_Y ? 3.2 : -0.7019;
+
+            // Create an extra point in between the charge station and wall if we're far enough away from the scoring zone
+            if (isRedAlliance && endDir.getX() < 0) {
+                // We're trying to score on the red side
+                if (startPos.getX() > CREATE_EXTRA_POINT_X_THRESHOLD) {
+                    controlVectors.add(new ControlVector(
+                            new double[]{EXTRA_POINT_X, -EXTRA_POINT_VECTOR_LENGTH, 0},
+                            new double[]{yCordToCreate, 0, 0}
+                    ));
+                }
+            } else if (!isRedAlliance && endDir.getX() > 0) {
+                // We're trying to score on the blue side
+                if (startPos.getX() < FIELD_WIDTH_METERS - CREATE_EXTRA_POINT_X_THRESHOLD) {
+                    controlVectors.add(new ControlVector(
+                            new double[]{FIELD_WIDTH_METERS - EXTRA_POINT_X, EXTRA_POINT_VECTOR_LENGTH, 0},
+                            new double[]{yCordToCreate, 0, 0}
+                    ));
+                }
+            }
+
+
             controlVectors.add(new ControlVector(
                     new double[]{targetPosition.getX(), endDir.getX(), 0},
-                    new double[]{targetPosition.getX(), endDir.getY(), 0}
+                    new double[]{targetPosition.getY(), endDir.getY(), 0}
             ));
             Trajectory trajectory;
-            TrajectoryConfig config = new TrajectoryConfig(MAX_VELOCITY, MAX_ACCELERATION);
-            config.setKinematics(Constants.SWERVE_DRIVE_KINEMATICS);
+            TrajectoryConfig config = new TrajectoryConfig(Math.max(MAX_VELOCITY, robotVelocityNorm), MAX_ACCELERATION);
+            //config.setKinematics(Constants.SWERVE_DRIVE_KINEMATICS); // The Kinematics has mutable state, so we can't use the same one
             config.setStartVelocity(robotVelocityNorm);
             config.setEndVelocity(0);
             config.addConstraints(constraints);
@@ -82,23 +123,29 @@ public class PathGenerator {
                 DriverStation.reportError("Failed to generate trajectory: " + e.getMessage(), e.getStackTrace());
                 return Optional.empty();
             }
+            System.out.println(trajectory.getTotalTimeSeconds());
+            System.out.println(trajectory.sample(0));
+            System.out.println(trajectory.sample(trajectory.getTotalTimeSeconds()));
+            System.out.println(trajectory.sample(trajectory.getTotalTimeSeconds() / 2));
             if (trajectory.getStates().size() == 0) {
                 DriverStation.reportError("Failed to generate trajectory: no states", false);
                 return Optional.empty();
-            } else if (Math.abs(
+            } else if (false && Math.abs(
                     trajectory.getStates().get(0).velocityMetersPerSecond - robotVelocityNorm) > MAX_VELOCITY_ERROR_NEW_PATH) {
-                DriverStation.reportError("Failed to generate trajectory: initial velocity too far off actual", false);
+                DriverStation.reportError("Failed to generate trajectory: initial velocity too far off actual. " +
+                        "Wanted Start Velocity: " + robotVelocityNorm +
+                        "Actual Start Velocity: " + trajectory.getStates().get(0).velocityMetersPerSecond, false);
                 // If we're getting this we likely need to increase VELOCITY_VECTOR_LEN_SCALE so that the path is more
                 // straight, at the beginning of it
                 return Optional.empty();
             }
-            if (isTrajectoryInBounds(trajectory)) {
+            if (true || isTrajectoryInBounds(trajectory)) {
                 return Optional.of(trajectory);
             } else {
                 DriverStation.reportError("Failed to generate trajectory: trajectory goes out of bounds", false);
                 return Optional.empty();
             }
-        }, ForkJoinPool.commonPool());
+        }, threadPoolExecutor);
     }
 
     public static final float FIELD_HEIGHT_METERS = (float) Constants.FIELD_HEIGHT_METERS;
@@ -113,6 +160,7 @@ public class PathGenerator {
                 float y = testPoint[1] + (float) state.poseMeters.getTranslation().getY();
 
                 if (!intersectionTest.testPoint(x, y)) {
+                    System.out.println("Out of bounds at " + state);
                     return false;
                 }
             }
@@ -160,6 +208,7 @@ public class PathGenerator {
                     GRIDS_START_Y + COMMUNITY_BORDER_HEIGHT, //y
                     1 //z
             )) {
+                System.out.println("Hitting thing at " + state);
                 return false;
             }
         }
