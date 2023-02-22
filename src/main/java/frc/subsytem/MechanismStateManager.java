@@ -76,8 +76,13 @@ public class MechanismStateManager extends AbstractSubsystem {
 
     private @NotNull MechanismStateManager.MechanismStateCoordinates currentWantedState = MechanismStates.STOWED.state;
 
+    MechanismStateCoordinates lastNotStowState = MechanismStates.STOWED.state;
+
     public void setState(@NotNull MechanismStates state) {
         setState(state.state);
+        if (state != MechanismStates.STOWED) {
+            lastNotStowState = state.state;
+        }
     }
 
 
@@ -85,13 +90,10 @@ public class MechanismStateManager extends AbstractSubsystem {
         return currentWantedState;
     }
 
-    MechanismStateCoordinates lastNotStowState = MechanismStates.STOWED.state;
 
     public void setState(@NotNull MechanismStateCoordinates state) {
+        // Don't set the lastNotStowState here so that the limits remain active if the arcade mode is used to move the mechanism
         currentWantedState = state;
-        if (!state.equals(MechanismStates.STOWED.state)) {
-            lastNotStowState = state;
-        }
     }
 
     /**
@@ -212,8 +214,8 @@ public class MechanismStateManager extends AbstractSubsystem {
 
 
         MechanismStateSubsystemPositions limitedStatePositions = coordinatesToSubsystemPositions(limitedStateCoordinates);
-        if (!Robot.getMechanismStateManager().lastNotStowState.equals(MechanismStates.FLOOR_PICKUP.state)) {
-            if (Robot.isOnAllianceSide()) {
+        if (!lastNotStowState.equals(MechanismStates.FLOOR_PICKUP.state)) {
+            if (!lastNotStowState.equals(MechanismStates.STATION_PICKUP.state)) {
                 // Use scoring keepouts
                 double armEndX = limitedStateCoordinates.xMeters - limitedStateCoordinates.grabberX();
                 double armEndY = limitedStateCoordinates.yMeters - limitedStateCoordinates.grabberY();
