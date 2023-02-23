@@ -579,7 +579,12 @@ public class Robot extends LoggedRobot {
     }
 
     private ControllerDriveInputs getControllerDriveInputs() {
-        var inputs = new ControllerDriveInputs(-xbox.getRawAxis(1), -xbox.getRawAxis(0), -xbox.getRawAxis(4));
+        ControllerDriveInputs inputs;
+        if (isRed()) {
+            inputs = new ControllerDriveInputs(-xbox.getRawAxis(1), -xbox.getRawAxis(0), -xbox.getRawAxis(4));
+        } else {
+            inputs = new ControllerDriveInputs(xbox.getRawAxis(1), xbox.getRawAxis(0), -xbox.getRawAxis(4));
+        }
         if (xbox.getRawButton(Controller.XboxButtons.X)) {
             inputs.applyDeadZone(0.2, 0.2, 0.2, 0.2);
         } else {
