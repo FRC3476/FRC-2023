@@ -353,9 +353,11 @@ public class Robot extends LoggedRobot {
             if (isTurnToTargetMode) {
                 assert teleopDrivingAutoAlignPosition != null;
                 var controllerDriveInputs = getControllerDriveInputs();
-                drive.setTurn(controllerDriveInputs,
-                        new State(teleopDrivingAutoAlignPosition.getRotation().getRadians(), 0),
-                        0);
+                if (teleopDrivingAutoAlignPosition != null) {
+                    drive.setTurn(controllerDriveInputs,
+                            new State(teleopDrivingAutoAlignPosition.getRotation().getRadians(), 0),
+                            0);
+                }
 
                 if (Math.abs(controllerDriveInputs.getRotation()) > 0) {
                     isTurnToTargetMode = false;
