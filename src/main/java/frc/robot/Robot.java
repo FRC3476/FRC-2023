@@ -76,78 +76,27 @@ public class Robot extends LoggedRobot {
     public static final int STICK_TOGGLE_FLOOR_PICKUP = 9;
     public static final int STICK_TOGGLE_PICKUP = 11;
     public static final int XBOX_TOGGLE_GRABBER = XboxButtons.B;
-    public static final LoggedDashboardChooser<String> sideChooser = new LoggedDashboardChooser<>("SideChooser");
-    private @NotNull
-    static Drive drive;
-    private @NotNull
-    static RobotTracker robotTracker;
-    private @NotNull
-    static VisionHandler visionHandler;
-
-    private @NotNull
-    static Elevator elevator;
-    private @NotNull
-    static TelescopingArm telescopingArm;
-    private @NotNull
-    static Grabber grabber;
-    private @NotNull
-    static MechanismStateManager mechanismStateManager;
-    // Autonomous
-    private final LoggedDashboardChooser<String> autoChooser = new LoggedDashboardChooser<>("AutoChooser");
-    public boolean isTurnToTargetMode = false;
     private double disabledTime = 0;
+
+    private @NotNull static Drive drive;
+    private @NotNull static RobotTracker robotTracker;
+    private @NotNull static VisionHandler visionHandler;
+
+    private @NotNull static Elevator elevator;
+    private @NotNull static TelescopingArm telescopingArm;
+    private @NotNull static Grabber grabber;
+    private @NotNull static MechanismStateManager mechanismStateManager;
+
+
     private @NotNull Controller xbox;
     private @NotNull Controller stick;
+
     private @NotNull Controller buttonPanel;
-    private @Nullable Pose2d teleopDrivingAutoAlignPosition = new Pose2d();
-    private WantedMechanismState wantedMechanismState = WantedMechanismState.STOWED;
-    private @Nullable WantedMechanismState lastWantedMechanismState = null;
-    private boolean isGrabberOpen = true;
-    private double wantedX = -0.489;
-    private double wantedY = 0.249;
-    private double wantedAngle = MAX_WRIST_ANGLE - 2;
 
-    {
-        Logger.getInstance().recordOutput("Auto Align Y", teleopDrivingAutoAlignPosition.getY());
-        Logger.getInstance().recordOutput("Auto Align X", teleopDrivingAutoAlignPosition.getX());
-        Logger.getInstance().recordOutput("Auto Align Angle", teleopDrivingAutoAlignPosition.getRotation().getDegrees());
-    }
+    // Autonomous
+    private final LoggedDashboardChooser<String> autoChooser = new LoggedDashboardChooser<>("AutoChooser");
 
-    public static boolean isRed() {
-        return sideChooser.get().equals("red");
-    }
-
-    public static boolean isOnAllianceSide() {
-        return isRed() == robotTracker.isOnRedSide();
-    }
-
-    public static @NotNull Drive getDrive() {
-        return drive;
-    }
-
-    public static @NotNull RobotTracker getRobotTracker() {
-        return robotTracker;
-    }
-
-    public static @NotNull VisionHandler getVisionHandler() {
-        return visionHandler;
-    }
-
-    public static @NotNull Grabber getGrabber() {
-        return grabber;
-    }
-
-    public static @NotNull TelescopingArm getTelescopingArm() {
-        return telescopingArm;
-    }
-
-    public static @NotNull Elevator getElevator() {
-        return elevator;
-    }
-
-    public static @NotNull MechanismStateManager getMechanismStateManager() {
-        return mechanismStateManager;
-    }
+    public static final LoggedDashboardChooser<String> sideChooser = new LoggedDashboardChooser<>("SideChooser");
 
     /**
      * This method is run when the robot is first started up and should be used for any initialization code.
@@ -220,14 +169,10 @@ public class Robot extends LoggedRobot {
             Logger.getInstance().addDataReceiver(
                     new WPILOGWriter(LogFileUtil.addPathSuffix(logPath, "_sim"))); // Save outputs to a new log
 
-            drive = new Drive(new DriveIO() {
-            });
-            elevator = new Elevator(new ElevatorIO() {
-            });
-            telescopingArm = new TelescopingArm(new TelescopingArmIO() {
-            });
-            grabber = new Grabber(new GrabberIO() {
-            });
+            drive = new Drive(new DriveIO() {});
+            elevator = new Elevator(new ElevatorIO() {});
+            telescopingArm = new TelescopingArm(new TelescopingArmIO() {});
+            grabber = new Grabber(new GrabberIO() {});
         }
 
         Logger.getInstance().start(); // Start logging! No more data receivers, replay sources, or metadata values may be added
@@ -300,6 +245,7 @@ public class Robot extends LoggedRobot {
         }
     }
 
+
     /**
      * This method is called every robot packet, no matter the mode. Use this for items like diagnostics that you want ran during
      * disabled, autonomous, teleoperated and test.
@@ -312,6 +258,7 @@ public class Robot extends LoggedRobot {
         AbstractSubsystem.tick();
     }
 
+
     @Override
     public void autonomousInit() {
         drive.setBrakeMode(true);
@@ -323,6 +270,7 @@ public class Robot extends LoggedRobot {
         AutonomousContainer.getInstance().runAutonomous(autoName, sideChooser.get(), true);
     }
 
+
     /**
      * This method is called periodically during autonomous.
      */
@@ -331,6 +279,7 @@ public class Robot extends LoggedRobot {
 
     }
 
+
     /**
      * This method is called once when teleop is enabled.
      */
@@ -338,6 +287,31 @@ public class Robot extends LoggedRobot {
     public void teleopInit() {
         drive.setBrakeMode(true);
     }
+
+
+    private @Nullable Pose2d teleopDrivingAutoAlignPosition = new Pose2d();
+
+    {
+        Logger.getInstance().recordOutput("Auto Align Y", teleopDrivingAutoAlignPosition.getY());
+        Logger.getInstance().recordOutput("Auto Align X", teleopDrivingAutoAlignPosition.getX());
+        Logger.getInstance().recordOutput("Auto Align Angle", teleopDrivingAutoAlignPosition.getRotation().getDegrees());
+    }
+
+
+    enum WantedMechanismState {
+        STOWED, SCORING, FLOOR_PICKUP, STATION_PICKUP
+    }
+
+    private WantedMechanismState wantedMechanismState = WantedMechanismState.STOWED;
+    private @Nullable WantedMechanismState lastWantedMechanismState = null;
+
+
+    private boolean isGrabberOpen = true;
+
+    private double wantedX = -0.489;
+    private double wantedY = 0.249;
+    private double wantedAngle = MAX_WRIST_ANGLE - 2;
+    public boolean isTurnToTargetMode = false;
 
     /**
      * This method is called periodically during operator control.
@@ -378,15 +352,13 @@ public class Robot extends LoggedRobot {
         } else {
             if (isTurnToTargetMode) {
                 assert teleopDrivingAutoAlignPosition != null;
-                if (teleopDrivingAutoAlignPosition != null) {
-                    var controllerDriveInputs = getControllerDriveInputs();
-                    drive.setTurn(controllerDriveInputs,
-                            new State(teleopDrivingAutoAlignPosition.getRotation().getRadians(), 0),
-                            0);
+                var controllerDriveInputs = getControllerDriveInputs();
+                drive.setTurn(controllerDriveInputs,
+                        new State(teleopDrivingAutoAlignPosition.getRotation().getRadians(), 0),
+                        0);
 
-                    if (Math.abs(controllerDriveInputs.getRotation()) > 0) {
-                        isTurnToTargetMode = false;
-                    }
+                if (Math.abs(controllerDriveInputs.getRotation()) > 0) {
+                    isTurnToTargetMode = false;
                 }
             } else {
                 drive.swerveDriveFieldRelative(getControllerDriveInputs());
@@ -562,6 +534,7 @@ public class Robot extends LoggedRobot {
         teleopDrivingAutoAlignPosition = new Pose2d(x, y, rotation);
     }
 
+
     /**
      * This method is called once when the robot is disabled.
      */
@@ -573,6 +546,7 @@ public class Robot extends LoggedRobot {
         disabledTime = Timer.getFPGATimestamp();
     }
 
+
     /**
      * This method is called periodically when disabled.
      */
@@ -583,12 +557,14 @@ public class Robot extends LoggedRobot {
         }
     }
 
+
     /**
      * This method is called once when test mode is enabled.
      */
     @Override
     public void testInit() {
     }
+
 
     /**
      * This method is called periodically during test mode.
@@ -618,7 +594,39 @@ public class Robot extends LoggedRobot {
         return inputs;
     }
 
-    enum WantedMechanismState {
-        STOWED, SCORING, FLOOR_PICKUP, STATION_PICKUP
+    public static boolean isRed() {
+        return sideChooser.get().equals("red");
+    }
+
+    public static boolean isOnAllianceSide() {
+        return isRed() == robotTracker.isOnRedSide();
+    }
+
+    public static @NotNull Drive getDrive() {
+        return drive;
+    }
+
+    public static @NotNull RobotTracker getRobotTracker() {
+        return robotTracker;
+    }
+
+    public static @NotNull VisionHandler getVisionHandler() {
+        return visionHandler;
+    }
+
+    public static @NotNull Grabber getGrabber() {
+        return grabber;
+    }
+
+    public static @NotNull TelescopingArm getTelescopingArm() {
+        return telescopingArm;
+    }
+
+    public static @NotNull Elevator getElevator() {
+        return elevator;
+    }
+
+    public static @NotNull MechanismStateManager getMechanismStateManager() {
+        return mechanismStateManager;
     }
 }
