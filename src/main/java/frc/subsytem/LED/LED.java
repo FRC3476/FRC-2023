@@ -3,6 +3,7 @@ package frc.subsytem.LED;
 import edu.wpi.first.wpilibj.AddressableLED;
 import edu.wpi.first.wpilibj.AddressableLEDBuffer;
 import frc.robot.Constants;
+import frc.robot.ScoringPositionManager;
 import frc.subsytem.AbstractSubsystem;
 import org.littletonrobotics.junction.Logger;
 
@@ -36,6 +37,14 @@ public class LED extends AbstractSubsystem {
         for(int i = 0; i < addressableLEDBuffer.getLength(); i++) {
             addressableLEDBuffer.setRGB(i, ledState.r, ledState.g, ledState.b);
             ledStrip.setData(addressableLEDBuffer);
+        }
+    }
+
+    public void setLedState(ScoringPositionManager.PositionType wantedPositionType) {
+        if(wantedPositionType == ScoringPositionManager.PositionType.CONE) {
+            setColor(LedState.YELLOW);
+        } else if(wantedPositionType == ScoringPositionManager.PositionType.CUBE) {
+            setColor(LedState.BLUE);
         }
     }
 

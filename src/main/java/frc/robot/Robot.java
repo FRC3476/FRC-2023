@@ -479,15 +479,6 @@ public class Robot extends LoggedRobot {
             grabber.setRollerVoltage(0);
         }
 
-        //Random button numbers
-        if(buttonPanel.getRawButton(10)) {
-            led.setColor(LED.LedState.YELLOW);
-        }
-
-        if(buttonPanel.getRawButton(11)) {
-            led.setColor(LED.LedState.BLUE);
-        }
-
         xbox.setRumble(RumbleType.kBothRumble, wantedRumble);
     }
 
