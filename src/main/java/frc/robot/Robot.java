@@ -22,6 +22,7 @@ import frc.subsytem.AbstractSubsystem;
 import frc.subsytem.Elevator.Elevator;
 import frc.subsytem.Elevator.ElevatorIO;
 import frc.subsytem.Elevator.ElevatorIOSparkMax;
+import frc.subsytem.LED.LED;
 import frc.subsytem.MechanismStateManager;
 import frc.subsytem.MechanismStateManager.MechanismStates;
 import frc.subsytem.drive.Drive;
@@ -86,7 +87,7 @@ public class Robot extends LoggedRobot {
     private @NotNull static TelescopingArm telescopingArm;
     private @NotNull static Grabber grabber;
     private @NotNull static MechanismStateManager mechanismStateManager;
-
+    private @NotNull static LED led;
 
     private @NotNull Controller xbox;
     private @NotNull Controller stick;
@@ -476,6 +477,15 @@ public class Robot extends LoggedRobot {
             grabber.setRollerVoltage(GRABBER_ROLLER_IDLE);
         } else {
             grabber.setRollerVoltage(0);
+        }
+
+        //Random button numbers
+        if(buttonPanel.getRawButton(10)) {
+            led.setColor(LED.LedState.YELLOW);
+        }
+
+        if(buttonPanel.getRawButton(11)) {
+            led.setColor(LED.LedState.BLUE);
         }
 
         xbox.setRumble(RumbleType.kBothRumble, wantedRumble);

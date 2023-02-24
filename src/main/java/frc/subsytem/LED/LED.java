@@ -14,7 +14,6 @@ public class LED extends AbstractSubsystem {
         ledStrip = new AddressableLED(0);
         ledStrip.setLength(Constants.LED_LENGTH);
         addressableLEDBuffer = new AddressableLEDBuffer(Constants.LED_LENGTH);
-        ledStrip.setData(addressableLEDBuffer);
         ledStrip.start();
     }
 
@@ -36,6 +35,7 @@ public class LED extends AbstractSubsystem {
     public void setColor(LedState ledState) {
         for(int i = 0; i < addressableLEDBuffer.getLength(); i++) {
             addressableLEDBuffer.setRGB(i, ledState.r, ledState.g, ledState.b);
+            ledStrip.setData(addressableLEDBuffer);
         }
     }
 
