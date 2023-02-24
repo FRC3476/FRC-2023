@@ -5,6 +5,7 @@
 
 package frc.robot;
 
+import com.dacubeking.AutoBuilder.robot.annotations.AutoBuilderAccessible;
 import com.dacubeking.AutoBuilder.robot.reflection.ClassInformationSender;
 import com.dacubeking.AutoBuilder.robot.robotinterface.AutonomousContainer;
 import com.dacubeking.AutoBuilder.robot.robotinterface.CommandTranslator;
@@ -209,7 +210,8 @@ public class Robot extends LoggedRobot {
 
                 ),
                 false,
-                null
+                null,
+                this
         );
         AutonomousContainer.getInstance().getAutonomousNames().forEach(name -> autoChooser.addOption(name, name));
 
@@ -329,8 +331,8 @@ public class Robot extends LoggedRobot {
         }
 
         if (xbox.getRisingEdge(XBOX_AUTO_ROTATE)) {
-            isTurnToTargetMode = true;
             updateTeleopDrivingTarget(scoringPositionManager);
+            isTurnToTargetMode = true;
         }
 
         if (xbox.getRawButton(XBOX_START_AUTO_DRIVE)) { //Should be remapped to one of the back buttons
@@ -609,30 +611,37 @@ public class Robot extends LoggedRobot {
         return isRed() == robotTracker.isOnRedSide();
     }
 
+    @AutoBuilderAccessible
     public static @NotNull Drive getDrive() {
         return drive;
     }
 
+    @AutoBuilderAccessible
     public static @NotNull RobotTracker getRobotTracker() {
         return robotTracker;
     }
 
+    @AutoBuilderAccessible
     public static @NotNull VisionHandler getVisionHandler() {
         return visionHandler;
     }
 
+    @AutoBuilderAccessible
     public static @NotNull Grabber getGrabber() {
         return grabber;
     }
 
+    @AutoBuilderAccessible
     public static @NotNull TelescopingArm getTelescopingArm() {
         return telescopingArm;
     }
 
+    @AutoBuilderAccessible
     public static @NotNull Elevator getElevator() {
         return elevator;
     }
 
+    @AutoBuilderAccessible
     public static @NotNull MechanismStateManager getMechanismStateManager() {
         return mechanismStateManager;
     }
