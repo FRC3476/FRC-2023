@@ -1,7 +1,5 @@
 package frc.subsytem.vision;
 
-import com.dacubeking.AutoBuilder.robot.sender.pathpreview.RobotPositionSender;
-import com.dacubeking.AutoBuilder.robot.sender.pathpreview.RobotState;
 import edu.wpi.first.apriltag.AprilTag;
 import edu.wpi.first.apriltag.AprilTagFieldLayout;
 import edu.wpi.first.apriltag.AprilTagFields;
@@ -134,7 +132,7 @@ public class VisionHandler extends AbstractSubsystem {
         }
     }
 
-    private final MatBuilder<N4, N1> visionStdMatBuilder = new MatBuilder<>(Nat.N4(), Nat.N1());
+    public static final MatBuilder<N4, N1> VISION_STD_BUILDER = new MatBuilder<>(Nat.N4(), Nat.N1());
 
     private void processNewTagPosition(VisionUpdate data) {
         final var expectedTagPosition = fieldTagCache.get(data.tagId); // We should never get an
@@ -142,7 +140,7 @@ public class VisionHandler extends AbstractSubsystem {
 
         final var tagTranslation = new Translation3d(data.posZ, -data.posX, -data.posY);
         var distanceToTag = tagTranslation.getNorm();
-        
+
         final var tagTranslationRobotCentric = tagTranslation
                 .rotateBy(negativeCameraPose.getRotation())
                 .plus(cameraPose.getTranslation());
@@ -192,14 +190,10 @@ public class VisionHandler extends AbstractSubsystem {
                 rotationFromTag
         );
 
-        RobotPositionSender.addRobotPosition(
-                new RobotState(poseToFeedToRobotTracker.toPose2d(), data.timestamp, "Fed Vision Pose Tag: " + data.tagId));
-        RobotPositionSender.addRobotPosition(
-                new RobotState(visionOnlyPose.toPose2d(), data.timestamp, "Vision Only Pose Tag: " + data.tagId));
         var defaultDevs = RobotTracker.DEFAULT_VISION_DEVIATIONS;
         if (distanceToTag == 0) return;
         var distanceToTag3 = distanceToTag * distanceToTag * distanceToTag;
-        var devs = visionStdMatBuilder.fill(
+        var devs = VISION_STD_BUILDER.fill(
                 defaultDevs.get(0, 0) * distanceToTag3,
                 defaultDevs.get(1, 0) * distanceToTag3,
                 defaultDevs.get(2, 0) * distanceToTag3,

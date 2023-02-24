@@ -21,6 +21,10 @@ import frc.subsytem.robottracker.GyroInputs.Entry;
 import frc.utility.geometry.MutableTranslation3d;
 import frc.utility.wpimodified.SwerveDriveOdometry;
 import frc.utility.wpimodified.SwerveDrivePoseEstimator;
+import org.apache.commons.math3.linear.EigenDecomposition;
+import org.apache.commons.math3.linear.MatrixUtils;
+import org.apache.commons.math3.linear.RealMatrix;
+import org.apache.commons.math3.linear.RealVector;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.littletonrobotics.junction.Logger;
@@ -31,9 +35,11 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 import static frc.robot.Constants.*;
+import static frc.subsytem.vision.VisionHandler.VISION_STD_BUILDER;
 import static java.lang.Double.isNaN;
 
 public final class RobotTracker extends AbstractSubsystem {
+    public static final double VISION_SAME_TIME_THRESHOLD = 0.05;
     private final ReentrantReadWriteLock lock = new ReentrantReadWriteLock();
     private final @NotNull WPI_Pigeon2 gyroSensor = new WPI_Pigeon2(PIGEON_CAN_ID, "rio");
 
@@ -57,7 +63,6 @@ public final class RobotTracker extends AbstractSubsystem {
      * The 3d pose of the robot at the last time the odometry was updated.
      */
     private @NotNull Pose3d latestPose3d = new Pose3d();
-    private @NotNull Rotation2d gyroAngle2d = new Rotation2d();
     private @NotNull Rotation3d gyroAngle3d = new Rotation3d();
 
     /**
@@ -126,14 +131,19 @@ public final class RobotTracker extends AbstractSubsystem {
     }
 
 
-    private record VisionMeasurement(Pose3d pose, double timestamp, Optional<Matrix<N4, N1>> visionMeasurementStds) {
+    private record VisionMeasurement(Pose3d pose, double timestamp,
+                                     Optional<Matrix<N4, N1>> visionMeasurementStds) implements Comparable<VisionMeasurement> {
+        @Override
+        public int compareTo(@NotNull VisionMeasurement o) {
+            return Double.compare(timestamp, o.timestamp);
+        }
     }
 
     private record CompletedVisionMeasurement(Pose3d pose, Matrix<N4, N1> visionMeasurementStds, Pose3d preUpdatePose) {
     }
 
     private final List<VisionMeasurement> visionMeasurements = Collections.synchronizedList(new ArrayList<>());
-    private final TreeMap<Double, List<CompletedVisionMeasurement>> pastVisionMeasurements = new TreeMap<>();
+    private final TreeMap<Double, CompletedVisionMeasurement> pastVisionMeasurements = new TreeMap<>();
 
     public void addVisionMeasurement(@NotNull Pose3d visionMeasurement, double timestamp) {
         visionMeasurements.add(new VisionMeasurement(visionMeasurement, timestamp, Optional.empty()));
@@ -255,7 +265,6 @@ public final class RobotTracker extends AbstractSubsystem {
                 // Get the gyro measurements for the timestamp of our swerve module positions
                 acceleration = accelerationHistory.getSample(timestamp).orElse(new Translation3d());
                 gyroAngle3d = gyroHistory.getSample(timestamp).orElse(gyroInputs.rotation3d);
-                gyroAngle2d = gyroAngle3d.toRotation2d();
 
                 // Integrate the acceleration to get the velocity for the velocity history
                 var lastVelocityEntry = velocityHistory.getInternalBuffer().lastEntry();
@@ -374,11 +383,8 @@ public final class RobotTracker extends AbstractSubsystem {
                     // Undo the vision measurements that were applied during the mismatch
                     var lastVisionUpdateToUndo = pastVisionMeasurements.firstEntry();
                     if (lastVisionUpdateToUndo != null) {
-                        swerveDriveOdometry.undoVisionMeasurement(lastVisionUpdateToUndo.getValue().get(0).pose(),
+                        swerveDriveOdometry.undoVisionMeasurement(lastVisionUpdateToUndo.getValue().pose(),
                                 lastVisionUpdateToUndo.getKey());
-                        // If the key exists, then the array list can't be empty, so it is safe to get the first element
-                        // The first element is the list is also the first vision measurement applied at that time, so it is the
-                        // one to undo with.
                     }
 
                     if (swerveDriveOdometry.rollbackOdometry(timestamp - MISMATCH_LOOK_BACK_TIME)) {
@@ -414,10 +420,9 @@ public final class RobotTracker extends AbstractSubsystem {
                         }
                         // Reapply the vision measurements
                         for (var entry : pastVisionMeasurements.entrySet()) {
-                            for (var visionMeasurement : entry.getValue()) {
-                                swerveDriveOdometry.addVisionMeasurement(visionMeasurement.pose(), entry.getKey(),
-                                        visionMeasurement.visionMeasurementStds());
-                            }
+                            var visionMeasurement = entry.getValue();
+                            swerveDriveOdometry.addVisionMeasurement(visionMeasurement.pose(), entry.getKey(),
+                                    visionMeasurement.visionMeasurementStds());
                         }
                     }
                 }
@@ -460,26 +465,61 @@ public final class RobotTracker extends AbstractSubsystem {
             swerveDriveOdometry.updateWithTime(timestamp, gyroAngle3d, modulePositions);
         }
 
+        double visionTimestamp = -1;
+
+        double totalPositionWeight = 0;
+        MutableTranslation3d weightedPosition = new MutableTranslation3d();
+
+        // Rotation Averaging is doing Eigendecomposition of sum of outer products; see https://math.stackexchange.com/a/3435296
+
+        double totalRotationWeight = 0;
+        RealMatrix accum = null; //Will be initialized on first iteration
+
         synchronized (visionMeasurements) {
             for (VisionMeasurement visionMeasurement : visionMeasurements) {
-                double poseError = visionMeasurement.pose.getTranslation().getDistance(visionMeasurement.pose.getTranslation());
-                if (poseError > maxAllowedPoseError) {
-                    continue;
+                if (visionTimestamp == -1 ||
+                        Math.abs(visionMeasurement.timestamp() - visionTimestamp) > VISION_SAME_TIME_THRESHOLD) {
+                    if (visionTimestamp != -1) {
+                        // We have a vision measurement to add at a different time
+                        // Add the previous vision measurement and reset the accumulators
+                        finalizeAndAddVisionMeasurement(visionTimestamp, totalPositionWeight, weightedPosition,
+                                totalRotationWeight, accum);
+                    }
+
+                    visionTimestamp = visionMeasurement.timestamp();
+
+                    totalPositionWeight = 0;
+                    weightedPosition.set(0, 0, 0);
+
+                    totalRotationWeight = 0;
+                    accum = MatrixUtils.createRealMatrix(4, 4);
                 }
 
-                var visionMeasurementStds = visionMeasurement.visionMeasurementStds().orElse(DEFAULT_VISION_DEVIATIONS);
+                var stds = visionMeasurement.visionMeasurementStds().orElse(DEFAULT_VISION_DEVIATIONS);
+                double posWeight = 1 / stds.get(0, 0); // The position standard deviation are the same for x, y, and z
 
-                pastVisionMeasurements.putIfAbsent(visionMeasurement.timestamp(), new ArrayList<>());
-                pastVisionMeasurements.get(visionMeasurement.timestamp()).add(
-                        new CompletedVisionMeasurement(visionMeasurement.pose, visionMeasurementStds,
-                                swerveDriveOdometry.getEstimatedPosition3d())
-                );
+                weightedPosition.plus(visionMeasurement.pose().getTranslation().times(posWeight));
+                totalPositionWeight += posWeight;
 
-                swerveDriveOdometry.addVisionMeasurement(visionMeasurement.pose(), visionMeasurement.timestamp(),
-                        visionMeasurement.visionMeasurementStds().orElse(DEFAULT_VISION_DEVIATIONS));
+
+                Quaternion rotation = visionMeasurement.pose().getRotation().getQuaternion();
+                double rotWeight = stds.get(4, 0);
+
+                RealVector qVec = MatrixUtils.createRealVector(
+                        new double[]{rotation.getX(), rotation.getY(), rotation.getZ(), rotation.getW()});
+
+
+                RealMatrix qOuterProdWeighted = qVec.outerProduct(qVec).scalarMultiply(rotWeight);
+                accum = accum.add(qOuterProdWeighted);
+                totalRotationWeight += rotWeight;
             }
-            visionMeasurements.clear();
         }
+        // Add the last vision measurement
+        finalizeAndAddVisionMeasurement(visionTimestamp, totalPositionWeight, weightedPosition, totalRotationWeight, accum);
+
+        // Remove old vision measurements we don't need anymore
+        visionMeasurements.clear();
+
 
         ChassisSpeeds chassisSpeeds = SWERVE_DRIVE_KINEMATICS.toChassisSpeeds(Robot.getDrive().getModuleStates());
 
@@ -511,6 +551,32 @@ public final class RobotTracker extends AbstractSubsystem {
         } finally {
             lock.writeLock().unlock();
         }
+    }
+
+    private void finalizeAndAddVisionMeasurement(double timestamp, double totalPositionWeight,
+                                                 MutableTranslation3d weightedPosition,
+                                                 double totalRotationWeight, RealMatrix accum) {
+        var positionAverage = weightedPosition.div(totalPositionWeight);
+        var positionDevs = Math.sqrt(Math.sqrt(totalPositionWeight) / totalPositionWeight);
+
+        var rotationDevs = Math.sqrt(Math.sqrt(totalRotationWeight) / totalRotationWeight);
+        EigenDecomposition eigenDecomposition = new EigenDecomposition(accum);
+        double[] ev0 = eigenDecomposition.getEigenvector(0).toArray();
+
+        Quaternion avgRotation = new Quaternion(ev0[1], ev0[2], ev0[3], ev0[0]);
+        var visionCombinedStds = VISION_STD_BUILDER.fill(positionDevs, positionDevs, positionDevs, rotationDevs);
+
+        var combinedPose = new Pose3d(positionAverage, new Rotation3d(avgRotation));
+
+        pastVisionMeasurements.put(timestamp, new CompletedVisionMeasurement(combinedPose, visionCombinedStds,
+                swerveDriveOdometry.getEstimatedPosition3d()));
+
+        swerveDriveOdometry.addVisionMeasurement(
+                combinedPose,
+                timestamp,
+                visionCombinedStds);
+
+        RobotPositionSender.addRobotPosition(new RobotState(combinedPose.toPose2d(), timestamp, "Combined Tag Pose"));
     }
 
     /**
