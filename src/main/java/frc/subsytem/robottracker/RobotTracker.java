@@ -515,7 +515,10 @@ public final class RobotTracker extends AbstractSubsystem {
             }
         }
         // Add the last vision measurement
-        finalizeAndAddVisionMeasurement(visionTimestamp, totalPositionWeight, weightedPosition, totalRotationWeight, accum);
+        if (visionTimestamp != -1) {
+            // We have at least one vision measurement to add
+            finalizeAndAddVisionMeasurement(visionTimestamp, totalPositionWeight, weightedPosition, totalRotationWeight, accum);
+        }
 
         // Remove old vision measurements we don't need anymore
         visionMeasurements.clear();
