@@ -42,6 +42,7 @@ public class GrabberIOSparkMax extends GrabberIO {
 
         grabberSparkMax.enableVoltageCompensation(Constants.GRABBER_NOMINAL_VOLTAGE);
         grabberSparkMax.setSmartCurrentLimit(Constants.GRABBER_SMART_CURRENT_LIMIT);
+        grabberSparkMax.setClosedLoopRampRate(0.5);
 
         if (GRABBER_WHEELS_USED) {
             rollerSparkMax1 = new CANSparkMax(GRABBER_ROLLER_MAIN_CAN_ID, CANSparkMaxLowLevel.MotorType.kBrushless);

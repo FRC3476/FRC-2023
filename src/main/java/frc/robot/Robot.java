@@ -310,6 +310,8 @@ public class Robot extends LoggedRobot {
 
 
     private boolean isGrabberOpen = true;
+    private boolean setFutureGrabberClose = false;
+
 
     private double wantedX = -0.489;
     private double wantedY = 0.249;
@@ -341,7 +343,7 @@ public class Robot extends LoggedRobot {
                 updateTeleopDrivingTarget(scoringPositionManager);
                 assert teleopDrivingAutoAlignPosition != null;
             }
-            
+
             if (!drive.driveToPosition(
                     teleopDrivingAutoAlignPosition.getTranslation(),
                     teleopDrivingAutoAlignPosition.getRotation(),
@@ -461,6 +463,9 @@ public class Robot extends LoggedRobot {
         if (isGrabberOpen) {
             if (wantedMechanismState == WantedMechanismState.STOWED) {
                 grabber.setGrabState(GrabState.IDLE);
+                if (setFutureGrabberClose && telescopingArm.getPosition() < 0.2) {
+                    isGrabberOpen = false;
+                }
             } else {
                 grabber.setGrabState(GrabState.OPEN);
             }
@@ -491,7 +496,7 @@ public class Robot extends LoggedRobot {
      */
     private void setStowed() {
         wantedMechanismState = WantedMechanismState.STOWED;
-        isGrabberOpen = false;
+        setFutureGrabberClose = true;
     }
 
     private void updateTeleopDrivingTarget(ScoringPositionManager scoringPositionManager) {
