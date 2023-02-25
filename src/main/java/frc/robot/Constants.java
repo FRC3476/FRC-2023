@@ -21,7 +21,7 @@ public final class Constants {
 
     private static final boolean GRAVITY_LESS_MODE = false;
 
-    public static final String LOG_DIRECTORY = "/home/lvuser/logs";
+    public static final String LOG_DIRECTORY = "/u/logs";
 
     public static final double SECONDS_PER_MINUTE = 60;
 
