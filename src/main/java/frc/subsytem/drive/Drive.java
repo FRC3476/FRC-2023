@@ -466,6 +466,7 @@ public final class Drive extends AbstractSubsystem {
 
     @Override
     public synchronized void update() {
+        var lastTimeStep = inputs.driveIoTimestamp;
         io.updateInputs(inputs);
         Logger.getInstance().processInputs("Drive", inputs);
 
@@ -480,7 +481,8 @@ public final class Drive extends AbstractSubsystem {
             case AUTO_BALANCE -> autoBalance(ControllerDriveInputs.ZERO);
         }
         if (driveState != DriveState.HOLD && !DriverStation.isTest() && DriverStation.isEnabled()) {
-            swerveDrive(nextChassisSpeeds, kinematicLimit, NOMINAL_DT);
+            var dt = inputs.driveIoTimestamp - lastTimeStep;
+            swerveDrive(nextChassisSpeeds, kinematicLimit, dt);
         }
     }
 
