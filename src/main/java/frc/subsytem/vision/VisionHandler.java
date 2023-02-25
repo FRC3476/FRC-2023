@@ -119,6 +119,8 @@ public class VisionHandler extends AbstractSubsystem {
         configTable.getEntry("Framerate").setDouble(30);
         configTable.getEntry("Threads").setDouble(4);
         configTable.getEntry("Do Stream").setBoolean(false);
+        configTable.getEntry("Stream Port").setDouble(5810);
+        configTable.getEntry("Stream Ip").setString("10.167.1.44");
 
         for (int i = 1; i <= 8; i++) {
             var table = visionTable.getEntry(String.valueOf(i));
