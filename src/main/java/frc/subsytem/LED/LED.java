@@ -34,16 +34,17 @@ public class LED extends AbstractSubsystem {
     }
 
     public void setColor(LedState ledState) {
-        for(int i = 0; i < addressableLEDBuffer.getLength(); i++) {
+        for (int i = 0; i < addressableLEDBuffer.getLength(); i++) {
             addressableLEDBuffer.setRGB(i, ledState.r, ledState.g, ledState.b);
             ledStrip.setData(addressableLEDBuffer);
         }
     }
 
-    public void setLedState(ScoringPositionManager.PositionType wantedPositionType) {
-        if(wantedPositionType == ScoringPositionManager.PositionType.CONE) {
+    public void setLedState() {
+        ScoringPositionManager.PositionType wantedPositionType = ScoringPositionManager.getInstance().getWantedPositionType();
+        if (wantedPositionType == ScoringPositionManager.PositionType.CONE) {
             setColor(LedState.YELLOW);
-        } else if(wantedPositionType == ScoringPositionManager.PositionType.CUBE) {
+        } else if (wantedPositionType == ScoringPositionManager.PositionType.CUBE) {
             setColor(LedState.BLUE);
         }
     }
