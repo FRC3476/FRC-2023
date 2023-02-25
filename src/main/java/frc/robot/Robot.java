@@ -517,11 +517,17 @@ public class Robot extends LoggedRobot {
 
             Logger.getInstance().recordOutput("Robot/Wanted Y Auto Drive", y);
 
+            double scoringPositionOffset;
+            if (scoringPositionManager.getWantedPositionType() == PositionType.CUBE) {
+                scoringPositionOffset = SCORING_POSITION_OFFSET_CUBE_FROM_WALL;
+            } else {
+                scoringPositionOffset = SCORING_POSITION_OFFSET_CONE_FROM_WALL;
+            }
             if (isRed()) {
-                x = Constants.GRIDS_RED_X + HALF_ROBOT_WIDTH + SCORING_POSITION_OFFSET_FROM_WALL;
+                x = Constants.GRIDS_RED_X + HALF_ROBOT_WIDTH + scoringPositionOffset;
                 rotation = Constants.SCORING_ANGLE_RED;
             } else {
-                x = Constants.GRIDS_BLUE_X - HALF_ROBOT_WIDTH - SCORING_POSITION_OFFSET_FROM_WALL;
+                x = Constants.GRIDS_BLUE_X - HALF_ROBOT_WIDTH - scoringPositionOffset;
                 rotation = Constants.SCORING_ANGLE_BLUE;
             }
         } else {

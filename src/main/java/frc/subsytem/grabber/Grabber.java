@@ -68,7 +68,7 @@ public class Grabber extends AbstractSubsystem {
     }
 
     public enum GrabState {
-        OPEN(2),
+        OPEN(5),
         GRAB_CUBE(-4),
         GRAB_CONE(-12),
         IDLE(0);

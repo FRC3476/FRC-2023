@@ -279,7 +279,8 @@ public final class Constants {
     public static final double PICKUP_POSITION_Y = -3.56;
     public static final double PICKUP_POSITION_X_OFFSET_FROM_WALL = FIELD_WIDTH_METERS - 15.2;
 
-    public static final float SCORING_POSITION_OFFSET_FROM_WALL = 0.1f;
+    public static final double SCORING_POSITION_OFFSET_CONE_FROM_WALL = 0.1;
+    public static final double SCORING_POSITION_OFFSET_CUBE_FROM_WALL = 0.1 + Units.inchesToMeters(3);
 
     // Constraints
     // TODO: FIND REAL CONSTRAINTS
