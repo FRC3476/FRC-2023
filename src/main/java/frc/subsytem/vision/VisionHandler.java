@@ -142,7 +142,7 @@ public class VisionHandler extends AbstractSubsystem {
 
         final var tagTranslation = new Translation3d(data.posZ, -data.posX, -data.posY);
         var distanceToTag = tagTranslation.getNorm();
-        
+
         final var tagTranslationRobotCentric = tagTranslation
                 .rotateBy(negativeCameraPose.getRotation())
                 .plus(cameraPose.getTranslation());
@@ -184,7 +184,7 @@ public class VisionHandler extends AbstractSubsystem {
         // but still pass the rotation we calculated from the tag, so we can use it to compensate for the gyro drift
         var poseToFeedToRobotTracker = new Pose3d(
                 calculatedTranslationFromGyro, // 3d pos on the field
-                rotationFromTag
+                distanceToTag > 4 ? gyroAngle : rotationFromTag
         );
 
         var visionOnlyPose = new Pose3d(
@@ -198,7 +198,7 @@ public class VisionHandler extends AbstractSubsystem {
                 new RobotState(visionOnlyPose.toPose2d(), data.timestamp, "Vision Only Pose Tag: " + data.tagId));
         var defaultDevs = RobotTracker.DEFAULT_VISION_DEVIATIONS;
         if (distanceToTag == 0) return;
-        var distanceToTag3 = distanceToTag * distanceToTag * distanceToTag;
+        var distanceToTag3 = distanceToTag * distanceToTag;
         var devs = visionStdMatBuilder.fill(
                 defaultDevs.get(0, 0) * distanceToTag3,
                 defaultDevs.get(1, 0) * distanceToTag3,

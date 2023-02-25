@@ -117,7 +117,7 @@ public final class RobotTracker extends AbstractSubsystem {
                 gyroInputs.rotation3d,
                 Robot.getDrive().getModulePositions(),
                 new Pose3d(),
-                VecBuilder.fill(0.1, 0.1, 0.05, 0.01),
+                VecBuilder.fill(0.1, 0.1, 0.1, 0.01),
                 DEFAULT_VISION_DEVIATIONS
         );
 
@@ -474,7 +474,6 @@ public final class RobotTracker extends AbstractSubsystem {
                         new CompletedVisionMeasurement(visionMeasurement.pose, visionMeasurementStds,
                                 swerveDriveOdometry.getEstimatedPosition3d())
                 );
-
                 swerveDriveOdometry.addVisionMeasurement(visionMeasurement.pose(), visionMeasurement.timestamp(),
                         visionMeasurement.visionMeasurementStds().orElse(DEFAULT_VISION_DEVIATIONS));
             }
@@ -554,7 +553,7 @@ public final class RobotTracker extends AbstractSubsystem {
     }
 
     /**
-     * @return The angular velocity of the robot in radians per second. (CCW is positive)
+     * @return The angular velocity of the robot in degrees per second. (CCW is positive)
      */
     public double getAngularVelocity() {
         lock.readLock().lock();
