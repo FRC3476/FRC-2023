@@ -123,10 +123,10 @@ public class PathGenerator {
                 DriverStation.reportError("Failed to generate trajectory: " + e.getMessage(), e.getStackTrace());
                 return Optional.empty();
             }
-            System.out.println(trajectory.getTotalTimeSeconds());
-            System.out.println(trajectory.sample(0));
-            System.out.println(trajectory.sample(trajectory.getTotalTimeSeconds()));
-            System.out.println(trajectory.sample(trajectory.getTotalTimeSeconds() / 2));
+//            System.out.println(trajectory.getTotalTimeSeconds());
+//            System.out.println(trajectory.sample(0));
+//            System.out.println(trajectory.sample(trajectory.getTotalTimeSeconds()));
+//            System.out.println(trajectory.sample(trajectory.getTotalTimeSeconds() / 2));
             if (trajectory.getStates().size() == 0) {
                 DriverStation.reportError("Failed to generate trajectory: no states", false);
                 return Optional.empty();

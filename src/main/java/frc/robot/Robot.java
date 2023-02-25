@@ -87,12 +87,13 @@ public class Robot extends LoggedRobot {
     private @NotNull static TelescopingArm telescopingArm;
     private @NotNull static Grabber grabber;
     private @NotNull static MechanismStateManager mechanismStateManager;
-
+    private @NotNull static PowerDistribution powerDistribution;
 
     private @NotNull Controller xbox;
     private @NotNull Controller stick;
 
     private @NotNull Controller buttonPanel;
+
 
     // Autonomous
     private final LoggedDashboardChooser<String> autoChooser = new LoggedDashboardChooser<>("AutoChooser");
@@ -158,7 +159,7 @@ public class Robot extends LoggedRobot {
 
             Logger.getInstance().addDataReceiver(new WPILOGWriter(LOG_DIRECTORY));
             Logger.getInstance().addDataReceiver(new RLOGServer(5800)); // Publish data to NetworkTables
-            new PowerDistribution(1, ModuleType.kRev); // Enables power distribution logging
+            powerDistribution = new PowerDistribution(1, ModuleType.kRev); // Enables power distribution logging
 
             drive = new Drive(new DriveIOSparkMax());
             elevator = new Elevator(new ElevatorIOSparkMax());
@@ -340,7 +341,7 @@ public class Robot extends LoggedRobot {
                 updateTeleopDrivingTarget(scoringPositionManager);
                 assert teleopDrivingAutoAlignPosition != null;
             }
-
+            
             if (!drive.driveToPosition(
                     teleopDrivingAutoAlignPosition.getTranslation(),
                     teleopDrivingAutoAlignPosition.getRotation(),
@@ -644,5 +645,9 @@ public class Robot extends LoggedRobot {
     @AutoBuilderAccessible
     public static @NotNull MechanismStateManager getMechanismStateManager() {
         return mechanismStateManager;
+    }
+
+    public static PowerDistribution getPowerDistribution() {
+        return powerDistribution;
     }
 }

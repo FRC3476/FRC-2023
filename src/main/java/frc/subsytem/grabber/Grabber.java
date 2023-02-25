@@ -69,8 +69,8 @@ public class Grabber extends AbstractSubsystem {
 
     public enum GrabState {
         OPEN(2),
-        GRAB_CUBE(-1),
-        GRAB_CONE(-4),
+        GRAB_CUBE(-4),
+        GRAB_CONE(-12),
         IDLE(0);
         final double voltage;
 
