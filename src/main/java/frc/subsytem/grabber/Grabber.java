@@ -79,7 +79,7 @@ public class Grabber extends AbstractSubsystem {
         }
     }
 
-    public void setGrabState(GrabState grabState) {
+    public synchronized void setGrabState(GrabState grabState) {
         io.setGrabberVoltage(grabState.voltage);
         Logger.getInstance().recordOutput("Grabber/Grabber voltage", grabState.voltage);
         Logger.getInstance().recordOutput("Grabber/Grabber state", grabState.name());

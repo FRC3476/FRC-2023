@@ -17,6 +17,8 @@ public class MechanismStateManager extends AbstractSubsystem {
     public static final double PICKUP_KEEPOUT_ELEVATOR_DISTANCE = 1.17;
     public static final double KEEPOUT_HYSTERESIS = 0.02;
 
+    boolean isAtFinalPosition = false;
+
     public record MechanismStateSubsystemPositions(double elevatorPositionMeters, double telescopingArmPositionMeters,
                                                    double grabberAngleDegrees) {
         public double grabberAngleRadians() {
@@ -49,12 +51,16 @@ public class MechanismStateManager extends AbstractSubsystem {
 
         @Override
         public boolean equals(Object o) {
+            return epsilonEquals(0, 0.01);
+        }
+
+        public boolean epsilonEquals(Object o, double epsilon) {
             if (this == o) return true;
             if (o == null || getClass() != o.getClass()) return false;
             MechanismStateCoordinates that = (MechanismStateCoordinates) o;
-            return OrangeUtility.doubleEqual(that.xMeters, xMeters, 0.01) &&
-                    OrangeUtility.doubleEqual(that.yMeters, yMeters, 0.01) &&
-                    OrangeUtility.doubleEqual(that.grabberAngleDegrees, grabberAngleDegrees, 0.01);
+            return OrangeUtility.doubleEqual(that.xMeters, xMeters, epsilon) &&
+                    OrangeUtility.doubleEqual(that.yMeters, yMeters, epsilon) &&
+                    OrangeUtility.doubleEqual(that.grabberAngleDegrees, grabberAngleDegrees, epsilon);
         }
     }
 
@@ -78,7 +84,7 @@ public class MechanismStateManager extends AbstractSubsystem {
 
     MechanismStateCoordinates lastNotStowState = MechanismStates.STOWED.state;
 
-    public void setState(@NotNull MechanismStates state) {
+    public synchronized void setState(@NotNull MechanismStates state) {
         setState(state.state);
         if (state != MechanismStates.STOWED) {
             lastNotStowState = state.state;
@@ -91,9 +97,12 @@ public class MechanismStateManager extends AbstractSubsystem {
     }
 
 
-    public void setState(@NotNull MechanismStateCoordinates state) {
+    public synchronized void setState(@NotNull MechanismStateCoordinates state) {
         // Don't set the lastNotStowState here so that the limits remain active if the arcade mode is used to move the mechanism
         currentWantedState = state;
+        synchronized (this) {
+            isAtFinalPosition = false;
+        }
     }
 
     /**
@@ -178,7 +187,7 @@ public class MechanismStateManager extends AbstractSubsystem {
     /**
      * Gets current mechanism state based off encoder values Assumes that each system is zeroed on startup
      */
-    private MechanismStateCoordinates getCurrentCoordinates() {
+    private synchronized MechanismStateCoordinates getCurrentCoordinates() {
         // Find x coordinate
         double x = -Constants.GRABBER_LENGTH;
 
@@ -206,7 +215,7 @@ public class MechanismStateManager extends AbstractSubsystem {
     }
 
     @Override
-    public void update() {
+    public synchronized void update() {
         MechanismStateCoordinates currentCoordinates = getCurrentCoordinates();
         MechanismStateSubsystemPositions currentPositions = coordinatesToSubsystemPositions(getCurrentCoordinates());
 
@@ -309,5 +318,34 @@ public class MechanismStateManager extends AbstractSubsystem {
                 currentPositions.telescopingArmPositionMeters());
         Logger.getInstance().recordOutput("MechanismStateManager/Recalculated Grabber Angle",
                 currentPositions.grabberAngleDegrees);
+
+
+        boolean isAtFinalPosition = limitCoordinates(currentWantedState).epsilonEquals(getCurrentCoordinates(), 0.02);
+
+        synchronized (this) {
+            this.isAtFinalPosition = isAtFinalPosition;
+        }
+    }
+
+    /**
+     * For auto use only. Blocks the thread until the mechanism is at the correct position
+     *
+     * @param extraDelayMs extra delay to add after the mechanism is at the correct position
+     * @throws InterruptedException if the thread is interrupted
+     */
+    public void waitTillMechAtFinalPos(long extraDelayMs) throws InterruptedException {
+        while (true) {
+            synchronized (this) {
+                if (isAtFinalPosition) {
+                    break;
+                }
+            }
+            Thread.sleep(10);
+        }
+        Thread.sleep(extraDelayMs);
+    }
+
+    public void waitTillMechAtFinalPos() throws InterruptedException {
+        waitTillMechAtFinalPos(0);
     }
 }
