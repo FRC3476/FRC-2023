@@ -70,7 +70,9 @@ import static java.lang.Math.abs;
 public class Robot extends LoggedRobot {
 
     public static final int XBOX_START_AUTO_DRIVE = XboxButtons.RIGHT_CLICK;
-    public static final int XBOX_AUTO_BALENCE = XboxButtons.Y;
+    public static final int XBOX_TOGGLE_MECH = XboxButtons.LEFT_CLICK;
+
+    public static final int XBOX_AUTO_BALANCE = XboxButtons.Y;
     public static final int XBOX_AUTO_ROTATE = XboxButtons.RIGHT_BUMPER;
     public static final int XBOX_RESET_HEADING = XboxButtons.A;
     public static final int STICK_TOGGLE_SCORING = 7;
@@ -118,7 +120,7 @@ public class Robot extends LoggedRobot {
             }
         }
 
-        Logger.getInstance().disableDeterministicTimestamps(); // Disable deterministic timestamps (they cause issues wit the
+        Logger.getInstance().disableDeterministicTimestamps(); // Disable deterministic timestamps (they cause issues with the
         // autoBuilder)
 
         if (isReal() || logPath == null) {
@@ -352,7 +354,7 @@ public class Robot extends LoggedRobot {
                 // We failed to generate a trajectory
                 wantedRumble = 1;
             }
-        } else if (xbox.getRawButton(XBOX_AUTO_BALENCE)) {
+        } else if (xbox.getRawButton(XBOX_AUTO_BALANCE)) {
             drive.autoBalance(getControllerDriveInputs());
         } else {
             if (isTurnToTargetMode) {
@@ -397,6 +399,19 @@ public class Robot extends LoggedRobot {
             if (wantedMechanismState == WantedMechanismState.STOWED) {
                 wantedMechanismState = WantedMechanismState.STATION_PICKUP;
                 isGrabberOpen = true;
+            } else {
+                setStowed();
+            }
+        }
+
+        if (xbox.getRisingEdge(XBOX_TOGGLE_MECH)) {
+            if (wantedMechanismState == WantedMechanismState.STOWED) {
+                if (isOnAllianceSide()) {
+                    wantedMechanismState = WantedMechanismState.SCORING;
+                } else {
+                    wantedMechanismState = WantedMechanismState.STATION_PICKUP;
+                    isGrabberOpen = true;
+                }
             } else {
                 setStowed();
             }
