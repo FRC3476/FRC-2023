@@ -4,12 +4,10 @@ import edu.wpi.first.math.geometry.Translation2d;
 import frc.utility.Controller;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
-import org.joml.Intersectiond;
-import org.joml.Vector2d;
 import org.littletonrobotics.junction.networktables.LoggedDashboardBoolean;
 import org.littletonrobotics.junction.networktables.LoggedDashboardString;
 
-import static frc.robot.Constants.*;
+import static frc.robot.Constants.IS_PRACTICE;
 
 public class ScoringPositionManager {
 
@@ -45,17 +43,17 @@ public class ScoringPositionManager {
      * On the blue alliance, the LEFT is a more positive Y value, and the RIGHT is a more negative Y value.
      */
     public enum SelectedPosition {
-        BOTTOM_LEFT(1, PositionType.BOTH),
+        BOTTOM_LEFT(3, PositionType.BOTH),
         BOTTOM_MIDDLE(2, PositionType.BOTH),
-        BOTTOM_RIGHT(3, PositionType.BOTH),
+        BOTTOM_RIGHT(1, PositionType.BOTH),
 
-        MIDDLE_LEFT(5, PositionType.CONE),
+        MIDDLE_LEFT(7, PositionType.CONE),
         MIDDLE_MIDDLE(6, PositionType.CUBE),
-        MIDDLE_RIGHT(7, PositionType.CONE),
+        MIDDLE_RIGHT(5, PositionType.CONE),
 
-        TOP_LEFT(11, PositionType.CONE),
+        TOP_LEFT(9, PositionType.CONE),
         TOP_MIDDLE(12, PositionType.CUBE),
-        TOP_RIGHT(9, PositionType.CONE);
+        TOP_RIGHT(11, PositionType.CONE);
 
 
         /**
@@ -106,7 +104,7 @@ public class ScoringPositionManager {
     }
 
     public boolean doesWantedPositionTypeMatchSelectedPositionType() {
-        if (wantedPositionType == PositionType.BOTH) {
+        if (selectedPosition.positionType == PositionType.BOTH) {
             return true;
         }
         return wantedPositionType == selectedPosition.positionType;
@@ -121,19 +119,17 @@ public class ScoringPositionManager {
         for (SelectedPosition value : SelectedPosition.values()) {
             if (buttonPanel.getRisingEdge(value.buttonPanelIndex)) {
                 selectedPosition = value;
+
+                setCone(selectedPosition.positionType == PositionType.CONE);
             }
         }
 
         if (buttonPanel.getRisingEdge(4)) {
             wantedPositionType = PositionType.CONE;
-            isCone.set(true);
-            isCube.set(false);
-            doesWantedPositionTypeMatchSelectedPositionType.set(doesWantedPositionTypeMatchSelectedPositionType());
+            setCone(true);
         } else if (buttonPanel.getRisingEdge(8)) {
             wantedPositionType = PositionType.CUBE;
-            isCone.set(false);
-            isCube.set(true);
-            doesWantedPositionTypeMatchSelectedPositionType.set(doesWantedPositionTypeMatchSelectedPositionType());
+            setCone(false);
         }
 
         wantedScoringPosition.set(selectedPosition.name());
@@ -144,6 +140,13 @@ public class ScoringPositionManager {
             doesWantedPositionTypeMatchSelectedPositionType.set(doesWantedPositionTypeMatchSelectedPositionType());
         }
         return oldSelectedPosition != selectedPosition;
+    }
+
+    private void setCone(boolean isCone) {
+        this.isCone.set(isCone);
+        this.isCube.set(!isCone);
+        wantedPositionType = isCone ? PositionType.CONE : PositionType.CUBE;
+        doesWantedPositionTypeMatchSelectedPositionType.set(doesWantedPositionTypeMatchSelectedPositionType());
     }
 
     public SelectedPosition getSelectedPosition() {
@@ -161,7 +164,9 @@ public class ScoringPositionManager {
      */
     @Contract(pure = true)
     public static double getGridRelativeY(@NotNull SelectedPosition selectedPosition, boolean isRedAlliance) {
-        double y = (selectedPosition.getSide() - 1) * CENTER_CUBE_SCORING_PLATFORM_TO_NODE_Y;
+        double offset = IS_PRACTICE ? 0.012 : 0;
+
+        double y = (selectedPosition.getSide() - 1) * CENTER_CUBE_SCORING_PLATFORM_TO_NODE_Y + offset;
         if (!isRedAlliance) {
             y *= -1;
         }
@@ -200,36 +205,19 @@ public class ScoringPositionManager {
     @Contract(pure = true)
     public static double getBestFieldY(@NotNull SelectedPosition selectedPosition, boolean isRedAlliance,
                                        @NotNull Translation2d robotPosition, @NotNull Translation2d robotVelocity) {
-        double intersectionXLine;
 
-        if (isRedAlliance) {
-            intersectionXLine = GRIDS_RED_X + INTERSECTION_TEST_LINE_X_OFFSET;
-        } else {
-            intersectionXLine = GRIDS_BLUE_X - INTERSECTION_TEST_LINE_X_OFFSET;
-        }
-
-        Vector2d intersection = new Vector2d();
-        Intersectiond.intersectLineLine(
-                // Create a line that includes the robot's position and is in the direction of the robot's velocity
-                robotPosition.getX(), robotPosition.getY(),
-                robotPosition.getX() + robotVelocity.getX(), robotPosition.getY() + robotVelocity.getY(),
-
-                // Create a line  parallel to the y axis that is at the intersectionXLine
-                intersectionXLine, 0,
-                intersectionXLine, 3,
-                intersection
-        );
-
-        double[] possibleYs = getPossibleFieldYs(selectedPosition, isRedAlliance);
-
+        var predictedRobotY = robotPosition.getY() + robotVelocity.getY() * 0.5;
+        double[] possibleYs = CUBE_SCORING_Y_CENTER;
         double bestY = possibleYs[0];
 
         // Find the closest possible Y to the intersection that we found.
         for (double possibleY : possibleYs) {
-            if (Math.abs(possibleY - intersection.y) < Math.abs(bestY - intersection.y)) {
+            if (Math.abs(possibleY - predictedRobotY) < Math.abs(bestY - predictedRobotY)) {
                 bestY = possibleY;
             }
         }
+
+        bestY = bestY + getGridRelativeY(selectedPosition, Robot.isRed());
 
         return bestY;
     }

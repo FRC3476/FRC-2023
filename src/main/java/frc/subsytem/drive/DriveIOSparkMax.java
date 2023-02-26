@@ -8,6 +8,7 @@ import com.revrobotics.CANSparkMax;
 import com.revrobotics.CANSparkMax.ControlType;
 import com.revrobotics.CANSparkMax.IdleMode;
 import com.revrobotics.CANSparkMaxLowLevel.MotorType;
+import com.revrobotics.CANSparkMaxLowLevel.PeriodicFrame;
 import com.revrobotics.SparkMaxAbsoluteEncoder;
 import com.revrobotics.SparkMaxAbsoluteEncoder.Type;
 import frc.robot.Constants;
@@ -111,6 +112,13 @@ public class DriveIOSparkMax extends DriveIO {
             swerveMotors[i].getEncoder().setVelocityConversionFactor(
                     Constants.SWERVE_MOTOR_POSITION_CONVERSION_FACTOR * 360 / SECONDS_PER_MINUTE);
 
+            swerveMotors[i].setPeriodicFramePeriod(PeriodicFrame.kStatus1, 10);
+            swerveMotors[i].setPeriodicFramePeriod(PeriodicFrame.kStatus4, 97);
+            swerveMotors[i].setPeriodicFramePeriod(PeriodicFrame.kStatus3, 101);
+            swerveMotors[i].setPeriodicFramePeriod(PeriodicFrame.kStatus5, 20);
+            swerveMotors[i].setPeriodicFramePeriod(PeriodicFrame.kStatus6, 50);
+
+
             swerveDriveMotors[i].setSmartCurrentLimit(SWERVE_DRIVE_MOTOR_CURRENT_LIMIT);
             swerveDriveMotors[i].setSecondaryCurrentLimit(100);
             swerveDriveMotors[i].enableVoltageCompensation(Constants.SWERVE_DRIVE_VOLTAGE_LIMIT);
@@ -118,6 +126,8 @@ public class DriveIOSparkMax extends DriveIO {
                     SWERVE_DRIVE_MOTOR_REDUCTION * SWERVE_METER_PER_ROTATION);
             swerveDriveMotors[i].getEncoder().setVelocityConversionFactor(
                     SWERVE_DRIVE_MOTOR_REDUCTION * SWERVE_METER_PER_ROTATION / SECONDS_PER_MINUTE);
+
+            swerveDriveMotors[i].getEncoder().setMeasurementPeriod(20);
             swerveDriveMotors[i].setIdleMode(IdleMode.kCoast);
             swerveMotors[i].setIdleMode(IdleMode.kCoast);
 

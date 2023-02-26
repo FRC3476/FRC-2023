@@ -1,5 +1,6 @@
 package frc.subsytem.robottracker;
 
+import com.ctre.phoenix.sensors.PigeonIMU_StatusFrame;
 import com.ctre.phoenix.sensors.WPI_Pigeon2;
 import com.dacubeking.AutoBuilder.robot.sender.pathpreview.RobotPositionSender;
 import com.dacubeking.AutoBuilder.robot.sender.pathpreview.RobotState;
@@ -8,10 +9,12 @@ import edu.wpi.first.math.VecBuilder;
 import edu.wpi.first.math.Vector;
 import edu.wpi.first.math.geometry.*;
 import edu.wpi.first.math.interpolation.TimeInterpolatableBuffer;
+import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.numbers.N1;
 import edu.wpi.first.math.numbers.N3;
 import edu.wpi.first.math.numbers.N4;
+import edu.wpi.first.wpilibj.DriverStation;
 import frc.robot.Robot;
 import frc.subsytem.AbstractSubsystem;
 import frc.subsytem.robottracker.GyroInputs.Entry;
@@ -28,6 +31,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 import static frc.robot.Constants.*;
+import static java.lang.Double.isNaN;
 
 public final class RobotTracker extends AbstractSubsystem {
     private final ReentrantReadWriteLock lock = new ReentrantReadWriteLock();
@@ -35,6 +39,11 @@ public final class RobotTracker extends AbstractSubsystem {
 
     {
         gyroSensor.configMountPose(0, 0, 0);
+        gyroSensor.setStatusFramePeriod(PigeonIMU_StatusFrame.CondStatus_10_SixDeg_Quat, 10, 100);
+        gyroSensor.setStatusFramePeriod(PigeonIMU_StatusFrame.BiasedStatus_6_Accel, 10, 100);
+        gyroSensor.setStatusFramePeriod(PigeonIMU_StatusFrame.CondStatus_6_SensorFusion, 10, 100);
+        gyroSensor.setStatusFramePeriod(PigeonIMU_StatusFrame.BiasedStatus_2_Gyro, 10, 100);
+        gyroSensor.setStatusFramePeriod(PigeonIMU_StatusFrame.CondStatus_3_GeneralAccel, 10, 100);
     }
 
     private final @NotNull Rotation3d ROTATION_IDENTITY = new Rotation3d();
@@ -67,7 +76,7 @@ public final class RobotTracker extends AbstractSubsystem {
 
     private final SwerveDriveOdometry noVisionOdometry;
 
-    private static final double VELOCITY_MEASUREMENT_WINDOW = 0.4;
+    private static final double VELOCITY_MEASUREMENT_WINDOW = 0.1;
 
     private final TimeInterpolatableBuffer<Pose3d> poseBufferForVelocity = TimeInterpolatableBuffer.createBuffer(
             Pose3d::interpolate, 1.5);
@@ -112,7 +121,7 @@ public final class RobotTracker extends AbstractSubsystem {
                 gyroInputs.rotation3d,
                 Robot.getDrive().getModulePositions(),
                 new Pose3d(),
-                VecBuilder.fill(0.1, 0.1, 0.05, 0.01),
+                VecBuilder.fill(0.1, 0.1, 0.1, 0.01),
                 DEFAULT_VISION_DEVIATIONS
         );
 
@@ -212,7 +221,7 @@ public final class RobotTracker extends AbstractSubsystem {
         }
     }
 
-    private double maxAllowedPoseError = 0.5;
+    private double maxAllowedPoseError = 1;
     private int mismatchedVelocityCount = 0;
     private boolean isVelocityMismatched = false;
     private double velocityMismatchTime = 0;
@@ -223,6 +232,8 @@ public final class RobotTracker extends AbstractSubsystem {
     {
         Logger.getInstance().recordOutput("Velocity Mismatch Count", mismatchedVelocityCount);
     }
+
+    long gyroUpdates = 0;
 
     @Override
     public void update() {
@@ -240,6 +251,8 @@ public final class RobotTracker extends AbstractSubsystem {
                 for (Entry<Translation3d> translation3dEntry : gyroInputs.accelerations) {
                     accelerationHistory.addSample(translation3dEntry.timestamp(), translation3dEntry.value());
                 }
+                gyroUpdates += gyroInputs.rotations.size();
+                Logger.getInstance().recordOutput("Robot Tracker/Angle Updates", gyroUpdates);
 
                 angularRollRate = gyroInputs.gyroRollVelocity;
                 angularRate = gyroInputs.gyroYawVelocity;
@@ -415,10 +428,6 @@ public final class RobotTracker extends AbstractSubsystem {
                 }
             }
 
-            velocity = velocityHistory.getSample(timestamp).orElse(new Translation3d())
-                    .rotateBy(startUpRotationToField)
-                    .plus(velocityOffset);
-
             Logger.getInstance().recordOutput("RobotTracker/Velocity Offset X", velocityOffset.getX());
             Logger.getInstance().recordOutput("RobotTracker/Velocity Offset Y", velocityOffset.getY());
             Logger.getInstance().recordOutput("RobotTracker/Velocity Offset Z", velocityOffset.getZ());
@@ -470,12 +479,16 @@ public final class RobotTracker extends AbstractSubsystem {
                         new CompletedVisionMeasurement(visionMeasurement.pose, visionMeasurementStds,
                                 swerveDriveOdometry.getEstimatedPosition3d())
                 );
-
                 swerveDriveOdometry.addVisionMeasurement(visionMeasurement.pose(), visionMeasurement.timestamp(),
                         visionMeasurement.visionMeasurementStds().orElse(DEFAULT_VISION_DEVIATIONS));
             }
             visionMeasurements.clear();
         }
+
+        ChassisSpeeds chassisSpeeds = SWERVE_DRIVE_KINEMATICS.toChassisSpeeds(Robot.getDrive().getModuleStates());
+
+        velocity = new Translation3d(chassisSpeeds.vxMetersPerSecond, chassisSpeeds.vyMetersPerSecond, 0)
+                .rotateBy(swerveDriveOdometry.getEstimatedPosition3d().getRotation());
 
         // Remove old vision measurements we don't need anymore
         pastVisionMeasurements.headMap(timestamp - MISMATCH_LOOK_BACK_TIME).clear();
@@ -483,7 +496,14 @@ public final class RobotTracker extends AbstractSubsystem {
 
         lock.writeLock().lock();
         try {
-            latestPose3d = swerveDriveOdometry.getEstimatedPosition3d();
+            var newPose = swerveDriveOdometry.getEstimatedPosition3d();
+            var translation = newPose.getTranslation();
+            if (isNaN(translation.getX()) || isNaN(translation.getY()) || isNaN(translation.getZ())) {
+                swerveDriveOdometry.resetPosition(gyroAngle3d, modulePositions, latestPose3d);
+                DriverStation.reportError("Reset swerve Drive Odometry because NaN was detected in the translation", false);
+            } else {
+                latestPose3d = newPose;
+            }
             latestPose = latestPose3d.toPose2d();
             if (velocity != null) {
                 this.velocity = velocity;
@@ -538,7 +558,7 @@ public final class RobotTracker extends AbstractSubsystem {
     }
 
     /**
-     * @return The angular velocity of the robot in radians per second. (CCW is positive)
+     * @return The angular velocity of the robot in degrees per second. (CCW is positive)
      */
     public double getAngularVelocity() {
         lock.readLock().lock();
@@ -645,6 +665,7 @@ public final class RobotTracker extends AbstractSubsystem {
         Logger.getInstance().recordOutput("RobotTracker/accelerationX", getAcceleration().getX());
         Logger.getInstance().recordOutput("RobotTracker/accelerationY", getAcceleration().getY());
         Logger.getInstance().recordOutput("RobotTracker/accelerationZ", getAcceleration().getZ());
+        Logger.getInstance().recordOutput("RobotTracker/acceleration", getAcceleration().getNorm());
         Logger.getInstance().recordOutput("RobotTracker/Velocity", getVelocity().getNorm());
         Logger.getInstance().recordOutput("RobotTracker/Is Velocity Mismatched", isVelocityMismatched);
         Logger.getInstance().recordOutput("RobotTracker/Velocity Mismatch Time", velocityMismatchTime);

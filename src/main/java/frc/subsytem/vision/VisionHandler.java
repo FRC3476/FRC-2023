@@ -1,25 +1,25 @@
 package frc.subsytem.vision;
 
-import com.dacubeking.AutoBuilder.robot.drawable.Drawable;
-import com.dacubeking.AutoBuilder.robot.drawable.Line;
-import com.dacubeking.AutoBuilder.robot.drawable.Renderer;
 import com.dacubeking.AutoBuilder.robot.sender.pathpreview.RobotPositionSender;
 import com.dacubeking.AutoBuilder.robot.sender.pathpreview.RobotState;
 import edu.wpi.first.apriltag.AprilTag;
 import edu.wpi.first.apriltag.AprilTagFieldLayout;
 import edu.wpi.first.apriltag.AprilTagFields;
+import edu.wpi.first.math.MatBuilder;
+import edu.wpi.first.math.Nat;
 import edu.wpi.first.math.VecBuilder;
 import edu.wpi.first.math.Vector;
 import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Quaternion;
 import edu.wpi.first.math.geometry.Rotation3d;
 import edu.wpi.first.math.geometry.Translation3d;
+import edu.wpi.first.math.numbers.N1;
 import edu.wpi.first.math.numbers.N3;
+import edu.wpi.first.math.numbers.N4;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.networktables.NetworkTable;
 import edu.wpi.first.networktables.NetworkTableEvent.Kind;
 import edu.wpi.first.networktables.NetworkTableInstance;
-import edu.wpi.first.wpilibj.util.Color8Bit;
 import frc.robot.Robot;
 import frc.subsytem.AbstractSubsystem;
 import frc.subsytem.robottracker.RobotTracker;
@@ -29,9 +29,9 @@ import org.littletonrobotics.junction.Logger;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.EnumSet;
+import java.util.HashMap;
 
 import static frc.robot.Constants.*;
-import static java.lang.Math.cos;
 import static org.joml.Math.tan;
 
 /**
@@ -46,10 +46,11 @@ public class VisionHandler extends AbstractSubsystem {
     static final Rotation3d POSITIVE_Y_90 = new Rotation3d(POSITIVE_Y, Math.toRadians(90.0));
     static final Rotation3d POSITIVE_X_NEGATIVE_90 = new Rotation3d(POSITIVE_X, Math.toRadians(-90.0));
     static final Rotation3d POSITIVE_Z_180 = new Rotation3d(POSITIVE_Z, Math.toRadians(180));
-    private static final @NotNull AprilTagFieldLayout fieldLayout;
+    private static final @NotNull HashMap<Integer, Pose3d> fieldTagCache;
 
     static {
         try {
+            @NotNull AprilTagFieldLayout fieldLayout;
             var wpiFieldLayout = AprilTagFieldLayout.loadFromResource(AprilTagFields.k2023ChargedUp.m_resourceFile);
 
             var adjustedAprilTags = new ArrayList<AprilTag>();
@@ -68,6 +69,13 @@ public class VisionHandler extends AbstractSubsystem {
 
             fieldLayout = new AprilTagFieldLayout(adjustedAprilTags, FIELD_HEIGHT_METERS, FIELD_WIDTH_METERS);
 
+            // Initialize Cache
+            fieldTagCache = new HashMap<>();
+
+            for (AprilTag tag : fieldLayout.getTags()) {
+                fieldTagCache.put(tag.ID, tag.pose);
+            }
+
 //            System.out.println("AprilTag Positions: ");
 //            for (AprilTag tag : fieldLayout.getTags()) {
 //                System.out.println(
@@ -80,9 +88,14 @@ public class VisionHandler extends AbstractSubsystem {
     }
 
     private final Pose3d cameraPose = new Pose3d(new Translation3d(Units.inchesToMeters(3.44 + 11.4375),
-            Units.inchesToMeters(-3.44),
+            Units.inchesToMeters(-3.44 - 0.44),
             Units.inchesToMeters(52.425)),
             new Rotation3d(VecBuilder.fill(0, 1, 0), Math.toRadians(-28)));
+
+    private final Pose3d negativeCameraPose = new Pose3d(
+            cameraPose.getTranslation().unaryMinus(),
+            cameraPose.getRotation().unaryMinus()
+    );
 
 
     VisionInputs visionInputs = new VisionInputs();
@@ -106,6 +119,8 @@ public class VisionHandler extends AbstractSubsystem {
         configTable.getEntry("Framerate").setDouble(30);
         configTable.getEntry("Threads").setDouble(4);
         configTable.getEntry("Do Stream").setBoolean(false);
+        configTable.getEntry("Stream Port").setDouble(5810);
+        configTable.getEntry("Stream Ip").setString("10.167.1.44");
 
         for (int i = 1; i <= 8; i++) {
             var table = visionTable.getEntry(String.valueOf(i));
@@ -121,22 +136,24 @@ public class VisionHandler extends AbstractSubsystem {
         }
     }
 
+    private final MatBuilder<N4, N1> visionStdMatBuilder = new MatBuilder<>(Nat.N4(), Nat.N1());
+
     private void processNewTagPosition(VisionUpdate data) {
-        final var expectedTagPosition = fieldLayout.getTagPose(data.tagId).orElseThrow(); // We should never get an
+        final var expectedTagPosition = fieldTagCache.get(data.tagId); // We should never get an
         // unknown tag
 
         final var tagTranslation = new Translation3d(data.posZ, -data.posX, -data.posY);
         var distanceToTag = tagTranslation.getNorm();
 
-
-        final var tagTranslationRobotCentric = new Translation3d(data.posZ, -data.posX, -data.posY)
-                .rotateBy(cameraPose.getRotation().unaryMinus())
+        final var tagTranslationRobotCentric = tagTranslation
+                .rotateBy(negativeCameraPose.getRotation())
                 .plus(cameraPose.getTranslation());
         final var tagRotationRobotCentric = new Rotation3d(new Quaternion(data.rotW, data.rotZ, -data.rotX, -data.rotY))
-                .rotateBy(cameraPose.getRotation().unaryMinus());
+                .rotateBy(negativeCameraPose.getRotation());
 
 
         Rotation3d gyroAngle = Robot.getRobotTracker().getGyroAngleAtTime(data.timestamp);
+
 
         var calculatedTranslationFromGyro =
                 expectedTagPosition.getTranslation()
@@ -169,7 +186,7 @@ public class VisionHandler extends AbstractSubsystem {
         // but still pass the rotation we calculated from the tag, so we can use it to compensate for the gyro drift
         var poseToFeedToRobotTracker = new Pose3d(
                 calculatedTranslationFromGyro, // 3d pos on the field
-                rotationFromTag
+                distanceToTag > 4 ? gyroAngle : rotationFromTag
         );
 
         var visionOnlyPose = new Pose3d(
@@ -183,8 +200,9 @@ public class VisionHandler extends AbstractSubsystem {
                 new RobotState(visionOnlyPose.toPose2d(), data.timestamp, "Vision Only Pose Tag: " + data.tagId));
         var defaultDevs = RobotTracker.DEFAULT_VISION_DEVIATIONS;
         if (distanceToTag == 0) return;
-        var distanceToTag3 = distanceToTag * distanceToTag * distanceToTag;
-        var devs = VecBuilder.fill(defaultDevs.get(0, 0) * distanceToTag3,
+        var distanceToTag3 = distanceToTag * distanceToTag;
+        var devs = visionStdMatBuilder.fill(
+                defaultDevs.get(0, 0) * distanceToTag3,
                 defaultDevs.get(1, 0) * distanceToTag3,
                 defaultDevs.get(2, 0) * distanceToTag3,
                 Math.atan(tan(defaultDevs.get(3, 0)) * distanceToTag3 * distanceToTag));
@@ -209,18 +227,18 @@ public class VisionHandler extends AbstractSubsystem {
 
 
         // Draw the tag on the field
-        var drawables = new Drawable[2];
-        int j = 0;
-        drawables[j++] = new Line((float) expectedTagPosition.getX(),
-                (float) (expectedTagPosition.getY() - 0.5),
-                (float) expectedTagPosition.getX(),
-                (float) (expectedTagPosition.getY() + 0.5), new Color8Bit(255, 255, 0));
-        drawables[j++] = new Line((float) expectedTagPosition.getX(),
-                (float) expectedTagPosition.getY(),
-                (float) (expectedTagPosition.getX() + cos(expectedTagPosition.getRotation().getZ()) * 0.1),
-                (float) (expectedTagPosition.getY()),
-                new Color8Bit(255, 255, 0));
-        Renderer.render(drawables);
+//        var drawables = new Drawable[2];
+//        int j = 0;
+//        drawables[j++] = new Line((float) expectedTagPosition.getX(),
+//                (float) (expectedTagPosition.getY() - 0.5),
+//                (float) expectedTagPosition.getX(),
+//                (float) (expectedTagPosition.getY() + 0.5), new Color8Bit(255, 255, 0));
+//        drawables[j++] = new Line((float) expectedTagPosition.getX(),
+//                (float) expectedTagPosition.getY(),
+//                (float) (expectedTagPosition.getX() + cos(expectedTagPosition.getRotation().getZ()) * 0.1),
+//                (float) (expectedTagPosition.getY()),
+//                new Color8Bit(255, 255, 0));
+//        Renderer.render(drawables);
     }
 
     @Override

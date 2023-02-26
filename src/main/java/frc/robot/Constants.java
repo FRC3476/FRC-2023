@@ -22,14 +22,14 @@ public final class Constants {
     public static final double ANGULAR_ACCELERATION_BALANCE_THRESHHOLD = 8;
     private static final boolean GRAVITY_LESS_MODE = false;
 
-    public static final String LOG_DIRECTORY = "/home/lvuser/logs";
+    public static final String LOG_DIRECTORY = "/u/logs";
 
     public static final double SECONDS_PER_MINUTE = 60;
 
     public static final boolean IS_PRACTICE = Files.exists(new File("/home/lvuser/practice").toPath());
     public static final boolean USE_CANCODERS = false;
     public static final double SECONDS_PER_MICROSECOND = 1e-6;
-    public static final long MIN_FREE_SPACE = 60000000; // 30 MB
+    public static final long MIN_FREE_SPACE = 60000000; // 60 MB
 
     // 2048 sensor units per revolution
     public static final double FALCON_ENCODER_TICKS_PER_ROTATIONS = 2048;
@@ -79,10 +79,11 @@ public final class Constants {
      * 3 -> Right Back
      */
     public static final SimpleMotorFeedforward[] DRIVE_FEEDFORWARD = {
-            new SimpleMotorFeedforward(0.33255, 2.95258, 0.0),
-            new SimpleMotorFeedforward(0.33255, 2.95258, 0.0),
-            new SimpleMotorFeedforward(0.33255, 2.95258, 0.0),
-            new SimpleMotorFeedforward(0.33255, 2.95258, 0.0)};
+            //ka = 0.55
+            new SimpleMotorFeedforward(0.194596, 2.86, 0),
+            new SimpleMotorFeedforward(0.194596, 2.86, 0),
+            new SimpleMotorFeedforward(0.194596, 2.86, 0),
+            new SimpleMotorFeedforward(0.194596, 2.86, 0)};
 
 
     /**
@@ -120,22 +121,30 @@ public final class Constants {
             SWERVE_MODULE_LOCATIONS
     );
 
-    public static final double DRIVE_HIGH_SPEED_M = 4.2;
+    public static final double DRIVE_HIGH_SPEED_M = DRIVE_FEEDFORWARD[0].maxAchievableVelocity(9, 0);
     /**
      * Allowed Turn Error in degrees.
      */
     public static final double MAX_TURN_ERROR = 30;
 
     public static final int SWERVE_MOTOR_CURRENT_LIMIT = 20;
-    public static final int SWERVE_DRIVE_MOTOR_CURRENT_LIMIT = 30;
+    public static final int SWERVE_DRIVE_MOTOR_CURRENT_LIMIT = 40;
     public static final int SWERVE_DRIVE_VOLTAGE_LIMIT = 12;
 
     public static final double SWERVE_DRIVE_MOTOR_REDUCTION = 1 / 6.75; // L2 gear ratio
+
+    public static final double ALLOWED_XY_ERROR_RAMSETE = 0.04;
+    public static final double PID_CONTROL_RANGE_AUTO_DRIVE_METERS = 0.1;
+    public static final double MAX_VELOCITY_END_PATH = 0.02;
     // TurnPID
 
-    public static final double DEFAULT_TURN_P = 10.0;
+    public static final double DEFAULT_TURN_P = 4.5;
     public static final double DEFAULT_TURN_I = 0;
-    public static final double DEFAULT_TURN_D = 0.4;
+    public static final double DEFAULT_TURN_D = 0.3;
+
+    public static final double DEFAULT_AUTO_P = 2;
+    public static final double DEFAULT_AUTO_I = 0;
+    public static final double DEFAULT_AUTO_D = 00;
     public static final double TURN_SPEED_LIMIT_WHILE_AIMING = 4.0;
 
     public static final double EXPECTED_TELEOP_DRIVE_DT = 0.02;
@@ -197,7 +206,7 @@ public final class Constants {
     public static final double PIVOT_ROTATIONS_PER_DEGREE = 1 / 5.4;
     public static final double PIVOT_IZONE = 10;
     public static final double GRABBER_NOMINAL_VOLTAGE = 9;
-    public static final int GRABBER_SMART_CURRENT_LIMIT = 20;
+    public static final int GRABBER_SMART_CURRENT_LIMIT = 35;
     public static final int PIVOT_SMART_CURRENT_LIMIT = 40;
     public static final int GRABBER_ROLLER_SMART_CURRENT_LIMIT = 30;
 
@@ -208,6 +217,7 @@ public final class Constants {
 
     public static final double GRABBER_ROLLER_VOLTAGE = -6;
     public static final double GRABBER_ROLLER_IDLE = -0;
+    public static boolean GRABBER_WHEELS_USED = !IS_PRACTICE;
 
     // TODO: FIND ACTUAL GRABBER LENGTH
     public static final double GRABBER_LENGTH = .308;
@@ -216,7 +226,7 @@ public final class Constants {
         /**
          * Normal acceleration limit while driving. This ensures that the driver can't tip the robot.
          */
-        NORMAL_DRIVING(new KinematicLimit(3.5, 5000, Math.PI * 2 * 10));
+        NORMAL_DRIVING(new KinematicLimit(6, 5000, Math.PI * 2 * 10));
         public final KinematicLimit kinematicLimit;
 
         KinematicLimits(KinematicLimit kinematicLimit) {
@@ -226,9 +236,9 @@ public final class Constants {
 
 
     // Realtime path generation
-    public static final double START_POS_PREDICT_AHEAD = 0.1;
+    public static final double START_POS_PREDICT_AHEAD = 0.0;
     public static final double END_VECTOR_LEN = 0.5;
-    public static final int VELOCITY_VECTOR_LEN_SCALE = 1;
+    public static final double VELOCITY_VECTOR_LEN_SCALE = 0.3;
     public static final double MAX_VELOCITY_ERROR_NEW_PATH = 0.05;
 
     public static final float GRIDS_RED_X = 1.373f;
@@ -252,9 +262,9 @@ public final class Constants {
     public static final float CHARGING_STATION_BLUE_LOWER_LEFT_X = 11.689f;
     public static final float CHARGING_STATION_LOWER_LEFT_Y = -0.047f;
 
-    public static final float ROBOT_WIDTH = 0.8128f;
+    public static final float ROBOT_WIDTH = 0.84f;
     public static final float HALF_ROBOT_WIDTH = ROBOT_WIDTH / 2;
-    public static final float ROBOT_LENGTH = 0.8128f;
+    public static final float ROBOT_LENGTH = 0.84f;
     public static final float HALF_ROBOT_LENGTH = ROBOT_LENGTH / 2;
 
 
@@ -271,8 +281,10 @@ public final class Constants {
     public static final Rotation2d PICKUP_ANGLE_RED = Rotation2d.fromDegrees(0);
     public static final Rotation2d PICKUP_ANGLE_BLUE = Rotation2d.fromDegrees(180);
 
-    public static final double PICKUP_POSITION_Y = -3.4199;
-    public static final double PICKUP_POSITION_X_OFFSET_FROM_WALL = 0.7635;
+    public static final double PICKUP_POSITION_Y = -3.56;
+    public static final double PICKUP_POSITION_X_OFFSET_FROM_WALL = FIELD_WIDTH_METERS - 15.2;
+
+    public static final float SCORING_POSITION_OFFSET_FROM_WALL = 0.1f;
 
     // Constraints
     // TODO: FIND REAL CONSTRAINTS
@@ -308,4 +320,7 @@ public final class Constants {
      */
     public static final double ARCADE_WRIST_ANGLE_SPEED = 360;
     public static final double ARCADE_MODE_TRANSLATION_SPEED = 1;
+
+    //Led Constants
+    public static final int LED_LENGTH = 5;
 }
