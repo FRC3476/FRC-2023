@@ -81,15 +81,24 @@ public class Grabber extends AbstractSubsystem {
         }
     }
 
+    GrabState lastGrabState = GrabState.IDLE;
+    double allowedClosedTime = 0;
+
     public synchronized void setGrabState(GrabState grabState) {
         io.setGrabberVoltage(grabState.voltage);
         Logger.getInstance().recordOutput("Grabber/Grabber voltage", grabState.voltage);
         Logger.getInstance().recordOutput("Grabber/Grabber state", grabState.name());
+        if (grabState != lastGrabState) {
+            lastGrabState = grabState;
+            allowedClosedTime = Timer.getFPGATimestamp() + 0.2;
+        }
     }
 
 
     public synchronized boolean isGrabbed() {
-        return inputs.grabberCurrent > GRABBED_CURRENT_THRESHOLD;
+        return Math.abs(inputs.grabberCurrent) > GRABBED_CURRENT_THRESHOLD
+                && (lastGrabState == GrabState.GRAB_CONE || lastGrabState == GrabState.GRAB_CUBE)
+                && Timer.getFPGATimestamp() > allowedClosedTime;
     }
 
     public void setRollerVoltage(double voltage) {

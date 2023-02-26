@@ -68,8 +68,10 @@ public class MechanismStateManager extends AbstractSubsystem {
     public enum MechanismStates {
         STOWED(new MechanismStateCoordinates(-0.489, 0.249, MAX_WRIST_ANGLE - 2)),
         LOW_SCORING(new MechanismStateCoordinates(Units.inchesToMeters(12), Units.inchesToMeters(7.5), 0)),
-        MIDDLE_SCORING(new MechanismStateCoordinates(Units.inchesToMeters(16), Units.inchesToMeters(47.5), 0)),
-        HIGH_SCORING(new MechanismStateCoordinates(Units.inchesToMeters(36), Units.inchesToMeters(57), 65)),
+        CUBE_MIDDLE_SCORING(new MechanismStateCoordinates(Units.inchesToMeters(16), Units.inchesToMeters(40), 0)),
+        CONE_MIDDLE_SCORING(new MechanismStateCoordinates(Units.inchesToMeters(16), Units.inchesToMeters(47.5), 0)),
+        CONE_HIGH_SCORING(new MechanismStateCoordinates(Units.inchesToMeters(36), Units.inchesToMeters(57), 65)),
+        CUBE_HIGH_SCORING(new MechanismStateCoordinates(Units.inchesToMeters(36), Units.inchesToMeters(54), 33)),
         STATION_PICKUP(new MechanismStateCoordinates(0.531, 2.3 - 0.015, 12)),
         FLOOR_PICKUP(new MechanismStateCoordinates(0.08, 0.06, 0));
         private final MechanismStateCoordinates state;
@@ -82,12 +84,13 @@ public class MechanismStateManager extends AbstractSubsystem {
 
     private @NotNull MechanismStateManager.MechanismStateCoordinates currentWantedState = MechanismStates.STOWED.state;
 
-    MechanismStateCoordinates lastNotStowState = MechanismStates.STOWED.state;
+    MechanismStates lastNotStowState = MechanismStates.STOWED;
 
     public synchronized void setState(@NotNull MechanismStates state) {
         setState(state.state);
         if (state != MechanismStates.STOWED) {
-            lastNotStowState = state.state;
+            lastNotStowState = state;
+            System.out.println("New State: " + state.name());
         }
     }
 
@@ -223,8 +226,8 @@ public class MechanismStateManager extends AbstractSubsystem {
 
 
         MechanismStateSubsystemPositions limitedStatePositions = coordinatesToSubsystemPositions(limitedStateCoordinates);
-        if (!lastNotStowState.equals(MechanismStates.FLOOR_PICKUP.state)) {
-            if (!lastNotStowState.equals(MechanismStates.STATION_PICKUP.state)) {
+        if (lastNotStowState != MechanismStates.FLOOR_PICKUP) {
+            if (lastNotStowState != MechanismStates.STATION_PICKUP) {
                 // Use scoring keepouts
                 double armEndX = limitedStateCoordinates.xMeters - limitedStateCoordinates.grabberX();
                 double armEndY = limitedStateCoordinates.yMeters - limitedStateCoordinates.grabberY();
