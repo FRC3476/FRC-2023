@@ -20,6 +20,7 @@ import java.nio.file.Files;
 public final class Constants {
 
     public static final double ANGULAR_ACCELERATION_BALANCE_THRESHHOLD = 8;
+    public static final double BALANCE_REVERSE_SPEED = .5;
     private static final boolean GRAVITY_LESS_MODE = false;
 
     public static final String LOG_DIRECTORY = "/u/logs";
