@@ -6,6 +6,8 @@ import frc.robot.Constants;
 import frc.subsytem.AbstractSubsystem;
 import org.littletonrobotics.junction.Logger;
 
+import static frc.robot.Constants.GRABBED_CURRENT_THRESHOLD;
+
 public class Grabber extends AbstractSubsystem {
 
     private final GrabberIO io;
@@ -83,6 +85,11 @@ public class Grabber extends AbstractSubsystem {
         io.setGrabberVoltage(grabState.voltage);
         Logger.getInstance().recordOutput("Grabber/Grabber voltage", grabState.voltage);
         Logger.getInstance().recordOutput("Grabber/Grabber state", grabState.name());
+    }
+
+
+    public synchronized boolean isGrabbed() {
+        return inputs.grabberCurrent > GRABBED_CURRENT_THRESHOLD;
     }
 
     public void setRollerVoltage(double voltage) {

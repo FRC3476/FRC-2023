@@ -67,7 +67,7 @@ public class GrabberIOSparkMax extends GrabberIO {
     }
 
     @Override
-    public void updateInputs(GrabberInputsAutoLogged inputs) {
+    public synchronized void updateInputs(GrabberInputsAutoLogged inputs) {
         inputs.pivotPosition = pivotSparkMax.getEncoder().getPosition();
         inputs.pivotVelocity = pivotSparkMax.getEncoder().getVelocity();
         inputs.pivotCurrent = pivotSparkMax.getOutputCurrent();

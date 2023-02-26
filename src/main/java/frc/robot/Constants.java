@@ -202,6 +202,7 @@ public final class Constants {
     public static final double PIVOT_IZONE = 10;
     public static final double GRABBER_NOMINAL_VOLTAGE = 9;
     public static final int GRABBER_SMART_CURRENT_LIMIT = 35;
+    public static final int GRABBED_CURRENT_THRESHOLD = GRABBER_SMART_CURRENT_LIMIT - 10;
     public static final int PIVOT_SMART_CURRENT_LIMIT = 40;
     public static final int GRABBER_ROLLER_SMART_CURRENT_LIMIT = 30;
 

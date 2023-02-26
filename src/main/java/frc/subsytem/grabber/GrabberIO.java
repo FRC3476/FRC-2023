@@ -30,7 +30,7 @@ public abstract class GrabberIO {
         double rollerFollowerVoltage = 0.0;
     }
 
-    public void updateInputs(GrabberInputsAutoLogged inputs) {}
+    public synchronized void updateInputs(GrabberInputsAutoLogged inputs) {}
 
     public void setPivotVoltage(double voltage) {}
 

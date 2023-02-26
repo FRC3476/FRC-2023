@@ -417,6 +417,10 @@ public class Robot extends LoggedRobot {
             }
         }
 
+        if (grabber.isGrabbed() && wantedMechanismState == WantedMechanismState.STATION_PICKUP) {
+            setStowed();
+        }
+
 
         if (wantedMechanismState != lastWantedMechanismState) {
             switch (wantedMechanismState) {
