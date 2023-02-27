@@ -51,16 +51,16 @@ public class MechanismStateManager extends AbstractSubsystem {
 
         @Override
         public boolean equals(Object o) {
-            return epsilonEquals(0, 0.01);
+            return epsilonEquals(0, 0.01, 1);
         }
 
-        public boolean epsilonEquals(Object o, double epsilon) {
+        public boolean epsilonEquals(Object o, double epsilon, double angleEpsilon) {
             if (this == o) return true;
             if (o == null || getClass() != o.getClass()) return false;
             MechanismStateCoordinates that = (MechanismStateCoordinates) o;
             return OrangeUtility.doubleEqual(that.xMeters, xMeters, epsilon) &&
                     OrangeUtility.doubleEqual(that.yMeters, yMeters, epsilon) &&
-                    OrangeUtility.doubleEqual(that.grabberAngleDegrees, grabberAngleDegrees, epsilon);
+                    OrangeUtility.doubleEqual(that.grabberAngleDegrees, grabberAngleDegrees, angleEpsilon);
         }
     }
 
@@ -69,7 +69,7 @@ public class MechanismStateManager extends AbstractSubsystem {
         STOWED(new MechanismStateCoordinates(-0.489, 0.249, MAX_WRIST_ANGLE - 2)),
         LOW_SCORING(new MechanismStateCoordinates(Units.inchesToMeters(12), Units.inchesToMeters(7.5), 0)),
         CUBE_MIDDLE_SCORING(new MechanismStateCoordinates(Units.inchesToMeters(16), Units.inchesToMeters(40), 0)),
-        CONE_MIDDLE_SCORING(new MechanismStateCoordinates(Units.inchesToMeters(16), Units.inchesToMeters(47.5), 0)),
+        CONE_MIDDLE_SCORING(new MechanismStateCoordinates(Units.inchesToMeters(15), Units.inchesToMeters(47.5), 0)),
         CONE_HIGH_SCORING(new MechanismStateCoordinates(Units.inchesToMeters(36), Units.inchesToMeters(57), 65)),
         CUBE_HIGH_SCORING(new MechanismStateCoordinates(Units.inchesToMeters(36), Units.inchesToMeters(54), 33)),
         STATION_PICKUP(new MechanismStateCoordinates(0.531, 2.3 - 0.015, 12)),
@@ -323,7 +323,17 @@ public class MechanismStateManager extends AbstractSubsystem {
                 currentPositions.grabberAngleDegrees);
 
 
-        boolean isAtFinalPosition = limitCoordinates(currentWantedState).epsilonEquals(getCurrentCoordinates(), 0.02);
+        var currentGoal = limitCoordinates(currentWantedState);
+        boolean isAtFinalPosition = currentGoal.epsilonEquals(currentCoordinates, 0.05, 5);
+
+        Logger.getInstance().recordOutput("MechanismStateManager/X Error", currentGoal.xMeters() - currentCoordinates.xMeters());
+        Logger.getInstance().recordOutput("MechanismStateManager/Y Error", currentGoal.yMeters() - currentCoordinates.yMeters());
+        Logger.getInstance().recordOutput("MechanismStateManager/Angle Error",
+                currentGoal.grabberAngleDegrees() - currentCoordinates.grabberAngleDegrees());
+
+        Logger.getInstance().recordOutput("MechanismStateManager/isAtFinalPosition",
+                isAtFinalPosition);
+
 
         synchronized (this) {
             this.isAtFinalPosition = isAtFinalPosition;

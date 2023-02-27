@@ -162,11 +162,11 @@ public final class Drive extends AbstractSubsystem {
     private static Rotation2d getPredictedRobotAngleInLoopCenter() {
         return Robot.getRobotTracker().getGyroAngleAtTime(Timer.getFPGATimestamp()).toRotation2d()
                 .plus(Rotation2d.fromDegrees(
-                        Robot.getRobotTracker().getAngularVelocity() * (EXPECTED_TELEOP_DRIVE_DT * 6)));
+                        Robot.getRobotTracker().getAngularVelocity() * (EXPECTED_TELEOP_DRIVE_DT * 2)));
     }
 
-    PIDController drivePositionPidX = new PIDController(2, 0, 0);
-    PIDController drivePositionPidY = new PIDController(2, 0, 0);
+    PIDController drivePositionPidX = new PIDController(1, 0, 0.1);
+    PIDController drivePositionPidY = new PIDController(1, 0, 0.1);
 
     {
         SmartDashboard.putData(drivePositionPidX);

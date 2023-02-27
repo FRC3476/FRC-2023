@@ -7,6 +7,10 @@
     <option name="HOST" value="10.34.76.2" />
     <option name="PORT" value="8349" />
     <option name="AUTO_RESTART" value="false" />
+    <RunnerSettings RunnerId="Debug">
+      <option name="DEBUG_PORT" value="8349" />
+      <option name="LOCAL" value="false" />
+    </RunnerSettings>
     <method v="2" />
   </configuration>
 </component>

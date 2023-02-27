@@ -66,7 +66,7 @@ public final class RobotTracker extends AbstractSubsystem {
     private double angularRate = 0;
 
 
-    public static final Matrix<N4, N1> DEFAULT_VISION_DEVIATIONS = VecBuilder.fill(0.2, 0.2, 0.2, Math.toRadians(9));
+    public static final Matrix<N4, N1> DEFAULT_VISION_DEVIATIONS = VecBuilder.fill(0.1, 0.1, 0.1, Math.toRadians(9));
 
     private final SwerveDrivePoseEstimator swerveDriveOdometry;
 
@@ -498,6 +498,13 @@ public final class RobotTracker extends AbstractSubsystem {
                 DriverStation.reportError("Reset swerve Drive Odometry because NaN was detected in the translation", false);
             } else {
                 latestPose3d = newPose;
+            }
+
+            if (isNaN(translation.getX()) || isNaN(translation.getY()) || isNaN(translation.getZ())) {
+                swerveDriveOdometry.resetPosition(gyroAngle3d, modulePositions, new Pose3d());
+                DriverStation.reportError("Reset swerve Drive Odometry because NaN was detected in the translation 2nd Time",
+                        false);
+                latestPose3d = new Pose3d();
             }
             latestPose = latestPose3d.toPose2d();
             if (velocity != null) {
