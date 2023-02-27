@@ -101,6 +101,12 @@ public class Grabber extends AbstractSubsystem {
                 && Timer.getFPGATimestamp() > allowedClosedTime;
     }
 
+    public void waitTillGrabbed() throws InterruptedException {
+        while (!isGrabbed()) {
+            Thread.sleep(10);
+        }
+    }
+
     public void setRollerVoltage(double voltage) {
         io.setRollerVoltage(voltage);
     }
