@@ -86,19 +86,27 @@ public class MechanismStateManager extends AbstractSubsystem {
 
     MechanismStates lastNotStowState = MechanismStates.STOWED;
 
+    MechanismStates lastState = MechanismStates.STOWED;
+
     public synchronized void setState(@NotNull MechanismStates state) {
         setState(state.state);
         if (state != MechanismStates.STOWED) {
             lastNotStowState = state;
             System.out.println("New State: " + state.name());
         }
+
+        if (state != lastState) {
+            Robot.getGrabber().setAutoGrab(
+                    state == MechanismStates.STATION_PICKUP || state == MechanismStates.FLOOR_PICKUP
+            );
+        }
+        lastState = state;
     }
 
 
     public @NotNull MechanismStateCoordinates getCurrentWantedState() {
         return currentWantedState;
     }
-
 
     public synchronized void setState(@NotNull MechanismStateCoordinates state) {
         // Don't set the lastNotStowState here so that the limits remain active if the arcade mode is used to move the mechanism

@@ -215,8 +215,9 @@ public final class Constants {
     public static final double GRABBER_ROLLER_IDLE = -0;
     public static boolean GRABBER_WHEELS_USED = false;
 
-    // TODO: FIND ACTUAL GRABBER LENGTH
     public static final double GRABBER_LENGTH = .308;
+
+    public static final boolean IS_AUTO_GRAB_ENABLED = !IS_PRACTICE;
 
     public enum KinematicLimits {
         /**

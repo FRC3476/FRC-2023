@@ -2,14 +2,18 @@ package frc.subsytem.grabber;
 
 import edu.wpi.first.math.trajectory.TrapezoidProfile;
 import edu.wpi.first.wpilibj.Timer;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import frc.robot.Constants;
 import frc.subsytem.AbstractSubsystem;
 import org.littletonrobotics.junction.Logger;
 
 import static frc.robot.Constants.GRABBED_CURRENT_THRESHOLD;
+import static frc.robot.Constants.IS_AUTO_GRAB_ENABLED;
 
 public class Grabber extends AbstractSubsystem {
 
+    public static final double MIN_OPEN_TIME = 0.5;
+    public static final double MIN_CLOSED_TIME = 0.2;
     private final GrabberIO io;
     private final GrabberInputsAutoLogged inputs = new GrabberInputsAutoLogged();
 
@@ -17,6 +21,7 @@ public class Grabber extends AbstractSubsystem {
         super();
         this.io = grabberIO;
         trapezoidProfile = new TrapezoidProfile(Constants.GRABBER_PIVOT_CONSTRAINTS, new TrapezoidProfile.State(56 + 90 - 20, 0));
+        setAutoGrab(false);
     }
 
     private TrapezoidProfile trapezoidProfile;
@@ -83,6 +88,8 @@ public class Grabber extends AbstractSubsystem {
 
     GrabState lastGrabState = GrabState.IDLE;
     double allowedClosedTime = 0;
+    double allowedOpenTime = 0;
+
 
     public synchronized void setGrabState(GrabState grabState) {
         io.setGrabberVoltage(grabState.voltage);
@@ -90,8 +97,17 @@ public class Grabber extends AbstractSubsystem {
         Logger.getInstance().recordOutput("Grabber/Grabber state", grabState.name());
         if (grabState != lastGrabState) {
             lastGrabState = grabState;
-            allowedClosedTime = Timer.getFPGATimestamp() + 0.2;
+            if (grabState == GrabState.OPEN) {
+                allowedOpenTime = Timer.getFPGATimestamp() + MIN_OPEN_TIME;
+            } else {
+                allowedClosedTime = Timer.getFPGATimestamp() + MIN_CLOSED_TIME;
+            }
         }
+    }
+
+    public synchronized void setAutoGrab(boolean enabled) {
+        io.setAutoGrab(enabled && IS_AUTO_GRAB_ENABLED);
+        Logger.getInstance().recordOutput("Grabber/Limit Switch Enabled", enabled && IS_AUTO_GRAB_ENABLED);
     }
 
 
@@ -101,8 +117,19 @@ public class Grabber extends AbstractSubsystem {
                 && Timer.getFPGATimestamp() > allowedClosedTime;
     }
 
+    public synchronized boolean isOpen() {
+        return Math.abs(inputs.grabberCurrent) > GRABBED_CURRENT_THRESHOLD
+                && (lastGrabState == GrabState.OPEN)
+                && Timer.getFPGATimestamp() > allowedOpenTime;
+    }
+
     public void setRollerVoltage(double voltage) {
         io.setRollerVoltage(voltage);
+    }
+
+    @Override
+    public void logData() {
+        SmartDashboard.putBoolean("Is Limit Switch Triggered", inputs.isLimitSwitchTriggered);
     }
 
     @Override

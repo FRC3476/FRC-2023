@@ -509,6 +509,8 @@ public class Robot extends LoggedRobot {
             isGrabberOpen = !isGrabberOpen;
             if (isGrabberOpen) {
                 grabberOpenTime = Timer.getFPGATimestamp();
+            } else {
+                grabber.setAutoGrab(false);
             }
         }
 
@@ -520,6 +522,11 @@ public class Robot extends LoggedRobot {
                 }
             } else {
                 grabber.setGrabState(GrabState.OPEN);
+                if ((wantedMechanismState == WantedMechanismState.FLOOR_PICKUP || wantedMechanismState == WantedMechanismState.STATION_PICKUP)
+                        && grabber.isOpen() && IS_AUTO_GRAB_ENABLED) {
+                    isGrabberOpen = false;
+                    System.out.println("Tyring to auto close");
+                }
             }
         } else {
             if (scoringPositionManager.getWantedPositionType() == PositionType.CONE) {
