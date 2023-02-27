@@ -117,10 +117,17 @@ public class Grabber extends AbstractSubsystem {
                 && Timer.getFPGATimestamp() > allowedClosedTime;
     }
 
+
     public synchronized boolean isOpen() {
         return Math.abs(inputs.grabberCurrent) > GRABBED_CURRENT_THRESHOLD
                 && (lastGrabState == GrabState.OPEN)
                 && Timer.getFPGATimestamp() > allowedOpenTime;
+    }
+
+    public void waitTillGrabbed() throws InterruptedException {
+        while (!isGrabbed()) {
+            Thread.sleep(10);
+        }
     }
 
     public void setRollerVoltage(double voltage) {
