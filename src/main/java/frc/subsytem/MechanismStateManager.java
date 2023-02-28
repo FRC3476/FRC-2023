@@ -332,7 +332,7 @@ public class MechanismStateManager extends AbstractSubsystem {
 
 
         var currentGoal = limitCoordinates(currentWantedState);
-        boolean isAtFinalPosition = currentGoal.epsilonEquals(currentCoordinates, 0.05, 5);
+        boolean isAtFinalPosition = currentGoal.epsilonEquals(currentCoordinates, 0.1, 5);
 
         Logger.getInstance().recordOutput("MechanismStateManager/X Error", currentGoal.xMeters() - currentCoordinates.xMeters());
         Logger.getInstance().recordOutput("MechanismStateManager/Y Error", currentGoal.yMeters() - currentCoordinates.yMeters());
