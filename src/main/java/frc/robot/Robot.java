@@ -248,6 +248,9 @@ public class Robot extends LoggedRobot {
         } catch (NoSuchFieldException | IllegalAccessException e) {
             throw new RuntimeException(e);
         }
+
+        System.out.println("Using GIT SHA: " + BuildConstants.GIT_SHA + " on branch " + BuildConstants.GIT_BRANCH
+                + " built on " + BuildConstants.BUILD_DATE);
     }
 
 
