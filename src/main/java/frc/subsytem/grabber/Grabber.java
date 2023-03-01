@@ -1,6 +1,7 @@
 package frc.subsytem.grabber;
 
 import edu.wpi.first.math.trajectory.TrapezoidProfile;
+import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import frc.robot.Constants;
@@ -56,10 +57,14 @@ public class Grabber extends AbstractSubsystem {
 
         double arbFFVoltage = Constants.GRABBER_FEEDFORWARD.calculate(Math.toRadians(inputs.pivotPosition),
                 state.velocity, acceleration);
-        if (Math.abs(inputs.pivotPosition - state.position) > 1) {
-            io.setPivotPosition(state.position, arbFFVoltage);
+        if (DriverStation.isTest()) {
+            io.setPivotVoltage(Constants.GRABBER_FEEDFORWARD.calculate(Math.toRadians(inputs.pivotPosition), 0, 0));
         } else {
-            io.setPivotVoltage(arbFFVoltage);
+            if (Math.abs(inputs.pivotPosition - state.position) > 1) {
+                io.setPivotPosition(state.position, arbFFVoltage);
+            } else {
+                io.setPivotVoltage(arbFFVoltage);
+            }
         }
 
         pastVelocity = state.velocity;
