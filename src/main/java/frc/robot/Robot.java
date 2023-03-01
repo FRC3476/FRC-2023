@@ -164,6 +164,7 @@ public class Robot extends LoggedRobot {
             elevator = new Elevator(new ElevatorIOSparkMax());
             telescopingArm = new TelescopingArm(new TelescopingArmIOSparkMax());
             grabber = new Grabber(new GrabberIOSparkMax());
+            led = new LED(5);
         } else {
             setUseTiming(false); // Run as fast as possible
             Logger.getInstance().setReplaySource(new WPILOGReader(logPath)); // Read replay log
@@ -174,6 +175,7 @@ public class Robot extends LoggedRobot {
             elevator = new Elevator(new ElevatorIO() {});
             telescopingArm = new TelescopingArm(new TelescopingArmIO() {});
             grabber = new Grabber(new GrabberIO() {});
+            led = new LED(5);
         }
 
         Logger.getInstance().start(); // Start logging! No more data receivers, replay sources, or metadata values may be added
@@ -190,6 +192,7 @@ public class Robot extends LoggedRobot {
         telescopingArm.start();
         grabber.start();
         drive.start();
+        led.start();
         ScoringPositionManager.getInstance();
 
         xbox = new Controller(0);
