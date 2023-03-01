@@ -11,7 +11,7 @@ public class LED extends AbstractSubsystem {
     AddressableLED ledStrip;
     AddressableLEDBuffer addressableLEDBuffer;
 
-    LED(int loggingInterval) {
+    public LED(int loggingInterval) {
         ledStrip = new AddressableLED(0);
         ledStrip.setLength(Constants.LED_LENGTH);
         addressableLEDBuffer = new AddressableLEDBuffer(Constants.LED_LENGTH);
@@ -53,7 +53,13 @@ public class LED extends AbstractSubsystem {
         ledStrip.close();
     }
 
+    @Override
     public void logData() {
         Logger.getInstance().recordOutput("LED Color", String.valueOf(addressableLEDBuffer.getLED(0)));
+    }
+
+    @Override
+    public void update() {
+        setLedState();
     }
 }
