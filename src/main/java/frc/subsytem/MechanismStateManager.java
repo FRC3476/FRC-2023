@@ -69,7 +69,7 @@ public class MechanismStateManager extends AbstractSubsystem {
         STOWED(new MechanismStateCoordinates(-0.489, 0.249, MAX_WRIST_ANGLE - 2)),
         LOW_SCORING(new MechanismStateCoordinates(Units.inchesToMeters(12), Units.inchesToMeters(7.5), 0)),
         CUBE_MIDDLE_SCORING(new MechanismStateCoordinates(Units.inchesToMeters(16), Units.inchesToMeters(40), 0)),
-        CONE_MIDDLE_SCORING(new MechanismStateCoordinates(Units.inchesToMeters(13.5), Units.inchesToMeters(47.5), 0)),
+        CONE_MIDDLE_SCORING(new MechanismStateCoordinates(Units.inchesToMeters(13), Units.inchesToMeters(47.5), 0)),
         CONE_HIGH_SCORING(new MechanismStateCoordinates(Units.inchesToMeters(36), Units.inchesToMeters(57), 65)),
         CUBE_HIGH_SCORING(new MechanismStateCoordinates(Units.inchesToMeters(36), Units.inchesToMeters(54), 33)),
         STATION_PICKUP(new MechanismStateCoordinates(0.531, 2.3 - 0.015, 12)),
