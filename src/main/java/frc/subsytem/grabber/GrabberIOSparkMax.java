@@ -4,7 +4,6 @@ import com.revrobotics.*;
 import com.revrobotics.CANSparkMax.ControlType;
 import com.revrobotics.SparkMaxLimitSwitch.Type;
 import com.revrobotics.SparkMaxPIDController.AccelStrategy;
-import edu.wpi.first.wpilibj.Encoder;
 import frc.robot.Constants;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -32,7 +31,8 @@ public class GrabberIOSparkMax extends GrabberIO {
             pivotSparkMax.getEncoder().setPositionConversionFactor(1.0 / PIVOT_ROTATIONS_PER_DEGREE);
             pivotSparkMax.getEncoder().setVelocityConversionFactor((1.0 / PIVOT_ROTATIONS_PER_DEGREE) / SECONDS_PER_MINUTE);
         } else {
-            pivotAbsoluteEncoder.setVelocityConversionFactor((1.0 / PIVOT_ROTATIONS_PER_DEGREE) / SECONDS_PER_MINUTE);
+            pivotAbsoluteEncoder.setPositionConversionFactor(PIVOT_CONVERSION_FACTOR);
+            pivotAbsoluteEncoder.setVelocityConversionFactor(PIVOT_CONVERSION_FACTOR / SECONDS_PER_MINUTE);
         }
         resetPivotPosition(MAX_WRIST_ANGLE);
 
