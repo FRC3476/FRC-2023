@@ -31,7 +31,7 @@ public class Grabber extends AbstractSubsystem {
     /**
      * @param position The position to set the grabber (degrees)
      */
-    public void setPosition(double position) {
+    public synchronized void setPosition(double position) {
         finalGoalPosition = position;
         trapezoidProfile = new TrapezoidProfile(Constants.GRABBER_PIVOT_CONSTRAINTS, new TrapezoidProfile.State(position, 0),
                 new TrapezoidProfile.State(inputs.pivotPosition, inputs.pivotVelocity));
@@ -42,7 +42,7 @@ public class Grabber extends AbstractSubsystem {
     private double pastVelocity = 0, pastTime = 0;
 
     @Override
-    public void update() {
+    public synchronized void update() {
         io.updateInputs(inputs);
         Logger.getInstance().processInputs("Grabber", inputs);
 
@@ -125,7 +125,13 @@ public class Grabber extends AbstractSubsystem {
     }
 
     public void waitTillGrabbed() throws InterruptedException {
-        while (!isGrabbed()) {
+        while (true) {
+            synchronized (this) {
+                if (isGrabbed()) {
+                    break;
+                }
+            }
+
             Thread.sleep(10);
         }
     }
