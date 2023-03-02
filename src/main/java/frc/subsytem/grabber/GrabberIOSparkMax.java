@@ -25,12 +25,12 @@ public class GrabberIOSparkMax extends GrabberIO {
     public GrabberIOSparkMax() {
         pivotSparkMax = new CANSparkMax(GRABBER_PIVOT_CAN_ID, CANSparkMaxLowLevel.MotorType.kBrushless);
         grabberSparkMax = new CANSparkMax(GRABBER_CAN_ID, CANSparkMaxLowLevel.MotorType.kBrushless);
-        pivotAbsoluteEncoder = pivotSparkMax.getAbsoluteEncoder(SparkMaxAbsoluteEncoder.Type.kDutyCycle);
 
-        if (pivotAbsoluteEncoder == null) {
+        if (IS_PRACTICE) {
             pivotSparkMax.getEncoder().setPositionConversionFactor(1.0 / PIVOT_ROTATIONS_PER_DEGREE);
             pivotSparkMax.getEncoder().setVelocityConversionFactor((1.0 / PIVOT_ROTATIONS_PER_DEGREE) / SECONDS_PER_MINUTE);
         } else {
+            pivotAbsoluteEncoder = pivotSparkMax.getAbsoluteEncoder(SparkMaxAbsoluteEncoder.Type.kDutyCycle);
             pivotAbsoluteEncoder.setPositionConversionFactor(PIVOT_CONVERSION_FACTOR);
             pivotAbsoluteEncoder.setVelocityConversionFactor(PIVOT_CONVERSION_FACTOR / SECONDS_PER_MINUTE);
         }
@@ -78,7 +78,7 @@ public class GrabberIOSparkMax extends GrabberIO {
 
     @Override
     public synchronized void updateInputs(GrabberInputsAutoLogged inputs) {
-        if (pivotAbsoluteEncoder == null) {
+        if (IS_PRACTICE) {
             inputs.pivotPosition = pivotSparkMax.getEncoder().getPosition();
             inputs.pivotVelocity = pivotSparkMax.getEncoder().getVelocity();
         } else {
