@@ -7,6 +7,9 @@ import org.jetbrains.annotations.NotNull;
 import org.littletonrobotics.junction.networktables.LoggedDashboardBoolean;
 import org.littletonrobotics.junction.networktables.LoggedDashboardString;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import static frc.robot.Constants.IS_PRACTICE;
 
 public class ScoringPositionManager {
@@ -66,8 +69,8 @@ public class ScoringPositionManager {
         /**
          * @return 0 for left, 1 for middle, 2 for right
          */
-        public int getSide() {
-            return ordinal() % 3;
+        public ScoringPositionSide getSide() {
+            return ScoringPositionSide.values()[ordinal() % 3];
         }
 
         public final int buttonPanelIndex;
@@ -157,6 +160,7 @@ public class ScoringPositionManager {
         this.selectedPosition = selectedPosition;
     }
 
+
     /**
      * @param selectedPosition The position to get the Y coordinate of
      * @param isRedAlliance    Whether the robot is on the red alliance
@@ -166,11 +170,66 @@ public class ScoringPositionManager {
     public static double getGridRelativeY(@NotNull SelectedPosition selectedPosition, boolean isRedAlliance) {
         double offset = IS_PRACTICE ? 0.012 : 0;
 
-        double y = (selectedPosition.getSide() - 1) * CENTER_CUBE_SCORING_PLATFORM_TO_NODE_Y + offset;
+        double y = (selectedPosition.getSide().ordinal() - 1) * CENTER_CUBE_SCORING_PLATFORM_TO_NODE_Y + offset;
         if (!isRedAlliance) {
             y *= -1;
         }
         return y;
+    }
+
+    enum AllianceSide {
+        RED, BLUE
+    }
+
+    /**
+     * Position of the scoring column relative to the robot. <b>LEFT/RIGHT is relative to the direction the robot would be facing
+     * when it is scoring in that position</b>.
+     */
+    enum ScoringPositionSide {
+        LEFT, MIDDLE, RIGHT
+    }
+
+    // Map<AllianceSide, Map<Grid Index, Map<Scoring Column, Offset>>>
+    static final Map<AllianceSide, HashMap<Integer, HashMap<ScoringPositionSide, Double>>> yScoringOffsets;
+
+    static {
+        yScoringOffsets = Map.of(
+                AllianceSide.RED, new HashMap<>() {{
+                    put(0, new HashMap<>() {{
+                        put(ScoringPositionSide.LEFT, 0.0);
+                        put(ScoringPositionSide.MIDDLE, 0.0);
+                        put(ScoringPositionSide.RIGHT, 0.0);
+                    }});
+                    put(1, new HashMap<>() {{
+                        put(ScoringPositionSide.LEFT, 0.0);
+                        put(ScoringPositionSide.MIDDLE, 0.0);
+                        put(ScoringPositionSide.RIGHT, 0.0);
+                    }});
+                    put(2, new HashMap<>() {{
+                        put(ScoringPositionSide.LEFT, 0.0);
+                        put(ScoringPositionSide.MIDDLE, 0.0);
+                        put(ScoringPositionSide.RIGHT, 0.0);
+                    }});
+                }},
+
+                AllianceSide.BLUE, new HashMap<>() {{
+                    put(0, new HashMap<>() {{
+                        put(ScoringPositionSide.LEFT, 0.0);
+                        put(ScoringPositionSide.MIDDLE, 0.0);
+                        put(ScoringPositionSide.RIGHT, 0.0);
+                    }});
+                    put(1, new HashMap<>() {{
+                        put(ScoringPositionSide.LEFT, 0.0);
+                        put(ScoringPositionSide.MIDDLE, 0.0);
+                        put(ScoringPositionSide.RIGHT, 0.0);
+                    }});
+                    put(2, new HashMap<>() {{
+                        put(ScoringPositionSide.LEFT, 0.0);
+                        put(ScoringPositionSide.MIDDLE, 0.0);
+                        put(ScoringPositionSide.RIGHT, 0.0);
+                    }});
+                }}
+        );
     }
 
     /**
@@ -182,8 +241,12 @@ public class ScoringPositionManager {
     public static double @NotNull [] getPossibleFieldYs(@NotNull SelectedPosition selectedPosition, boolean isRedAlliance) {
         double[] possibleYs = new double[3];
         double y = getGridRelativeY(selectedPosition, isRedAlliance);
+
+
         for (int i = 0; i < 3; i++) {
-            possibleYs[i] = y + CUBE_SCORING_Y_CENTER[i];
+            possibleYs[i] = y + CUBE_SCORING_Y_CENTER[i]
+                    + yScoringOffsets.get(isRedAlliance ? AllianceSide.RED : AllianceSide.BLUE).get(i).get(
+                    selectedPosition.getSide());
         }
         return possibleYs;
     }
