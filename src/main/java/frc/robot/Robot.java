@@ -642,6 +642,9 @@ public class Robot extends LoggedRobot {
      */
     @Override
     public void testInit() {
+        // Disable the grabber
+        grabber.setAutoGrab(false);
+        grabber.setGrabState(GrabState.IDLE);
     }
 
 
@@ -651,8 +654,8 @@ public class Robot extends LoggedRobot {
     @Override
     public void testPeriodic() {
         xbox.update();
-        if (xbox.getRawButton(XboxButtons.X) && xbox.getRawButton(XBOX_TOGGLE_GRABBER)
-                && xbox.getRisingEdge(XboxButtons.X) && xbox.getRisingEdge(XBOX_TOGGLE_GRABBER)) {
+        if (xbox.getRawButton(XboxButtons.X) && xbox.getRawButton(XboxButtons.B)
+                && xbox.getRisingEdge(XboxButtons.X) && xbox.getRisingEdge(XboxButtons.B)) {
             drive.resetAbsoluteZeros();
         }
     }
