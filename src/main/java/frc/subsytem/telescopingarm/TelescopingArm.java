@@ -51,7 +51,7 @@ public class TelescopingArm extends AbstractSubsystem {
         if (DriverStation.isTest()) {
             io.setTelescopingArmVoltage(Constants.TELESCOPING_ARM_FEEDFORWARD.calculate(0, 0));
         } else {
-            if (Math.abs(state.position - inputs.position) > 0.0001) {
+            if (Math.abs(state.position - inputs.position) > Constants.TELESCOPING_ARM_ALLOWED_ERROR) {
                 io.setTelescopingArmPosition(state.position,
                         Constants.TELESCOPING_ARM_FEEDFORWARD.calculate(state.velocity, acceleration));
             } else {
