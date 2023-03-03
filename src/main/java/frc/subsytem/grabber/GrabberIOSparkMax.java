@@ -31,8 +31,9 @@ public class GrabberIOSparkMax extends GrabberIO {
             pivotSparkMax.getEncoder().setVelocityConversionFactor((1.0 / PIVOT_ROTATIONS_PER_DEGREE) / SECONDS_PER_MINUTE);
         } else {
             pivotAbsoluteEncoder = pivotSparkMax.getAbsoluteEncoder(SparkMaxAbsoluteEncoder.Type.kDutyCycle);
-            pivotAbsoluteEncoder.setPositionConversionFactor(PIVOT_CONVERSION_FACTOR);
-            pivotAbsoluteEncoder.setVelocityConversionFactor(PIVOT_CONVERSION_FACTOR / SECONDS_PER_MINUTE);
+            pivotAbsoluteEncoder.setPositionConversionFactor(DEGREES_PER_ROTATION);
+            pivotAbsoluteEncoder.setVelocityConversionFactor(DEGREES_PER_ROTATION / SECONDS_PER_MINUTE);
+            pivotSparkMax.getPIDController().setFeedbackDevice(pivotAbsoluteEncoder);
         }
         resetPivotPosition(MAX_WRIST_ANGLE);
 

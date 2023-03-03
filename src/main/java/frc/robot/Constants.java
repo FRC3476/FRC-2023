@@ -205,7 +205,7 @@ public final class Constants {
     public static final int GRABBED_CURRENT_THRESHOLD = GRABBER_SMART_CURRENT_LIMIT - 10;
     public static final int PIVOT_SMART_CURRENT_LIMIT = 40;
     public static final int GRABBER_ROLLER_SMART_CURRENT_LIMIT = 30;
-    public static final double PIVOT_CONVERSION_FACTOR = 360;
+    public static final double DEGREES_PER_ROTATION = 360;
     public static final int GRABBER_PIVOT_CAN_ID = 50;
     public static final int GRABBER_CAN_ID = 51;
     public static final int GRABBER_ROLLER_MAIN_CAN_ID = 52;
