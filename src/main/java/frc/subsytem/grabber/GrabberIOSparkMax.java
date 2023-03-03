@@ -3,9 +3,12 @@ package frc.subsytem.grabber;
 import com.revrobotics.CANSparkMax;
 import com.revrobotics.CANSparkMax.ControlType;
 import com.revrobotics.CANSparkMaxLowLevel;
+import com.revrobotics.SparkMaxLimitSwitch;
+import com.revrobotics.SparkMaxLimitSwitch.Type;
 import com.revrobotics.SparkMaxPIDController;
 import com.revrobotics.SparkMaxPIDController.AccelStrategy;
 import frc.robot.Constants;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import static edu.wpi.first.wpilibj.RobotBase.isReal;
@@ -17,6 +20,8 @@ public class GrabberIOSparkMax extends GrabberIO {
     private final CANSparkMax grabberSparkMax;
     private @Nullable CANSparkMax rollerSparkMax1;
     private @Nullable CANSparkMax rollerSparkMax2;
+
+    private @NotNull SparkMaxLimitSwitch reverseLimitSwitch;
 
 
     public GrabberIOSparkMax() {
@@ -42,6 +47,8 @@ public class GrabberIOSparkMax extends GrabberIO {
 
         grabberSparkMax.enableVoltageCompensation(Constants.GRABBER_NOMINAL_VOLTAGE);
         grabberSparkMax.setSmartCurrentLimit(Constants.GRABBER_SMART_CURRENT_LIMIT);
+        grabberSparkMax.setClosedLoopRampRate(0.75);
+        reverseLimitSwitch = grabberSparkMax.getReverseLimitSwitch(Type.kNormallyClosed);
 
         if (GRABBER_WHEELS_USED) {
             rollerSparkMax1 = new CANSparkMax(GRABBER_ROLLER_MAIN_CAN_ID, CANSparkMaxLowLevel.MotorType.kBrushless);
@@ -66,7 +73,7 @@ public class GrabberIOSparkMax extends GrabberIO {
     }
 
     @Override
-    public void updateInputs(GrabberInputsAutoLogged inputs) {
+    public synchronized void updateInputs(GrabberInputsAutoLogged inputs) {
         inputs.pivotPosition = pivotSparkMax.getEncoder().getPosition();
         inputs.pivotVelocity = pivotSparkMax.getEncoder().getVelocity();
         inputs.pivotCurrent = pivotSparkMax.getOutputCurrent();
@@ -94,6 +101,8 @@ public class GrabberIOSparkMax extends GrabberIO {
             inputs.rollerFollowerTemp = rollerSparkMax2.getMotorTemperature();
             inputs.rollerFollowerVoltage = rollerSparkMax2.getAppliedOutput() * rollerSparkMax2.getBusVoltage();
         }
+
+        inputs.isLimitSwitchTriggered = reverseLimitSwitch.isPressed();
     }
 
     @Override
@@ -124,5 +133,10 @@ public class GrabberIOSparkMax extends GrabberIO {
             rollerSparkMax1.getPIDController().setReference(voltage, CANSparkMax.ControlType.kVoltage);
             rollerSparkMax2.getPIDController().setReference(voltage, ControlType.kVoltage);
         }
+    }
+
+    @Override
+    public void setAutoGrab(boolean enabled) {
+        reverseLimitSwitch.enableLimitSwitch(enabled);
     }
 }

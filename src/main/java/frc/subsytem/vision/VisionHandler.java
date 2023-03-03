@@ -117,6 +117,8 @@ public class VisionHandler extends AbstractSubsystem {
         configTable.getEntry("Framerate").setDouble(30);
         configTable.getEntry("Threads").setDouble(4);
         configTable.getEntry("Do Stream").setBoolean(false);
+        configTable.getEntry("Stream Port").setDouble(5810);
+        configTable.getEntry("Stream Ip").setString("10.167.1.44");
 
         for (int i = 1; i <= 8; i++) {
             var table = visionTable.getEntry(String.valueOf(i));
@@ -165,29 +167,12 @@ public class VisionHandler extends AbstractSubsystem {
                 .plus(POSITIVE_Z_180)
                 .minus(tagRotationRobotCentric);
 
-
-        var calculatedTranslationFromTagOrientation =
-                expectedTagPosition.getTranslation()
-                        .plus(
-                                tagTranslationRobotCentric
-                                        // Rotate the translation by the tag orientation (to make it relative to the field)
-                                        .rotateBy(rotationFromTag)
-                                        // Make the vector from the tag to the robot (instead of the robot to the tag)
-                                        .unaryMinus()
-                        );
-
-
         // Use position we calculated from the gyro, but use the rotation we calculated from the tag
         // the position we calculated from the gyro is more accurate,
         // but still pass the rotation we calculated from the tag, so we can use it to compensate for the gyro drift
         var poseToFeedToRobotTracker = new Pose3d(
                 calculatedTranslationFromGyro, // 3d pos on the field
-                rotationFromTag
-        );
-
-        var visionOnlyPose = new Pose3d(
-                calculatedTranslationFromTagOrientation, // 3d pos on the field
-                rotationFromTag
+                distanceToTag > 4 ? gyroAngle : rotationFromTag
         );
 
         var defaultDevs = RobotTracker.DEFAULT_VISION_DEVIATIONS;
@@ -200,7 +185,6 @@ public class VisionHandler extends AbstractSubsystem {
                 Math.atan(tan(defaultDevs.get(3, 0)) * distanceToTag3 * distanceToTag));
         Robot.getRobotTracker().addVisionMeasurement(poseToFeedToRobotTracker, data.timestamp, devs);
 
-        Logger.getInstance().recordOutput("VisionHandler/VisionOnlyPose/" + data.tagId, visionOnlyPose);
         Logger.getInstance().recordOutput("VisionHandler/VisionOnlyPoseAngles/" + data.tagId + "/X",
                 Math.toDegrees(tagRotationRobotCentric.getX()));
         Logger.getInstance().recordOutput("VisionHandler/VisionOnlyPoseAngles/" + data.tagId + "/Y",
@@ -208,7 +192,6 @@ public class VisionHandler extends AbstractSubsystem {
         Logger.getInstance().recordOutput("VisionHandler/VisionOnlyPoseAngles/" + data.tagId + "/Z",
                 Math.toDegrees(tagRotationRobotCentric.getZ()));
 
-        Logger.getInstance().recordOutput("VisionHandler/VisionOnlyPose/" + data.tagId, visionOnlyPose);
         Logger.getInstance().recordOutput("VisionHandler/VisionOnlyPosePosition/" + data.tagId + "/X",
                 tagTranslationRobotCentric.getX());
         Logger.getInstance().recordOutput("VisionHandler/VisionOnlyPosePosition/" + data.tagId + "/Y",

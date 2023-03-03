@@ -28,9 +28,10 @@ public abstract class GrabberIO {
         double rollerFollowerCurrent = 0.0;
         double rollerFollowerTemp = 0.0;
         double rollerFollowerVoltage = 0.0;
+        boolean isLimitSwitchTriggered = false;
     }
 
-    public void updateInputs(GrabberInputsAutoLogged inputs) {}
+    public synchronized void updateInputs(GrabberInputsAutoLogged inputs) {}
 
     public void setPivotVoltage(double voltage) {}
 
@@ -41,4 +42,6 @@ public abstract class GrabberIO {
     public void resetPivotPosition(double position) {}
 
     public void setRollerVoltage(double voltage) {}
+
+    public void setAutoGrab(boolean enabled) {}
 }

@@ -145,6 +145,7 @@ public class ScoringPositionManager {
     private void setCone(boolean isCone) {
         this.isCone.set(isCone);
         this.isCube.set(!isCone);
+        wantedPositionType = isCone ? PositionType.CONE : PositionType.CUBE;
         doesWantedPositionTypeMatchSelectedPositionType.set(doesWantedPositionTypeMatchSelectedPositionType());
     }
 

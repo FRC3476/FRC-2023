@@ -112,7 +112,7 @@ public class DriveIOSparkMax extends DriveIO {
             swerveMotors[i].getEncoder().setVelocityConversionFactor(
                     Constants.SWERVE_MOTOR_POSITION_CONVERSION_FACTOR * 360 / SECONDS_PER_MINUTE);
 
-            swerveMotors[i].setPeriodicFramePeriod(PeriodicFrame.kStatus1, 50);
+            swerveMotors[i].setPeriodicFramePeriod(PeriodicFrame.kStatus1, 10);
             swerveMotors[i].setPeriodicFramePeriod(PeriodicFrame.kStatus4, 97);
             swerveMotors[i].setPeriodicFramePeriod(PeriodicFrame.kStatus3, 101);
             swerveMotors[i].setPeriodicFramePeriod(PeriodicFrame.kStatus5, 20);
@@ -126,6 +126,8 @@ public class DriveIOSparkMax extends DriveIO {
                     SWERVE_DRIVE_MOTOR_REDUCTION * SWERVE_METER_PER_ROTATION);
             swerveDriveMotors[i].getEncoder().setVelocityConversionFactor(
                     SWERVE_DRIVE_MOTOR_REDUCTION * SWERVE_METER_PER_ROTATION / SECONDS_PER_MINUTE);
+
+            swerveDriveMotors[i].getEncoder().setMeasurementPeriod(20);
             swerveDriveMotors[i].setIdleMode(IdleMode.kCoast);
             swerveMotors[i].setIdleMode(IdleMode.kCoast);
 

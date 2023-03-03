@@ -71,7 +71,7 @@ public final class RobotTracker extends AbstractSubsystem {
     private double angularRate = 0;
 
 
-    public static final Matrix<N4, N1> DEFAULT_VISION_DEVIATIONS = VecBuilder.fill(0.2, 0.2, 0.2, Math.toRadians(9));
+    public static final Matrix<N4, N1> DEFAULT_VISION_DEVIATIONS = VecBuilder.fill(0.1, 0.1, 0.1, Math.toRadians(9));
 
     private final SwerveDrivePoseEstimator swerveDriveOdometry;
 
@@ -122,7 +122,7 @@ public final class RobotTracker extends AbstractSubsystem {
                 gyroInputs.rotation3d,
                 Robot.getDrive().getModulePositions(),
                 new Pose3d(),
-                VecBuilder.fill(0.1, 0.1, 0.05, 0.01),
+                VecBuilder.fill(0.1, 0.1, 0.1, 0.01),
                 DEFAULT_VISION_DEVIATIONS
         );
 
@@ -543,6 +543,13 @@ public final class RobotTracker extends AbstractSubsystem {
             } else {
                 latestPose3d = newPose;
             }
+
+            if (isNaN(translation.getX()) || isNaN(translation.getY()) || isNaN(translation.getZ())) {
+                swerveDriveOdometry.resetPosition(gyroAngle3d, modulePositions, new Pose3d());
+                DriverStation.reportError("Reset swerve Drive Odometry because NaN was detected in the translation 2nd Time",
+                        false);
+                latestPose3d = new Pose3d();
+            }
             latestPose = latestPose3d.toPose2d();
             if (velocity != null) {
                 this.velocity = velocity;
@@ -623,7 +630,7 @@ public final class RobotTracker extends AbstractSubsystem {
     }
 
     /**
-     * @return The angular velocity of the robot in radians per second. (CCW is positive)
+     * @return The angular velocity of the robot in degrees per second. (CCW is positive)
      */
     public double getAngularVelocity() {
         lock.readLock().lock();

@@ -2,6 +2,8 @@
 
 package frc.subsytem.drive;
 
+import com.dacubeking.AutoBuilder.robot.sender.pathpreview.RobotPositionSender;
+import com.dacubeking.AutoBuilder.robot.sender.pathpreview.RobotState;
 import edu.wpi.first.math.controller.HolonomicDriveController;
 import edu.wpi.first.math.controller.ProfiledPIDController;
 import edu.wpi.first.math.geometry.Pose2d;
@@ -56,7 +58,8 @@ public final class Drive extends AbstractSubsystem {
     private final LiveEditableValue<Double> autoI = new LiveEditableValue<>(DEFAULT_AUTO_I, SmartDashboard.getEntry("AutoI"));
 
     private final LiveEditableValue<Double> autoD = new LiveEditableValue<>(DEFAULT_AUTO_D, SmartDashboard.getEntry("AutoD"));
-    @Nullable Trajectory.State lastGoal = null;
+
+    private final LiveEditableValue<Double> driveKa = new LiveEditableValue<>(0.3, SmartDashboard.getEntry("DriveKa"));
     private double autoStartTime;
     private boolean swerveAutoControllerInitialized = false;
     private Trajectory currentAutoTrajectory;
@@ -106,7 +109,7 @@ public final class Drive extends AbstractSubsystem {
     private void resetAuto() {
         ProfiledPIDController autoTurnPIDController
                 = new ProfiledPIDController(turnP.get(), turnI.get(), turnD.get(),
-                new TrapezoidProfile.Constraints(2 * Math.PI, Math.PI * 8));
+                new TrapezoidProfile.Constraints(1.7 * Math.PI, Math.PI * 3.5));
         autoTurnPIDController.enableContinuousInput(-Math.PI, Math.PI);
         autoTurnPIDController.setTolerance(Math.toRadians(1));
 
@@ -114,11 +117,13 @@ public final class Drive extends AbstractSubsystem {
                 new PIDController(autoP.get(), autoI.get(), autoD.get()),
                 new PIDController(autoP.get(), autoI.get(), autoD.get()),
                 autoTurnPIDController);
+        swerveAutoController.setEnabled(true);
         swerveAutoController.setTolerance(
                 new Pose2d(ALLOWED_XY_ERROR_RAMSETE, ALLOWED_XY_ERROR_RAMSETE, Rotation2d.fromDegrees(10))); //TODO: Tune
     }
 
     /**
+     * @return Returns requested drive wheel velocity in Meters per second
      * @return Returns requested drive wheel velocity in Meters per second
      */
     private double getSwerveDriveVelocity(int motorNum) {
@@ -157,7 +162,15 @@ public final class Drive extends AbstractSubsystem {
     private static Rotation2d getPredictedRobotAngleInLoopCenter() {
         return Robot.getRobotTracker().getGyroAngleAtTime(Timer.getFPGATimestamp()).toRotation2d()
                 .plus(Rotation2d.fromDegrees(
-                        Robot.getRobotTracker().getAngularVelocity() * (EXPECTED_TELEOP_DRIVE_DT * 1.5)));
+                        Robot.getRobotTracker().getAngularVelocity() * (EXPECTED_TELEOP_DRIVE_DT * 3)));
+    }
+
+    PIDController drivePositionPidX = new PIDController(4.1, 0, 0.41);
+    PIDController drivePositionPidY = new PIDController(4.1, 0, 0.41);
+
+    {
+        SmartDashboard.putData(drivePositionPidX);
+        SmartDashboard.putData(drivePositionPidY);
     }
 
     /**
@@ -170,11 +183,28 @@ public final class Drive extends AbstractSubsystem {
      */
     public synchronized boolean driveToPosition(Translation2d targetPosition, Rotation2d targetAngle,
                                                 ControllerDriveInputs inputs) {
+
         Translation2d positionError = Robot.getRobotTracker().getLatestPose().getTranslation().minus(targetPosition);
-        if (Math.abs(positionError.getX()) < ALLOWED_XY_ERROR_RAMSETE * 1.5
-                && Math.abs(positionError.getY()) < ALLOWED_XY_ERROR_RAMSETE * 1.5) {
-            //setTurn(ControllerDriveInputs.ZERO, new State(targetAngle.getRadians(), 0), 0);
-            nextChassisSpeeds = new ChassisSpeeds();
+        if (Math.abs(positionError.getX()) < PID_CONTROL_RANGE_AUTO_DRIVE_METERS
+                && Math.abs(positionError.getY()) < PID_CONTROL_RANGE_AUTO_DRIVE_METERS) {
+            if (Math.abs(positionError.getX()) < 0.02
+                    && Math.abs(positionError.getY()) < 0.02) {
+                setTurn(new ControllerDriveInputs(),
+                        new State(targetAngle.getRadians(), 0),
+                        Math.toRadians(1));
+            } else {
+                var currPos = Robot.getRobotTracker().getLatestPose().getTranslation();
+                setTurn(
+                        new ControllerDriveInputs(
+                                drivePositionPidX.calculate(currPos.getX(), targetPosition.getX()) / DRIVE_HIGH_SPEED_M,
+                                drivePositionPidY.calculate(currPos.getY(), targetPosition.getY()) / DRIVE_HIGH_SPEED_M,
+                                0
+                        ),
+                        new State(targetAngle.getRadians(), 0),
+                        0,
+                        true
+                );
+            }
             return true;
         }
         if (!(driveState == DriveState.WAITING_FOR_PATH || driveState == DriveState.RAMSETE)) {
@@ -219,7 +249,7 @@ public final class Drive extends AbstractSubsystem {
                                 realtimeTrajectoryStartVelocity.getY() / DRIVE_HIGH_SPEED_M,
                                 0
                         ),
-                        new State(targetPosition.getAngle().getRadians(), 0),
+                        new State(targetAngle.getRadians(), 0),
                         0,
                         false);
                 kinematicLimit = KinematicLimits.NORMAL_DRIVING.kinematicLimit;
@@ -246,6 +276,14 @@ public final class Drive extends AbstractSubsystem {
 //        } catch (IllegalAccessException e) {
 //            throw new RuntimeException(e);
 //        }
+
+
+//        kinematicLimit = new KinematicLimit(
+//                kinematicLimit.maxDriveVelocity(),
+//                Math.min(DRIVE_FEEDFORWARD[0].maxAchievableAcceleration(Robot.getPowerDistribution().getVoltage(),
+//                        Robot.getRobotTracker().getVelocity().getNorm()), kinematicLimit.maxDriveAcceleration()),
+//                kinematicLimit.maxSteeringVelocity()
+//        );
         ChassisSpeeds updated_chassis_speeds = new ChassisSpeeds(
                 twist_vel.dx / dt, twist_vel.dy / dt, twist_vel.dtheta / dt);
         var newSwerveSetpoint =
@@ -311,6 +349,10 @@ public final class Drive extends AbstractSubsystem {
         return angleDiff;
     }
 
+    double[] lastModuleVelocities = new double[4];
+    double[] lastModuleTimes = new double[4];
+
+
     /**
      * Sets the motor voltage
      *
@@ -322,14 +364,23 @@ public final class Drive extends AbstractSubsystem {
             throw new IllegalArgumentException("Module must be between 0 and 3");
         }
 
-
-        double ffv = DRIVE_FEEDFORWARD[module].calculate(velocity, acceleration);
+        double ffv = DRIVE_FEEDFORWARD[module].calculate(velocity, 0);
         // Converts ffv voltage to percent output and sets it to motor
         io.setDriveMotorVoltage(module, ffv);
+
         Logger.getInstance().recordOutput("Drive/Out Volts Ks" + module, DRIVE_FEEDFORWARD[module].ks * Math.signum(velocity));
         Logger.getInstance().recordOutput("Drive/Out Volts Kv" + module, DRIVE_FEEDFORWARD[module].kv * velocity);
         Logger.getInstance().recordOutput("Drive/Out Volts Ka" + module, DRIVE_FEEDFORWARD[module].ka * acceleration);
+        Logger.getInstance().recordOutput("Drive/Voltage Contrib to Accel" + module,
+                ffv - DRIVE_FEEDFORWARD[module].calculate(getSwerveDriveVelocity(module)));
 
+        double time = Logger.getInstance().getRealTimestamp() * SECONDS_PER_MICROSECOND;
+
+        Logger.getInstance().recordOutput("Drive/Acceleration" + module,
+                (lastModuleVelocities[module] - getSwerveDriveVelocity(module)) / (time - lastModuleTimes[module]));
+
+        lastModuleVelocities[module] = getSwerveDriveVelocity(module);
+        lastModuleTimes[module] = Logger.getInstance().getRealTimestamp() * SECONDS_PER_MICROSECOND;
 
         Logger.getInstance().recordOutput("Drive/Out Volts " + module, ffv);
         //swerveDriveMotors[module].setVoltage(10 * velocity/Constants.SWERVE_METER_PER_ROTATION);
@@ -356,7 +407,6 @@ public final class Drive extends AbstractSubsystem {
         this.currentAutoTrajectory = trajectory;
         this.autoStartTime = autoStartTime;
         setDriveState(DriveState.RAMSETE);
-        lastGoal = null;
         Logger.getInstance().recordOutput("Drive/Trajectory", trajectory);
     }
 
@@ -368,12 +418,11 @@ public final class Drive extends AbstractSubsystem {
             swerveAutoControllerInitialized = true;
         }
 
+        double pathTime = Timer.getFPGATimestamp() - autoStartTime;
+
         Pose2d currentPose = Robot.getRobotTracker().getLatestPose();
 
-        Trajectory.State goal = currentAutoTrajectory.sample(Timer.getFPGATimestamp() - autoStartTime);
-        if (lastGoal == null) {
-            lastGoal = goal;
-        }
+        Trajectory.State goal = currentAutoTrajectory.sample(pathTime);
 
         Rotation2d targetHeading = autoTargetHeading;
 
@@ -392,6 +441,8 @@ public final class Drive extends AbstractSubsystem {
         Logger.getInstance().recordOutput("Drive/Auto/Heading Error",
                 getAngleDiff(targetHeading.getDegrees(), currentPose.getRotation().getDegrees()));
 
+        RobotPositionSender.addRobotPosition(new RobotState(goal.poseMeters, "Auto Goal Pose"));
+
 
         try {
             if (swerveAutoController == null) {
@@ -400,20 +451,43 @@ public final class Drive extends AbstractSubsystem {
                 resetAuto();
             }
 
-            assert lastGoal != null;
+            Trajectory.State oldGoal = currentAutoTrajectory.sample(
+                    pathTime - EXPECTED_TELEOP_DRIVE_DT
+            );
+
             var modifiedGoal = new Trajectory.State(
                     goal.timeSeconds,
                     goal.velocityMetersPerSecond,
                     goal.accelerationMetersPerSecondSq,
-                    lastGoal.poseMeters,
+                    oldGoal.poseMeters,
                     goal.curvatureRadPerMeter
             );
 
-
-            nextChassisSpeeds = swerveAutoController.calculate(
+            var autoWantedState = swerveAutoController.calculate(
                     currentPose,
-                    goal,
+                    modifiedGoal,
                     targetHeading);
+
+            if (Timer.getFPGATimestamp() - autoStartTime < currentAutoTrajectory.getTotalTimeSeconds()) {
+                var currVel = new Translation2d(
+                        goal.velocityMetersPerSecond * goal.poseMeters.getRotation().getCos(),
+                        goal.velocityMetersPerSecond * goal.poseMeters.getRotation().getSin()
+                );
+
+                var prevVel = new Translation2d(
+                        oldGoal.velocityMetersPerSecond * oldGoal.poseMeters.getRotation().getCos(),
+                        oldGoal.velocityMetersPerSecond * oldGoal.poseMeters.getRotation().getSin()
+                );
+
+                var accel = currVel.minus(prevVel).div(EXPECTED_TELEOP_DRIVE_DT);
+                var extraSpeed = accel.times(driveKa.get()).div(DRIVE_FEEDFORWARD[0].kv);
+                var extraSpeedRobotRelative = extraSpeed.rotateBy(currentPose.getRotation());
+
+                autoWantedState.vxMetersPerSecond += extraSpeedRobotRelative.getX();
+                autoWantedState.vyMetersPerSecond += extraSpeedRobotRelative.getY();
+            }
+
+            nextChassisSpeeds = autoWantedState;
             kinematicLimit = KinematicLimits.NORMAL_DRIVING.kinematicLimit;
             if (swerveAutoController.atReference()
                     && (Timer.getFPGATimestamp() - autoStartTime) >= currentAutoTrajectory.getTotalTimeSeconds()
@@ -427,8 +501,6 @@ public final class Drive extends AbstractSubsystem {
                 nextAllowedPrintError = Timer.getFPGATimestamp() + 2;
             }
         }
-
-        lastGoal = goal;
     }
 
     /**
@@ -466,6 +538,7 @@ public final class Drive extends AbstractSubsystem {
 
     @Override
     public synchronized void update() {
+        var lastTimeStep = inputs.driveIoTimestamp;
         io.updateInputs(inputs);
         Logger.getInstance().processInputs("Drive", inputs);
 
@@ -480,7 +553,8 @@ public final class Drive extends AbstractSubsystem {
             case AUTO_BALANCE -> autoBalance(ControllerDriveInputs.ZERO);
         }
         if (driveState != DriveState.HOLD && !DriverStation.isTest() && DriverStation.isEnabled()) {
-            swerveDrive(nextChassisSpeeds, kinematicLimit, NOMINAL_DT);
+            var dt = inputs.driveIoTimestamp - lastTimeStep;
+            swerveDrive(nextChassisSpeeds, kinematicLimit, dt);
         }
     }
 
@@ -533,6 +607,13 @@ public final class Drive extends AbstractSubsystem {
 //        System.out.println(
 //                "turn error: " + Math.toDegrees(turnPID.getPositionError()) + " delta speed: " + Math.toDegrees(pidDeltaSpeed));
 
+        if (Math.abs(TurnInputs.goal.position - Robot.getRobotTracker().getGyroAngle().getRadians())
+                < TurnInputs.turnErrorRadians) {
+            if (this.driveState == DriveState.TURN) {
+                this.driveState = DriveState.DONE;
+                pidDeltaSpeed = 0;
+            }
+        }
 
         nextChassisSpeeds = ChassisSpeeds.fromFieldRelativeSpeeds(
                 TurnInputs.controllerDriveInputs.getX() * DRIVE_HIGH_SPEED_M,
@@ -540,12 +621,6 @@ public final class Drive extends AbstractSubsystem {
                 pidDeltaSpeed,
                 Robot.getRobotTracker().getGyroAngle());
 
-        if (Math.abs(TurnInputs.goal.position - Robot.getRobotTracker().getGyroAngle().getRadians())
-                < TurnInputs.turnErrorRadians) {
-            if (this.driveState == DriveState.TURN) {
-                this.driveState = DriveState.DONE;
-            }
-        }
 
         double curSpeed = Robot.getRobotTracker().getAngularVelocity();
         Logger.getInstance().recordOutput("Drive/Turn Position Error", Math.toDegrees(turnPID.getPositionError()));
