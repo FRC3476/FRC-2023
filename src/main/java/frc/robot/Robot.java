@@ -57,6 +57,7 @@ import java.lang.reflect.Field;
 import java.nio.file.Files;
 import java.util.Arrays;
 import java.util.NoSuchElementException;
+import java.util.concurrent.ConcurrentLinkedDeque;
 
 import static frc.robot.Constants.*;
 import static java.lang.Math.abs;
@@ -102,11 +103,14 @@ public class Robot extends LoggedRobot {
 
     public static final LoggedDashboardChooser<String> sideChooser = new LoggedDashboardChooser<>("SideChooser");
 
+    private static Thread mainThread;
+
     /**
      * This method is run when the robot is first started up and should be used for any initialization code.
      */
     @Override
     public void robotInit() {
+        mainThread = Thread.currentThread();
         Logger.getInstance().recordMetadata("ProjectName", "FRC2023"); // Set a metadata value
 
 
@@ -263,6 +267,7 @@ public class Robot extends LoggedRobot {
      */
     @Override
     public void robotPeriodic() {
+        runAsyncScheduledTasks();
         AbstractSubsystem.tick();
     }
 
@@ -470,6 +475,12 @@ public class Robot extends LoggedRobot {
                 }
                 case FLOOR_PICKUP -> mechanismStateManager.setState(MechanismStates.FLOOR_PICKUP);
                 case STATION_PICKUP -> mechanismStateManager.setState(MechanismStates.STATION_PICKUP);
+            }
+
+            if (wantedMechanismState != lastWantedMechanismState) {
+                Robot.getGrabber().setAutoGrab(
+                        wantedMechanismState == WantedMechanismState.STATION_PICKUP || wantedMechanismState == WantedMechanismState.FLOOR_PICKUP
+                );
             }
         }
 
@@ -726,5 +737,22 @@ public class Robot extends LoggedRobot {
 
     public static PowerDistribution getPowerDistribution() {
         return powerDistribution;
+    }
+
+
+    private static ConcurrentLinkedDeque<Runnable> toRunOnMainThread = new ConcurrentLinkedDeque<>();
+
+    public static void runOnMainThread(Runnable runnable) {
+        toRunOnMainThread.add(runnable);
+    }
+
+    private void runAsyncScheduledTasks() {
+        while (!toRunOnMainThread.isEmpty()) {
+            toRunOnMainThread.poll().run();
+        }
+    }
+
+    public static boolean isOnMainThread() {
+        return mainThread == Thread.currentThread();
     }
 }
