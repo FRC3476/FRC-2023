@@ -542,11 +542,34 @@ public final class Drive extends AbstractSubsystem {
         return Timer.getFPGATimestamp() - autoStartTime;
     }
 
+    double[] previousRelativePositions = new double[4];
+    double[] previousAbsolutePositions = new double[4];
+
     @Override
     public synchronized void update() {
         var lastTimeStep = inputs.driveIoTimestamp;
         io.updateInputs(inputs);
         Logger.getInstance().processInputs("Drive", inputs);
+
+        if (DRIVE_IS_ABSOLUTE) {
+            for (int i = 0; i < 4; i++) {
+                double[] relativeChange = new double[4];
+                double[] absoluteChange = new double[4];
+                double[] error = new double[4];
+
+                relativeChange[i] = getAngleDiff(previousRelativePositions[i], inputs.swerveMotorRelativePositions[i]);
+                absoluteChange[i] = getAngleDiff(previousAbsolutePositions[i], inputs.swerveMotorAbsolutePositions[i]);
+                error[i] = Math.abs(relativeChange[i] - absoluteChange[i]);
+
+                if (error[i] > DRIVE_MAX_DEGREE_ERROR) {
+                    boolean errorCheck = error[i] > DRIVE_MAX_DEGREE_ERROR;
+                    Logger.getInstance().recordOutput("Drive/Error", errorCheck);
+                }
+
+                previousRelativePositions[i] = inputs.swerveMotorRelativePositions[i];
+                previousAbsolutePositions[i] = inputs.swerveMotorAbsolutePositions[i];
+            }
+        }
 
         switch (driveState) {
             case TURN, WAITING_FOR_PATH -> updateTurn();
