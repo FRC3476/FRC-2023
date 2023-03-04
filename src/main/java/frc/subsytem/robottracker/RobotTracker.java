@@ -35,6 +35,7 @@ import static frc.robot.Constants.*;
 import static java.lang.Double.isNaN;
 
 public final class RobotTracker extends AbstractSubsystem {
+    public static final double GYRO_VELOCITY_MEASUREMENT_WINDOW = 0.02;
     private final ReentrantReadWriteLock lock = new ReentrantReadWriteLock();
     private final @NotNull WPI_Pigeon2 gyroSensor = new WPI_Pigeon2(PIGEON_CAN_ID, "rio");
 
@@ -286,7 +287,17 @@ public final class RobotTracker extends AbstractSubsystem {
                 gyroInputs.rotations.clear();
 
 
-                gyroYVelocity = gyroInputs.gyroRollVelocity;
+                var lastestEntry = gyroHistory.getInternalBuffer().lastEntry();
+
+                if (lastestEntry != null) {
+                    double latestTime = lastestEntry.getKey();
+                    // It should be impossible for the sample to be empty
+                    var prevEntry = gyroHistory.getSample(latestTime - GYRO_VELOCITY_MEASUREMENT_WINDOW);
+                    if (prevEntry.isPresent()) {
+                        gyroYVelocity = (lastestEntry.getValue().getY() - prevEntry.get().getY())
+                                / GYRO_VELOCITY_MEASUREMENT_WINDOW;
+                    }
+                }
             } finally {
                 lock.writeLock().unlock();
             }
