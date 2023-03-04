@@ -168,8 +168,8 @@ public class VisionHandler extends AbstractSubsystem {
                         );
 
         var rotationFromTag = expectedTagPosition.getRotation()
-                .plus(POSITIVE_Z_180)
-                .minus(tagRotationRobotCentric);
+                .minus(tagRotationRobotCentric)
+                .rotateBy(POSITIVE_Z_180);
 
         // Use position we calculated from the gyro, but use the rotation we calculated from the tag
         // the position we calculated from the gyro is more accurate,
@@ -178,6 +178,25 @@ public class VisionHandler extends AbstractSubsystem {
                 calculatedTranslationFromGyro, // 3d pos on the field
                 distanceToTag > 4 ? gyroAngle : rotationFromTag
         );
+
+
+        var calculatedTranslationFromTagOrientation =
+                expectedTagPosition.getTranslation()
+                        .plus(
+                                tagTranslationRobotCentric
+                                        // Rotate the translation by the tag orientation (to make it relative to the field)
+                                        .rotateBy(rotationFromTag)
+                                        // Make the vector from the tag to the robot (instead of the robot to the tag)
+                                        .unaryMinus()
+                        );
+
+        var visionOnlyPose = new Pose3d(
+                calculatedTranslationFromTagOrientation, // 3d pos on the field
+                rotationFromTag
+        );
+
+        Logger.getInstance().recordOutput("VisionHandler/VisionOnlyPose/" + data.tagId, visionOnlyPose);
+
 
         RobotPositionSender.addRobotPosition(
                 new RobotState(poseToFeedToRobotTracker.toPose2d(), data.timestamp, "Fed Vision Pose Tag: " + data.tagId));
