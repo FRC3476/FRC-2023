@@ -77,6 +77,7 @@ public class Robot extends LoggedRobot {
     public static final int XBOX_AUTO_ROTATE = XboxButtons.RIGHT_BUMPER;
     public static final int XBOX_RESET_HEADING = XboxButtons.A;
     public static final int STICK_TOGGLE_SCORING = 7;
+    public static final int STICK_TOGGLE_STATION_PICKUP = 10;
     public static final int STICK_TOGGLE_FLOOR_PICKUP = 9;
     public static final int STICK_TOGGLE_PICKUP = 11;
     public static final int XBOX_TOGGLE_GRABBER = XboxButtons.LEFT_BUMPER;
@@ -330,6 +331,7 @@ public class Robot extends LoggedRobot {
 
     private double grabberOpenTime = 0;
     private boolean wantToClose = false;
+    private boolean rightStationPickup = true;
 
 
     /**
@@ -436,6 +438,10 @@ public class Robot extends LoggedRobot {
             } else {
                 setStowed();
             }
+        }
+
+        if (stick.getRisingEdge(STICK_TOGGLE_STATION_PICKUP)) {
+            rightStationPickup = !rightStationPickup;
         }
 
         if (xbox.getRisingEdge(XBOX_TOGGLE_MECH)) {
@@ -607,7 +613,9 @@ public class Robot extends LoggedRobot {
         } else {
             // We're on the opposite side as our alliance
             // Try to go to the pickup position
-            y = PICKUP_POSITION_Y;
+            if (rightStationPickup) y = PICKUP_POSITION_Y;
+            else y = OTHER_PICKUP_POSITION_Y;
+            
             if (isRed()) {
                 x = FIELD_WIDTH_METERS - PICKUP_POSITION_X_OFFSET_FROM_WALL;
                 rotation = PICKUP_ANGLE_RED;
