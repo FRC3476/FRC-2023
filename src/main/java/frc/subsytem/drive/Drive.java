@@ -441,15 +441,21 @@ public final class Drive extends AbstractSubsystem {
         Logger.getInstance().recordOutput("Drive/Auto/Heading Error",
                 getAngleDiff(targetHeading.getDegrees(), currentPose.getRotation().getDegrees()));
 
-        RobotPositionSender.addRobotPosition(new RobotState(goal.poseMeters, "Auto Goal Pose"));
-
-
         try {
             if (swerveAutoController == null) {
                 DriverStation.reportError("swerveAutoController is null",
                         Thread.getAllStackTraces().get(Thread.currentThread()));
                 resetAuto();
             }
+            assert swerveAutoController != null;
+            Logger.getInstance().recordOutput("Drive/Auto/Profiled Heading Error",
+                    getAngleDiff(Math.toDegrees(swerveAutoController.getThetaController().getGoal().position),
+                            currentPose.getRotation().getDegrees()));
+
+            Pose2d goalPose = new Pose2d(goal.poseMeters.getTranslation(),
+                    new Rotation2d(swerveAutoController.getThetaController().getGoal().position));
+            RobotPositionSender.addRobotPosition(new RobotState(goalPose, "Auto Goal Pose"));
+
 
             Trajectory.State oldGoal = currentAutoTrajectory.sample(
                     pathTime - EXPECTED_TELEOP_DRIVE_DT
