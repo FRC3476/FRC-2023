@@ -151,7 +151,7 @@ public final class Constants {
      */
     public static final double GRAVITY = 9.80665;
     public static final int PIGEON_CAN_ID = 30;
-    public static final double COAST_AFTER_DISABLE_TIME = 0.5;
+    public static final double COAST_AFTER_DISABLE_TIME = 7;
     public static final double FIELD_HEIGHT_METERS = 8.0137;
     public static final double FIELD_WIDTH_METERS = 16.54175;
 
