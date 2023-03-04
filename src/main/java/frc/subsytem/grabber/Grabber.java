@@ -9,8 +9,7 @@ import frc.robot.Robot;
 import frc.subsytem.AbstractSubsystem;
 import org.littletonrobotics.junction.Logger;
 
-import static frc.robot.Constants.GRABBED_CURRENT_THRESHOLD;
-import static frc.robot.Constants.IS_AUTO_GRAB_ENABLED;
+import static frc.robot.Constants.*;
 
 public class Grabber extends AbstractSubsystem {
 
@@ -140,6 +139,8 @@ public class Grabber extends AbstractSubsystem {
                 && Timer.getFPGATimestamp() > allowedOpenTime;
     }
 
+    double waitTillGrabbedTime;
+
     public void waitTillGrabbed() throws InterruptedException {
         while (true) {
             synchronized (this) {
@@ -149,6 +150,11 @@ public class Grabber extends AbstractSubsystem {
             }
 
             Thread.sleep(10);
+            waitTillGrabbedTime += 10;
+
+            if (waitTillGrabbedTime >= MAX_AUTO_GRAB_TIME) {
+                break;
+            }
         }
     }
 
