@@ -82,15 +82,23 @@ public class Robot extends LoggedRobot {
     public static final int XBOX_TOGGLE_GRABBER = XboxButtons.LEFT_BUMPER;
     private double disabledTime = 0;
 
-    private @NotNull static Drive drive;
-    private @NotNull static RobotTracker robotTracker;
-    private @NotNull static VisionHandler visionHandler;
+    private @NotNull
+    static Drive drive;
+    private @NotNull
+    static RobotTracker robotTracker;
+    private @NotNull
+    static VisionHandler visionHandler;
 
-    private @NotNull static Elevator elevator;
-    private @NotNull static TelescopingArm telescopingArm;
-    private @NotNull static Grabber grabber;
-    private @NotNull static MechanismStateManager mechanismStateManager;
-    private @NotNull static PowerDistribution powerDistribution;
+    private @NotNull
+    static Elevator elevator;
+    private @NotNull
+    static TelescopingArm telescopingArm;
+    private @NotNull
+    static Grabber grabber;
+    private @NotNull
+    static MechanismStateManager mechanismStateManager;
+    private @NotNull
+    static PowerDistribution powerDistribution;
 
     private @NotNull Controller xbox;
     private @NotNull Controller stick;
@@ -177,10 +185,15 @@ public class Robot extends LoggedRobot {
             Logger.getInstance().addDataReceiver(
                     new WPILOGWriter(LogFileUtil.addPathSuffix(logPath, "_sim"))); // Save outputs to a new log
 
-            drive = new Drive(new DriveIO() {});
-            elevator = new Elevator(new ElevatorIO() {});
-            telescopingArm = new TelescopingArm(new TelescopingArmIO() {});
-            grabber = new Grabber(new GrabberIO() {});
+            drive = new Drive(new DriveIO() {
+            });
+            elevator = new Elevator(new ElevatorIO() {
+            });
+            telescopingArm = new TelescopingArm(new TelescopingArmIO() {
+            });
+            grabber = new Grabber(new GrabberIO() {
+            });
+            drive.resetAbsoluteZeros();
         }
 
         Logger.getInstance().start(); // Start logging! No more data receivers, replay sources, or metadata values may be added
