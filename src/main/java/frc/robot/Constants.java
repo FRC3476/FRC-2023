@@ -35,7 +35,9 @@ public final class Constants {
     private static final int NOMINAL_DT_MS = 20;
 
     //Drive Constants
-    public static final double AUTO_BALANCING_VELOCITY = 1;
+    public static final double AUTO_BALANCING_VELOCITY = 0.5;
+    public static final int AUTO_BALANCE_VELOCITY_THRESHOLD = 5;
+
     public static final int DRIVE_LEFT_FRONT_ID = 11;
     public static final int DRIVE_LEFT_BACK_ID = 12;
     public static final int DRIVE_RIGHT_FRONT_ID = 13;
@@ -58,7 +60,7 @@ public final class Constants {
     public static final double SWERVE_DRIVE_I = 0.00;
     public static final double SWERVE_DRIVE_F = 0.00;
     public static final double SWERVE_DRIVE_INTEGRAL_ZONE = 0.00;
-    public static final double AUTO_BALANCE_COMPLETE_THRESHOLD = 9;
+    public static final double AUTO_BALANCE_COMPLETE_THRESHOLD = 12;
     /**
      * Feed forward constants for the drivetrain.
      * <p>
@@ -134,7 +136,7 @@ public final class Constants {
     public static final double DEFAULT_TURN_I = 0;
     public static final double DEFAULT_TURN_D = 0.3;
 
-    public static final double DEFAULT_AUTO_P = 10;
+    public static final double DEFAULT_AUTO_P = 5;
     public static final double DEFAULT_AUTO_I = 0;
     public static final double DEFAULT_AUTO_D = 0;
     public static final double TURN_SPEED_LIMIT_WHILE_AIMING = 4.0;
@@ -187,7 +189,7 @@ public final class Constants {
     public static final double TELESCOPING_ARM_D = 30.0;
     public static final double TELESCOPING_ARM_ROTATIONS_PER_METER = 96.664 / (Math.PI);
     public static final double TELESCOPING_ARM_NOMINAL_VOLTAGE = 9;
-    public static final int TELESCOPING_ARM_SMART_CURRENT_LIMIT = 30;
+    public static final int TELESCOPING_ARM_SMART_CURRENT_LIMIT = 20;
     public static final int TELESCOPING_ARM_CAN_ID = 60;
     public static final double TELESCOPING_ARM_ALLOWED_ERROR = 0.0001;
     public static final ArmFeedforward GRABBER_FEEDFORWARD = new ArmFeedforward(0.32, 0.34, 0, 0);
