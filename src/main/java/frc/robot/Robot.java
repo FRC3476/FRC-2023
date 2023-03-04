@@ -554,7 +554,7 @@ public class Robot extends LoggedRobot {
 
         // True if both buttons pressed
         if((buttonPanel.getRisingEdge(1) && buttonPanel.getRawButton(2))
-            || (buttonPanel.getRawButton(1) && buttonPanel.getRisingEdge(buttonPanel(2))) {
+            || (buttonPanel.getRawButton(1) && buttonPanel.getRisingEdge(2))) {
             System.out.println("Homing Subsystems");
             elevator.homeElevator();
         }
