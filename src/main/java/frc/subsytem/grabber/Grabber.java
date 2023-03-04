@@ -100,6 +100,7 @@ public class Grabber extends AbstractSubsystem {
     public synchronized void setGrabState(GrabState grabState) {
         if (!Robot.isOnMainThread()) {
             Robot.runOnMainThread(() -> setGrabState(grabState));
+            return;
         }
 
         io.setGrabberVoltage(grabState.voltage);
@@ -118,6 +119,7 @@ public class Grabber extends AbstractSubsystem {
     public synchronized void setAutoGrab(boolean enabled) {
         if (!Robot.isOnMainThread()) {
             Robot.runOnMainThread(() -> setAutoGrab(enabled));
+            return;
         }
         io.setAutoGrab(enabled && IS_AUTO_GRAB_ENABLED);
 
