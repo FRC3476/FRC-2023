@@ -718,8 +718,14 @@ public final class Drive extends AbstractSubsystem {
 
         if (angleMeasure >= AUTO_BALANCE_COMPLETE_THRESHOLD) {
             xVelocity = AUTO_BALANCING_VELOCITY;
+            if (Robot.getRobotTracker().getGyroYVelocity() < -AUTO_BALANCE_VELOCITY_THRESHOLD) {
+                xVelocity = 0;
+            }
         } else if (angleMeasure <= -AUTO_BALANCE_COMPLETE_THRESHOLD) {
             xVelocity = -AUTO_BALANCING_VELOCITY;
+            if (Robot.getRobotTracker().getGyroYVelocity() > AUTO_BALANCE_VELOCITY_THRESHOLD) {
+                xVelocity = 0;
+            }
         }
 
         nextChassisSpeeds = ChassisSpeeds.fromFieldRelativeSpeeds(

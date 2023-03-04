@@ -15,6 +15,7 @@ import edu.wpi.first.math.numbers.N1;
 import edu.wpi.first.math.numbers.N3;
 import edu.wpi.first.math.numbers.N4;
 import edu.wpi.first.wpilibj.DriverStation;
+import edu.wpi.first.wpilibj.Timer;
 import frc.robot.Robot;
 import frc.subsytem.AbstractSubsystem;
 import frc.subsytem.robottracker.GyroInputs.Entry;
@@ -231,6 +232,12 @@ public final class RobotTracker extends AbstractSubsystem {
 
     long gyroUpdates = 0;
 
+    public double getGyroYVelocity() {
+        return gyroYVelocity;
+    }
+
+    double gyroYVelocity = 0;
+
     @Override
     public void update() {
         double timestamp = Robot.getDrive().getIoTimestamp();
@@ -277,6 +284,9 @@ public final class RobotTracker extends AbstractSubsystem {
                 // Clear the gyro histories
                 gyroInputs.accelerations.clear();
                 gyroInputs.rotations.clear();
+
+
+                gyroYVelocity = gyroInputs.gyroRollVelocity;
             } finally {
                 lock.writeLock().unlock();
             }
@@ -664,9 +674,12 @@ public final class RobotTracker extends AbstractSubsystem {
         Logger.getInstance().recordOutput("RobotTracker/Velocity", getVelocity().getNorm());
         Logger.getInstance().recordOutput("RobotTracker/Is Velocity Mismatched", isVelocityMismatched);
         Logger.getInstance().recordOutput("RobotTracker/Velocity Mismatch Time", velocityMismatchTime);
-        Logger.getInstance().recordOutput("RobotTracker/Rotation X", Math.toDegrees(getLatestPose3d().getRotation().getX()));
-        Logger.getInstance().recordOutput("RobotTracker/Rotation Y", Math.toDegrees(getLatestPose3d().getRotation().getY()));
-        Logger.getInstance().recordOutput("RobotTracker/Rotation Z", Math.toDegrees(getLatestPose3d().getRotation().getZ()));
+
+        var gyroRotation = getGyroAngleAtTime(Timer.getFPGATimestamp());
+
+        Logger.getInstance().recordOutput("RobotTracker/Rotation X", Math.toDegrees(gyroRotation.getX()));
+        Logger.getInstance().recordOutput("RobotTracker/Rotation Y", Math.toDegrees(gyroRotation.getY()));
+        Logger.getInstance().recordOutput("RobotTracker/Rotation Z", Math.toDegrees(gyroRotation.getZ()));
 
 
         RobotPositionSender.addRobotPosition(new RobotState(getLatestPose(), getVelocity().getX(),
