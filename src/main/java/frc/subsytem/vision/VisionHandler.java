@@ -200,6 +200,8 @@ public class VisionHandler extends AbstractSubsystem {
 
         RobotPositionSender.addRobotPosition(
                 new RobotState(poseToFeedToRobotTracker.toPose2d(), data.timestamp, "Fed Vision Pose Tag: " + data.tagId));
+        RobotPositionSender.addRobotPosition(
+                new RobotState(visionOnlyPose.toPose2d(), data.timestamp, "Vision Only Pose Tag: " + data.tagId));
         var defaultDevs = RobotTracker.DEFAULT_VISION_DEVIATIONS;
         if (distanceToTag == 0) return;
         var distanceToTag3 = distanceToTag * distanceToTag;

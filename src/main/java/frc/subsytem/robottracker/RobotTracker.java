@@ -474,8 +474,11 @@ public final class RobotTracker extends AbstractSubsystem {
                         new CompletedVisionMeasurement(visionMeasurement.pose, visionMeasurementStds,
                                 swerveDriveOdometry.getEstimatedPosition3d())
                 );
-                swerveDriveOdometry.addVisionMeasurement(visionMeasurement.pose(), visionMeasurement.timestamp(),
-                        visionMeasurement.visionMeasurementStds().orElse(DEFAULT_VISION_DEVIATIONS));
+
+                var stds = visionMeasurement.visionMeasurementStds().orElse(DEFAULT_VISION_DEVIATIONS);
+                var reducedStds = VecBuilder.fill(stds.get(0, 0), stds.get(1, 0), stds.get(3, 0));
+                swerveDriveOdometry.addVisionMeasurement(visionMeasurement.pose().toPose2d(), visionMeasurement.timestamp(),
+                        reducedStds);
             }
             visionMeasurements.clear();
         }
@@ -661,6 +664,9 @@ public final class RobotTracker extends AbstractSubsystem {
         Logger.getInstance().recordOutput("RobotTracker/Velocity", getVelocity().getNorm());
         Logger.getInstance().recordOutput("RobotTracker/Is Velocity Mismatched", isVelocityMismatched);
         Logger.getInstance().recordOutput("RobotTracker/Velocity Mismatch Time", velocityMismatchTime);
+        Logger.getInstance().recordOutput("RobotTracker/Rotation X", Math.toDegrees(getLatestPose3d().getRotation().getX()));
+        Logger.getInstance().recordOutput("RobotTracker/Rotation Y", Math.toDegrees(getLatestPose3d().getRotation().getY()));
+        Logger.getInstance().recordOutput("RobotTracker/Rotation Z", Math.toDegrees(getLatestPose3d().getRotation().getZ()));
 
 
         RobotPositionSender.addRobotPosition(new RobotState(getLatestPose(), getVelocity().getX(),
