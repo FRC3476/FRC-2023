@@ -5,6 +5,7 @@ import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import frc.robot.Constants;
+import frc.robot.Robot;
 import frc.subsytem.AbstractSubsystem;
 import org.littletonrobotics.junction.Logger;
 
@@ -97,6 +98,11 @@ public class Grabber extends AbstractSubsystem {
 
 
     public synchronized void setGrabState(GrabState grabState) {
+        if (!Robot.isOnMainThread()) {
+            Robot.runOnMainThread(() -> setGrabState(grabState));
+            return;
+        }
+
         io.setGrabberVoltage(grabState.voltage);
         Logger.getInstance().recordOutput("Grabber/Grabber voltage", grabState.voltage);
         Logger.getInstance().recordOutput("Grabber/Grabber state", grabState.name());
@@ -111,7 +117,12 @@ public class Grabber extends AbstractSubsystem {
     }
 
     public synchronized void setAutoGrab(boolean enabled) {
+        if (!Robot.isOnMainThread()) {
+            Robot.runOnMainThread(() -> setAutoGrab(enabled));
+            return;
+        }
         io.setAutoGrab(enabled && IS_AUTO_GRAB_ENABLED);
+
         Logger.getInstance().recordOutput("Grabber/Limit Switch Enabled", enabled && IS_AUTO_GRAB_ENABLED);
     }
 

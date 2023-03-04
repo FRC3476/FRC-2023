@@ -94,12 +94,6 @@ public class MechanismStateManager extends AbstractSubsystem {
             lastNotStowState = state;
             System.out.println("New State: " + state.name());
         }
-
-        if (state != lastState) {
-            Robot.getGrabber().setAutoGrab(
-                    state == MechanismStates.STATION_PICKUP || state == MechanismStates.FLOOR_PICKUP
-            );
-        }
         lastState = state;
     }
 
