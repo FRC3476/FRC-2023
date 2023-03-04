@@ -7,6 +7,9 @@ import frc.robot.Constants;
 import frc.subsytem.AbstractSubsystem;
 import org.littletonrobotics.junction.Logger;
 
+import static frc.robot.Constants.*;
+import static frc.utility.MathUtil.avg;
+
 public class TelescopingArm extends AbstractSubsystem {
 
     private final TelescopingArmIO io;
@@ -22,6 +25,15 @@ public class TelescopingArm extends AbstractSubsystem {
     private double trapezoidProfileStartTime = 0;
 
     /**
+     * Controls elevator motor with percent output
+     *
+     * @param percent Spans from -1 to 1 where the extremes are full power and direction depends on the sign
+     */
+    public void setPercentOutput(double percent) {
+        io.setTelescopingArmVoltage(percent * ARM_NOMINAL_VOLTAGE);
+    }
+
+    /**
      * @param position The position to set the telescoping arm (meters)
      */
     public void setPosition(double position) {
@@ -33,12 +45,33 @@ public class TelescopingArm extends AbstractSubsystem {
         Logger.getInstance().recordOutput("Telescoping Arm/Goal position", position);
     }
 
+    private boolean homing = false;
+    private double homeTime = 0;
+
+    public void homeArm() {
+        homeTime = ARM_MIN_HOME_TIME;
+        homing = true;
+    }
+
     private double pastVelocity = 0, pastTime = 0;
 
     @Override
     public void update() {
         io.updateInputs(inputs);
         Logger.getInstance().processInputs("Telescoping Arm", inputs);
+
+        if (homing) {
+            if (DriverStation.isEnabled()) {
+                homeTime -= Constants.NOMINAL_DT;
+                setPercentOutput(MOTOR_SPEED_DECREASING_RATE);
+                if (homeTime <= 0 && avg(inputs.current) > Constants.ELEVATOR_STALLING_CURRENT) {
+                    homing = false;
+                    io.resetTelescopingArmPosition(0);
+                }
+                Logger.getInstance().recordOutput("Elevator/Home time", homeTime);
+            }
+            return;
+        }
 
         double currentTime = Timer.getFPGATimestamp();
         if (trapezoidProfileStartTime == -1) {
