@@ -18,9 +18,6 @@ import java.io.File;
 import java.nio.file.Files;
 
 public final class Constants {
-
-    private static final boolean GRAVITY_LESS_MODE = false;
-
     public static final String LOG_DIRECTORY = "/u/logs";
 
     public static final double SECONDS_PER_MINUTE = 60;
@@ -56,7 +53,7 @@ public final class Constants {
 
     public static final double SWERVE_INCHES_PER_ROTATION = 12.5 * 0.976;
     public static final double SWERVE_METER_PER_ROTATION = Units.inchesToMeters(SWERVE_INCHES_PER_ROTATION);
-    public static final double SWERVE_DRIVE_P = .01;
+    public static final double SWERVE_DRIVE_P = .06;
     public static final double SWERVE_DRIVE_D = 0.00;
     public static final double SWERVE_DRIVE_I = 0.00;
     public static final double SWERVE_DRIVE_F = 0.00;
@@ -137,9 +134,9 @@ public final class Constants {
     public static final double DEFAULT_TURN_I = 0;
     public static final double DEFAULT_TURN_D = 0.3;
 
-    public static final double DEFAULT_AUTO_P = 2;
+    public static final double DEFAULT_AUTO_P = 10;
     public static final double DEFAULT_AUTO_I = 0;
-    public static final double DEFAULT_AUTO_D = 00;
+    public static final double DEFAULT_AUTO_D = 0;
     public static final double TURN_SPEED_LIMIT_WHILE_AIMING = 4.0;
 
     public static final double EXPECTED_TELEOP_DRIVE_DT = 0.02;
@@ -192,6 +189,7 @@ public final class Constants {
     public static final double TELESCOPING_ARM_NOMINAL_VOLTAGE = 9;
     public static final int TELESCOPING_ARM_SMART_CURRENT_LIMIT = 30;
     public static final int TELESCOPING_ARM_CAN_ID = 60;
+    public static final double TELESCOPING_ARM_ALLOWED_ERROR = 0.0001;
     public static final ArmFeedforward GRABBER_FEEDFORWARD = new ArmFeedforward(0.32, 0.34, 0, 0);
     public static final TrapezoidProfile.Constraints GRABBER_PIVOT_CONSTRAINTS
             = new TrapezoidProfile.Constraints(10, 10);
@@ -213,10 +211,11 @@ public final class Constants {
 
     public static final double GRABBER_ROLLER_VOLTAGE = -6;
     public static final double GRABBER_ROLLER_IDLE = -0;
-    public static boolean GRABBER_WHEELS_USED = !IS_PRACTICE;
+    public static boolean GRABBER_WHEELS_USED = false;
 
-    // TODO: FIND ACTUAL GRABBER LENGTH
     public static final double GRABBER_LENGTH = .308;
+
+    public static final boolean IS_AUTO_GRAB_ENABLED = !IS_PRACTICE;
 
     public enum KinematicLimits {
         /**

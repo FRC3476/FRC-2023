@@ -51,16 +51,16 @@ public class MechanismStateManager extends AbstractSubsystem {
 
         @Override
         public boolean equals(Object o) {
-            return epsilonEquals(0, 0.01);
+            return epsilonEquals(0, 0.01, 1);
         }
 
-        public boolean epsilonEquals(Object o, double epsilon) {
+        public boolean epsilonEquals(Object o, double epsilon, double angleEpsilon) {
             if (this == o) return true;
             if (o == null || getClass() != o.getClass()) return false;
             MechanismStateCoordinates that = (MechanismStateCoordinates) o;
             return OrangeUtility.doubleEqual(that.xMeters, xMeters, epsilon) &&
                     OrangeUtility.doubleEqual(that.yMeters, yMeters, epsilon) &&
-                    OrangeUtility.doubleEqual(that.grabberAngleDegrees, grabberAngleDegrees, epsilon);
+                    OrangeUtility.doubleEqual(that.grabberAngleDegrees, grabberAngleDegrees, angleEpsilon);
         }
     }
 
@@ -68,8 +68,10 @@ public class MechanismStateManager extends AbstractSubsystem {
     public enum MechanismStates {
         STOWED(new MechanismStateCoordinates(-0.489, 0.249, MAX_WRIST_ANGLE - 2)),
         LOW_SCORING(new MechanismStateCoordinates(Units.inchesToMeters(12), Units.inchesToMeters(7.5), 0)),
-        MIDDLE_SCORING(new MechanismStateCoordinates(Units.inchesToMeters(16), Units.inchesToMeters(47.5), 0)),
-        HIGH_SCORING(new MechanismStateCoordinates(Units.inchesToMeters(36), Units.inchesToMeters(57), 65)),
+        CUBE_MIDDLE_SCORING(new MechanismStateCoordinates(Units.inchesToMeters(16), Units.inchesToMeters(40), 0)),
+        CONE_MIDDLE_SCORING(new MechanismStateCoordinates(Units.inchesToMeters(13), Units.inchesToMeters(47.5), 0)),
+        CONE_HIGH_SCORING(new MechanismStateCoordinates(Units.inchesToMeters(36), Units.inchesToMeters(57), 65)),
+        CUBE_HIGH_SCORING(new MechanismStateCoordinates(Units.inchesToMeters(36), Units.inchesToMeters(54), 33)),
         STATION_PICKUP(new MechanismStateCoordinates(0.531, 2.3 - 0.015, 12)),
         FLOOR_PICKUP(new MechanismStateCoordinates(0.08, 0.06, 0));
         private final MechanismStateCoordinates state;
@@ -82,20 +84,29 @@ public class MechanismStateManager extends AbstractSubsystem {
 
     private @NotNull MechanismStateManager.MechanismStateCoordinates currentWantedState = MechanismStates.STOWED.state;
 
-    MechanismStateCoordinates lastNotStowState = MechanismStates.STOWED.state;
+    MechanismStates lastNotStowState = MechanismStates.STOWED;
+
+    MechanismStates lastState = MechanismStates.STOWED;
 
     public synchronized void setState(@NotNull MechanismStates state) {
         setState(state.state);
         if (state != MechanismStates.STOWED) {
-            lastNotStowState = state.state;
+            lastNotStowState = state;
+            System.out.println("New State: " + state.name());
         }
+
+        if (state != lastState) {
+            Robot.getGrabber().setAutoGrab(
+                    state == MechanismStates.STATION_PICKUP || state == MechanismStates.FLOOR_PICKUP
+            );
+        }
+        lastState = state;
     }
 
 
     public @NotNull MechanismStateCoordinates getCurrentWantedState() {
         return currentWantedState;
     }
-
 
     public synchronized void setState(@NotNull MechanismStateCoordinates state) {
         // Don't set the lastNotStowState here so that the limits remain active if the arcade mode is used to move the mechanism
@@ -223,8 +234,8 @@ public class MechanismStateManager extends AbstractSubsystem {
 
 
         MechanismStateSubsystemPositions limitedStatePositions = coordinatesToSubsystemPositions(limitedStateCoordinates);
-        if (!lastNotStowState.equals(MechanismStates.FLOOR_PICKUP.state)) {
-            if (!lastNotStowState.equals(MechanismStates.STATION_PICKUP.state)) {
+        if (lastNotStowState != MechanismStates.FLOOR_PICKUP) {
+            if (lastNotStowState != MechanismStates.STATION_PICKUP) {
                 // Use scoring keepouts
                 double armEndX = limitedStateCoordinates.xMeters - limitedStateCoordinates.grabberX();
                 double armEndY = limitedStateCoordinates.yMeters - limitedStateCoordinates.grabberY();
@@ -320,7 +331,17 @@ public class MechanismStateManager extends AbstractSubsystem {
                 currentPositions.grabberAngleDegrees);
 
 
-        boolean isAtFinalPosition = limitCoordinates(currentWantedState).epsilonEquals(getCurrentCoordinates(), 0.02);
+        var currentGoal = limitCoordinates(currentWantedState);
+        boolean isAtFinalPosition = currentGoal.epsilonEquals(currentCoordinates, 0.1, 5);
+
+        Logger.getInstance().recordOutput("MechanismStateManager/X Error", currentGoal.xMeters() - currentCoordinates.xMeters());
+        Logger.getInstance().recordOutput("MechanismStateManager/Y Error", currentGoal.yMeters() - currentCoordinates.yMeters());
+        Logger.getInstance().recordOutput("MechanismStateManager/Angle Error",
+                currentGoal.grabberAngleDegrees() - currentCoordinates.grabberAngleDegrees());
+
+        Logger.getInstance().recordOutput("MechanismStateManager/isAtFinalPosition",
+                isAtFinalPosition);
+
 
         synchronized (this) {
             this.isAtFinalPosition = isAtFinalPosition;

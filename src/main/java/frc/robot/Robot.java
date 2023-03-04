@@ -78,7 +78,7 @@ public class Robot extends LoggedRobot {
     public static final int STICK_TOGGLE_SCORING = 7;
     public static final int STICK_TOGGLE_FLOOR_PICKUP = 9;
     public static final int STICK_TOGGLE_PICKUP = 11;
-    public static final int XBOX_TOGGLE_GRABBER = XboxButtons.B;
+    public static final int XBOX_TOGGLE_GRABBER = XboxButtons.LEFT_BUMPER;
     private double disabledTime = 0;
 
     private @NotNull static Drive drive;
@@ -248,6 +248,9 @@ public class Robot extends LoggedRobot {
         } catch (NoSuchFieldException | IllegalAccessException e) {
             throw new RuntimeException(e);
         }
+
+        System.out.println("Using GIT SHA: " + BuildConstants.GIT_SHA + " on branch " + BuildConstants.GIT_BRANCH
+                + " built on " + BuildConstants.BUILD_DATE);
     }
 
 
@@ -320,6 +323,10 @@ public class Robot extends LoggedRobot {
     private double wantedAngle = MAX_WRIST_ANGLE - 2;
     public boolean isTurnToTargetMode = false;
 
+    private double grabberOpenTime = 0;
+    private boolean wantToClose = false;
+
+
     /**
      * This method is called periodically during operator control.
      */
@@ -378,6 +385,28 @@ public class Robot extends LoggedRobot {
             robotTracker.resetPose(new Pose2d(robotTracker.getLatestPose().getTranslation(), new Rotation2d()));
         }
 
+        if (grabber.isGrabbed() &&
+                (wantedMechanismState == WantedMechanismState.STATION_PICKUP || wantedMechanismState == WantedMechanismState.FLOOR_PICKUP)) {
+            setStowed();
+        }
+
+        if (isGrabberOpen
+                && (wantedMechanismState == WantedMechanismState.SCORING)
+                && xbox.getFallingEdge(XBOX_TOGGLE_GRABBER)) {
+            wantToClose = true;
+        }
+
+        if (wantToClose) {
+            if (scoringPositionManager.getWantedPositionType() == PositionType.CUBE &&
+                    Timer.getFPGATimestamp() - grabberOpenTime > 0.5) {
+                setStowed();
+            }
+            if (scoringPositionManager.getWantedPositionType() == PositionType.CONE &&
+                    Timer.getFPGATimestamp() - grabberOpenTime > 0.1) {
+                setStowed();
+            }
+        }
+
         if (stick.getRisingEdge(STICK_TOGGLE_SCORING)) {
             if (wantedMechanismState == WantedMechanismState.STOWED) {
                 wantedMechanismState = WantedMechanismState.SCORING;
@@ -417,10 +446,6 @@ public class Robot extends LoggedRobot {
             }
         }
 
-        if (grabber.isGrabbed() && wantedMechanismState == WantedMechanismState.STATION_PICKUP) {
-            setStowed();
-        }
-
 
         if (wantedMechanismState != lastWantedMechanismState) {
             switch (wantedMechanismState) {
@@ -430,9 +455,17 @@ public class Robot extends LoggedRobot {
                     if (level == 0) {
                         mechanismStateManager.setState(MechanismStates.LOW_SCORING);
                     } else if (level == 1) {
-                        mechanismStateManager.setState(MechanismStates.MIDDLE_SCORING);
+                        if (scoringPositionManager.getWantedPositionType() == PositionType.CONE) {
+                            mechanismStateManager.setState(MechanismStates.CONE_MIDDLE_SCORING);
+                        } else {
+                            mechanismStateManager.setState(MechanismStates.CUBE_MIDDLE_SCORING);
+                        }
                     } else if (level == 2) {
-                        mechanismStateManager.setState(MechanismStates.HIGH_SCORING);
+                        if (scoringPositionManager.getWantedPositionType() == PositionType.CONE) {
+                            mechanismStateManager.setState(MechanismStates.CONE_HIGH_SCORING);
+                        } else {
+                            mechanismStateManager.setState(MechanismStates.CUBE_HIGH_SCORING);
+                        }
                     }
                 }
                 case FLOOR_PICKUP -> mechanismStateManager.setState(MechanismStates.FLOOR_PICKUP);
@@ -477,6 +510,11 @@ public class Robot extends LoggedRobot {
 
         if (xbox.getRisingEdge(XBOX_TOGGLE_GRABBER)) {
             isGrabberOpen = !isGrabberOpen;
+            if (isGrabberOpen) {
+                grabberOpenTime = Timer.getFPGATimestamp();
+            } else {
+                grabber.setAutoGrab(false);
+            }
         }
 
         if (isGrabberOpen) {
@@ -487,6 +525,11 @@ public class Robot extends LoggedRobot {
                 }
             } else {
                 grabber.setGrabState(GrabState.OPEN);
+                if ((wantedMechanismState == WantedMechanismState.FLOOR_PICKUP || wantedMechanismState == WantedMechanismState.STATION_PICKUP)
+                        && grabber.isOpen() && IS_AUTO_GRAB_ENABLED) {
+                    isGrabberOpen = false;
+                    System.out.println("Tyring to auto close");
+                }
             }
         } else {
             if (scoringPositionManager.getWantedPositionType() == PositionType.CONE) {
@@ -516,6 +559,7 @@ public class Robot extends LoggedRobot {
     private void setStowed() {
         wantedMechanismState = WantedMechanismState.STOWED;
         setFutureGrabberClose = true;
+        wantToClose = false;
     }
 
     private void updateTeleopDrivingTarget(ScoringPositionManager scoringPositionManager) {
@@ -598,6 +642,9 @@ public class Robot extends LoggedRobot {
      */
     @Override
     public void testInit() {
+        // Disable the grabber
+        grabber.setAutoGrab(false);
+        grabber.setGrabState(GrabState.IDLE);
     }
 
 
@@ -607,8 +654,8 @@ public class Robot extends LoggedRobot {
     @Override
     public void testPeriodic() {
         xbox.update();
-        if (xbox.getRawButton(XboxButtons.X) && xbox.getRawButton(XBOX_TOGGLE_GRABBER)
-                && xbox.getRisingEdge(XboxButtons.X) && xbox.getRisingEdge(XBOX_TOGGLE_GRABBER)) {
+        if (xbox.getRawButton(XboxButtons.X) && xbox.getRawButton(XboxButtons.B)
+                && xbox.getRisingEdge(XboxButtons.X) && xbox.getRisingEdge(XboxButtons.B)) {
             drive.resetAbsoluteZeros();
         }
     }
