@@ -81,7 +81,7 @@ public class Grabber extends AbstractSubsystem {
     }
 
     public enum GrabState {
-        OPEN(5),
+        OPEN(6),
         GRAB_CUBE(-4),
         GRAB_CONE(-12),
         IDLE(0);
@@ -116,14 +116,21 @@ public class Grabber extends AbstractSubsystem {
         }
     }
 
+    boolean isAutoGrabEnabled = false;
+
     public synchronized void setAutoGrab(boolean enabled) {
         if (!Robot.isOnMainThread()) {
             Robot.runOnMainThread(() -> setAutoGrab(enabled));
             return;
         }
+        isAutoGrabEnabled = enabled && IS_AUTO_GRAB_ENABLED;
         io.setAutoGrab(enabled && IS_AUTO_GRAB_ENABLED);
 
         Logger.getInstance().recordOutput("Grabber/Limit Switch Enabled", enabled && IS_AUTO_GRAB_ENABLED);
+    }
+
+    public synchronized boolean isAutoGrabEnabled() {
+        return isAutoGrabEnabled;
     }
 
 
@@ -140,7 +147,10 @@ public class Grabber extends AbstractSubsystem {
                 && Timer.getFPGATimestamp() > allowedOpenTime;
     }
 
-    public void waitTillGrabbed() throws InterruptedException {
+    double startTime;
+
+    public void waitTillGrabbed(double maxTime) throws InterruptedException {
+        startTime = Timer.getFPGATimestamp();
         while (true) {
             synchronized (this) {
                 if (isGrabbed()) {
@@ -149,6 +159,10 @@ public class Grabber extends AbstractSubsystem {
             }
 
             Thread.sleep(10);
+
+            if (Timer.getFPGATimestamp() - startTime > maxTime) {
+                break;
+            }
         }
     }
 

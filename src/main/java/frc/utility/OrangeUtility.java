@@ -2,6 +2,8 @@
 
 package frc.utility;
 
+import edu.wpi.first.math.geometry.Pose3d;
+import edu.wpi.first.math.geometry.Translation3d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.wpilibj.DriverStation;
 import frc.utility.geometry.MutableTranslation2d;
@@ -9,6 +11,8 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import static frc.robot.Constants.FIELD_HEIGHT_METERS;
 
 public final class OrangeUtility {
 
@@ -270,5 +274,13 @@ public final class OrangeUtility {
         if (!assertion) {
             throw new RuntimeException("Assertion Failed");
         }
+    }
+
+    /**
+     * Fix the coordinates to they work with advantage kit
+     */
+    public static Pose3d fixCoords(Pose3d pose3d) {
+        return new Pose3d(new Translation3d(pose3d.getX(), pose3d.getY() + FIELD_HEIGHT_METERS / 2, pose3d.getZ()),
+                pose3d.getRotation());
     }
 }

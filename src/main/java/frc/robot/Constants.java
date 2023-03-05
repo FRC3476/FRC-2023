@@ -18,6 +18,8 @@ import java.io.File;
 import java.nio.file.Files;
 
 public final class Constants {
+    public static final double ANGULAR_ACCELERATION_BALANCE_THRESHHOLD = 10;
+    public static final double BALANCE_REVERSE_SPEED = .4;
     public static final String LOG_DIRECTORY = "/u/logs";
 
     public static final double SECONDS_PER_MINUTE = 60;
@@ -33,6 +35,10 @@ public final class Constants {
     public static final double SWERVE_MOTOR_POSITION_CONVERSION_FACTOR = 1 / 12.8;
     public static final int DEFAULT_PERIODS_PER_LOG = 0;
     private static final int NOMINAL_DT_MS = 20;
+
+    public static final double BALANCE_P = .05;
+    public static final double BALANCE_I = 0;
+    public static final double BALANCE_D = 0;
 
     //Drive Constants
     public static final double AUTO_BALANCING_VELOCITY = 0.5;
@@ -55,12 +61,13 @@ public final class Constants {
 
     public static final double SWERVE_INCHES_PER_ROTATION = 12.5 * 0.976;
     public static final double SWERVE_METER_PER_ROTATION = Units.inchesToMeters(SWERVE_INCHES_PER_ROTATION);
-    public static final double SWERVE_DRIVE_P = .06;
+    public static final double SWERVE_DRIVE_P = .08;
     public static final double SWERVE_DRIVE_D = 0.00;
     public static final double SWERVE_DRIVE_I = 0.00;
     public static final double SWERVE_DRIVE_F = 0.00;
     public static final double SWERVE_DRIVE_INTEGRAL_ZONE = 0.00;
-    public static final double AUTO_BALANCE_COMPLETE_THRESHOLD = 12;
+    public static final double AUTO_BALANCE_COMPLETE_THRESHOLD = 9;
+
     /**
      * Feed forward constants for the drivetrain.
      * <p>
@@ -189,7 +196,7 @@ public final class Constants {
     public static final double TELESCOPING_ARM_D = 30.0;
     public static final double TELESCOPING_ARM_ROTATIONS_PER_METER = 96.664 / (Math.PI);
     public static final double TELESCOPING_ARM_NOMINAL_VOLTAGE = 9;
-    public static final int TELESCOPING_ARM_SMART_CURRENT_LIMIT = 20;
+    public static final int TELESCOPING_ARM_SMART_CURRENT_LIMIT = 25;
     public static final int TELESCOPING_ARM_CAN_ID = 60;
     public static final double TELESCOPING_ARM_ALLOWED_ERROR = 0.0001;
     public static final ArmFeedforward GRABBER_FEEDFORWARD = new ArmFeedforward(0.32, 0.34, 0, 0);
@@ -217,7 +224,7 @@ public final class Constants {
 
     public static final double GRABBER_LENGTH = .308;
 
-    public static final boolean IS_AUTO_GRAB_ENABLED = !IS_PRACTICE;
+    public static final boolean IS_AUTO_GRAB_ENABLED = true;
 
     public enum KinematicLimits {
         /**
