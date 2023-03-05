@@ -77,22 +77,28 @@ public class Robot extends LoggedRobot {
     public static final int XBOX_AUTO_ROTATE = XboxButtons.RIGHT_BUMPER;
     public static final int XBOX_RESET_HEADING = XboxButtons.A;
     public static final int STICK_TOGGLE_SCORING = 7;
-    public static final int STICK_LOWER_STATION_PICKUP = 8;
-    public static final int STICK_UPPER_STATION_PICKUP = 10;
     public static final int STICK_TOGGLE_FLOOR_PICKUP = 9;
     public static final int STICK_TOGGLE_PICKUP = 11;
     public static final int XBOX_TOGGLE_GRABBER = XboxButtons.LEFT_BUMPER;
     private double disabledTime = 0;
 
-    private @NotNull static Drive drive;
-    private @NotNull static RobotTracker robotTracker;
-    private @NotNull static VisionHandler visionHandler;
+    private @NotNull
+    static Drive drive;
+    private @NotNull
+    static RobotTracker robotTracker;
+    private @NotNull
+    static VisionHandler visionHandler;
 
-    private @NotNull static Elevator elevator;
-    private @NotNull static TelescopingArm telescopingArm;
-    private @NotNull static Grabber grabber;
-    private @NotNull static MechanismStateManager mechanismStateManager;
-    private @NotNull static PowerDistribution powerDistribution;
+    private @NotNull
+    static Elevator elevator;
+    private @NotNull
+    static TelescopingArm telescopingArm;
+    private @NotNull
+    static Grabber grabber;
+    private @NotNull
+    static MechanismStateManager mechanismStateManager;
+    private @NotNull
+    static PowerDistribution powerDistribution;
 
     private @NotNull Controller xbox;
     private @NotNull Controller stick;
@@ -179,10 +185,14 @@ public class Robot extends LoggedRobot {
             Logger.getInstance().addDataReceiver(
                     new WPILOGWriter(LogFileUtil.addPathSuffix(logPath, "_sim"))); // Save outputs to a new log
 
-            drive = new Drive(new DriveIO() {});
-            elevator = new Elevator(new ElevatorIO() {});
-            telescopingArm = new TelescopingArm(new TelescopingArmIO() {});
-            grabber = new Grabber(new GrabberIO() {});
+            drive = new Drive(new DriveIO() {
+            });
+            elevator = new Elevator(new ElevatorIO() {
+            });
+            telescopingArm = new TelescopingArm(new TelescopingArmIO() {
+            });
+            grabber = new Grabber(new GrabberIO() {
+            });
         }
 
         Logger.getInstance().start(); // Start logging! No more data receivers, replay sources, or metadata values may be added
@@ -332,8 +342,6 @@ public class Robot extends LoggedRobot {
 
     private double grabberOpenTime = 0;
     private boolean wantToClose = false;
-    private boolean upperStationPickup = true;
-
 
     /**
      * This method is called periodically during operator control.
@@ -439,14 +447,6 @@ public class Robot extends LoggedRobot {
             } else {
                 setStowed();
             }
-        }
-
-        if (stick.getRisingEdge(STICK_UPPER_STATION_PICKUP)) {
-            upperStationPickup = true;
-        }
-
-        if (stick.getRisingEdge(STICK_LOWER_STATION_PICKUP)) {
-            upperStationPickup = false;
         }
 
         if (xbox.getRisingEdge(XBOX_TOGGLE_MECH)) {
@@ -618,7 +618,7 @@ public class Robot extends LoggedRobot {
         } else {
             // We're on the opposite side as our alliance
             // Try to go to the pickup position
-            if (upperStationPickup) {
+            if (robotTracker.getLatestPose3d().getY() < 2.715) {
                 y = LOWER_PICKUP_POSITION_Y;
             } else {
                 y = UPPER_PICKUP_POSITION_Y;
