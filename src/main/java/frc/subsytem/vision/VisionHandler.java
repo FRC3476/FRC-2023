@@ -20,6 +20,8 @@ import edu.wpi.first.math.util.Units;
 import edu.wpi.first.networktables.NetworkTable;
 import edu.wpi.first.networktables.NetworkTableEvent.Kind;
 import edu.wpi.first.networktables.NetworkTableInstance;
+import edu.wpi.first.wpilibj.Timer;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import frc.robot.Robot;
 import frc.subsytem.AbstractSubsystem;
 import frc.subsytem.robottracker.RobotTracker;
@@ -124,6 +126,7 @@ public class VisionHandler extends AbstractSubsystem {
         configTable.getEntry("Decision Margin").setDouble(15);
         configTable.getEntry("Encode Quality").setDouble(50);
 
+
         for (int i = 1; i <= 8; i++) {
             var table = visionTable.getEntry(String.valueOf(i));
             int finalI = i;
@@ -135,8 +138,21 @@ public class VisionHandler extends AbstractSubsystem {
                             visionInputs.visionUpdates.add(visionUpdate);
                         }
                     });
+
+
         }
+
+        var visionTableLoopTime = visionMiscTable.getEntry("Vision Looptime");
+
+        NetworkTableInstance.getDefault().addListener(visionTableLoopTime.getTopic(),
+                EnumSet.of(Kind.kValueRemote),
+                (event) -> {
+                    lastUpdateTime = Timer.getFPGATimestamp();
+                });
     }
+
+
+    double lastUpdateTime = -1000;
 
     private final MatBuilder<N4, N1> visionStdMatBuilder = new MatBuilder<>(Nat.N4(), Nat.N1());
 
@@ -247,12 +263,15 @@ public class VisionHandler extends AbstractSubsystem {
     public synchronized void update() {
         Logger.getInstance().processInputs("VisionHandler", visionInputs);
 
+        SmartDashboard.putBoolean("MiniPC Connected", Timer.getFPGATimestamp() - lastUpdateTime < 0.5);
+
         Logger.getInstance().recordOutput("Vision Handler/Tags Updates", visionInputs.visionUpdates.size());
         // Process vision updates
         for (var visionUpdate : visionInputs.visionUpdates) {
             processNewTagPosition(visionUpdate);
         }
         visionInputs.visionUpdates.clear();
+
     }
 
     record VisionUpdate(double posX, double posY, double posZ, double rotX, double rotY, double rotZ, double rotW,
