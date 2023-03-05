@@ -196,7 +196,7 @@ public final class Constants {
     public static final double TELESCOPING_ARM_D = 30.0;
     public static final double TELESCOPING_ARM_ROTATIONS_PER_METER = 96.664 / (Math.PI);
     public static final double TELESCOPING_ARM_NOMINAL_VOLTAGE = 9;
-    public static final int TELESCOPING_ARM_SMART_CURRENT_LIMIT = 20;
+    public static final int TELESCOPING_ARM_SMART_CURRENT_LIMIT = 25;
     public static final int TELESCOPING_ARM_CAN_ID = 60;
     public static final double TELESCOPING_ARM_ALLOWED_ERROR = 0.0001;
     public static final ArmFeedforward GRABBER_FEEDFORWARD = new ArmFeedforward(0.32, 0.34, 0, 0);
