@@ -36,7 +36,7 @@ import static frc.utility.OrangeUtility.fixCoords;
 import static java.lang.Double.isNaN;
 
 public final class RobotTracker extends AbstractSubsystem {
-    public static final double GYRO_VELOCITY_MEASUREMENT_WINDOW = 0.02;
+    public static final double GYRO_VELOCITY_MEASUREMENT_WINDOW = 0.04;
     private final ReentrantReadWriteLock lock = new ReentrantReadWriteLock();
     private final @NotNull WPI_Pigeon2 gyroSensor = new WPI_Pigeon2(PIGEON_CAN_ID, "rio");
 
@@ -73,7 +73,7 @@ public final class RobotTracker extends AbstractSubsystem {
      */
     private double angularRollRate = 0;
 
-    public static final Matrix<N4, N1> DEFAULT_VISION_DEVIATIONS = VecBuilder.fill(0.1, 0.1, 0.1, Math.toRadians(5));
+    public static final Matrix<N4, N1> DEFAULT_VISION_DEVIATIONS = VecBuilder.fill(0.1, 0.1, 0.1, Math.toRadians(10));
 
     private final SwerveDrivePoseEstimator swerveDriveOdometry;
 
@@ -124,7 +124,7 @@ public final class RobotTracker extends AbstractSubsystem {
                 gyroInputs.rotation3d,
                 Robot.getDrive().getModulePositions(),
                 new Pose3d(),
-                VecBuilder.fill(0.1, 0.1, 0.1, 1),
+                VecBuilder.fill(0.1, 0.1, 0.1, 0.01),
                 DEFAULT_VISION_DEVIATIONS
         );
 
@@ -237,12 +237,8 @@ public final class RobotTracker extends AbstractSubsystem {
     }
 
     long gyroUpdates = 0;
-
-    public double getGyroYVelocity() {
-        return gyroYVelocity;
-    }
-
-    double gyroYVelocity = 0;
+    private double gyroYVelocity = 0;
+    private double gyroYAngle = 0;
 
     @Override
     public void update() {
@@ -292,17 +288,21 @@ public final class RobotTracker extends AbstractSubsystem {
                 gyroInputs.accelerations.clear();
                 gyroInputs.rotations.clear();
 
-
                 var lastestEntry = gyroHistory.getInternalBuffer().lastEntry();
 
                 if (lastestEntry != null) {
                     double latestTime = lastestEntry.getKey();
-                    // It should be impossible for the sample to be empty
-                    var prevEntry = gyroHistory.getSample(latestTime - GYRO_VELOCITY_MEASUREMENT_WINDOW);
-                    if (prevEntry.isPresent()) {
-                        gyroYVelocity = (lastestEntry.getValue().getY() - prevEntry.get().getY())
-                                / GYRO_VELOCITY_MEASUREMENT_WINDOW;
+                    {
+                        Translation3d up = new Translation3d(0, 0, 1);
+                        var rotated = up.rotateBy(getGyroAngleAtTime(latestTime));
+                        gyroYAngle = -Math.atan2(rotated.getX(), rotated.getZ());
                     }
+
+                    Translation3d up = new Translation3d(0, 0, 1);
+                    var rotated = up.rotateBy(getGyroAngleAtTime(latestTime - GYRO_VELOCITY_MEASUREMENT_WINDOW));
+                    var prevGyroYAngle = -Math.atan2(rotated.getX(), rotated.getZ());
+
+                    gyroYVelocity = (gyroYAngle - prevGyroYAngle) / GYRO_VELOCITY_MEASUREMENT_WINDOW;
                 }
             } finally {
                 lock.writeLock().unlock();
@@ -717,12 +717,8 @@ public final class RobotTracker extends AbstractSubsystem {
         Logger.getInstance().recordOutput("RobotTracker/Raw Rotation Y", Math.toDegrees(currGyroAngle.getY()));
         Logger.getInstance().recordOutput("RobotTracker/Raw Rotation Z", Math.toDegrees(currGyroAngle.getZ()));
 
-        Translation3d up = new Translation3d(0, 0, 1);
-        var rotated = up.rotateBy(getLatestPose3d().getRotation());
-
-        var angle = Math.atan2(rotated.getX(), rotated.getZ());
-
-        Logger.getInstance().recordOutput("RobotTracker/Y Axis Angle", Math.toDegrees(angle));
+        Logger.getInstance().recordOutput("RobotTracker/Y Axis Angle", Math.toDegrees(gyroYAngle));
+        Logger.getInstance().recordOutput("RobotTracker/Y Axis Angle", Math.toDegrees(gyroYVelocity));
 
 
         RobotPositionSender.addRobotPosition(new RobotState(getLatestPose(), getVelocity().getX(),
@@ -842,5 +838,13 @@ public final class RobotTracker extends AbstractSubsystem {
 
         // The deltaVelocity over our measurement window
         return mutDeltaPosition.div(deltaTime).getTranslation3d();
+    }
+
+    public double getGyroYVelocity() {
+        return gyroYVelocity;
+    }
+
+    public double getGyroYAngle() {
+        return gyroYAngle;
     }
 }
