@@ -218,9 +218,6 @@ public final class Constants {
     public static final double GRABBER_LENGTH = .308;
 
     public static final boolean IS_AUTO_GRAB_ENABLED = true;
-
-    public static final double MAX_AUTO_GRAB_TIME = 50;
-
     public enum KinematicLimits {
         /**
          * Normal acceleration limit while driving. This ensures that the driver can't tip the robot.
