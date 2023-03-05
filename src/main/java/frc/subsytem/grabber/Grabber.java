@@ -14,7 +14,7 @@ import static frc.robot.Constants.*;
 public class Grabber extends AbstractSubsystem {
 
     public static final double MIN_OPEN_TIME = 0.5;
-    public static final double MIN_CLOSED_TIME = 0.5;
+    public static final double MIN_CLOSED_TIME = 0.2;
     private final GrabberIO io;
     private final GrabberInputsAutoLogged inputs = new GrabberInputsAutoLogged();
 
@@ -121,9 +121,6 @@ public class Grabber extends AbstractSubsystem {
         if (!Robot.isOnMainThread()) {
             Robot.runOnMainThread(() -> setAutoGrab(enabled));
             return;
-        }
-        if (enabled != isAutoGrabEnabled) {
-            System.out.println("setting auto grab: " + enabled);
         }
         isAutoGrabEnabled = enabled && IS_AUTO_GRAB_ENABLED;
         io.setAutoGrab(enabled && IS_AUTO_GRAB_ENABLED);
