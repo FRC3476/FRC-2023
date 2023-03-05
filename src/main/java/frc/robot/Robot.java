@@ -255,6 +255,8 @@ public class Robot extends LoggedRobot {
 
         System.out.println("Using GIT SHA: " + BuildConstants.GIT_SHA + " on branch " + BuildConstants.GIT_BRANCH
                 + " built on " + BuildConstants.BUILD_DATE);
+
+        runOnMainThread(new MiniPCStatus());
     }
 
 
