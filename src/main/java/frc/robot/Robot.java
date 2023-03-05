@@ -520,11 +520,14 @@ public class Robot extends LoggedRobot {
         Logger.getInstance().recordOutput("Robot/Wanted Mechanism State", wantedMechanismState.name());
 
         if (xbox.getRisingEdge(XBOX_TOGGLE_GRABBER)) {
-            isGrabberOpen = !isGrabberOpen;
-            if (isGrabberOpen) {
-                grabberOpenTime = Timer.getFPGATimestamp();
-            } else {
+            if (grabber.isAutoGrabEnabled() && !isGrabberOpen) {
+                // Auto Grab isn't letting us close so disable it
                 grabber.setAutoGrab(false);
+            } else {
+                isGrabberOpen = !isGrabberOpen;
+                if (isGrabberOpen) {
+                    grabberOpenTime = Timer.getFPGATimestamp();
+                }
             }
         }
 
@@ -535,11 +538,12 @@ public class Robot extends LoggedRobot {
                     isGrabberOpen = false;
                 }
             } else {
-                grabber.setGrabState(GrabState.OPEN);
                 if ((wantedMechanismState == WantedMechanismState.FLOOR_PICKUP || wantedMechanismState == WantedMechanismState.STATION_PICKUP)
                         && grabber.isOpen() && IS_AUTO_GRAB_ENABLED) {
+                    grabber.setAutoGrab(true);
                     isGrabberOpen = false;
-                    System.out.println("Tyring to auto close");
+                } else {
+                    grabber.setGrabState(GrabState.OPEN);
                 }
             }
         } else {
