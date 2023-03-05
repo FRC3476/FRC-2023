@@ -544,6 +544,7 @@ public final class Drive extends AbstractSubsystem {
 
     double[] previousRelativePositions = new double[4];
     double[] previousAbsolutePositions = new double[4];
+    String[] driveErrorNames = new String[4];
 
     @Override
     public synchronized void update() {
@@ -551,7 +552,11 @@ public final class Drive extends AbstractSubsystem {
         io.updateInputs(inputs);
         Logger.getInstance().processInputs("Drive", inputs);
 
-        if (DRIVE_IS_ABSOLUTE) {
+        if (driveIsAbsolute) {
+            driveErrorNames[0] = "Drive/Spark 15 error";
+            driveErrorNames[1] = "Drive/Spark 16 error";
+            driveErrorNames[2] = "Drive/Spark 17 error";
+            driveErrorNames[3] = "Drive/Spark 18 error";
             for (int i = 0; i < 4; i++) {
                 double[] relativeChange = new double[4];
                 double[] absoluteChange = new double[4];
@@ -563,7 +568,9 @@ public final class Drive extends AbstractSubsystem {
 
                 if (error[i] > DRIVE_MAX_DEGREE_ERROR) {
                     boolean errorCheck = error[i] > DRIVE_MAX_DEGREE_ERROR;
-                    Logger.getInstance().recordOutput("Drive/Error", errorCheck);
+                    Logger.getInstance().recordOutput(driveErrorNames[i], errorCheck);
+                } else {
+                    Logger.getInstance().recordOutput(driveErrorNames[i], false);
                 }
 
                 previousRelativePositions[i] = inputs.swerveMotorRelativePositions[i];
