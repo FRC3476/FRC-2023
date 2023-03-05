@@ -32,6 +32,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 import static frc.robot.Constants.*;
+import static frc.utility.OrangeUtility.fixCoords;
 import static java.lang.Double.isNaN;
 
 public final class RobotTracker extends AbstractSubsystem {
@@ -68,7 +69,7 @@ public final class RobotTracker extends AbstractSubsystem {
     private double angularRate = 0;
 
 
-    public static final Matrix<N4, N1> DEFAULT_VISION_DEVIATIONS = VecBuilder.fill(0.1, 0.1, 0.1, Math.toRadians(9));
+    public static final Matrix<N4, N1> DEFAULT_VISION_DEVIATIONS = VecBuilder.fill(0.1, 0.1, 0.1, Math.toRadians(5));
 
     private final SwerveDrivePoseEstimator swerveDriveOdometry;
 
@@ -119,7 +120,7 @@ public final class RobotTracker extends AbstractSubsystem {
                 gyroInputs.rotation3d,
                 Robot.getDrive().getModulePositions(),
                 new Pose3d(),
-                VecBuilder.fill(0.1, 0.1, 0.1, 0.01),
+                VecBuilder.fill(0.1, 0.1, 0.1, 1),
                 DEFAULT_VISION_DEVIATIONS
         );
 
@@ -498,8 +499,12 @@ public final class RobotTracker extends AbstractSubsystem {
 
                 var stds = visionMeasurement.visionMeasurementStds().orElse(DEFAULT_VISION_DEVIATIONS);
                 var reducedStds = VecBuilder.fill(stds.get(0, 0), stds.get(1, 0), stds.get(3, 0));
-                swerveDriveOdometry.addVisionMeasurement(visionMeasurement.pose().toPose2d(), visionMeasurement.timestamp(),
-                        reducedStds);
+
+                var visionPose = visionMeasurement.pose();
+                visionPose = new Pose3d(visionPose.getTranslation(), visionPose.getRotation());
+
+                swerveDriveOdometry.addVisionMeasurement(visionMeasurement.pose(), visionMeasurement.timestamp(),
+                        stds);
             }
             visionMeasurements.clear();
         }
@@ -609,8 +614,7 @@ public final class RobotTracker extends AbstractSubsystem {
     public @NotNull Rotation3d getGyroAngleAtTime(double time) {
         lock.readLock().lock();
         try {
-            return gyroHistory.getSample(time).orElse(ROTATION_IDENTITY)
-                    .plus(gyroOffset);
+            return gyroOffset.plus(gyroHistory.getSample(time).orElse(ROTATION_IDENTITY));
         } finally {
             lock.readLock().unlock();
         }
@@ -674,8 +678,8 @@ public final class RobotTracker extends AbstractSubsystem {
         Logger.getInstance().recordOutput("RobotTracker/y", getLatestPose().getTranslation().getY());
         Logger.getInstance().recordOutput("RobotTracker/NoVisionPose", noVisionOdometry.getPoseMeters());
         Logger.getInstance().recordOutput("RobotTracker/VisionPose", getLatestPose());
-        Logger.getInstance().recordOutput("RobotTracker/NoVisionPose3d", noVisionOdometry.getPoseMeters3d());
-        Logger.getInstance().recordOutput("RobotTracker/VisionPose3d", getLatestPose3d());
+        Logger.getInstance().recordOutput("RobotTracker/NoVisionPose3d", fixCoords(noVisionOdometry.getPoseMeters3d()));
+        Logger.getInstance().recordOutput("RobotTracker/VisionPose3d", fixCoords(getLatestPose3d()));
         Logger.getInstance().recordOutput("RobotTracker/velocityX", getVelocity().getX());
         Logger.getInstance().recordOutput("RobotTracker/velocityY", getVelocity().getY());
         Logger.getInstance().recordOutput("RobotTracker/accelerationX", getAcceleration().getX());
@@ -688,9 +692,22 @@ public final class RobotTracker extends AbstractSubsystem {
 
         var gyroRotation = getGyroAngleAtTime(Timer.getFPGATimestamp());
 
-        Logger.getInstance().recordOutput("RobotTracker/Rotation X", Math.toDegrees(gyroRotation.getX()));
-        Logger.getInstance().recordOutput("RobotTracker/Rotation Y", Math.toDegrees(gyroRotation.getY()));
-        Logger.getInstance().recordOutput("RobotTracker/Rotation Z", Math.toDegrees(gyroRotation.getZ()));
+        Logger.getInstance().recordOutput("RobotTracker/Rotation X", Math.toDegrees(getLatestPose3d().getRotation().getX()));
+        Logger.getInstance().recordOutput("RobotTracker/Rotation Y", Math.toDegrees(getLatestPose3d().getRotation().getY()));
+        Logger.getInstance().recordOutput("RobotTracker/Rotation Z", Math.toDegrees(getLatestPose3d().getRotation().getZ()));
+
+        var currGyroAngle = getGyroAngleAtTime(Timer.getFPGATimestamp());
+
+        Logger.getInstance().recordOutput("RobotTracker/Raw Rotation X", Math.toDegrees(currGyroAngle.getX()));
+        Logger.getInstance().recordOutput("RobotTracker/Raw Rotation Y", Math.toDegrees(currGyroAngle.getY()));
+        Logger.getInstance().recordOutput("RobotTracker/Raw Rotation Z", Math.toDegrees(currGyroAngle.getZ()));
+
+        Translation3d up = new Translation3d(0, 0, 1);
+        var rotated = up.rotateBy(getLatestPose3d().getRotation());
+
+        var angle = Math.atan2(rotated.getX(), rotated.getZ());
+
+        Logger.getInstance().recordOutput("RobotTracker/Y Axis Angle", Math.toDegrees(angle));
 
 
         RobotPositionSender.addRobotPosition(new RobotState(getLatestPose(), getVelocity().getX(),
