@@ -16,6 +16,7 @@ public class Grabber extends AbstractSubsystem {
 
     public static final double MIN_OPEN_TIME = 0.5;
     public static final double MIN_CLOSED_TIME = 0.2;
+    public static final double CURRENT_SPIKE_TIME_THRESHOLD = 0.1;
     private final GrabberIO io;
     private final GrabberInputsAutoLogged inputs = new GrabberInputsAutoLogged();
 
@@ -113,6 +114,9 @@ public class Grabber extends AbstractSubsystem {
             } else {
                 allowedClosedTime = Timer.getFPGATimestamp() + MIN_CLOSED_TIME;
             }
+
+            grabbedAboveCurrentTime = Double.MAX_VALUE;
+            openAboveCurrentTime = Double.MAX_VALUE;
         }
     }
 
@@ -133,18 +137,32 @@ public class Grabber extends AbstractSubsystem {
         return isAutoGrabEnabled;
     }
 
+    double grabbedAboveCurrentTime = 0;
+
 
     public synchronized boolean isGrabbed() {
-        return Math.abs(inputs.grabberCurrent) > GRABBED_CURRENT_THRESHOLD
+        if (Math.abs(inputs.grabberCurrent) > GRABBED_CURRENT_THRESHOLD
                 && (lastGrabState == GrabState.GRAB_CONE || lastGrabState == GrabState.GRAB_CUBE)
-                && Timer.getFPGATimestamp() > allowedClosedTime;
+                && Timer.getFPGATimestamp() > allowedOpenTime) {
+            return Timer.getFPGATimestamp() > grabbedAboveCurrentTime;
+        } else {
+            grabbedAboveCurrentTime = Timer.getFPGATimestamp() + CURRENT_SPIKE_TIME_THRESHOLD;
+        }
+        return false;
     }
 
 
+    double openAboveCurrentTime = 0;
+
     public synchronized boolean isOpen() {
-        return Math.abs(inputs.grabberCurrent) > GRABBED_CURRENT_THRESHOLD
+        if (Math.abs(inputs.grabberCurrent) > GRABBED_CURRENT_THRESHOLD
                 && (lastGrabState == GrabState.OPEN)
-                && Timer.getFPGATimestamp() > allowedOpenTime;
+                && Timer.getFPGATimestamp() > allowedOpenTime) {
+            return Timer.getFPGATimestamp() > openAboveCurrentTime;
+        } else {
+            openAboveCurrentTime = Timer.getFPGATimestamp() + CURRENT_SPIKE_TIME_THRESHOLD;
+        }
+        return false;
     }
 
     double startTime;
