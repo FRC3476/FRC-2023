@@ -57,6 +57,7 @@ import java.lang.reflect.Field;
 import java.nio.file.Files;
 import java.util.Arrays;
 import java.util.NoSuchElementException;
+import java.util.concurrent.ConcurrentLinkedDeque;
 
 import static frc.robot.Constants.*;
 import static java.lang.Math.abs;
@@ -70,13 +71,15 @@ import static java.lang.Math.abs;
 public class Robot extends LoggedRobot {
 
     public static final int XBOX_START_AUTO_DRIVE = XboxButtons.RIGHT_CLICK;
-    public static final int XBOX_AUTO_BALENCE = XboxButtons.Y;
+    public static final int XBOX_TOGGLE_MECH = XboxButtons.LEFT_CLICK;
+
+    public static final int XBOX_AUTO_BALANCE = XboxButtons.Y;
     public static final int XBOX_AUTO_ROTATE = XboxButtons.RIGHT_BUMPER;
     public static final int XBOX_RESET_HEADING = XboxButtons.A;
     public static final int STICK_TOGGLE_SCORING = 7;
     public static final int STICK_TOGGLE_FLOOR_PICKUP = 9;
     public static final int STICK_TOGGLE_PICKUP = 11;
-    public static final int XBOX_TOGGLE_GRABBER = XboxButtons.B;
+    public static final int XBOX_TOGGLE_GRABBER = XboxButtons.LEFT_BUMPER;
     private double disabledTime = 0;
 
     private @NotNull static Drive drive;
@@ -100,11 +103,14 @@ public class Robot extends LoggedRobot {
 
     public static final LoggedDashboardChooser<String> sideChooser = new LoggedDashboardChooser<>("SideChooser");
 
+    private static Thread mainThread;
+
     /**
      * This method is run when the robot is first started up and should be used for any initialization code.
      */
     @Override
     public void robotInit() {
+        mainThread = Thread.currentThread();
         Logger.getInstance().recordMetadata("ProjectName", "FRC2023"); // Set a metadata value
 
 
@@ -118,7 +124,7 @@ public class Robot extends LoggedRobot {
             }
         }
 
-        Logger.getInstance().disableDeterministicTimestamps(); // Disable deterministic timestamps (they cause issues wit the
+        Logger.getInstance().disableDeterministicTimestamps(); // Disable deterministic timestamps (they cause issues with the
         // autoBuilder)
 
         if (isReal() || logPath == null) {
@@ -246,6 +252,9 @@ public class Robot extends LoggedRobot {
         } catch (NoSuchFieldException | IllegalAccessException e) {
             throw new RuntimeException(e);
         }
+
+        System.out.println("Using GIT SHA: " + BuildConstants.GIT_SHA + " on branch " + BuildConstants.GIT_BRANCH
+                + " built on " + BuildConstants.BUILD_DATE);
     }
 
 
@@ -258,6 +267,7 @@ public class Robot extends LoggedRobot {
      */
     @Override
     public void robotPeriodic() {
+        runAsyncScheduledTasks();
         AbstractSubsystem.tick();
     }
 
@@ -318,6 +328,10 @@ public class Robot extends LoggedRobot {
     private double wantedAngle = MAX_WRIST_ANGLE - 2;
     public boolean isTurnToTargetMode = false;
 
+    private double grabberOpenTime = 0;
+    private boolean wantToClose = false;
+
+
     /**
      * This method is called periodically during operator control.
      */
@@ -352,7 +366,7 @@ public class Robot extends LoggedRobot {
                 // We failed to generate a trajectory
                 wantedRumble = 1;
             }
-        } else if (xbox.getRawButton(XBOX_AUTO_BALENCE)) {
+        } else if (xbox.getRawButton(XBOX_AUTO_BALANCE)) {
             drive.autoBalance(getControllerDriveInputs());
         } else {
             if (isTurnToTargetMode) {
@@ -374,6 +388,28 @@ public class Robot extends LoggedRobot {
 
         if (xbox.getRisingEdge(XBOX_RESET_HEADING)) {
             robotTracker.resetPose(new Pose2d(robotTracker.getLatestPose().getTranslation(), new Rotation2d()));
+        }
+
+        if (grabber.isGrabbed() &&
+                (wantedMechanismState == WantedMechanismState.STATION_PICKUP || wantedMechanismState == WantedMechanismState.FLOOR_PICKUP)) {
+            setStowed();
+        }
+
+        if (isGrabberOpen
+                && (wantedMechanismState == WantedMechanismState.SCORING)
+                && xbox.getFallingEdge(XBOX_TOGGLE_GRABBER)) {
+            wantToClose = true;
+        }
+
+        if (wantToClose) {
+            if (scoringPositionManager.getWantedPositionType() == PositionType.CUBE &&
+                    Timer.getFPGATimestamp() - grabberOpenTime > 0.5) {
+                setStowed();
+            }
+            if (scoringPositionManager.getWantedPositionType() == PositionType.CONE &&
+                    Timer.getFPGATimestamp() - grabberOpenTime > 0.1) {
+                setStowed();
+            }
         }
 
         if (stick.getRisingEdge(STICK_TOGGLE_SCORING)) {
@@ -402,6 +438,19 @@ public class Robot extends LoggedRobot {
             }
         }
 
+        if (xbox.getRisingEdge(XBOX_TOGGLE_MECH)) {
+            if (wantedMechanismState == WantedMechanismState.STOWED) {
+                if (isOnAllianceSide()) {
+                    wantedMechanismState = WantedMechanismState.SCORING;
+                } else {
+                    wantedMechanismState = WantedMechanismState.STATION_PICKUP;
+                    isGrabberOpen = true;
+                }
+            } else {
+                setStowed();
+            }
+        }
+
 
         if (wantedMechanismState != lastWantedMechanismState) {
             switch (wantedMechanismState) {
@@ -411,13 +460,27 @@ public class Robot extends LoggedRobot {
                     if (level == 0) {
                         mechanismStateManager.setState(MechanismStates.LOW_SCORING);
                     } else if (level == 1) {
-                        mechanismStateManager.setState(MechanismStates.MIDDLE_SCORING);
+                        if (scoringPositionManager.getWantedPositionType() == PositionType.CONE) {
+                            mechanismStateManager.setState(MechanismStates.CONE_MIDDLE_SCORING);
+                        } else {
+                            mechanismStateManager.setState(MechanismStates.CUBE_MIDDLE_SCORING);
+                        }
                     } else if (level == 2) {
-                        mechanismStateManager.setState(MechanismStates.HIGH_SCORING);
+                        if (scoringPositionManager.getWantedPositionType() == PositionType.CONE) {
+                            mechanismStateManager.setState(MechanismStates.CONE_HIGH_SCORING);
+                        } else {
+                            mechanismStateManager.setState(MechanismStates.CUBE_HIGH_SCORING);
+                        }
                     }
                 }
                 case FLOOR_PICKUP -> mechanismStateManager.setState(MechanismStates.FLOOR_PICKUP);
                 case STATION_PICKUP -> mechanismStateManager.setState(MechanismStates.STATION_PICKUP);
+            }
+
+            if (wantedMechanismState != lastWantedMechanismState) {
+                Robot.getGrabber().setAutoGrab(
+                        wantedMechanismState == WantedMechanismState.STATION_PICKUP || wantedMechanismState == WantedMechanismState.FLOOR_PICKUP
+                );
             }
         }
 
@@ -457,7 +520,15 @@ public class Robot extends LoggedRobot {
         Logger.getInstance().recordOutput("Robot/Wanted Mechanism State", wantedMechanismState.name());
 
         if (xbox.getRisingEdge(XBOX_TOGGLE_GRABBER)) {
-            isGrabberOpen = !isGrabberOpen;
+            if (grabber.isAutoGrabEnabled() && !isGrabberOpen) {
+                // Auto Grab isn't letting us close so disable it
+                grabber.setAutoGrab(false);
+            } else {
+                isGrabberOpen = !isGrabberOpen;
+                if (isGrabberOpen) {
+                    grabberOpenTime = Timer.getFPGATimestamp();
+                }
+            }
         }
 
         if (isGrabberOpen) {
@@ -467,7 +538,13 @@ public class Robot extends LoggedRobot {
                     isGrabberOpen = false;
                 }
             } else {
-                grabber.setGrabState(GrabState.OPEN);
+                if ((wantedMechanismState == WantedMechanismState.FLOOR_PICKUP || wantedMechanismState == WantedMechanismState.STATION_PICKUP)
+                        && grabber.isOpen() && IS_AUTO_GRAB_ENABLED) {
+                    grabber.setAutoGrab(true);
+                    isGrabberOpen = false;
+                } else {
+                    grabber.setGrabState(GrabState.OPEN);
+                }
             }
         } else {
             if (scoringPositionManager.getWantedPositionType() == PositionType.CONE) {
@@ -497,6 +574,7 @@ public class Robot extends LoggedRobot {
     private void setStowed() {
         wantedMechanismState = WantedMechanismState.STOWED;
         setFutureGrabberClose = true;
+        wantToClose = false;
     }
 
     private void updateTeleopDrivingTarget(ScoringPositionManager scoringPositionManager) {
@@ -517,11 +595,17 @@ public class Robot extends LoggedRobot {
 
             Logger.getInstance().recordOutput("Robot/Wanted Y Auto Drive", y);
 
+            double scoringPositionOffset;
+            if (scoringPositionManager.getWantedPositionType() == PositionType.CUBE) {
+                scoringPositionOffset = SCORING_POSITION_OFFSET_CUBE_FROM_WALL;
+            } else {
+                scoringPositionOffset = SCORING_POSITION_OFFSET_CONE_FROM_WALL;
+            }
             if (isRed()) {
-                x = Constants.GRIDS_RED_X + HALF_ROBOT_WIDTH + SCORING_POSITION_OFFSET_FROM_WALL;
+                x = Constants.GRIDS_RED_X + HALF_ROBOT_WIDTH + scoringPositionOffset;
                 rotation = Constants.SCORING_ANGLE_RED;
             } else {
-                x = Constants.GRIDS_BLUE_X - HALF_ROBOT_WIDTH - SCORING_POSITION_OFFSET_FROM_WALL;
+                x = Constants.GRIDS_BLUE_X - HALF_ROBOT_WIDTH - scoringPositionOffset;
                 rotation = Constants.SCORING_ANGLE_BLUE;
             }
         } else {
@@ -573,6 +657,9 @@ public class Robot extends LoggedRobot {
      */
     @Override
     public void testInit() {
+        // Disable the grabber
+        grabber.setAutoGrab(false);
+        grabber.setGrabState(GrabState.IDLE);
     }
 
 
@@ -582,8 +669,8 @@ public class Robot extends LoggedRobot {
     @Override
     public void testPeriodic() {
         xbox.update();
-        if (xbox.getRawButton(XboxButtons.X) && xbox.getRawButton(XBOX_TOGGLE_GRABBER)
-                && xbox.getRisingEdge(XboxButtons.X) && xbox.getRisingEdge(XBOX_TOGGLE_GRABBER)) {
+        if (xbox.getRawButton(XboxButtons.X) && xbox.getRawButton(XboxButtons.B)
+                && xbox.getRisingEdge(XboxButtons.X) && xbox.getRisingEdge(XboxButtons.B)) {
             drive.resetAbsoluteZeros();
         }
     }
@@ -654,5 +741,22 @@ public class Robot extends LoggedRobot {
 
     public static PowerDistribution getPowerDistribution() {
         return powerDistribution;
+    }
+
+
+    private static ConcurrentLinkedDeque<Runnable> toRunOnMainThread = new ConcurrentLinkedDeque<>();
+
+    public static void runOnMainThread(Runnable runnable) {
+        toRunOnMainThread.add(runnable);
+    }
+
+    private void runAsyncScheduledTasks() {
+        while (!toRunOnMainThread.isEmpty()) {
+            toRunOnMainThread.poll().run();
+        }
+    }
+
+    public static boolean isOnMainThread() {
+        return mainThread == Thread.currentThread();
     }
 }

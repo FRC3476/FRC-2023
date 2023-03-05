@@ -119,7 +119,7 @@ public final class Drive extends AbstractSubsystem {
     private void resetAuto() {
         ProfiledPIDController autoTurnPIDController
                 = new ProfiledPIDController(turnP.get(), turnI.get(), turnD.get(),
-                new TrapezoidProfile.Constraints(2 * Math.PI, Math.PI * 8));
+                new TrapezoidProfile.Constraints(1.7 * Math.PI, Math.PI * 3.5));
         autoTurnPIDController.enableContinuousInput(-Math.PI, Math.PI);
         autoTurnPIDController.setTolerance(Math.toRadians(1));
 
@@ -172,11 +172,11 @@ public final class Drive extends AbstractSubsystem {
     private static Rotation2d getPredictedRobotAngleInLoopCenter() {
         return Robot.getRobotTracker().getGyroAngleAtTime(Timer.getFPGATimestamp()).toRotation2d()
                 .plus(Rotation2d.fromDegrees(
-                        Robot.getRobotTracker().getAngularVelocity() * (EXPECTED_TELEOP_DRIVE_DT * 6)));
+                        Robot.getRobotTracker().getAngularVelocity() * (EXPECTED_TELEOP_DRIVE_DT * 3)));
     }
 
-    PIDController drivePositionPidX = new PIDController(2, 0, 0);
-    PIDController drivePositionPidY = new PIDController(2, 0, 0);
+    PIDController drivePositionPidX = new PIDController(4.1, 0, 0.41);
+    PIDController drivePositionPidY = new PIDController(4.1, 0, 0.41);
 
     {
         SmartDashboard.putData(drivePositionPidX);
@@ -206,8 +206,8 @@ public final class Drive extends AbstractSubsystem {
                 var currPos = Robot.getRobotTracker().getLatestPose().getTranslation();
                 setTurn(
                         new ControllerDriveInputs(
-                                drivePositionPidX.calculate(currPos.getX(), targetPosition.getX()),
-                                drivePositionPidY.calculate(currPos.getY(), targetPosition.getY()),
+                                drivePositionPidX.calculate(currPos.getX(), targetPosition.getX()) / DRIVE_HIGH_SPEED_M,
+                                drivePositionPidY.calculate(currPos.getY(), targetPosition.getY()) / DRIVE_HIGH_SPEED_M,
                                 0
                         ),
                         new State(targetAngle.getRadians(), 0),
@@ -451,15 +451,21 @@ public final class Drive extends AbstractSubsystem {
         Logger.getInstance().recordOutput("Drive/Auto/Heading Error",
                 getAngleDiff(targetHeading.getDegrees(), currentPose.getRotation().getDegrees()));
 
-        RobotPositionSender.addRobotPosition(new RobotState(goal.poseMeters, "Auto Goal Pose"));
-
-
         try {
             if (swerveAutoController == null) {
                 DriverStation.reportError("swerveAutoController is null",
                         Thread.getAllStackTraces().get(Thread.currentThread()));
                 resetAuto();
             }
+            assert swerveAutoController != null;
+            Logger.getInstance().recordOutput("Drive/Auto/Profiled Heading Error",
+                    getAngleDiff(Math.toDegrees(swerveAutoController.getThetaController().getGoal().position),
+                            currentPose.getRotation().getDegrees()));
+
+            Pose2d goalPose = new Pose2d(goal.poseMeters.getTranslation(),
+                    new Rotation2d(swerveAutoController.getThetaController().getGoal().position));
+            RobotPositionSender.addRobotPosition(new RobotState(goalPose, "Auto Goal Pose"));
+
 
             Trajectory.State oldGoal = currentAutoTrajectory.sample(
                     pathTime - EXPECTED_TELEOP_DRIVE_DT
@@ -725,7 +731,7 @@ public final class Drive extends AbstractSubsystem {
         if (angleMeasure <= AUTO_BALANCE_COMPLETE_THRESHOLD && angleMeasure >= -AUTO_BALANCE_COMPLETE_THRESHOLD) {
             // Stops PID if within this range
             xVelocity = 0;
-        } else if(Math.abs(angularVelocity) > Constants.ANGULAR_ACCELERATION_BALANCE_THRESHHOLD){
+        } else if (Math.abs(angularVelocity) > Constants.ANGULAR_ACCELERATION_BALANCE_THRESHHOLD) {
             // Run backwards a little PID if velocity is too high
             xVelocity = Math.copySign(Constants.BALANCE_REVERSE_SPEED, -angleMeasure);
         } else {

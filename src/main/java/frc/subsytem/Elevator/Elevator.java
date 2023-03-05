@@ -89,7 +89,11 @@ public class Elevator extends AbstractSubsystem {
         TrapezoidProfile.State state = trapezoidProfile.calculate(currentTime - trapezoidProfileStartTime);
         double acceleration = 0; //(state.velocity - pastVelocity) / (currentTime - pastTime);
         double arbFFVoltage = Constants.ELEVATOR_FEEDFORWARD.calculate(state.velocity, acceleration);
-        io.setElevatorPosition(state.position, arbFFVoltage);
+        if (DriverStation.isTest()) {
+            io.setElevatorVoltage(Constants.ELEVATOR_FEEDFORWARD.calculate(0, 0));
+        } else {
+            io.setElevatorPosition(state.position, arbFFVoltage);
+        }
 
         pastVelocity = state.velocity;
         pastTime = currentTime;

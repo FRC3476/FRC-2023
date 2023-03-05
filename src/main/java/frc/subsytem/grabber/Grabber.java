@@ -1,13 +1,20 @@
 package frc.subsytem.grabber;
 
 import edu.wpi.first.math.trajectory.TrapezoidProfile;
+import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.Timer;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import frc.robot.Constants;
+import frc.robot.Robot;
 import frc.subsytem.AbstractSubsystem;
 import org.littletonrobotics.junction.Logger;
 
+import static frc.robot.Constants.*;
+
 public class Grabber extends AbstractSubsystem {
 
+    public static final double MIN_OPEN_TIME = 0.5;
+    public static final double MIN_CLOSED_TIME = 0.2;
     private final GrabberIO io;
     private final GrabberInputsAutoLogged inputs = new GrabberInputsAutoLogged();
 
@@ -15,6 +22,7 @@ public class Grabber extends AbstractSubsystem {
         super();
         this.io = grabberIO;
         trapezoidProfile = new TrapezoidProfile(Constants.GRABBER_PIVOT_CONSTRAINTS, new TrapezoidProfile.State(56 + 90 - 20, 0));
+        setAutoGrab(false);
     }
 
     private TrapezoidProfile trapezoidProfile;
@@ -24,7 +32,7 @@ public class Grabber extends AbstractSubsystem {
     /**
      * @param position The position to set the grabber (degrees)
      */
-    public void setPosition(double position) {
+    public synchronized void setPosition(double position) {
         finalGoalPosition = position;
         trapezoidProfile = new TrapezoidProfile(Constants.GRABBER_PIVOT_CONSTRAINTS, new TrapezoidProfile.State(position, 0),
                 new TrapezoidProfile.State(inputs.pivotPosition, inputs.pivotVelocity));
@@ -35,7 +43,7 @@ public class Grabber extends AbstractSubsystem {
     private double pastVelocity = 0, pastTime = 0;
 
     @Override
-    public void update() {
+    public synchronized void update() {
         io.updateInputs(inputs);
         Logger.getInstance().processInputs("Grabber", inputs);
 
@@ -49,10 +57,14 @@ public class Grabber extends AbstractSubsystem {
 
         double arbFFVoltage = Constants.GRABBER_FEEDFORWARD.calculate(Math.toRadians(inputs.pivotPosition),
                 state.velocity, acceleration);
-        if (Math.abs(inputs.pivotPosition - state.position) > 1) {
-            io.setPivotPosition(state.position, arbFFVoltage);
+        if (DriverStation.isTest()) {
+            io.setPivotVoltage(Constants.GRABBER_FEEDFORWARD.calculate(Math.toRadians(inputs.pivotPosition), 0, 0));
         } else {
-            io.setPivotVoltage(arbFFVoltage);
+            if (Math.abs(inputs.pivotPosition - state.position) > 1) {
+                io.setPivotPosition(state.position, arbFFVoltage);
+            } else {
+                io.setPivotVoltage(arbFFVoltage);
+            }
         }
 
         pastVelocity = state.velocity;
@@ -68,7 +80,7 @@ public class Grabber extends AbstractSubsystem {
     }
 
     public enum GrabState {
-        OPEN(2),
+        OPEN(5),
         GRAB_CUBE(-4),
         GRAB_CONE(-12),
         IDLE(0);
@@ -79,14 +91,87 @@ public class Grabber extends AbstractSubsystem {
         }
     }
 
-    public void setGrabState(GrabState grabState) {
+    GrabState lastGrabState = GrabState.IDLE;
+    double allowedClosedTime = 0;
+    double allowedOpenTime = 0;
+
+
+    public synchronized void setGrabState(GrabState grabState) {
+        if (!Robot.isOnMainThread()) {
+            Robot.runOnMainThread(() -> setGrabState(grabState));
+            return;
+        }
+
         io.setGrabberVoltage(grabState.voltage);
         Logger.getInstance().recordOutput("Grabber/Grabber voltage", grabState.voltage);
         Logger.getInstance().recordOutput("Grabber/Grabber state", grabState.name());
+        if (grabState != lastGrabState) {
+            lastGrabState = grabState;
+            if (grabState == GrabState.OPEN) {
+                allowedOpenTime = Timer.getFPGATimestamp() + MIN_OPEN_TIME;
+            } else {
+                allowedClosedTime = Timer.getFPGATimestamp() + MIN_CLOSED_TIME;
+            }
+        }
+    }
+
+    boolean isAutoGrabEnabled = false;
+
+    public synchronized void setAutoGrab(boolean enabled) {
+        if (!Robot.isOnMainThread()) {
+            Robot.runOnMainThread(() -> setAutoGrab(enabled));
+            return;
+        }
+        isAutoGrabEnabled = enabled && IS_AUTO_GRAB_ENABLED;
+        io.setAutoGrab(enabled && IS_AUTO_GRAB_ENABLED);
+
+        Logger.getInstance().recordOutput("Grabber/Limit Switch Enabled", enabled && IS_AUTO_GRAB_ENABLED);
+    }
+
+    public synchronized boolean isAutoGrabEnabled() {
+        return isAutoGrabEnabled;
+    }
+
+
+    public synchronized boolean isGrabbed() {
+        return Math.abs(inputs.grabberCurrent) > GRABBED_CURRENT_THRESHOLD
+                && (lastGrabState == GrabState.GRAB_CONE || lastGrabState == GrabState.GRAB_CUBE)
+                && Timer.getFPGATimestamp() > allowedClosedTime;
+    }
+
+
+    public synchronized boolean isOpen() {
+        return Math.abs(inputs.grabberCurrent) > GRABBED_CURRENT_THRESHOLD
+                && (lastGrabState == GrabState.OPEN)
+                && Timer.getFPGATimestamp() > allowedOpenTime;
+    }
+
+    double startTime;
+
+    public void waitTillGrabbed(double maxTime) throws InterruptedException {
+        startTime = Timer.getFPGATimestamp();
+        while (true) {
+            synchronized (this) {
+                if (isGrabbed()) {
+                    break;
+                }
+            }
+
+            Thread.sleep(10);
+
+            if (Timer.getFPGATimestamp() - startTime > maxTime) {
+                break;
+            }
+        }
     }
 
     public void setRollerVoltage(double voltage) {
         io.setRollerVoltage(voltage);
+    }
+
+    @Override
+    public void logData() {
+        SmartDashboard.putBoolean("Is Limit Switch Triggered", inputs.isLimitSwitchTriggered);
     }
 
     @Override
