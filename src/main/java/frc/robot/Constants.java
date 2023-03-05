@@ -278,8 +278,8 @@ public final class Constants {
     public static final Rotation2d PICKUP_ANGLE_RED = Rotation2d.fromDegrees(0);
     public static final Rotation2d PICKUP_ANGLE_BLUE = Rotation2d.fromDegrees(180);
 
-    public static final double UPPER_PICKUP_POSITION_Y = -3.56;
-    public static final double LOWER_PICKUP_POSITION_Y = -1.925892;
+    public static final double LOWER_PICKUP_POSITION_Y = -3.56;
+    public static final double UPPER_PICKUP_POSITION_Y = -1.925892;
     public static final double PICKUP_POSITION_X_OFFSET_FROM_WALL = FIELD_WIDTH_METERS - 15.2;
 
     public static final double SCORING_POSITION_OFFSET_CONE_FROM_WALL = 0.1;

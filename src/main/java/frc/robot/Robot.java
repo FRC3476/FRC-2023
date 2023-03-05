@@ -619,11 +619,11 @@ public class Robot extends LoggedRobot {
             // We're on the opposite side as our alliance
             // Try to go to the pickup position
             if (upperStationPickup) {
-                y = UPPER_PICKUP_POSITION_Y;
-            } else {
                 y = LOWER_PICKUP_POSITION_Y;
+            } else {
+                y = UPPER_PICKUP_POSITION_Y;
             }
-            
+
             if (isRed()) {
                 x = FIELD_WIDTH_METERS - PICKUP_POSITION_X_OFFSET_FROM_WALL;
                 rotation = PICKUP_ANGLE_RED;
