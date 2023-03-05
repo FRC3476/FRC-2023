@@ -14,7 +14,7 @@ import static frc.robot.Constants.*;
 public class Grabber extends AbstractSubsystem {
 
     public static final double MIN_OPEN_TIME = 0.5;
-    public static final double MIN_CLOSED_TIME = 0.2;
+    public static final double MIN_CLOSED_TIME = 0.5;
     private final GrabberIO io;
     private final GrabberInputsAutoLogged inputs = new GrabberInputsAutoLogged();
 
@@ -115,14 +115,24 @@ public class Grabber extends AbstractSubsystem {
         }
     }
 
+    boolean isAutoGrabEnabled = false;
+
     public synchronized void setAutoGrab(boolean enabled) {
         if (!Robot.isOnMainThread()) {
             Robot.runOnMainThread(() -> setAutoGrab(enabled));
             return;
         }
+        if (enabled != isAutoGrabEnabled) {
+            System.out.println("setting auto grab: " + enabled);
+        }
+        isAutoGrabEnabled = enabled && IS_AUTO_GRAB_ENABLED;
         io.setAutoGrab(enabled && IS_AUTO_GRAB_ENABLED);
 
         Logger.getInstance().recordOutput("Grabber/Limit Switch Enabled", enabled && IS_AUTO_GRAB_ENABLED);
+    }
+
+    public synchronized boolean isAutoGrabEnabled() {
+        return isAutoGrabEnabled;
     }
 
 
@@ -139,9 +149,10 @@ public class Grabber extends AbstractSubsystem {
                 && Timer.getFPGATimestamp() > allowedOpenTime;
     }
 
-    double waitTillGrabbedTime;
+    double startTime;
 
-    public void waitTillGrabbed() throws InterruptedException {
+    public void waitTillGrabbed(double maxTime) throws InterruptedException {
+        startTime = Timer.getFPGATimestamp();
         while (true) {
             synchronized (this) {
                 if (isGrabbed()) {
@@ -150,9 +161,8 @@ public class Grabber extends AbstractSubsystem {
             }
 
             Thread.sleep(10);
-            waitTillGrabbedTime += 10;
 
-            if (waitTillGrabbedTime >= MAX_AUTO_GRAB_TIME) {
+            if (Timer.getFPGATimestamp() - startTime > maxTime) {
                 break;
             }
         }
