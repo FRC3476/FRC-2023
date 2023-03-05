@@ -172,7 +172,7 @@ public final class Drive extends AbstractSubsystem {
     private static Rotation2d getPredictedRobotAngleInLoopCenter() {
         return Robot.getRobotTracker().getGyroAngleAtTime(Timer.getFPGATimestamp()).toRotation2d()
                 .plus(Rotation2d.fromDegrees(
-                        Robot.getRobotTracker().getAngularVelocity() * (EXPECTED_TELEOP_DRIVE_DT * 3)));
+                        Robot.getRobotTracker().getAngularVelocity() * (EXPECTED_TELEOP_DRIVE_DT * 4)));
     }
 
     PIDController drivePositionPidX = new PIDController(4.1, 0, 0.41);
@@ -745,6 +745,14 @@ public final class Drive extends AbstractSubsystem {
                 inputs.getRotation() * MAX_TELEOP_TURN_SPEED,
                 Robot.getRobotTracker().getGyroAngle());
     }
+
+    public void autoBalance() throws InterruptedException {
+        setDriveState(DriveState.AUTO_BALANCE);
+        while (DriverStation.isAutonomous()) {
+            Thread.sleep(10);
+        }
+    }
+
 
     public synchronized void resetAbsoluteZeros() {
         io.resetAbsoluteZeros();

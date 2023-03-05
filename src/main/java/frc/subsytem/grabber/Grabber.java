@@ -9,7 +9,8 @@ import frc.robot.Robot;
 import frc.subsytem.AbstractSubsystem;
 import org.littletonrobotics.junction.Logger;
 
-import static frc.robot.Constants.*;
+import static frc.robot.Constants.GRABBED_CURRENT_THRESHOLD;
+import static frc.robot.Constants.IS_AUTO_GRAB_ENABLED;
 
 public class Grabber extends AbstractSubsystem {
 
@@ -80,7 +81,7 @@ public class Grabber extends AbstractSubsystem {
     }
 
     public enum GrabState {
-        OPEN(5),
+        OPEN(6),
         GRAB_CUBE(-4),
         GRAB_CONE(-12),
         IDLE(0);
