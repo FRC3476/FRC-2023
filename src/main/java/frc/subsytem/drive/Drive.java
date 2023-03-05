@@ -719,9 +719,8 @@ public final class Drive extends AbstractSubsystem {
     }
 
     public synchronized void autoBalance(@NotNull ControllerDriveInputs inputs) {
-        var angle = Robot.getRobotTracker().getGyroAngleAtTime(Timer.getFPGATimestamp());
-        double angleMeasure = angle.getY();
-        angleMeasure = Math.toDegrees(angleMeasure);
+        var angle = Robot.getRobotTracker().getGyroYAngle();
+        var angleMeasure = Math.toDegrees(angle);
         Logger.getInstance().recordOutput("Drive/Auto Balance Angle", angleMeasure);
 
         double angularVelocity = Robot.getRobotTracker().getAngularRollVelocity();
@@ -737,6 +736,8 @@ public final class Drive extends AbstractSubsystem {
         } else {
             xVelocity = Math.copySign(balancePID.calculate(angleMeasure), angleMeasure);
         }
+
+        Logger.getInstance().recordOutput("Drive/Auto Balance Velocity", xVelocity);
 
         nextChassisSpeeds = ChassisSpeeds.fromFieldRelativeSpeeds(
                 xVelocity,

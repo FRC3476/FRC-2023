@@ -18,8 +18,8 @@ import java.io.File;
 import java.nio.file.Files;
 
 public final class Constants {
-    public static final double ANGULAR_ACCELERATION_BALANCE_THRESHHOLD = 8;
-    public static final double BALANCE_REVERSE_SPEED = .5;
+    public static final double ANGULAR_ACCELERATION_BALANCE_THRESHHOLD = 10;
+    public static final double BALANCE_REVERSE_SPEED = .4;
     public static final String LOG_DIRECTORY = "/u/logs";
 
     public static final double SECONDS_PER_MINUTE = 60;
@@ -36,7 +36,7 @@ public final class Constants {
     public static final int DEFAULT_PERIODS_PER_LOG = 0;
     private static final int NOMINAL_DT_MS = 20;
 
-    public static final double BALANCE_P = .02;
+    public static final double BALANCE_P = .05;
     public static final double BALANCE_I = 0;
     public static final double BALANCE_D = 0;
 
@@ -66,7 +66,7 @@ public final class Constants {
     public static final double SWERVE_DRIVE_I = 0.00;
     public static final double SWERVE_DRIVE_F = 0.00;
     public static final double SWERVE_DRIVE_INTEGRAL_ZONE = 0.00;
-    public static final double AUTO_BALANCE_COMPLETE_THRESHOLD = 12;
+    public static final double AUTO_BALANCE_COMPLETE_THRESHOLD = 9;
 
     /**
      * Feed forward constants for the drivetrain.
