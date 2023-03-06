@@ -343,7 +343,6 @@ public class Robot extends LoggedRobot {
     private double grabberOpenTime = 0;
     private boolean wantToClose = false;
 
-
     /**
      * This method is called periodically during operator control.
      */
@@ -623,7 +622,6 @@ public class Robot extends LoggedRobot {
         } else {
             // We're on the opposite side as our alliance
             // Try to go to the pickup position
-
             var predictedPoseForPickup = robotTracker.getLatestPose().getTranslation().plus(robotTracker.getVelocity().times(0.15));
 
 
@@ -632,7 +630,6 @@ public class Robot extends LoggedRobot {
             } else {
                 y = UPPER_PICKUP_POSITION_Y;
             }
-            
             if (isRed()) {
                 x = FIELD_WIDTH_METERS - PICKUP_POSITION_X_OFFSET_FROM_WALL;
                 rotation = PICKUP_ANGLE_RED;
