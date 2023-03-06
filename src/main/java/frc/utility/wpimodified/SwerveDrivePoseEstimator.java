@@ -16,6 +16,8 @@ import edu.wpi.first.math.numbers.N3;
 import edu.wpi.first.math.numbers.N4;
 import edu.wpi.first.util.WPIUtilJNI;
 import edu.wpi.first.wpilibj.DriverStation;
+import edu.wpi.first.wpilibj.Timer;
+import frc.robot.Constants;
 
 /**
  * This class wraps {@link SwerveDriveOdometry Swerve Drive Odometry} to fuse latency-compensated vision measurements with swerve
@@ -292,6 +294,7 @@ public class SwerveDrivePoseEstimator {
      *                              you should use {@link edu.wpi.first.wpilibj.Timer#getFPGATimestamp()} as your time source or
      *                              sync the epochs.
      */
+    double errorTime;
     public void addVisionMeasurement(Pose3d visionRobotPoseMeters, double timestampSeconds) {
         try {
 
@@ -345,7 +348,10 @@ public class SwerveDrivePoseEstimator {
 
             m_poseEstimate = old_estimate.exp(odometry_fastforward);
         } catch (IllegalArgumentException e) {
-            DriverStation.reportError("Failed to add Vision Measurement: " + e.getMessage(), e.getStackTrace());
+            if(Timer.getFPGATimestamp() - errorTime >= Constants.MAX_ERROR_PRINT_TIME) {
+                DriverStation.reportError("Failed to add Vision Measurement: " + e.getMessage(), e.getStackTrace());
+            }
+            errorTime = Timer.getFPGATimestamp();
         }
     }
 
