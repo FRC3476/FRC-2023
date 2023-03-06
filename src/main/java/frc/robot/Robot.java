@@ -82,15 +82,23 @@ public class Robot extends LoggedRobot {
     public static final int XBOX_TOGGLE_GRABBER = XboxButtons.LEFT_BUMPER;
     private double disabledTime = 0;
 
-    private @NotNull static Drive drive;
-    private @NotNull static RobotTracker robotTracker;
-    private @NotNull static VisionHandler visionHandler;
+    private @NotNull
+    static Drive drive;
+    private @NotNull
+    static RobotTracker robotTracker;
+    private @NotNull
+    static VisionHandler visionHandler;
 
-    private @NotNull static Elevator elevator;
-    private @NotNull static TelescopingArm telescopingArm;
-    private @NotNull static Grabber grabber;
-    private @NotNull static MechanismStateManager mechanismStateManager;
-    private @NotNull static PowerDistribution powerDistribution;
+    private @NotNull
+    static Elevator elevator;
+    private @NotNull
+    static TelescopingArm telescopingArm;
+    private @NotNull
+    static Grabber grabber;
+    private @NotNull
+    static MechanismStateManager mechanismStateManager;
+    private @NotNull
+    static PowerDistribution powerDistribution;
 
     private @NotNull Controller xbox;
     private @NotNull Controller stick;
@@ -177,10 +185,14 @@ public class Robot extends LoggedRobot {
             Logger.getInstance().addDataReceiver(
                     new WPILOGWriter(LogFileUtil.addPathSuffix(logPath, "_sim"))); // Save outputs to a new log
 
-            drive = new Drive(new DriveIO() {});
-            elevator = new Elevator(new ElevatorIO() {});
-            telescopingArm = new TelescopingArm(new TelescopingArmIO() {});
-            grabber = new Grabber(new GrabberIO() {});
+            drive = new Drive(new DriveIO() {
+            });
+            elevator = new Elevator(new ElevatorIO() {
+            });
+            telescopingArm = new TelescopingArm(new TelescopingArmIO() {
+            });
+            grabber = new Grabber(new GrabberIO() {
+            });
         }
 
         Logger.getInstance().start(); // Start logging! No more data receivers, replay sources, or metadata values may be added
@@ -611,7 +623,16 @@ public class Robot extends LoggedRobot {
         } else {
             // We're on the opposite side as our alliance
             // Try to go to the pickup position
-            y = PICKUP_POSITION_Y;
+
+            var predictedPoseForPickup = robotTracker.getLatestPose().getTranslation().plus(robotTracker.getVelocity().times(0.15));
+
+
+            if (predictedPoseForPickup.getY() < -2.715) {
+                y = LOWER_PICKUP_POSITION_Y;
+            } else {
+                y = UPPER_PICKUP_POSITION_Y;
+            }
+            
             if (isRed()) {
                 x = FIELD_WIDTH_METERS - PICKUP_POSITION_X_OFFSET_FROM_WALL;
                 rotation = PICKUP_ANGLE_RED;

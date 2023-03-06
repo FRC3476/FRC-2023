@@ -67,7 +67,7 @@ public class MechanismStateManager extends AbstractSubsystem {
 
     public enum MechanismStates {
         STOWED(new MechanismStateCoordinates(-0.489, 0.249, MAX_WRIST_ANGLE - 2)),
-        LOW_SCORING(new MechanismStateCoordinates(Units.inchesToMeters(12), Units.inchesToMeters(7.5), 0)),
+        LOW_SCORING(new MechanismStateCoordinates(0.08, 0.1, 0)),
         CUBE_MIDDLE_SCORING(new MechanismStateCoordinates(Units.inchesToMeters(16), Units.inchesToMeters(40), 0)),
         CONE_MIDDLE_SCORING(new MechanismStateCoordinates(Units.inchesToMeters(13), Units.inchesToMeters(47.5), 0)),
         CONE_HIGH_SCORING(new MechanismStateCoordinates(Units.inchesToMeters(36), Units.inchesToMeters(57), 65)),

@@ -122,7 +122,7 @@ public final class Constants {
             SWERVE_MODULE_LOCATIONS
     );
 
-    public static final double DRIVE_HIGH_SPEED_M = DRIVE_FEEDFORWARD[0].maxAchievableVelocity(12, 0);
+    public static final double DRIVE_HIGH_SPEED_M = 5;
     /**
      * Allowed Turn Error in degrees.
      */
@@ -230,7 +230,7 @@ public final class Constants {
         /**
          * Normal acceleration limit while driving. This ensures that the driver can't tip the robot.
          */
-        NORMAL_DRIVING(new KinematicLimit(6, 5000, Math.PI * 2 * 10));
+        NORMAL_DRIVING(new KinematicLimit(7, 5000, Math.PI * 2 * 10));
         public final KinematicLimit kinematicLimit;
 
         KinematicLimits(KinematicLimit kinematicLimit) {
@@ -285,9 +285,10 @@ public final class Constants {
     public static final Rotation2d PICKUP_ANGLE_RED = Rotation2d.fromDegrees(0);
     public static final Rotation2d PICKUP_ANGLE_BLUE = Rotation2d.fromDegrees(180);
 
-    public static final double PICKUP_POSITION_Y = -3.56;
-    public static final double PICKUP_POSITION_X_OFFSET_FROM_WALL = FIELD_WIDTH_METERS - 15.2;
-
+    public static final double LOWER_PICKUP_POSITION_Y = -3.56;
+    public static final double UPPER_PICKUP_POSITION_Y = -2.05892;
+    public static final double PICKUP_POSITION_X_OFFSET_FROM_WALL = FIELD_WIDTH_METERS - 15.2 + Units.inchesToMeters(3);
+    
     public static final double SCORING_POSITION_OFFSET_CONE_FROM_WALL = 0.1;
     public static final double SCORING_POSITION_OFFSET_CUBE_FROM_WALL = 0.1 + Units.inchesToMeters(3);
 
