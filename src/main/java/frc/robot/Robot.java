@@ -622,7 +622,7 @@ public class Robot extends LoggedRobot {
         } else {
             // We're on the opposite side as our alliance
             // Try to go to the pickup position
-            if (robotTracker.getLatestPose3d().getY() < 2.715) {
+            if (robotTracker.getLatestPose3d().getY() < -2.715) {
                 y = LOWER_PICKUP_POSITION_Y;
             } else {
                 y = UPPER_PICKUP_POSITION_Y;
