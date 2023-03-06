@@ -550,7 +550,7 @@ public class Robot extends LoggedRobot {
                 }
             } else {
                 if ((wantedMechanismState == WantedMechanismState.FLOOR_PICKUP || wantedMechanismState == WantedMechanismState.STATION_PICKUP)
-                        && grabber.isOpen() && IS_AUTO_GRAB_ENABLED) {
+                        && grabber.isOpen() && IS_AUTO_GRAB_ENABLED && mechanismStateManager.isMechAtFinalPos()) {
                     grabber.setAutoGrab(true);
                     isGrabberOpen = false;
                 } else {
