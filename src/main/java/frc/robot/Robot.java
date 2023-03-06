@@ -311,6 +311,7 @@ public class Robot extends LoggedRobot {
     @Override
     public void teleopInit() {
         drive.setBrakeMode(true);
+        mechanismStateManager.setKeepoutsEnabled(true);
     }
 
 
@@ -327,7 +328,7 @@ public class Robot extends LoggedRobot {
         STOWED, SCORING, FLOOR_PICKUP, STATION_PICKUP
     }
 
-    private WantedMechanismState wantedMechanismState = WantedMechanismState.STOWED;
+    private static WantedMechanismState wantedMechanismState = WantedMechanismState.STOWED;
     private @Nullable WantedMechanismState lastWantedMechanismState = null;
 
 
@@ -776,5 +777,9 @@ public class Robot extends LoggedRobot {
 
     public static boolean isOnMainThread() {
         return mainThread == Thread.currentThread();
+    }
+
+    public static void setCurrentWantedState(WantedMechanismState state) {
+        runOnMainThread(() -> wantedMechanismState = state);
     }
 }

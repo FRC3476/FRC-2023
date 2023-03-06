@@ -18,6 +18,13 @@ public class MechanismStateManager extends AbstractSubsystem {
 
     boolean isAtFinalPosition = false;
 
+    private boolean areKeepoutsEnabled = true;
+
+    public synchronized void setKeepoutsEnabled(boolean enabled) {
+        this.areKeepoutsEnabled = enabled;
+    }
+
+
     public record MechanismStateSubsystemPositions(double elevatorPositionMeters, double telescopingArmPositionMeters,
                                                    double grabberAngleDegrees) {
         public double grabberAngleRadians() {
@@ -227,7 +234,8 @@ public class MechanismStateManager extends AbstractSubsystem {
 
 
         MechanismStateSubsystemPositions limitedStatePositions = coordinatesToSubsystemPositions(limitedStateCoordinates);
-        if (!(lastNotStowState == MechanismStates.FLOOR_PICKUP || lastNotStowState == MechanismStates.LOW_SCORING)) {
+        if (!(lastNotStowState == MechanismStates.FLOOR_PICKUP || lastNotStowState == MechanismStates.LOW_SCORING)
+                && areKeepoutsEnabled) {
             if (lastNotStowState != MechanismStates.STATION_PICKUP) {
                 // Use scoring keepouts
                 double armEndX = limitedStateCoordinates.xMeters - limitedStateCoordinates.grabberX();
