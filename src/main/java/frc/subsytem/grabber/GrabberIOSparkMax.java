@@ -80,11 +80,11 @@ public class GrabberIOSparkMax extends GrabberIO {
     @Override
     public synchronized void updateInputs(GrabberInputsAutoLogged inputs) {
         if (IS_PRACTICE) {
-            inputs.pivotPosition = pivotSparkMax.getEncoder().getPosition();
-            inputs.pivotVelocity = pivotSparkMax.getEncoder().getVelocity();
-        } else {
             inputs.pivotPosition = pivotAbsoluteEncoder.getPosition();
             inputs.pivotVelocity = pivotAbsoluteEncoder.getVelocity();
+        } else {
+            inputs.pivotPosition = pivotSparkMax.getEncoder().getPosition();
+            inputs.pivotVelocity = pivotSparkMax.getEncoder().getVelocity();
         }
         inputs.pivotCurrent = pivotSparkMax.getOutputCurrent();
         inputs.pivotTemp = pivotSparkMax.getMotorTemperature();
