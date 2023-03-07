@@ -152,9 +152,9 @@ public class DriveIOSparkMax extends DriveIO {
         }
     }
 
-    public void setRelativePosition(double position) {
+    public void setRelativePositions() {
         for(int i = 0; i < 4; i++) {
-            swerveMotors[i].getEncoder().setPosition(position);
+            swerveMotors[i].getEncoder().setPosition(swerveMotors[i].getAbsoluteEncoder(Type.kDutyCycle).getPosition());
         }
     }
 

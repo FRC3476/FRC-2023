@@ -554,7 +554,10 @@ public final class Drive extends AbstractSubsystem {
 
     double[] previousRelativePositions = new double[4];
     double[] previousAbsolutePositions = new double[4];
-    String[] driveErrorNames = new String[4];
+    String[] driveErrorNames = new String[] {
+            "Drive/Left front turn rate mismatched", "Drive/Left back turn rate mismatched",
+            "Drive/Right front turn rate mismatched", "Drive/Right back turn rate mismatched"
+    };
 
     @Override
     public synchronized void update() {
@@ -563,10 +566,6 @@ public final class Drive extends AbstractSubsystem {
         Logger.getInstance().processInputs("Drive", inputs);
 
         if (driveIsAbsolute) {
-            driveErrorNames[0] = "Drive/Spark 15 error";
-            driveErrorNames[1] = "Drive/Spark 16 error";
-            driveErrorNames[2] = "Drive/Spark 17 error";
-            driveErrorNames[3] = "Drive/Spark 18 error";
             for (int i = 0; i < 4; i++) {
                 double[] relativeChange = new double[4];
                 double[] absoluteChange = new double[4];
@@ -576,12 +575,7 @@ public final class Drive extends AbstractSubsystem {
                 absoluteChange[i] = getAngleDiff(previousAbsolutePositions[i], inputs.swerveMotorAbsolutePositions[i]);
                 error[i] = Math.abs(relativeChange[i] - absoluteChange[i]);
 
-                if (error[i] > DRIVE_MAX_DEGREE_ERROR) {
-                    boolean errorCheck = error[i] > DRIVE_MAX_DEGREE_ERROR;
-                    Logger.getInstance().recordOutput(driveErrorNames[i], errorCheck);
-                } else {
-                    Logger.getInstance().recordOutput(driveErrorNames[i], false);
-                }
+                Logger.getInstance().recordOutput(driveErrorNames[i], error[i] > DRIVE_MAX_DEGREE_ERROR);
 
                 previousRelativePositions[i] = inputs.swerveMotorRelativePositions[i];
                 previousAbsolutePositions[i] = inputs.swerveMotorAbsolutePositions[i];
@@ -602,6 +596,10 @@ public final class Drive extends AbstractSubsystem {
             var dt = inputs.driveIoTimestamp - lastTimeStep;
             swerveDrive(nextChassisSpeeds, kinematicLimit, dt);
         }
+    }
+
+    public void setRelativePositions() {
+        io.setRelativePositions();
     }
 
     /**

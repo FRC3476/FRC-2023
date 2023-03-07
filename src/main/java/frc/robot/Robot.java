@@ -251,6 +251,7 @@ public class Robot extends LoggedRobot {
         // TODO: Change this to CLOSED when we're confident the grabber won't try to tear itself apart when it's trying to close
         grabber.setGrabState(GrabState.IDLE);
         mechanismStateManager.setState(MechanismStates.STOWED);
+        drive.setRelativePositions();
 
         Class<PathGenerator> loadPathGenerator = PathGenerator.class; // Load the PathGenerator class to ensure that it is
         // initialized (and creates the thread to generate paths) before the robot starts
