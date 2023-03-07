@@ -20,11 +20,13 @@ import edu.wpi.first.math.util.Units;
 import edu.wpi.first.networktables.NetworkTable;
 import edu.wpi.first.networktables.NetworkTableEvent.Kind;
 import edu.wpi.first.networktables.NetworkTableInstance;
+import edu.wpi.first.wpilibj.Timer;
 import frc.robot.Robot;
 import frc.subsytem.AbstractSubsystem;
 import frc.subsytem.robottracker.RobotTracker;
 import org.jetbrains.annotations.NotNull;
 import org.littletonrobotics.junction.Logger;
+import org.littletonrobotics.junction.networktables.LoggedDashboardBoolean;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -39,6 +41,13 @@ import static org.joml.Math.tan;
  * Gives pose estimates based on april tag vision
  */
 public class VisionHandler extends AbstractSubsystem {
+
+    public static final double NO_VISION_UPDATES_TIME_THRESHOLD = 0.1;
+    private final LoggedDashboardBoolean isVisionConnected = new LoggedDashboardBoolean("Vision Connected", false);
+
+    {
+        Logger.getInstance().registerDashboardInput(isVisionConnected);
+    }
 
     static final Vector<N3> POSITIVE_X = VecBuilder.fill(1, 0, 0);
     static final Vector<N3> POSITIVE_Y = VecBuilder.fill(0, 1, 0);
@@ -126,6 +135,14 @@ public class VisionHandler extends AbstractSubsystem {
         configTable.getEntry("Encode Quality").setDouble(50);
         configTable.getEntry("Record Video").setBoolean(false);
 
+        NetworkTableInstance.getDefault().addListener(visionMiscTable.getEntry("Vision Looptime").getTopic(),
+                EnumSet.of(Kind.kValueRemote),
+                (event) -> {
+                    synchronized (this) {
+                        visionInputs.lastVisionUpdate = Timer.getFPGATimestamp();
+                    }
+                });
+
         for (int i = 1; i <= 8; i++) {
             var table = visionTable.getEntry(String.valueOf(i));
             int finalI = i;
@@ -159,8 +176,6 @@ public class VisionHandler extends AbstractSubsystem {
 
         Rotation3d gyroAngle = Robot.getRobotTracker().getGyroAngleAtTime(data.timestamp); //vison_field_to_robot
         // hypothetically ?????
-
-        expectedTagPosition.getTranslation();
 
         var rotationFromTag = expectedTagPosition.getRotation()// field to tag
                 .minus(tagRotationRobotCentric)
@@ -256,6 +271,8 @@ public class VisionHandler extends AbstractSubsystem {
     @Override
     public synchronized void update() {
         Logger.getInstance().processInputs("VisionHandler", visionInputs);
+
+        isVisionConnected.set(visionInputs.lastVisionUpdate - Timer.getFPGATimestamp() < NO_VISION_UPDATES_TIME_THRESHOLD);
 
         Logger.getInstance().recordOutput("Vision Handler/Tags Updates", visionInputs.visionUpdates.size());
         // Process vision updates
