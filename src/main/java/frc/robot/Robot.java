@@ -110,8 +110,12 @@ public class Robot extends LoggedRobot {
 
     // Autonomous
     private final LoggedDashboardChooser<String> autoChooser = new LoggedDashboardChooser<>("AutoChooser");
-
     public static final LoggedDashboardChooser<String> sideChooser = new LoggedDashboardChooser<>("SideChooser");
+
+    {
+        Logger.getInstance().registerDashboardInput(autoChooser);
+        Logger.getInstance().registerDashboardInput(sideChooser);
+    }
 
     private static Thread mainThread;
 
