@@ -16,6 +16,8 @@ import edu.wpi.first.math.numbers.N3;
 import edu.wpi.first.math.numbers.N4;
 import edu.wpi.first.util.WPIUtilJNI;
 import edu.wpi.first.wpilibj.DriverStation;
+import edu.wpi.first.wpilibj.Timer;
+import frc.robot.Constants;
 
 /**
  * This class wraps {@link SwerveDriveOdometry Swerve Drive Odometry} to fuse latency-compensated vision measurements with swerve
@@ -286,12 +288,14 @@ public class SwerveDrivePoseEstimator {
      *
      * @param visionRobotPoseMeters The pose of the robot as measured by the vision camera.
      * @param timestampSeconds      The timestamp of the vision measurement in seconds. Note that if you don't use your own time
-     *                              source by calling {@link  #updateWithTime(double, Rotation2d, SwerveModulePosition[])} then
-     *                              you must use a timestamp with an epoch since FPGA startup (i.e., the epoch of this timestamp
-     *                              is the same epoch as {@link edu.wpi.first.wpilibj.Timer#getFPGATimestamp()}.) This means that
-     *                              you should use {@link edu.wpi.first.wpilibj.Timer#getFPGATimestamp()} as your time source or
-     *                              sync the epochs.
+     * source by calling {@link  #updateWithTime(double, Rotation2d, SwerveModulePosition[])} then
+     * you must use a timestamp with an epoch since FPGA startup (i.e., the epoch of this timestamp
+     * is the same epoch as {@link edu.wpi.first.wpilibj.Timer#getFPGATimestamp()}.) This means that
+     * you should use {@link edu.wpi.first.wpilibj.Timer#getFPGATimestamp()} as your time source or
+     * sync the epochs.
      */
+    double errorTime;
+
     public void addVisionMeasurement(Pose3d visionRobotPoseMeters, double timestampSeconds) {
         try {
 
@@ -345,7 +349,10 @@ public class SwerveDrivePoseEstimator {
 
             m_poseEstimate = old_estimate.exp(odometry_fastforward);
         } catch (IllegalArgumentException e) {
-            DriverStation.reportError("Failed to add Vision Measurement: " + e.getMessage(), e.getStackTrace());
+            if (Timer.getFPGATimestamp() - errorTime >= Constants.MAX_ERROR_PRINT_TIME) {
+                DriverStation.reportError("Failed to add Vision Measurement: " + e.getMessage(), false);
+            }
+            errorTime = Timer.getFPGATimestamp();
         }
     }
 

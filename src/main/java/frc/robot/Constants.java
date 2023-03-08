@@ -70,6 +70,7 @@ public final class Constants {
 
     public static final double DRIVE_MAX_DEGREE_ERROR = 5;
     public static boolean driveIsAbsolute;
+    public static final double MAX_ERROR_PRINT_TIME = 0.5;
     /**
      * Feed forward constants for the drivetrain.
      * <p>
@@ -132,7 +133,9 @@ public final class Constants {
 
     public static final int SWERVE_MOTOR_CURRENT_LIMIT = 20;
     public static final int SWERVE_DRIVE_MOTOR_CURRENT_LIMIT = 40;
-    public static final int SWERVE_DRIVE_VOLTAGE_LIMIT = 12;
+    public static final int SWERVE_DRIVE_VOLTAGE_LIMIT_AUTO = 12;
+    public static final int SWERVE_DRIVE_VOLTAGE_LIMIT_TELEOP = 15;
+
 
     public static final double SWERVE_DRIVE_MOTOR_REDUCTION = 1 / 6.75; // L2 gear ratio
 

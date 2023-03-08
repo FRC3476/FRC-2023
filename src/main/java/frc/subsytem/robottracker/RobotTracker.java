@@ -25,6 +25,7 @@ import frc.utility.wpimodified.SwerveDrivePoseEstimator;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.littletonrobotics.junction.Logger;
+import org.littletonrobotics.junction.networktables.LoggedDashboardBoolean;
 
 import java.util.*;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
@@ -240,6 +241,12 @@ public final class RobotTracker extends AbstractSubsystem {
     private double gyroYVelocity = 0;
     private double gyroYAngle = 0;
 
+    private final LoggedDashboardBoolean isGyroConnected = new LoggedDashboardBoolean("Gyro/Connected", false);
+
+    {
+        Logger.getInstance().registerDashboardInput(isGyroConnected);
+    }
+
     @Override
     public void update() {
         double timestamp = Robot.getDrive().getIoTimestamp();
@@ -258,6 +265,7 @@ public final class RobotTracker extends AbstractSubsystem {
                 }
                 gyroUpdates += gyroInputs.rotations.size();
                 Logger.getInstance().recordOutput("Robot Tracker/Angle Updates", gyroUpdates);
+                isGyroConnected.set(gyroInputs.rotations.size() > 0);
 
                 angularRollRate = gyroInputs.gyroRollVelocity;
                 angularRate = gyroInputs.gyroYawVelocity;
