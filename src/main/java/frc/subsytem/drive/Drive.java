@@ -51,6 +51,8 @@ public final class Drive extends AbstractSubsystem {
     private final @NotNull LiveEditableValue<Double> turnD = new LiveEditableValue<>(DEFAULT_TURN_D, SmartDashboard.getEntry(
             "TurnPIDD"));
     private final @NotNull PIDController turnPID;
+    private final @NotNull PIDController balancePID;
+
     private final DriveIO io;
     private final DriveInputsAutoLogged inputs = new DriveInputsAutoLogged();
     private final Field m_moduleStates;
@@ -91,6 +93,14 @@ public final class Drive extends AbstractSubsystem {
     }
 
     {
+
+        // Balance PID takes in degrees of rotation on the axis parallel to the wide edge of the charging station and returns a velocity in meters per second
+        balancePID = new PIDController(Constants.BALANCE_P, Constants.BALANCE_I, Constants.BALANCE_D);
+        balancePID.setSetpoint(0);
+    }
+
+
+    {
         try {
             m_moduleStates = SwerveDriveKinematics.class.getDeclaredField("m_moduleStates");
             m_moduleStates.setAccessible(true);
@@ -109,7 +119,7 @@ public final class Drive extends AbstractSubsystem {
     private void resetAuto() {
         ProfiledPIDController autoTurnPIDController
                 = new ProfiledPIDController(turnP.get(), turnI.get(), turnD.get(),
-                new TrapezoidProfile.Constraints(2 * Math.PI, Math.PI * 8));
+                new TrapezoidProfile.Constraints(1.7 * Math.PI, Math.PI * 3.5));
         autoTurnPIDController.enableContinuousInput(-Math.PI, Math.PI);
         autoTurnPIDController.setTolerance(Math.toRadians(1));
 
@@ -162,11 +172,11 @@ public final class Drive extends AbstractSubsystem {
     private static Rotation2d getPredictedRobotAngleInLoopCenter() {
         return Robot.getRobotTracker().getGyroAngleAtTime(Timer.getFPGATimestamp()).toRotation2d()
                 .plus(Rotation2d.fromDegrees(
-                        Robot.getRobotTracker().getAngularVelocity() * (EXPECTED_TELEOP_DRIVE_DT * 2)));
+                        Robot.getRobotTracker().getAngularVelocity() * (EXPECTED_TELEOP_DRIVE_DT * 4)));
     }
 
-    PIDController drivePositionPidX = new PIDController(1, 0, 0.1);
-    PIDController drivePositionPidY = new PIDController(1, 0, 0.1);
+    PIDController drivePositionPidX = new PIDController(4.1, 0, 0.41);
+    PIDController drivePositionPidY = new PIDController(4.1, 0, 0.41);
 
     {
         SmartDashboard.putData(drivePositionPidX);
@@ -196,8 +206,8 @@ public final class Drive extends AbstractSubsystem {
                 var currPos = Robot.getRobotTracker().getLatestPose().getTranslation();
                 setTurn(
                         new ControllerDriveInputs(
-                                drivePositionPidX.calculate(currPos.getX(), targetPosition.getX()),
-                                drivePositionPidY.calculate(currPos.getY(), targetPosition.getY()),
+                                drivePositionPidX.calculate(currPos.getX(), targetPosition.getX()) / DRIVE_HIGH_SPEED_M,
+                                drivePositionPidY.calculate(currPos.getY(), targetPosition.getY()) / DRIVE_HIGH_SPEED_M,
                                 0
                         ),
                         new State(targetAngle.getRadians(), 0),
@@ -441,15 +451,21 @@ public final class Drive extends AbstractSubsystem {
         Logger.getInstance().recordOutput("Drive/Auto/Heading Error",
                 getAngleDiff(targetHeading.getDegrees(), currentPose.getRotation().getDegrees()));
 
-        RobotPositionSender.addRobotPosition(new RobotState(goal.poseMeters, "Auto Goal Pose"));
-
-
         try {
             if (swerveAutoController == null) {
                 DriverStation.reportError("swerveAutoController is null",
                         Thread.getAllStackTraces().get(Thread.currentThread()));
                 resetAuto();
             }
+            assert swerveAutoController != null;
+            Logger.getInstance().recordOutput("Drive/Auto/Profiled Heading Error",
+                    getAngleDiff(Math.toDegrees(swerveAutoController.getThetaController().getGoal().position),
+                            currentPose.getRotation().getDegrees()));
+
+            Pose2d goalPose = new Pose2d(goal.poseMeters.getTranslation(),
+                    new Rotation2d(swerveAutoController.getThetaController().getGoal().position));
+            RobotPositionSender.addRobotPosition(new RobotState(goalPose, "Auto Goal Pose"));
+
 
             Trajectory.State oldGoal = currentAutoTrajectory.sample(
                     pathTime - EXPECTED_TELEOP_DRIVE_DT
@@ -703,18 +719,25 @@ public final class Drive extends AbstractSubsystem {
     }
 
     public synchronized void autoBalance(@NotNull ControllerDriveInputs inputs) {
-        var angle = Robot.getRobotTracker().getGyroAngleAtTime(Timer.getFPGATimestamp());
-        double angleMeasure = angle.getY();
-        angleMeasure = Math.toDegrees(angleMeasure);
+        var angle = Robot.getRobotTracker().getGyroYAngle();
+        var angleMeasure = Math.toDegrees(angle);
         Logger.getInstance().recordOutput("Drive/Auto Balance Angle", angleMeasure);
 
-        double xVelocity = 0;
+        double angularVelocity = Robot.getRobotTracker().getAngularRollVelocity();
 
-        if (angleMeasure >= AUTO_BALANCE_COMPLETE_THRESHOLD) {
-            xVelocity = AUTO_BALANCING_VELOCITY;
-        } else if (angleMeasure <= -AUTO_BALANCE_COMPLETE_THRESHOLD) {
-            xVelocity = -AUTO_BALANCING_VELOCITY;
+        double xVelocity;
+
+        if (angleMeasure <= AUTO_BALANCE_COMPLETE_THRESHOLD && angleMeasure >= -AUTO_BALANCE_COMPLETE_THRESHOLD) {
+            // Stops PID if within this range
+            xVelocity = 0;
+        } else if (Math.abs(angularVelocity) > Constants.ANGULAR_ACCELERATION_BALANCE_THRESHHOLD) {
+            // Run backwards a little PID if velocity is too high
+            xVelocity = Math.copySign(Constants.BALANCE_REVERSE_SPEED, -angleMeasure);
+        } else {
+            xVelocity = Math.copySign(balancePID.calculate(angleMeasure), angleMeasure);
         }
+
+        Logger.getInstance().recordOutput("Drive/Auto Balance Velocity", xVelocity);
 
         nextChassisSpeeds = ChassisSpeeds.fromFieldRelativeSpeeds(
                 xVelocity,
@@ -722,6 +745,14 @@ public final class Drive extends AbstractSubsystem {
                 inputs.getRotation() * MAX_TELEOP_TURN_SPEED,
                 Robot.getRobotTracker().getGyroAngle());
     }
+
+    public void autoBalance() throws InterruptedException {
+        setDriveState(DriveState.AUTO_BALANCE);
+        while (DriverStation.isAutonomous()) {
+            Thread.sleep(10);
+        }
+    }
+
 
     public synchronized void resetAbsoluteZeros() {
         io.resetAbsoluteZeros();

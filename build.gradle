@@ -38,6 +38,7 @@ deploy {
                     jvmArgs.add("-Xmx12M")
                     jvmArgs.add("-Xms12M")
                     jvmArgs.add("-Djoml.fastmath=false")
+                    jvmArgs.add("-ea")
                 }
 
                 // Static files artifact

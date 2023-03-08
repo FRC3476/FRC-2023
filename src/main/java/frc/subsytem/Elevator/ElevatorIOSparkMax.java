@@ -23,7 +23,7 @@ public class ElevatorIOSparkMax extends ElevatorIO {
         pidController.setI(Constants.ELEVATOR_I);
         pidController.setD(Constants.ELEVATOR_D);
         pidController.setIZone(Constants.ELEVATOR_IZONE);
-        elevatorMain.getPIDController().setOutputRange(-0.62, 0.8);
+        elevatorMain.getPIDController().setOutputRange(-1, 1);
 
         resetPosition(0);
 

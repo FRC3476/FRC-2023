@@ -183,7 +183,7 @@ public class DriveIOSparkMax extends DriveIO {
 
             inputs.swerveMotorCurrents[i] = swerveMotors[i].getOutputCurrent();
             inputs.swerveMotorTemps[i] = swerveMotors[i].getMotorTemperature();
-            inputs.swerveMotorVoltages[i] = swerveMotors[i].getBusVoltage();
+            inputs.swerveMotorVoltages[i] = swerveMotors[i].getBusVoltage() * swerveMotors[i].getAppliedOutput();
             inputs.swerveMotorRelativePositions[i] = swerveMotors[i].getEncoder().getPosition();
             inputs.driveMotorFaults[i] = swerveDriveMotors[i].getStickyFaults();
             inputs.swerveMotorFaults[i] = swerveMotors[i].getStickyFaults();
