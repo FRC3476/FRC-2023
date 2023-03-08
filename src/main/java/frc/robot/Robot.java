@@ -46,6 +46,7 @@ import org.jetbrains.annotations.Nullable;
 import org.littletonrobotics.junction.LogFileUtil;
 import org.littletonrobotics.junction.LoggedRobot;
 import org.littletonrobotics.junction.Logger;
+import org.littletonrobotics.junction.networktables.LoggedDashboardBoolean;
 import org.littletonrobotics.junction.networktables.LoggedDashboardChooser;
 import org.littletonrobotics.junction.rlog.RLOGServer;
 import org.littletonrobotics.junction.wpilog.WPILOGReader;
@@ -79,6 +80,7 @@ public class Robot extends LoggedRobot {
     public static final int STICK_TOGGLE_SCORING = 7;
     public static final int STICK_TOGGLE_FLOOR_PICKUP = 9;
     public static final int STICK_TOGGLE_PICKUP = 11;
+    public static final int STICK_TOGGLE_AUTO_GRAB = 7;
     public static final int XBOX_TOGGLE_GRABBER = XboxButtons.LEFT_BUMPER;
     private double disabledTime = 0;
 
@@ -344,6 +346,13 @@ public class Robot extends LoggedRobot {
     private double grabberOpenTime = 0;
     private boolean wantToClose = false;
 
+    private boolean useAutoGrab = true;
+    LoggedDashboardBoolean autoGrabDashboard = new LoggedDashboardBoolean("Auto Grab", useAutoGrab);
+
+    {
+        Logger.getInstance().registerDashboardInput(autoGrabDashboard);
+    }
+
     /**
      * This method is called periodically during operator control.
      */
@@ -463,6 +472,11 @@ public class Robot extends LoggedRobot {
             }
         }
 
+        if (stick.getRisingEdge(STICK_TOGGLE_AUTO_GRAB)) {
+            useAutoGrab = !useAutoGrab;
+            autoGrabDashboard.set(useAutoGrab);
+        }
+
 
         if (wantedMechanismState != lastWantedMechanismState) {
             switch (wantedMechanismState) {
@@ -489,7 +503,7 @@ public class Robot extends LoggedRobot {
                 case STATION_PICKUP -> mechanismStateManager.setState(MechanismStates.STATION_PICKUP);
             }
 
-            if (wantedMechanismState != lastWantedMechanismState) {
+            if (wantedMechanismState != lastWantedMechanismState && useAutoGrab) {
                 Robot.getGrabber().setAutoGrab(
                         wantedMechanismState == WantedMechanismState.STATION_PICKUP || wantedMechanismState == WantedMechanismState.FLOOR_PICKUP
                 );
@@ -551,8 +565,7 @@ public class Robot extends LoggedRobot {
                 }
             } else {
                 if ((wantedMechanismState == WantedMechanismState.FLOOR_PICKUP || wantedMechanismState == WantedMechanismState.STATION_PICKUP)
-                        && grabber.isOpen() && IS_AUTO_GRAB_ENABLED && mechanismStateManager.isMechAtFinalPos()) {
-                    grabber.setAutoGrab(true);
+                        && grabber.isOpen() && IS_AUTO_GRAB_ENABLED && mechanismStateManager.isMechAtFinalPos() && grabber.isAutoGrabEnabled()) {
                     isGrabberOpen = false;
                 } else {
                     grabber.setGrabState(GrabState.OPEN);
