@@ -293,6 +293,7 @@ public class Robot extends LoggedRobot {
     @Override
     public void autonomousInit() {
         drive.setBrakeMode(true);
+        drive.setDriveVoltageCompLevel(SWERVE_DRIVE_VOLTAGE_LIMIT_AUTO);
         String autoName = autoChooser.get();
         if (autoName == null) {
             autoName = "";
@@ -317,6 +318,7 @@ public class Robot extends LoggedRobot {
     @Override
     public void teleopInit() {
         drive.setBrakeMode(true);
+        drive.setDriveVoltageCompLevel(SWERVE_DRIVE_VOLTAGE_LIMIT_TELEOP);
         mechanismStateManager.setKeepoutsEnabled(true);
     }
 

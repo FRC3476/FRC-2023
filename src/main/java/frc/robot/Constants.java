@@ -130,7 +130,9 @@ public final class Constants {
 
     public static final int SWERVE_MOTOR_CURRENT_LIMIT = 20;
     public static final int SWERVE_DRIVE_MOTOR_CURRENT_LIMIT = 40;
-    public static final int SWERVE_DRIVE_VOLTAGE_LIMIT = 12;
+    public static final int SWERVE_DRIVE_VOLTAGE_LIMIT_AUTO = 12;
+    public static final int SWERVE_DRIVE_VOLTAGE_LIMIT_TELEOP = 15;
+
 
     public static final double SWERVE_DRIVE_MOTOR_REDUCTION = 1 / 6.75; // L2 gear ratio
 
@@ -288,7 +290,7 @@ public final class Constants {
     public static final double LOWER_PICKUP_POSITION_Y = -3.56;
     public static final double UPPER_PICKUP_POSITION_Y = -2.05892;
     public static final double PICKUP_POSITION_X_OFFSET_FROM_WALL = FIELD_WIDTH_METERS - 15.2 + Units.inchesToMeters(3);
-    
+
     public static final double SCORING_POSITION_OFFSET_CONE_FROM_WALL = 0.1;
     public static final double SCORING_POSITION_OFFSET_CUBE_FROM_WALL = 0.1 + Units.inchesToMeters(3);
 

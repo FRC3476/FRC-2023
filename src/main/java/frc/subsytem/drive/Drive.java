@@ -778,4 +778,13 @@ public final class Drive extends AbstractSubsystem {
         public static State goal;
         public static double turnErrorRadians;
     }
+
+    /**
+     * Sets the voltage compensation level for the drive motors
+     *
+     * @param voltage the voltage compensation level
+     */
+    public synchronized void setDriveVoltageCompLevel(double voltage) {
+        io.setDriveVoltageCompLevel(voltage);
+    }
 }

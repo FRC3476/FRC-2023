@@ -64,4 +64,11 @@ public abstract class DriveIO {
     public void resetAbsoluteZeros() {}
 
     protected void updateInputs(DriveInputsAutoLogged inputs) {}
+
+    /**
+     * Set the drive voltage compensation level
+     *
+     * @param voltage the maximum nominal voltage
+     */
+    public void setDriveVoltageCompLevel(double voltage) {}
 }
