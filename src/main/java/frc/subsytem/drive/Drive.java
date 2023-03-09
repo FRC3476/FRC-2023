@@ -562,6 +562,7 @@ public final class Drive extends AbstractSubsystem {
     };
 
     public static boolean driveIsAbsolute;
+    LoggedDashboardBoolean isError = null;
     boolean isErrorLogged = false;
 
     @Override
@@ -581,22 +582,14 @@ public final class Drive extends AbstractSubsystem {
                 absoluteChange[i] = getAngleDiff(previousAbsolutePositions[i], inputs.swerveMotorAbsolutePositions[i]);
                 error[i] = Math.abs(relativeChange[i] - absoluteChange[i]);
 
-                LoggedDashboardBoolean isError = null;
+                isError = new LoggedDashboardBoolean(driveErrorNames[i], true);
 
-                if (error[i] > DRIVE_MAX_DEGREE_ERROR) {
+                if (!(error[i] > DRIVE_MAX_DEGREE_ERROR)) {
                     isError = new LoggedDashboardBoolean(driveErrorNames[i], true);
-                    isErrorLogged = true;
-                } else {
-                    if (!isErrorLogged) {
-                        isError = new LoggedDashboardBoolean(driveErrorNames[i], false);
-                    }
                 }
 
                 Logger.getInstance().registerDashboardInput(isError);
-
-                if (error[i] > DRIVE_MAX_DEGREE_ERROR) {
-                    Logger.getInstance().recordOutput(driveErrorNames[i] + " amount", error[i] - DRIVE_MAX_DEGREE_ERROR);
-                }
+                Logger.getInstance().recordOutput(driveErrorNames[i] + " amount", error[i] - DRIVE_MAX_DEGREE_ERROR);
 
                 previousRelativePositions[i] = inputs.swerveMotorRelativePositions[i];
                 previousAbsolutePositions[i] = inputs.swerveMotorAbsolutePositions[i];
