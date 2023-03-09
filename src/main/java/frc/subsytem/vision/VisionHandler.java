@@ -122,7 +122,7 @@ public class VisionHandler extends AbstractSubsystem {
         // Send out connection flag to april tags processor
         visionMiscTable.getEntry("Connection Flag").setBoolean(true);
 
-        configTable.getEntry("Exposure").setDouble(100);
+        configTable.getEntry("Exposure").setDouble(50);
         configTable.getEntry("Camera Type").setDouble(0);
         configTable.getEntry("X Resolution").setDouble(1280);
         configTable.getEntry("Y Resolution").setDouble(800);
@@ -131,7 +131,7 @@ public class VisionHandler extends AbstractSubsystem {
         configTable.getEntry("Do Stream").setBoolean(false);
         configTable.getEntry("Stream Port").setDouble(5810);
         configTable.getEntry("Stream Ip").setString("10.34.76.225");
-        configTable.getEntry("Decision Margin").setDouble(15);
+        configTable.getEntry("Decision Margin").setDouble(10);
         configTable.getEntry("Encode Quality").setDouble(50);
         configTable.getEntry("Record Video").setBoolean(false);
 
