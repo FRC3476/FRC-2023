@@ -9,6 +9,7 @@ import java.util.ArrayList;
 public class VisionInputs implements LoggableInputs {
 
     public final ArrayList<VisionUpdate> visionUpdates = new ArrayList<>();
+    public double lastVisionUpdate = -10000;
 
     @Override
     public void toLog(LogTable table) {

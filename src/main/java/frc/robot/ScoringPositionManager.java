@@ -7,6 +7,9 @@ import org.jetbrains.annotations.NotNull;
 import org.littletonrobotics.junction.networktables.LoggedDashboardBoolean;
 import org.littletonrobotics.junction.networktables.LoggedDashboardString;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import static frc.robot.Constants.IS_PRACTICE;
 
 public class ScoringPositionManager {
@@ -64,10 +67,10 @@ public class ScoringPositionManager {
         }
 
         /**
-         * @return 0 for left, 1 for middle, 2 for right
+         * @return The column of the scoring position.
          */
-        public int getSide() {
-            return ordinal() % 3;
+        public ScoringDirection getScoringDirection() {
+            return ScoringDirection.values()[ordinal() % 3];
         }
 
         public final int buttonPanelIndex;
@@ -157,6 +160,7 @@ public class ScoringPositionManager {
         this.selectedPosition = selectedPosition;
     }
 
+
     /**
      * @param selectedPosition The position to get the Y coordinate of
      * @param isRedAlliance    Whether the robot is on the red alliance
@@ -166,11 +170,155 @@ public class ScoringPositionManager {
     public static double getGridRelativeY(@NotNull SelectedPosition selectedPosition, boolean isRedAlliance) {
         double offset = IS_PRACTICE ? 0.012 : 0;
 
-        double y = (selectedPosition.getSide() - 1) * CENTER_CUBE_SCORING_PLATFORM_TO_NODE_Y + offset;
+        double y = (selectedPosition.getScoringDirection().ordinal() - 1) * CENTER_CUBE_SCORING_PLATFORM_TO_NODE_Y + offset;
         if (!isRedAlliance) {
             y *= -1;
         }
         return y;
+    }
+
+    enum AllianceSide {
+        RED, BLUE
+    }
+
+    /**
+     * Position of the scoring column relative to the robot. <b>LEFT/RIGHT is relative to the direction the robot would be facing
+     * when it is scoring in that position</b>.
+     */
+    enum ScoringDirection {
+        LEFT, MIDDLE, RIGHT
+    }
+
+    // Map<AllianceSide, Map<Grid Index (Always starts from -y), Map<Scoring Column, Offset>>>
+    static final Map<AllianceSide, HashMap<Integer, HashMap<ScoringDirection, Double>>> yScoringOffsets;
+
+    static {
+        yScoringOffsets = Map.of(
+                AllianceSide.RED, new HashMap<>() {{
+                    /*
+                    RED          SCORING TABLE           BLUE
+                    -                                    -
+                    -                                    -
+                    -                                    -
+
+                    -                                    -
+                    -                                    -
+                    -                                    -
+
+                    R                                    -
+                    M                                    -
+                    L                                    -
+                    */
+                    put(0, new HashMap<>() {{
+                        put(ScoringDirection.LEFT, 0.0);
+                        put(ScoringDirection.MIDDLE, 0.0);
+                        put(ScoringDirection.RIGHT, 0.0);
+                    }});
+
+
+                    /*
+                    RED          SCORING TABLE           BLUE
+                    -                                    -
+                    -                                    -
+                    -                                    -
+
+                    R                                    -
+                    M                                    -
+                    L                                    -
+
+                    -                                    -
+                    -                                    -
+                    -                                    -
+                    */
+                    put(1, new HashMap<>() {{
+                        put(ScoringDirection.LEFT, 0.0);
+                        put(ScoringDirection.MIDDLE, 0.0);
+                        put(ScoringDirection.RIGHT, 0.0);
+                    }});
+
+                    /*
+                    RED          SCORING TABLE           BLUE
+                    R                                    -
+                    M                                    -
+                    L                                    -
+
+                    -                                    -
+                    -                                    -
+                    -                                    -
+
+                    -                                    -
+                    -                                    -
+                    -                                    -
+                    */
+                    put(2, new HashMap<>() {{
+                        put(ScoringDirection.LEFT, 0.0);
+                        put(ScoringDirection.MIDDLE, 0.0);
+                        put(ScoringDirection.RIGHT, 0.0);
+                    }});
+                }},
+
+                AllianceSide.BLUE, new HashMap<>() {{
+                    /*
+                    RED          SCORING TABLE           BLUE
+                    -                                    -
+                    -                                    -
+                    -                                    -
+
+                    -                                    -
+                    -                                    -
+                    -                                    -
+
+                    -                                    L
+                    -                                    M
+                    -                                    R
+                    */
+                    put(0, new HashMap<>() {{
+                        put(ScoringDirection.LEFT, 0.0);
+                        put(ScoringDirection.MIDDLE, 0.0);
+                        put(ScoringDirection.RIGHT, 0.0);
+                    }});
+
+                                        /*
+                    RED          SCORING TABLE           BLUE
+                    -                                    -
+                    -                                    -
+                    -                                    -
+
+                    -                                    L
+                    -                                    M
+                    -                                    R
+
+                    -                                    -
+                    -                                    -
+                    -                                    -
+                    */
+                    put(1, new HashMap<>() {{
+                        put(ScoringDirection.LEFT, 0.0);
+                        put(ScoringDirection.MIDDLE, 0.0);
+                        put(ScoringDirection.RIGHT, 0.0);
+                    }});
+
+                                        /*
+                    RED          SCORING TABLE           BLUE
+                    -                                    L
+                    -                                    M
+                    -                                    R
+
+                    -                                    -
+                    -                                    -
+                    -                                    -
+
+                    -                                    -
+                    -                                    -
+                    -                                    -
+                    */
+                    put(2, new HashMap<>() {{
+                        put(ScoringDirection.LEFT, 0.0);
+                        put(ScoringDirection.MIDDLE, 0.0);
+                        put(ScoringDirection.RIGHT, 0.0);
+                    }});
+                }}
+        );
     }
 
     /**
@@ -182,6 +330,8 @@ public class ScoringPositionManager {
     public static double @NotNull [] getPossibleFieldYs(@NotNull SelectedPosition selectedPosition, boolean isRedAlliance) {
         double[] possibleYs = new double[3];
         double y = getGridRelativeY(selectedPosition, isRedAlliance);
+
+
         for (int i = 0; i < 3; i++) {
             possibleYs[i] = y + CUBE_SCORING_Y_CENTER[i];
         }
@@ -210,14 +360,23 @@ public class ScoringPositionManager {
         double[] possibleYs = CUBE_SCORING_Y_CENTER;
         double bestY = possibleYs[0];
 
+        int chosenGridIndex = 0;
         // Find the closest possible Y to the intersection that we found.
-        for (double possibleY : possibleYs) {
+        for (int i = 0; i < 3; i++) {
+            double possibleY = possibleYs[i];
             if (Math.abs(possibleY - predictedRobotY) < Math.abs(bestY - predictedRobotY)) {
                 bestY = possibleY;
+                chosenGridIndex = i;
             }
         }
 
-        bestY = bestY + getGridRelativeY(selectedPosition, Robot.isRed());
+        bestY = bestY
+                + getGridRelativeY(selectedPosition, isRedAlliance)
+                + yScoringOffsets
+                .get(isRedAlliance ? AllianceSide.RED : AllianceSide.BLUE)
+                .get(chosenGridIndex)
+                .get(selectedPosition.getScoringDirection());
+
 
         return bestY;
     }
