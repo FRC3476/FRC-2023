@@ -576,10 +576,11 @@ public final class Drive extends AbstractSubsystem {
                 relativeChange[i] = getAngleDiff(previousRelativePositions[i], inputs.swerveMotorRelativePositions[i]);
                 absoluteChange[i] = getAngleDiff(previousAbsolutePositions[i], inputs.swerveMotorAbsolutePositions[i]);
                 error[i] = Math.abs(relativeChange[i] - absoluteChange[i]);
+
+                Logger.getInstance().recordOutput(driveErrorNames[i], error[i] > DRIVE_MAX_DEGREE_ERROR);
+                
                 if (error[i] > DRIVE_MAX_DEGREE_ERROR) {
-                    Logger.getInstance().recordOutput(driveErrorNames[i], error[i] - DRIVE_MAX_DEGREE_ERROR);
-                } else {
-                    Logger.getInstance().recordOutput(driveErrorNames[i], false);
+                    Logger.getInstance().recordOutput(driveErrorNames[i] + " amount", error[i] - DRIVE_MAX_DEGREE_ERROR);
                 }
 
                 previousRelativePositions[i] = inputs.swerveMotorRelativePositions[i];
