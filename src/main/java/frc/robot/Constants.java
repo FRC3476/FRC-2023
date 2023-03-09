@@ -69,7 +69,6 @@ public final class Constants {
     public static final double AUTO_BALANCE_COMPLETE_THRESHOLD = 9;
 
     public static final double DRIVE_MAX_DEGREE_ERROR = 5;
-    public static boolean driveIsAbsolute;
     public static final double MAX_ERROR_PRINT_TIME = 0.5;
     /**
      * Feed forward constants for the drivetrain.

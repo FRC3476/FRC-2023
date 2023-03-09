@@ -559,6 +559,8 @@ public final class Drive extends AbstractSubsystem {
             "Drive/Right front turn rate mismatched", "Drive/Right back turn rate mismatched"
     };
 
+    public static boolean driveIsAbsolute;
+
     @Override
     public synchronized void update() {
         var lastTimeStep = inputs.driveIoTimestamp;
