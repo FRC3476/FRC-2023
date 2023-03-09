@@ -268,6 +268,10 @@ public class VisionHandler extends AbstractSubsystem {
 //        Renderer.render(drawables);
     }
 
+    public void forceRecord(boolean record) {
+        NetworkTableInstance.getDefault().getTable("Vision Config").getEntry("Record Video").setBoolean(record);
+    }
+
     @Override
     public synchronized void update() {
         Logger.getInstance().processInputs("VisionHandler", visionInputs);

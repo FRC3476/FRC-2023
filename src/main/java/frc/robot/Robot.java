@@ -13,12 +13,9 @@ import com.dacubeking.AutoBuilder.robot.robotinterface.CommandTranslator;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.trajectory.TrapezoidProfile.State;
+import edu.wpi.first.wpilibj.*;
 import edu.wpi.first.wpilibj.GenericHID.RumbleType;
-import edu.wpi.first.wpilibj.IterativeRobotBase;
-import edu.wpi.first.wpilibj.PowerDistribution;
 import edu.wpi.first.wpilibj.PowerDistribution.ModuleType;
-import edu.wpi.first.wpilibj.Timer;
-import edu.wpi.first.wpilibj.Watchdog;
 import frc.robot.ScoringPositionManager.PositionType;
 import frc.subsytem.AbstractSubsystem;
 import frc.subsytem.Elevator.Elevator;
@@ -303,6 +300,9 @@ public class Robot extends LoggedRobot {
     public void robotPeriodic() {
         runAsyncScheduledTasks();
         AbstractSubsystem.tick();
+
+        // Record video is FMS is attached
+        visionHandler.forceRecord(DriverStation.isFMSAttached());
 
         if (Objects.equals(lastSelectedAuto, autoChooser.get()) || Objects.equals(lastSelectedSide, sideChooser.get())) {
             lastSelectedAuto = autoChooser.get();
