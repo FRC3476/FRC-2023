@@ -284,7 +284,7 @@ public class Robot extends LoggedRobot {
 
     private final LoggedDashboardNumber autoPositionErrorX = new LoggedDashboardNumber("Auto Position Error X", 0);
     private final LoggedDashboardNumber autoPositionErrorY = new LoggedDashboardNumber("Auto Position Error Y", 0);
-    private final LoggedDashboardNumber autoPositionErrorTheta = new LoggedDashboardNumber("Auto Position Error Y", 0);
+    private final LoggedDashboardNumber autoPositionErrorTheta = new LoggedDashboardNumber("Auto Position Error Theta", 0);
 
     {
         Logger.getInstance().registerDashboardInput(autoPositionErrorX);
