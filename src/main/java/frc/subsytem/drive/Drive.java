@@ -17,6 +17,7 @@ import edu.wpi.first.math.kinematics.SwerveModuleState;
 import edu.wpi.first.math.trajectory.Trajectory;
 import edu.wpi.first.math.trajectory.TrapezoidProfile;
 import edu.wpi.first.math.trajectory.TrapezoidProfile.State;
+import edu.wpi.first.util.CombinedRuntimeLoader;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
@@ -34,6 +35,7 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.littletonrobotics.junction.Logger;
+import org.littletonrobotics.junction.networktables.LoggedDashboardBoolean;
 
 import java.lang.reflect.Field;
 import java.util.Optional;
@@ -560,6 +562,7 @@ public final class Drive extends AbstractSubsystem {
     };
 
     public static boolean driveIsAbsolute;
+    boolean isErrorLogged = false;
 
     @Override
     public synchronized void update() {
@@ -573,12 +576,24 @@ public final class Drive extends AbstractSubsystem {
                 double[] absoluteChange = new double[4];
                 double[] error = new double[4];
 
+
                 relativeChange[i] = getAngleDiff(previousRelativePositions[i], inputs.swerveMotorRelativePositions[i]);
                 absoluteChange[i] = getAngleDiff(previousAbsolutePositions[i], inputs.swerveMotorAbsolutePositions[i]);
                 error[i] = Math.abs(relativeChange[i] - absoluteChange[i]);
 
-                Logger.getInstance().recordOutput(driveErrorNames[i], error[i] > DRIVE_MAX_DEGREE_ERROR);
-                
+                LoggedDashboardBoolean isError = null;
+
+                if (error[i] > DRIVE_MAX_DEGREE_ERROR) {
+                    isError = new LoggedDashboardBoolean(driveErrorNames[i], true);
+                    isErrorLogged = true;
+                } else {
+                    if (!isErrorLogged) {
+                        isError = new LoggedDashboardBoolean(driveErrorNames[i], false);
+                    }
+                }
+
+                Logger.getInstance().registerDashboardInput(isError);
+
                 if (error[i] > DRIVE_MAX_DEGREE_ERROR) {
                     Logger.getInstance().recordOutput(driveErrorNames[i] + " amount", error[i] - DRIVE_MAX_DEGREE_ERROR);
                 }
