@@ -72,7 +72,7 @@ public class MechanismStateManager extends AbstractSubsystem {
 
 
     public enum MechanismStates {
-        STOWED(new MechanismStateCoordinates(-0.489, 0.249, MAX_WRIST_ANGLE - 2)),
+        STOWED(new MechanismStateCoordinates(-0.445, 0.285, MAX_WRIST_ANGLE - 2)),
         LOW_SCORING(new MechanismStateCoordinates(0.08, 0.1, 0)),
         CUBE_MIDDLE_SCORING(new MechanismStateCoordinates(Units.inchesToMeters(16), Units.inchesToMeters(40), 0)),
         CONE_MIDDLE_SCORING(new MechanismStateCoordinates(Units.inchesToMeters(13), Units.inchesToMeters(47.5), 0)),
@@ -177,7 +177,8 @@ public class MechanismStateManager extends AbstractSubsystem {
 
         // Calculate the minX and maxX based on desired y
         double dynamicMinX =
-                ((mutableY - wristY) / Math.tan(Constants.ELEVATOR_TILT_RADIANS)) - Constants.GRABBER_LENGTH + wristX;
+                ((mutableY - wristY) / Math.tan(
+                        Constants.ELEVATOR_TILT_RADIANS)) - Constants.GRABBER_LENGTH + wristX + Constants.BASE_MIN_X;
         double dynamicMaxX =
                 ((mutableY - wristY) / Math.tan(
                         Constants.ELEVATOR_TILT_RADIANS)) - Constants.GRABBER_LENGTH + wristX + Constants.BASE_MAX_X;

@@ -25,6 +25,7 @@ public class TelescopingArm extends AbstractSubsystem {
      * @param position The position to set the telescoping arm (meters)
      */
     public void setPosition(double position) {
+        position = Math.max(Constants.BASE_MIN_X, Math.min(Constants.BASE_MAX_X, position));
         trapezoidProfile = new TrapezoidProfile(Constants.TELESCOPING_ARM_CONSTRAINTS, new TrapezoidProfile.State(position, 0),
                 new TrapezoidProfile.State(
                         inputs.position,
