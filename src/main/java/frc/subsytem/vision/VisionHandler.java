@@ -272,7 +272,7 @@ public class VisionHandler extends AbstractSubsystem {
     public synchronized void update() {
         Logger.getInstance().processInputs("VisionHandler", visionInputs);
 
-        isVisionConnected.set(visionInputs.lastVisionUpdate - Timer.getFPGATimestamp() < NO_VISION_UPDATES_TIME_THRESHOLD);
+        isVisionConnected.set(Timer.getFPGATimestamp() - visionInputs.lastVisionUpdate < NO_VISION_UPDATES_TIME_THRESHOLD);
 
         Logger.getInstance().recordOutput("Vision Handler/Tags Updates", visionInputs.visionUpdates.size());
         // Process vision updates
