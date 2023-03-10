@@ -304,7 +304,7 @@ public class Robot extends LoggedRobot {
         // Record video is FMS is attached
         visionHandler.forceRecord(DriverStation.isFMSAttached());
 
-        if (Objects.equals(lastSelectedAuto, autoChooser.get()) || Objects.equals(lastSelectedSide, sideChooser.get())) {
+        if (!(Objects.equals(lastSelectedAuto, autoChooser.get()) || Objects.equals(lastSelectedSide, sideChooser.get()))) {
             lastSelectedAuto = autoChooser.get();
             lastSelectedSide = sideChooser.get();
             System.out.println("Auto: " + autoChooser.get() + " Side: " + sideChooser.get());
