@@ -100,7 +100,7 @@ public class VisionHandler extends AbstractSubsystem {
     private final Pose3d cameraPose = new Pose3d(new Translation3d(Units.inchesToMeters(3.44 + 11.4375),
             Units.inchesToMeters(-3.44 - 0.44),
             Units.inchesToMeters(52.425)),
-            new Rotation3d(VecBuilder.fill(0, 1, 0), Math.toRadians(-28)));
+            new Rotation3d(VecBuilder.fill(0, 1, 0), Math.toRadians(-31)));
 
     private final Pose3d negativeCameraPose = new Pose3d(
             cameraPose.getTranslation().unaryMinus(),
@@ -133,7 +133,7 @@ public class VisionHandler extends AbstractSubsystem {
         configTable.getEntry("Stream Ip").setString("10.34.76.225");
         configTable.getEntry("Decision Margin").setDouble(10);
         configTable.getEntry("Encode Quality").setDouble(50);
-        configTable.getEntry("Record Video").setBoolean(false);
+        configTable.getEntry("Record Video").setBoolean(true);
 
         NetworkTableInstance.getDefault().addListener(visionMiscTable.getEntry("Vision Looptime").getTopic(),
                 EnumSet.of(Kind.kValueRemote),
@@ -269,7 +269,7 @@ public class VisionHandler extends AbstractSubsystem {
     }
 
     public void forceRecord(boolean record) {
-        NetworkTableInstance.getDefault().getTable("Vision Config").getEntry("Record Video").setBoolean(record);
+//        NetworkTableInstance.getDefault().getTable("Vision Config").getEntry("Record Video").setBoolean(record);
     }
 
     @Override
