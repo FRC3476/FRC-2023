@@ -790,4 +790,9 @@ public final class Drive extends AbstractSubsystem {
     public synchronized void setDriveVoltageCompLevel(double voltage) {
         io.setDriveVoltageCompLevel(voltage);
     }
+
+
+    public synchronized void resetPeriodicFrames() {
+        io.resetPeriodicFrames();
+    }
 }

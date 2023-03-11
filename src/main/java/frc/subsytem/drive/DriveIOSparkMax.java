@@ -264,4 +264,14 @@ public class DriveIOSparkMax extends DriveIO {
             }
         }
     }
+
+    public void resetPeriodicFrames() {
+        for (CANSparkMax swerveMotor : swerveMotors) {
+            swerveMotor.setPeriodicFramePeriod(PeriodicFrame.kStatus1, 10);
+            swerveMotor.setPeriodicFramePeriod(PeriodicFrame.kStatus4, 97);
+            swerveMotor.setPeriodicFramePeriod(PeriodicFrame.kStatus3, 101);
+            swerveMotor.setPeriodicFramePeriod(PeriodicFrame.kStatus5, 20);
+            swerveMotor.setPeriodicFramePeriod(PeriodicFrame.kStatus6, 50);
+        }
+    }
 }
