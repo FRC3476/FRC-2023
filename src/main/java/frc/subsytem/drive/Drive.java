@@ -732,9 +732,9 @@ public final class Drive extends AbstractSubsystem {
         if (angleMeasure <= AUTO_BALANCE_COMPLETE_THRESHOLD && angleMeasure >= -AUTO_BALANCE_COMPLETE_THRESHOLD) {
             // Stops PID if within this range
             xVelocity = 0;
-        } else if (Math.abs(angularVelocity) > Constants.ANGULAR_ACCELERATION_BALANCE_THRESHHOLD) {
+        } else if (Math.abs(angularVelocity) > Constants.ANGULAR_VELOCITY_BALANCE_THRESHHOLD) {
             // Run backwards a little PID if velocity is too high
-            xVelocity = Math.copySign(Constants.BALANCE_REVERSE_SPEED, -angleMeasure);
+            xVelocity = Math.copySign(Constants.BALANCE_REVERSE_SPEED, angleMeasure);
         } else {
             xVelocity = Math.copySign(balancePID.calculate(angleMeasure), angleMeasure);
         }

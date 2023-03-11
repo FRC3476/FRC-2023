@@ -18,7 +18,7 @@ import java.io.File;
 import java.nio.file.Files;
 
 public final class Constants {
-    public static final double ANGULAR_ACCELERATION_BALANCE_THRESHHOLD = 10;
+    public static final double ANGULAR_VELOCITY_BALANCE_THRESHHOLD = 10;
     public static final double BALANCE_REVERSE_SPEED = .5;
     public static final String LOG_DIRECTORY = "/home/lvuser/logs";
 
