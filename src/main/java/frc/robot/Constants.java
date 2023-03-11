@@ -27,7 +27,7 @@ public final class Constants {
     public static final boolean IS_PRACTICE = Files.exists(new File("/home/lvuser/practice").toPath());
     public static final boolean USE_CANCODERS = false;
     public static final double SECONDS_PER_MICROSECOND = 1e-6;
-    public static final long MIN_FREE_SPACE = 1000000000; // 60 MB
+    public static final long MIN_FREE_SPACE = 1000000000; // 1 GB
 
     // 2048 sensor units per revolution
     public static final double FALCON_ENCODER_TICKS_PER_ROTATIONS = 2048;
@@ -289,10 +289,10 @@ public final class Constants {
 
     public static final double LOWER_PICKUP_POSITION_Y = -3.56;
     public static final double UPPER_PICKUP_POSITION_Y = -2.05892;
-    public static final double PICKUP_POSITION_X_OFFSET_FROM_WALL = FIELD_WIDTH_METERS - 15.2 + Units.inchesToMeters(1);
+    public static final double PICKUP_POSITION_X_OFFSET_FROM_WALL = FIELD_WIDTH_METERS - 15.2 + Units.inchesToMeters(-1);
 
-    public static final double SCORING_POSITION_OFFSET_CONE_FROM_WALL = 0.05;
-    public static final double SCORING_POSITION_OFFSET_CUBE_FROM_WALL = 0.05 + Units.inchesToMeters(3);
+    public static final double SCORING_POSITION_OFFSET_CONE_FROM_WALL = 0.08;
+    public static final double SCORING_POSITION_OFFSET_CUBE_FROM_WALL = 0.05 + Units.inchesToMeters(2);
 
     // Constraints
     // TODO: FIND REAL CONSTRAINTS
