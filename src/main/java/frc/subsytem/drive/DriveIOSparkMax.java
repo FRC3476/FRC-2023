@@ -106,7 +106,7 @@ public class DriveIOSparkMax extends DriveIO {
             // Sets current limits for motors
             swerveMotors[i].setSmartCurrentLimit(SWERVE_MOTOR_CURRENT_LIMIT);
             swerveMotors[i].setSecondaryCurrentLimit(100);
-            swerveMotors[i].enableVoltageCompensation(Constants.SWERVE_DRIVE_VOLTAGE_LIMIT);
+            swerveMotors[i].enableVoltageCompensation(Constants.SWERVE_DRIVE_VOLTAGE_LIMIT_AUTO);
             swerveMotors[i].getEncoder().setPositionConversionFactor(
                     Constants.SWERVE_MOTOR_POSITION_CONVERSION_FACTOR * 360);
             swerveMotors[i].getEncoder().setVelocityConversionFactor(
@@ -121,7 +121,7 @@ public class DriveIOSparkMax extends DriveIO {
 
             swerveDriveMotors[i].setSmartCurrentLimit(SWERVE_DRIVE_MOTOR_CURRENT_LIMIT);
             swerveDriveMotors[i].setSecondaryCurrentLimit(100);
-            swerveDriveMotors[i].enableVoltageCompensation(Constants.SWERVE_DRIVE_VOLTAGE_LIMIT);
+            swerveDriveMotors[i].enableVoltageCompensation(Constants.SWERVE_DRIVE_VOLTAGE_LIMIT_AUTO);
             swerveDriveMotors[i].getEncoder().setPositionConversionFactor(
                     SWERVE_DRIVE_MOTOR_REDUCTION * SWERVE_METER_PER_ROTATION);
             swerveDriveMotors[i].getEncoder().setVelocityConversionFactor(
@@ -183,7 +183,7 @@ public class DriveIOSparkMax extends DriveIO {
 
             inputs.swerveMotorCurrents[i] = swerveMotors[i].getOutputCurrent();
             inputs.swerveMotorTemps[i] = swerveMotors[i].getMotorTemperature();
-            inputs.swerveMotorVoltages[i] = swerveMotors[i].getBusVoltage();
+            inputs.swerveMotorVoltages[i] = swerveMotors[i].getBusVoltage() * swerveMotors[i].getAppliedOutput();
             inputs.swerveMotorRelativePositions[i] = swerveMotors[i].getEncoder().getPosition();
             inputs.driveMotorFaults[i] = swerveDriveMotors[i].getStickyFaults();
             inputs.swerveMotorFaults[i] = swerveMotors[i].getStickyFaults();
@@ -251,6 +251,16 @@ public class DriveIOSparkMax extends DriveIO {
                         -(swerveSparkAbsoluteEncoder.getPosition() - swerveSparkAbsoluteEncoder.getZeroOffset())
                 );
                 swerveMotors[i].burnFlash();
+            }
+        }
+    }
+
+    public void setDriveVoltageCompLevel(double voltage) {
+        for (CANSparkMax driveMotor : swerveDriveMotors) {
+            if (voltage <= 0) {
+                driveMotor.disableVoltageCompensation();
+            } else if (voltage > 0) {
+                driveMotor.enableVoltageCompensation(voltage);
             }
         }
     }

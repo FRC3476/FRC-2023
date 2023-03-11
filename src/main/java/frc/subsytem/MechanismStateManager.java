@@ -7,17 +7,23 @@ import frc.utility.OrangeUtility;
 import org.jetbrains.annotations.NotNull;
 import org.littletonrobotics.junction.Logger;
 
-import static frc.robot.Constants.GRABBER_LENGTH;
-import static frc.robot.Constants.MAX_WRIST_ANGLE;
+import static frc.robot.Constants.*;
 
 public class MechanismStateManager extends AbstractSubsystem {
 
     public static final double SCORING_KEEPOUT_Y = 0.92;
     public static final double SCORING_KEEPOUT_X = 0.21;
-    public static final double PICKUP_KEEPOUT_ELEVATOR_DISTANCE = 1.17;
+    public static final double PICKUP_KEEPOUT_ELEVATOR_DISTANCE = 1.17 - (!IS_PRACTICE ? Units.inchesToMeters(3) : 0);
     public static final double KEEPOUT_HYSTERESIS = 0.02;
 
     boolean isAtFinalPosition = false;
+
+    private boolean areKeepoutsEnabled = true;
+
+    public synchronized void setKeepoutsEnabled(boolean enabled) {
+        this.areKeepoutsEnabled = enabled;
+    }
+
 
     public record MechanismStateSubsystemPositions(double elevatorPositionMeters, double telescopingArmPositionMeters,
                                                    double grabberAngleDegrees) {
@@ -66,14 +72,14 @@ public class MechanismStateManager extends AbstractSubsystem {
 
 
     public enum MechanismStates {
-        STOWED(new MechanismStateCoordinates(-0.489, 0.249, MAX_WRIST_ANGLE - 2)),
-        LOW_SCORING(new MechanismStateCoordinates(Units.inchesToMeters(12), Units.inchesToMeters(7.5), 0)),
+        STOWED(new MechanismStateCoordinates(-0.445, 0.285, MAX_WRIST_ANGLE - 2)),
+        LOW_SCORING(new MechanismStateCoordinates(0.08, 0.1, 0)),
         CUBE_MIDDLE_SCORING(new MechanismStateCoordinates(Units.inchesToMeters(16), Units.inchesToMeters(40), 0)),
         CONE_MIDDLE_SCORING(new MechanismStateCoordinates(Units.inchesToMeters(13), Units.inchesToMeters(47.5), 0)),
         CONE_HIGH_SCORING(new MechanismStateCoordinates(Units.inchesToMeters(36), Units.inchesToMeters(57), 65)),
         CUBE_HIGH_SCORING(new MechanismStateCoordinates(Units.inchesToMeters(36), Units.inchesToMeters(54), 33)),
-        STATION_PICKUP(new MechanismStateCoordinates(0.531, 2.3 - 0.015, 12)),
-        FLOOR_PICKUP(new MechanismStateCoordinates(0.08, 0.06, 0));
+        STATION_PICKUP(new MechanismStateCoordinates(0.531, 2.3 - 0.015 - (!IS_PRACTICE ? Units.inchesToMeters(3) : 0), 12)),
+        FLOOR_PICKUP(new MechanismStateCoordinates(0.08, 0.06, !IS_PRACTICE ? -10 : 0));
         private final MechanismStateCoordinates state;
 
         MechanismStates(MechanismStateCoordinates state) {
@@ -93,12 +99,6 @@ public class MechanismStateManager extends AbstractSubsystem {
         if (state != MechanismStates.STOWED) {
             lastNotStowState = state;
             System.out.println("New State: " + state.name());
-        }
-
-        if (state != lastState) {
-            Robot.getGrabber().setAutoGrab(
-                    state == MechanismStates.STATION_PICKUP || state == MechanismStates.FLOOR_PICKUP
-            );
         }
         lastState = state;
     }
@@ -177,7 +177,8 @@ public class MechanismStateManager extends AbstractSubsystem {
 
         // Calculate the minX and maxX based on desired y
         double dynamicMinX =
-                ((mutableY - wristY) / Math.tan(Constants.ELEVATOR_TILT_RADIANS)) - Constants.GRABBER_LENGTH + wristX;
+                ((mutableY - wristY) / Math.tan(
+                        Constants.ELEVATOR_TILT_RADIANS)) - Constants.GRABBER_LENGTH + wristX + Constants.BASE_MIN_X;
         double dynamicMaxX =
                 ((mutableY - wristY) / Math.tan(
                         Constants.ELEVATOR_TILT_RADIANS)) - Constants.GRABBER_LENGTH + wristX + Constants.BASE_MAX_X;
@@ -234,7 +235,8 @@ public class MechanismStateManager extends AbstractSubsystem {
 
 
         MechanismStateSubsystemPositions limitedStatePositions = coordinatesToSubsystemPositions(limitedStateCoordinates);
-        if (lastNotStowState != MechanismStates.FLOOR_PICKUP) {
+        if (!(lastNotStowState == MechanismStates.FLOOR_PICKUP || lastNotStowState == MechanismStates.LOW_SCORING)
+                && areKeepoutsEnabled) {
             if (lastNotStowState != MechanismStates.STATION_PICKUP) {
                 // Use scoring keepouts
                 double armEndX = limitedStateCoordinates.xMeters - limitedStateCoordinates.grabberX();
@@ -355,12 +357,7 @@ public class MechanismStateManager extends AbstractSubsystem {
      * @throws InterruptedException if the thread is interrupted
      */
     public void waitTillMechAtFinalPos(long extraDelayMs) throws InterruptedException {
-        while (true) {
-            synchronized (this) {
-                if (isAtFinalPosition) {
-                    break;
-                }
-            }
+        while (!isMechAtFinalPos()) {
             Thread.sleep(10);
         }
         Thread.sleep(extraDelayMs);
@@ -368,5 +365,9 @@ public class MechanismStateManager extends AbstractSubsystem {
 
     public void waitTillMechAtFinalPos() throws InterruptedException {
         waitTillMechAtFinalPos(0);
+    }
+
+    public synchronized boolean isMechAtFinalPos() {
+        return isAtFinalPosition;
     }
 }

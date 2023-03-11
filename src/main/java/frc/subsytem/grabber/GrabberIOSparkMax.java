@@ -2,6 +2,7 @@ package frc.subsytem.grabber;
 
 import com.revrobotics.CANSparkMax;
 import com.revrobotics.CANSparkMax.ControlType;
+import com.revrobotics.CANSparkMax.IdleMode;
 import com.revrobotics.CANSparkMaxLowLevel;
 import com.revrobotics.SparkMaxLimitSwitch;
 import com.revrobotics.SparkMaxLimitSwitch.Type;
@@ -48,6 +49,7 @@ public class GrabberIOSparkMax extends GrabberIO {
         grabberSparkMax.enableVoltageCompensation(Constants.GRABBER_NOMINAL_VOLTAGE);
         grabberSparkMax.setSmartCurrentLimit(Constants.GRABBER_SMART_CURRENT_LIMIT);
         grabberSparkMax.setClosedLoopRampRate(0.75);
+        grabberSparkMax.setIdleMode(IdleMode.kBrake);
         reverseLimitSwitch = grabberSparkMax.getReverseLimitSwitch(Type.kNormallyClosed);
 
         if (GRABBER_WHEELS_USED) {

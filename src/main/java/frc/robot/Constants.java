@@ -18,6 +18,8 @@ import java.io.File;
 import java.nio.file.Files;
 
 public final class Constants {
+    public static final double ANGULAR_ACCELERATION_BALANCE_THRESHHOLD = 10;
+    public static final double BALANCE_REVERSE_SPEED = .4;
     public static final String LOG_DIRECTORY = "/u/logs";
 
     public static final double SECONDS_PER_MINUTE = 60;
@@ -34,8 +36,14 @@ public final class Constants {
     public static final int DEFAULT_PERIODS_PER_LOG = 0;
     private static final int NOMINAL_DT_MS = 20;
 
+    public static final double BALANCE_P = .05;
+    public static final double BALANCE_I = 0;
+    public static final double BALANCE_D = 0;
+
     //Drive Constants
-    public static final double AUTO_BALANCING_VELOCITY = 1;
+    public static final double AUTO_BALANCING_VELOCITY = 0.5;
+    public static final int AUTO_BALANCE_VELOCITY_THRESHOLD = 5;
+
     public static final int DRIVE_LEFT_FRONT_ID = 11;
     public static final int DRIVE_LEFT_BACK_ID = 12;
     public static final int DRIVE_RIGHT_FRONT_ID = 13;
@@ -53,12 +61,13 @@ public final class Constants {
 
     public static final double SWERVE_INCHES_PER_ROTATION = 12.5 * 0.976;
     public static final double SWERVE_METER_PER_ROTATION = Units.inchesToMeters(SWERVE_INCHES_PER_ROTATION);
-    public static final double SWERVE_DRIVE_P = .06;
+    public static final double SWERVE_DRIVE_P = .08;
     public static final double SWERVE_DRIVE_D = 0.00;
     public static final double SWERVE_DRIVE_I = 0.00;
     public static final double SWERVE_DRIVE_F = 0.00;
     public static final double SWERVE_DRIVE_INTEGRAL_ZONE = 0.00;
     public static final double AUTO_BALANCE_COMPLETE_THRESHOLD = 9;
+    public static final double MAX_ERROR_PRINT_TIME = 0.5;
     /**
      * Feed forward constants for the drivetrain.
      * <p>
@@ -113,7 +122,7 @@ public final class Constants {
             SWERVE_MODULE_LOCATIONS
     );
 
-    public static final double DRIVE_HIGH_SPEED_M = DRIVE_FEEDFORWARD[0].maxAchievableVelocity(12, 0);
+    public static final double DRIVE_HIGH_SPEED_M = 5;
     /**
      * Allowed Turn Error in degrees.
      */
@@ -121,7 +130,9 @@ public final class Constants {
 
     public static final int SWERVE_MOTOR_CURRENT_LIMIT = 20;
     public static final int SWERVE_DRIVE_MOTOR_CURRENT_LIMIT = 40;
-    public static final int SWERVE_DRIVE_VOLTAGE_LIMIT = 12;
+    public static final int SWERVE_DRIVE_VOLTAGE_LIMIT_AUTO = 12;
+    public static final int SWERVE_DRIVE_VOLTAGE_LIMIT_TELEOP = 15;
+
 
     public static final double SWERVE_DRIVE_MOTOR_REDUCTION = 1 / 6.75; // L2 gear ratio
 
@@ -134,7 +145,7 @@ public final class Constants {
     public static final double DEFAULT_TURN_I = 0;
     public static final double DEFAULT_TURN_D = 0.3;
 
-    public static final double DEFAULT_AUTO_P = 10;
+    public static final double DEFAULT_AUTO_P = 5;
     public static final double DEFAULT_AUTO_I = 0;
     public static final double DEFAULT_AUTO_D = 0;
     public static final double TURN_SPEED_LIMIT_WHILE_AIMING = 4.0;
@@ -149,7 +160,7 @@ public final class Constants {
      */
     public static final double GRAVITY = 9.80665;
     public static final int PIGEON_CAN_ID = 30;
-    public static final double COAST_AFTER_DISABLE_TIME = 0.5;
+    public static final double COAST_AFTER_DISABLE_TIME = 7;
     public static final double FIELD_HEIGHT_METERS = 8.0137;
     public static final double FIELD_WIDTH_METERS = 16.54175;
 
@@ -190,7 +201,7 @@ public final class Constants {
     public static final double ARM_NOMINAL_VOLTAGE = 9;
     public static final double TELESCOPING_ARM_ROTATIONS_PER_METER = 96.664 / (Math.PI);
     public static final double TELESCOPING_ARM_NOMINAL_VOLTAGE = 9;
-    public static final int TELESCOPING_ARM_SMART_CURRENT_LIMIT = 30;
+    public static final int TELESCOPING_ARM_SMART_CURRENT_LIMIT = 40;
     public static final int TELESCOPING_ARM_CAN_ID = 60;
     public static final double TELESCOPING_ARM_ALLOWED_ERROR = 0.0001;
     public static final ArmFeedforward GRABBER_FEEDFORWARD = new ArmFeedforward(0.32, 0.34, 0, 0);
@@ -218,13 +229,13 @@ public final class Constants {
 
     public static final double GRABBER_LENGTH = .308;
 
-    public static final boolean IS_AUTO_GRAB_ENABLED = !IS_PRACTICE;
+    public static final boolean IS_AUTO_GRAB_ENABLED = true;
 
     public enum KinematicLimits {
         /**
          * Normal acceleration limit while driving. This ensures that the driver can't tip the robot.
          */
-        NORMAL_DRIVING(new KinematicLimit(6, 5000, Math.PI * 2 * 10));
+        NORMAL_DRIVING(new KinematicLimit(7, 5000, Math.PI * 2 * 10));
         public final KinematicLimit kinematicLimit;
 
         KinematicLimits(KinematicLimit kinematicLimit) {
@@ -279,8 +290,9 @@ public final class Constants {
     public static final Rotation2d PICKUP_ANGLE_RED = Rotation2d.fromDegrees(0);
     public static final Rotation2d PICKUP_ANGLE_BLUE = Rotation2d.fromDegrees(180);
 
-    public static final double PICKUP_POSITION_Y = -3.56;
-    public static final double PICKUP_POSITION_X_OFFSET_FROM_WALL = FIELD_WIDTH_METERS - 15.2;
+    public static final double LOWER_PICKUP_POSITION_Y = -3.56;
+    public static final double UPPER_PICKUP_POSITION_Y = -2.05892;
+    public static final double PICKUP_POSITION_X_OFFSET_FROM_WALL = FIELD_WIDTH_METERS - 15.2 + Units.inchesToMeters(3);
 
     public static final double SCORING_POSITION_OFFSET_CONE_FROM_WALL = 0.1;
     public static final double SCORING_POSITION_OFFSET_CUBE_FROM_WALL = 0.1 + Units.inchesToMeters(3);
@@ -289,7 +301,7 @@ public final class Constants {
     // TODO: FIND REAL CONSTRAINTS
     public static final double MAX_WRIST_ANGLE = 126;
     public static final double MIN_WRIST_ANGLE = -90;
-    public static final double BASE_MIN_X = -.49;
+    public static final double BASE_MIN_X = Units.inchesToMeters(1);
     public static final double BASE_MAX_X = .43;
     public static final double MIN_Y = -0.03;
     public static final double MAX_Y = 1.05 + Units.inchesToMeters(2.1);
