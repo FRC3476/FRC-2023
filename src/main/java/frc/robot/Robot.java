@@ -406,6 +406,9 @@ public class Robot extends LoggedRobot {
         buttonPanel.update();
         double wantedRumble = 0;
 
+        Logger.getInstance().recordOutput("Controls/Is Left Toggle Grabber Pressed", xbox.getRawButton(XBOX_TOGGLE_GRABBER));
+        Logger.getInstance().recordOutput("Controls/Is Left Toggle Mech Pressed", xbox.getRawButton(XBOX_TOGGLE_MECH));
+
         var scoringPositionManager = ScoringPositionManager.getInstance();
         if (scoringPositionManager.updateSelectedPosition(buttonPanel)) {
             teleopDrivingAutoAlignPosition = null;
