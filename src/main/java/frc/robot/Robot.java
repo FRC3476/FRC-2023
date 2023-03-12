@@ -17,6 +17,7 @@ import edu.wpi.first.wpilibj.*;
 import edu.wpi.first.wpilibj.GenericHID.RumbleType;
 import edu.wpi.first.wpilibj.PowerDistribution.ModuleType;
 import frc.robot.ScoringPositionManager.PositionType;
+import frc.robot.ScoringPositionManager.SelectedPosition;
 import frc.subsytem.AbstractSubsystem;
 import frc.subsytem.Elevator.Elevator;
 import frc.subsytem.Elevator.ElevatorIO;
@@ -691,7 +692,9 @@ public class Robot extends LoggedRobot {
             Logger.getInstance().recordOutput("Robot/Wanted Y Auto Drive", y);
 
             double scoringPositionOffset;
-            if (scoringPositionManager.getWantedPositionType() == PositionType.CUBE) {
+            if (scoringPositionManager.getSelectedPosition() == SelectedPosition.MIDDLE_LEFT || scoringPositionManager.getSelectedPosition() == SelectedPosition.MIDDLE_RIGHT) {
+                scoringPositionOffset = SCORING_POSITION_OFFSET_CUBE_FROM_WALL;
+            } else if (scoringPositionManager.getWantedPositionType() == PositionType.CUBE) {
                 scoringPositionOffset = SCORING_POSITION_OFFSET_CUBE_FROM_WALL;
             } else {
                 scoringPositionOffset = SCORING_POSITION_OFFSET_CONE_FROM_WALL;
