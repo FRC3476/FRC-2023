@@ -34,6 +34,7 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.littletonrobotics.junction.Logger;
+import org.littletonrobotics.junction.networktables.LoggedDashboardNumber;
 
 import java.lang.reflect.Field;
 import java.util.Optional;
@@ -718,6 +719,20 @@ public final class Drive extends AbstractSubsystem {
         }
     }
 
+    LoggedDashboardNumber balanceCompleteThreshold =
+            new LoggedDashboardNumber("Auto Balance Complete Threshold", AUTO_BALANCE_COMPLETE_THRESHOLD);
+    LoggedDashboardNumber balanceVelocityThreshold =
+            new LoggedDashboardNumber("Auto Balance Velocity Threshold", AUTO_BALANCE_VELOCITY_THRESHOLD);
+    LoggedDashboardNumber balanceReverseVelocity =
+            new LoggedDashboardNumber("Auto Balance Reverse Velocity", BALANCE_REVERSE_SPEED);
+
+    {
+        Logger.getInstance().registerDashboardInput(balanceCompleteThreshold);
+        Logger.getInstance().registerDashboardInput(balanceVelocityThreshold);
+        Logger.getInstance().registerDashboardInput(balanceReverseVelocity);
+        SmartDashboard.putData(balancePID);
+    }
+
     public synchronized void autoBalance(@NotNull ControllerDriveInputs inputs) {
         var angle = Robot.getRobotTracker().getGyroYAngle();
         var angleMeasure = Math.toDegrees(angle);
@@ -729,12 +744,12 @@ public final class Drive extends AbstractSubsystem {
 
         double xVelocity;
 
-        if (angleMeasure <= AUTO_BALANCE_COMPLETE_THRESHOLD && angleMeasure >= -AUTO_BALANCE_COMPLETE_THRESHOLD) {
+        if (angleMeasure <= balanceCompleteThreshold.get() && angleMeasure >= -balanceCompleteThreshold.get()) {
             // Stops PID if within this range
             xVelocity = 0;
-        } else if (Math.abs(angularVelocity) > Constants.ANGULAR_VELOCITY_BALANCE_THRESHHOLD) {
+        } else if (Math.abs(angularVelocity) > balanceVelocityThreshold.get()) {
             // Run backwards a little PID if velocity is too high
-            xVelocity = Math.copySign(Constants.BALANCE_REVERSE_SPEED, -angleMeasure);
+            xVelocity = Math.copySign(balanceReverseVelocity.get(), -angleMeasure);
         } else {
             xVelocity = Math.copySign(balancePID.calculate(angleMeasure), angleMeasure);
         }

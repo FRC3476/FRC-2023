@@ -19,7 +19,7 @@ import java.nio.file.Files;
 
 public final class Constants {
     public static final double ANGULAR_VELOCITY_BALANCE_THRESHHOLD = 10;
-    public static final double BALANCE_REVERSE_SPEED = 0.05;
+    public static final double BALANCE_REVERSE_SPEED = 0.2;
     public static final String LOG_DIRECTORY = "/home/lvuser/logs";
 
     public static final double SECONDS_PER_MINUTE = 60;
@@ -36,13 +36,13 @@ public final class Constants {
     public static final int DEFAULT_PERIODS_PER_LOG = 0;
     private static final int NOMINAL_DT_MS = 20;
 
-    public static final double BALANCE_P = .047;
+    public static final double BALANCE_P = .040;
     public static final double BALANCE_I = 0;
     public static final double BALANCE_D = 0;
 
     //Drive Constants
     public static final double AUTO_BALANCING_VELOCITY = 0.5;
-    public static final int AUTO_BALANCE_VELOCITY_THRESHOLD = 5;
+    public static final int AUTO_BALANCE_VELOCITY_THRESHOLD = 8;
 
     public static final int DRIVE_LEFT_FRONT_ID = 11;
     public static final int DRIVE_LEFT_BACK_ID = 12;
@@ -66,7 +66,7 @@ public final class Constants {
     public static final double SWERVE_DRIVE_I = 0.00;
     public static final double SWERVE_DRIVE_F = 0.00;
     public static final double SWERVE_DRIVE_INTEGRAL_ZONE = 0.00;
-    public static final double AUTO_BALANCE_COMPLETE_THRESHOLD = 6;
+    public static final double AUTO_BALANCE_COMPLETE_THRESHOLD = 7;
     public static final double MAX_ERROR_PRINT_TIME = 0.5;
     /**
      * Feed forward constants for the drivetrain.
