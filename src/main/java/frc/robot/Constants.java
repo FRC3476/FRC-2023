@@ -19,7 +19,7 @@ import java.nio.file.Files;
 
 public final class Constants {
     public static final double ANGULAR_VELOCITY_BALANCE_THRESHHOLD = 10;
-    public static final double BALANCE_REVERSE_SPEED = 0;
+    public static final double BALANCE_REVERSE_SPEED = 0.05;
     public static final String LOG_DIRECTORY = "/home/lvuser/logs";
 
     public static final double SECONDS_PER_MINUTE = 60;
@@ -36,7 +36,7 @@ public final class Constants {
     public static final int DEFAULT_PERIODS_PER_LOG = 0;
     private static final int NOMINAL_DT_MS = 20;
 
-    public static final double BALANCE_P = .05;
+    public static final double BALANCE_P = .047;
     public static final double BALANCE_I = 0;
     public static final double BALANCE_D = 0;
 
