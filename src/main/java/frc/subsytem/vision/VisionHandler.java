@@ -133,7 +133,7 @@ public class VisionHandler extends AbstractSubsystem {
         configTable.getEntry("Stream Ip").setString("10.34.76.225");
         configTable.getEntry("Decision Margin").setDouble(10);
         configTable.getEntry("Encode Quality").setDouble(50);
-        configTable.getEntry("Record Video").setBoolean(true);
+        configTable.getEntry("Record Video").setBoolean(false);
 
         NetworkTableInstance.getDefault().addListener(visionMiscTable.getEntry("Vision Looptime").getTopic(),
                 EnumSet.of(Kind.kValueRemote),
