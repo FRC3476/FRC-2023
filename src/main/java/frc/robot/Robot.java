@@ -25,7 +25,6 @@ import frc.subsytem.MechanismStateManager;
 import frc.subsytem.MechanismStateManager.MechanismStates;
 import frc.subsytem.drive.Drive;
 import frc.subsytem.drive.DriveIO;
-import frc.subsytem.drive.DriveIOSparkMax;
 import frc.subsytem.grabber.Grabber;
 import frc.subsytem.grabber.Grabber.GrabState;
 import frc.subsytem.grabber.GrabberIO;
@@ -680,7 +679,8 @@ public class Robot extends LoggedRobot {
         } else {
             // We're on the opposite side as our alliance
             // Try to go to the pickup position
-            var predictedPoseForPickup = robotTracker.getLatestPose().getTranslation().plus(robotTracker.getVelocity().times(0.15));
+            var predictedPoseForPickup = robotTracker.getLatestPose().getTranslation().plus(
+                    robotTracker.getVelocity().times(0.15));
 
 
             if (predictedPoseForPickup.getY() < -2.715) {
