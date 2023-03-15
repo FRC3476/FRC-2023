@@ -658,6 +658,10 @@ public final class RobotTracker extends AbstractSubsystem {
     }
 
     public void resetPose(@NotNull Pose3d pose) {
+        if (!Robot.isOnMainThread()) {
+            Robot.runOnMainThread(() -> resetPose(pose));
+            return;
+        }
         lock.writeLock().lock();
         try {
             swerveDriveOdometry.resetPosition(gyroInputs.rotation3d, Robot.getDrive().getModulePositions(), pose);
