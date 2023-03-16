@@ -376,7 +376,7 @@ public final class Drive extends AbstractSubsystem {
 
         double ffv = DRIVE_FEEDFORWARD[module].calculate(velocity, 0);
         // Converts ffv voltage to percent output and sets it to motor
-        io.setDriveMotorCurrent(module, ffv);
+        io.setDriveMotorVoltage(module, ffv);
 
         Logger.getInstance().recordOutput("Drive/Out Volts Ks" + module, DRIVE_FEEDFORWARD[module].ks * Math.signum(velocity));
         Logger.getInstance().recordOutput("Drive/Out Volts Kv" + module, DRIVE_FEEDFORWARD[module].kv * velocity);
