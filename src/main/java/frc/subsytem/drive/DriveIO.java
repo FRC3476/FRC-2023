@@ -1,7 +1,5 @@
 package frc.subsytem.drive;
 
-import com.ctre.phoenix.ErrorCode;
-import com.ctre.phoenix.motorcontrol.StickyFaults;
 import org.littletonrobotics.junction.AutoLog;
 
 public abstract class DriveIO {
@@ -22,8 +20,8 @@ public abstract class DriveIO {
         double[] driveMotorVoltages = new double[4];
         double[] swerveMotorVoltages = new double[4];
 
-        ErrorCode[] swerveMotorFaults = new ErrorCode[4];
-        ErrorCode[] driveMotorFaults = new ErrorCode[4];
+        double[] swerveMotorFaults = new double[4];
+        double[] driveMotorFaults = new double[4];
 
 
         double driveIoTimestamp = 0.0;
@@ -51,7 +49,7 @@ public abstract class DriveIO {
      * @param motorNum the selected swerve motor
      * @param voltage  the wanted voltage
      */
-    protected void setSwerveMotorCurrent(int motorNum, double voltage) {}
+    protected void setSwerveMotorVoltage(int motorNum, double voltage) {}
 
 
     /**
@@ -60,7 +58,7 @@ public abstract class DriveIO {
      * @param motorNum the selected swerve motor
      * @param voltage  the target voltage in volts
      */
-    protected void setDriveMotorCurrent(int motorNum, double voltage) {}
+    protected void setDriveMotorVoltage(int motorNum, double voltage) {}
 
 
     public void resetAbsoluteZeros() {}
