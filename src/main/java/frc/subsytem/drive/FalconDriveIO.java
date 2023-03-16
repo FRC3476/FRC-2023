@@ -14,7 +14,7 @@ import java.util.concurrent.locks.ReentrantLock;
 
 import static frc.robot.Constants.*;
 
-public class DriveIOTalon extends DriveIO {
+public class FalconDriveIO extends DriveIO {
     /**
      * Motors that turn the wheels around. Uses Falcon500s
      */
@@ -30,7 +30,7 @@ public class DriveIOTalon extends DriveIO {
     private final @NotNull CANCoder[] swerveCanCoders;
     private final ReentrantLock swerveAutoControllerLock = new ReentrantLock();
 
-    public DriveIOTalon() {
+    public FalconDriveIO() {
         final @NotNull TalonFX leftFrontTalon, leftBackTalon, rightFrontTalon, rightBackTalon;
         final @NotNull TalonFX leftFrontTalonSwerve, leftBackTalonSwerve, rightFrontTalonSwerve, rightBackTalonSwerve;
 
@@ -135,11 +135,10 @@ public class DriveIOTalon extends DriveIO {
 
         for (int i = 0; i < 4; i++) {
             inputs.driveMotorPositions[i] =
-                    swerveDriveMotors[i].getSelectedSensorPosition() * SWERVE_DRIVE_MOTOR_REDUCTION *
-                            SWERVE_METER_PER_ROTATION;
+                    swerveDriveMotors[i].getSelectedSensorPosition() / FALCON_ENCODER_TICKS_PER_ROTATIONS * SWERVE_DRIVE_MOTOR_REDUCTION;
             inputs.driveMotorVelocities[i] =
-                    swerveDriveMotors[i].getSelectedSensorVelocity() * SWERVE_DRIVE_MOTOR_REDUCTION *
-                            SWERVE_METER_PER_ROTATION / SECONDS_PER_MINUTE;
+                    swerveDriveMotors[i].getSelectedSensorVelocity() * FALCON_ENCODER_TICKS_PER_100_MS_TO_RPM
+                            * SWERVE_DRIVE_MOTOR_REDUCTION * FALCON_ENCODER_TICKS_PER_ROTATIONS;
             inputs.driveMotorCurrents[i] = swerveDriveMotors[i].getOutputCurrent();
             inputs.driveMotorTemps[i] = swerveDriveMotors[i].getTemperature();
             inputs.driveMotorVoltages[i] = swerveDriveMotors[i].getBusVoltage() * swerveDriveMotors[i].getMotorOutputVoltage();
@@ -149,9 +148,10 @@ public class DriveIOTalon extends DriveIO {
             inputs.swerveMotorTemps[i] = swerveMotors[i].getTemperature();
             inputs.swerveMotorVoltages[i] = swerveMotors[i].getBusVoltage() * swerveMotors[i].getMotorOutputVoltage();
             inputs.swerveMotorRelativePositions[i] =
-                    swerveMotors[i].getSelectedSensorPosition() * SWERVE_MOTOR_POSITION_CONVERSION_FACTOR * 360;
-            inputs.driveMotorFaults[i] = swerveDriveMotors[i].getStickyFaults(stickyFaults);
-            inputs.swerveMotorFaults[i] = swerveMotors[i].getStickyFaults(stickyFaults);
+                    swerveMotors[i].getSelectedSensorPosition() / FALCON_ENCODER_TICKS_PER_ROTATIONS
+                            * SWERVE_MOTOR_POSITION_CONVERSION_FACTOR * 360;
+            inputs.driveMotorFaults[i] = swerveDriveMotors[i].getStickyFaults(stickyFaults).ordinal();
+            inputs.swerveMotorFaults[i] = swerveMotors[i].getStickyFaults(stickyFaults).ordinal();
         }
     }
 
@@ -179,24 +179,25 @@ public class DriveIOTalon extends DriveIO {
      */
     @Override
     protected void setSwerveMotorPosition(int motorNum, double position) {
-        swerveMotors[motorNum].set(ControlMode.Position, position);
+        swerveMotors[motorNum].set(ControlMode.Position,
+                position * FALCON_ENCODER_TICKS_PER_ROTATIONS / SWERVE_MOTOR_POSITION_CONVERSION_FACTOR / 360);
     }
 
     /**
      * Set the target position of the selected swerve motor
      *
      * @param motorNum the selected swerve motor
-     * @param current  the wanted voltage
+     * @param voltage  the wanted voltage
      */
     @Override
-    protected void setDriveMotorCurrent(int motorNum, double current) {
-        swerveMotors[motorNum].set(ControlMode.Velocity, current);
+    protected void setDriveMotorVoltage(int motorNum, double voltage) {
+        swerveMotors[motorNum].set(ControlMode.PercentOutput, voltage);
     }
 
 
     @Override
-    protected void setSwerveMotorCurrent(int motorNum, double current) {
-        swerveDriveMotors[motorNum].set(ControlMode.Current, current);
+    protected void setSwerveMotorVoltage(int motorNum, double voltage) {
+        swerveDriveMotors[motorNum].set(ControlMode.PercentOutput, voltage);
     }
 
     public void resetAbsoluteZeros() {
