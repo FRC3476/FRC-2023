@@ -26,14 +26,14 @@ public class GrabberIOSparkMax extends GrabberIO {
         pivotSparkMax = new CANSparkMax(GRABBER_PIVOT_CAN_ID, CANSparkMaxLowLevel.MotorType.kBrushless);
         grabberSparkMax = new CANSparkMax(GRABBER_CAN_ID, CANSparkMaxLowLevel.MotorType.kBrushless);
 
-        if (IS_PRACTICE) {
-            pivotSparkMax.getEncoder().setPositionConversionFactor(1.0 / PIVOT_ROTATIONS_PER_DEGREE);
-            pivotSparkMax.getEncoder().setVelocityConversionFactor((1.0 / PIVOT_ROTATIONS_PER_DEGREE) / SECONDS_PER_MINUTE);
-        } else {
+        if (USE_PIVOT_ABSOLUTE_ENCODER) {
             pivotAbsoluteEncoder = pivotSparkMax.getAbsoluteEncoder(SparkMaxAbsoluteEncoder.Type.kDutyCycle);
             pivotAbsoluteEncoder.setPositionConversionFactor(DEGREES_PER_ROTATION);
             pivotAbsoluteEncoder.setVelocityConversionFactor(DEGREES_PER_ROTATION / SECONDS_PER_MINUTE);
             pivotSparkMax.getPIDController().setFeedbackDevice(pivotAbsoluteEncoder);
+        } else {
+            pivotSparkMax.getEncoder().setPositionConversionFactor(1.0 / PIVOT_ROTATIONS_PER_DEGREE);
+            pivotSparkMax.getEncoder().setVelocityConversionFactor((1.0 / PIVOT_ROTATIONS_PER_DEGREE) / SECONDS_PER_MINUTE);
         }
         resetPivotPosition(MAX_WRIST_ANGLE);
 
@@ -79,13 +79,17 @@ public class GrabberIOSparkMax extends GrabberIO {
 
     @Override
     public synchronized void updateInputs(GrabberInputsAutoLogged inputs) {
-        if (IS_PRACTICE) {
+        if (USE_PIVOT_ABSOLUTE_ENCODER) {
+            assert pivotAbsoluteEncoder != null;
             inputs.pivotPosition = pivotAbsoluteEncoder.getPosition();
             inputs.pivotVelocity = pivotAbsoluteEncoder.getVelocity();
         } else {
             inputs.pivotPosition = pivotSparkMax.getEncoder().getPosition();
             inputs.pivotVelocity = pivotSparkMax.getEncoder().getVelocity();
         }
+        inputs.pivotRelativePosition = pivotSparkMax.getEncoder().getPosition();
+        inputs.pivotRelativeVelocity = pivotSparkMax.getEncoder().getVelocity();
+
         inputs.pivotCurrent = pivotSparkMax.getOutputCurrent();
         inputs.pivotTemp = pivotSparkMax.getMotorTemperature();
         inputs.pivotVoltage = pivotSparkMax.getAppliedOutput() * pivotSparkMax.getBusVoltage();

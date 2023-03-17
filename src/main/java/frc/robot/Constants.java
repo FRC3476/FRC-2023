@@ -218,6 +218,7 @@ public final class Constants {
     public static final double GRABBER_LENGTH = .308;
 
     public static final boolean IS_AUTO_GRAB_ENABLED = !IS_PRACTICE;
+    public static final boolean USE_PIVOT_ABSOLUTE_ENCODER = !IS_PRACTICE;
 
     public enum KinematicLimits {
         /**
