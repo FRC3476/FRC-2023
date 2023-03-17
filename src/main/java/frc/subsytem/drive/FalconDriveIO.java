@@ -1,11 +1,11 @@
 package frc.subsytem.drive;
 
-import com.ctre.phoenix.motorcontrol.*;
-import com.ctre.phoenix.motorcontrol.can.TalonFX;
-import com.ctre.phoenix.sensors.AbsoluteSensorRange;
-import com.ctre.phoenix.sensors.CANCoder;
-import com.ctre.phoenix.sensors.CANCoderStatusFrame;
-import com.ctre.phoenix.sensors.SensorVelocityMeasPeriod;
+import com.ctre.phoenixpro.configs.Slot0Configs;
+import com.ctre.phoenixpro.configs.VoltageConfigs;
+import com.ctre.phoenixpro.controls.CoastOut;
+import com.ctre.phoenixpro.controls.StaticBrake;
+import com.ctre.phoenixpro.hardware.CANcoder;
+import com.ctre.phoenixpro.hardware.TalonFX;
 import frc.robot.Constants;
 import org.jetbrains.annotations.NotNull;
 import org.littletonrobotics.junction.Logger;
@@ -27,17 +27,12 @@ public class FalconDriveIO extends DriveIO {
      * Absolute Encoders for the motors that turn the wheel
      */
 
-    private final @NotNull CANCoder[] swerveCanCoders;
+    private final @NotNull CANcoder[] swerveCanCoders;
     private final ReentrantLock swerveAutoControllerLock = new ReentrantLock();
 
     public FalconDriveIO() {
         final @NotNull TalonFX leftFrontTalon, leftBackTalon, rightFrontTalon, rightBackTalon;
         final @NotNull TalonFX leftFrontTalonSwerve, leftBackTalonSwerve, rightFrontTalonSwerve, rightBackTalonSwerve;
-
-        SupplyCurrentLimitConfiguration swerveMotorCurrentLimit = new SupplyCurrentLimitConfiguration();
-        swerveMotorCurrentLimit.currentLimit = SWERVE_MOTOR_CURRENT_LIMIT;
-        SensorVelocityMeasPeriod measurementPeriod = SensorVelocityMeasPeriod.Period_20Ms;
-        NeutralMode mode = NeutralMode.Coast;
 
         // Swerve Drive Motors
         leftFrontTalon = new TalonFX(Constants.DRIVE_LEFT_FRONT_ID);
@@ -67,14 +62,14 @@ public class FalconDriveIO extends DriveIO {
         swerveDriveMotors[3] = rightBackTalon;
 
         if (USE_CANCODERS) {
-            final @NotNull CANCoder leftFrontCanCoder, leftBackCanCoder, rightFrontCanCoder, rightBackCanCoder;
+            final @NotNull CANcoder leftFrontCanCoder, leftBackCanCoder, rightFrontCanCoder, rightBackCanCoder;
 
-            leftFrontCanCoder = new CANCoder(Constants.CAN_LEFT_FRONT_ID);
-            leftBackCanCoder = new CANCoder(Constants.CAN_LEFT_BACK_ID);
-            rightFrontCanCoder = new CANCoder(Constants.CAN_RIGHT_FRONT_ID);
-            rightBackCanCoder = new CANCoder(Constants.CAN_RIGHT_BACK_ID);
+            leftFrontCanCoder = new CANcoder(Constants.CAN_LEFT_FRONT_ID, "*");
+            leftBackCanCoder = new CANcoder(Constants.CAN_LEFT_BACK_ID, "*");
+            rightFrontCanCoder = new CANcoder(Constants.CAN_RIGHT_FRONT_ID, "*");
+            rightBackCanCoder = new CANcoder(Constants.CAN_RIGHT_BACK_ID, "*");
 
-            swerveCanCoders = new CANCoder[4];
+            swerveCanCoders = new CANcoder[4];
             swerveCanCoders[0] = leftFrontCanCoder;
             swerveCanCoders[1] = leftBackCanCoder;
             swerveCanCoders[2] = rightFrontCanCoder;
@@ -86,28 +81,28 @@ public class FalconDriveIO extends DriveIO {
 
         for (int i = 0; i < 4; i++) {
             // Sets swerveMotors PID
-            swerveMotors[i].config_kP(0, Constants.SWERVE_DRIVE_P);
-            swerveMotors[i].config_kD(0, Constants.SWERVE_DRIVE_D);
-            swerveMotors[i].config_kI(0, Constants.SWERVE_DRIVE_I);
-            swerveMotors[i].config_kF(0, Constants.SWERVE_DRIVE_F);
-            swerveMotors[i].config_IntegralZone(0, Constants.SWERVE_DRIVE_INTEGRAL_ZONE);
+            Slot0Configs PIDConfigs = new Slot0Configs();
+            PIDConfigs.kP = SWERVE_DRIVE_P;
+            PIDConfigs.kI = SWERVE_DRIVE_I;
+            PIDConfigs.kD = SWERVE_DRIVE_D;
+            PIDConfigs.kS = 0;
+            PIDConfigs.kV = 0;
+
+            swerveMotors[i].getConfigurator().apply(PIDConfigs);
 
             // Sets current limits for motors
-
-            swerveMotors[i].configSupplyCurrentLimit(swerveMotorCurrentLimit);
-            swerveMotors[i].enableVoltageCompensation(true);
-            swerveMotors[i].configVoltageCompSaturation(Constants.SWERVE_DRIVE_VOLTAGE_LIMIT_AUTO);
+            VoltageConfigs voltageConfigs = new VoltageConfigs();
+            voltageConfigs.PeakForwardVoltage = SWERVE_MOTOR_CURRENT_LIMIT;
+            voltageConfigs.SupplyVoltageTimeConstant = SWERVE_DRIVE_VOLTAGE_LIMIT_AUTO;
+            swerveMotors[i].getConfigurator().apply(voltageConfigs);
+            swerveDriveMotors[i].getConfigurator().apply(voltageConfigs);
 
             swerveMotors[i].setStatusFramePeriod(StatusFrame.Status_1_General, 10);
             swerveMotors[i].setStatusFramePeriod(StatusFrameEnhanced.Status_4_AinTempVbat, 101);
 
-            swerveDriveMotors[i].configSupplyCurrentLimit(swerveMotorCurrentLimit);
-            swerveDriveMotors[i].enableVoltageCompensation(true);
-            swerveDriveMotors[i].configVoltageCompSaturation(SWERVE_DRIVE_VOLTAGE_LIMIT_AUTO);
-            swerveDriveMotors[i].configVelocityMeasurementPeriod(measurementPeriod);
-
-            swerveDriveMotors[i].setNeutralMode(mode);
-            swerveMotors[i].setNeutralMode(mode);
+            CoastOut coastOut = new CoastOut();
+            swerveDriveMotors[i].setControl(coastOut);
+            swerveMotors[i].setControl(coastOut);
 
             swerveMotors[i].setInverted(true);
 
@@ -129,29 +124,28 @@ public class FalconDriveIO extends DriveIO {
         inputs.swerveMotorTemps = new double[4];
         inputs.driveMotorVoltages = new double[4];
         inputs.swerveMotorVoltages = new double[4];
-        StickyFaults stickyFaults = new StickyFaults();
 
         inputs.driveIoTimestamp = Logger.getInstance().getRealTimestamp() * SECONDS_PER_MICROSECOND;
 
         for (int i = 0; i < 4; i++) {
             inputs.driveMotorPositions[i] =
-                    swerveDriveMotors[i].getSelectedSensorPosition() / FALCON_ENCODER_TICKS_PER_ROTATIONS * SWERVE_DRIVE_MOTOR_REDUCTION;
+                    swerveDriveMotors[i].getPosition().getValue() / FALCON_ENCODER_TICKS_PER_ROTATIONS * SWERVE_DRIVE_MOTOR_REDUCTION;
             inputs.driveMotorVelocities[i] =
-                    swerveDriveMotors[i].getSelectedSensorVelocity() * FALCON_ENCODER_TICKS_PER_100_MS_TO_RPM
+                    swerveDriveMotors[i].getVelocity().getValue() * FALCON_ENCODER_TICKS_PER_100_MS_TO_RPM
                             * SWERVE_DRIVE_MOTOR_REDUCTION * FALCON_ENCODER_TICKS_PER_ROTATIONS;
-            inputs.driveMotorCurrents[i] = swerveDriveMotors[i].getOutputCurrent();
-            inputs.driveMotorTemps[i] = swerveDriveMotors[i].getTemperature();
-            inputs.driveMotorVoltages[i] = swerveDriveMotors[i].getBusVoltage() * swerveDriveMotors[i].getMotorOutputVoltage();
-            inputs.swerveMotorAbsolutePositions[i] = swerveCanCoders[i].getAbsolutePosition();
+            inputs.driveMotorCurrents[i] = swerveDriveMotors[i].getSupplyCurrent().getValue();
+            inputs.driveMotorTemps[i] = swerveDriveMotors[i].getDeviceTemp().getValue();
+            inputs.driveMotorVoltages[i] = swerveDriveMotors[i].getSupplyVoltage().getValue(); // Can't find bus voltage
+            inputs.swerveMotorAbsolutePositions[i] = swerveCanCoders[i].getAbsolutePosition().getValue();
 
-            inputs.swerveMotorCurrents[i] = swerveMotors[i].getOutputCurrent();
-            inputs.swerveMotorTemps[i] = swerveMotors[i].getTemperature();
-            inputs.swerveMotorVoltages[i] = swerveMotors[i].getBusVoltage() * swerveMotors[i].getMotorOutputVoltage();
+            inputs.swerveMotorCurrents[i] = swerveMotors[i].getSupplyCurrent().getValue();
+            inputs.swerveMotorTemps[i] = swerveMotors[i].getDeviceTemp().getValue();
+            inputs.swerveMotorVoltages[i] = swerveMotors[i].getSupplyVoltage().getValue(); // Can't find bus voltage
             inputs.swerveMotorRelativePositions[i] =
-                    swerveMotors[i].getSelectedSensorPosition() / FALCON_ENCODER_TICKS_PER_ROTATIONS
+                    swerveMotors[i].getPosition().getValue() / FALCON_ENCODER_TICKS_PER_ROTATIONS
                             * SWERVE_MOTOR_POSITION_CONVERSION_FACTOR * 360;
-            inputs.driveMotorFaults[i] = swerveDriveMotors[i].getStickyFaults(stickyFaults).ordinal();
-            inputs.swerveMotorFaults[i] = swerveMotors[i].getStickyFaults(stickyFaults).ordinal();
+            inputs.driveMotorFaults[i] = swerveDriveMotors[i]. //Which faults do we need here
+            inputs.swerveMotorFaults[i] = swerveMotors[i]. //Which faults do we need here
         }
     }
 
@@ -160,12 +154,13 @@ public class FalconDriveIO extends DriveIO {
     @Override
     protected void setBrakeMode(boolean enable) {
         if (isBreaking != enable) {
-            NeutralMode mode = enable ? NeutralMode.Brake : NeutralMode.Coast;
+            CoastOut coastOut = new CoastOut();
+            StaticBrake staticBrake = new StaticBrake();
             for (TalonFX swerveMotor : swerveMotors) {
-                swerveMotor.setNeutralMode(mode);
+                swerveMotor.setControl(enable ? staticBrake : coastOut);
             }
             for (TalonFX swerveDriveMotor : swerveDriveMotors) {
-                swerveDriveMotor.setNeutralMode(mode);
+                swerveDriveMotor.setControl(enable ? staticBrake : coastOut);
             }
             isBreaking = enable;
         }
@@ -179,8 +174,8 @@ public class FalconDriveIO extends DriveIO {
      */
     @Override
     protected void setSwerveMotorPosition(int motorNum, double position) {
-        swerveMotors[motorNum].set(ControlMode.Position,
-                position * FALCON_ENCODER_TICKS_PER_ROTATIONS / SWERVE_MOTOR_POSITION_CONVERSION_FACTOR / 360);
+        swerveMotors[motorNum].setRotorPosition(position * FALCON_ENCODER_TICKS_PER_ROTATIONS
+                / SWERVE_MOTOR_POSITION_CONVERSION_FACTOR / 360);
     }
 
     /**
@@ -191,19 +186,19 @@ public class FalconDriveIO extends DriveIO {
      */
     @Override
     protected void setDriveMotorVoltage(int motorNum, double voltage) {
-        swerveMotors[motorNum].set(ControlMode.PercentOutput, voltage);
+        swerveMotors[motorNum].set(voltage);
     }
 
 
     @Override
     protected void setSwerveMotorVoltage(int motorNum, double voltage) {
-        swerveDriveMotors[motorNum].set(ControlMode.PercentOutput, voltage);
+        swerveDriveMotors[motorNum].set(voltage);
     }
 
     public void resetAbsoluteZeros() {
         for (int i = 0; i < swerveCanCoders.length; i++) {
-            CANCoder swerveCanCoder = swerveCanCoders[i];
-            System.out.println(i + " Setting Zero " + swerveCanCoder.configGetMagnetOffset() + " -> 0");
+            CANcoder swerveCanCoder = swerveCanCoders[i];
+            System.out.println(i + " Setting Zero " + swerveCanCoder.get() + " -> 0");
             swerveCanCoder.configAbsoluteSensorRange(AbsoluteSensorRange.Unsigned_0_to_360);
             swerveCanCoder.configMagnetOffset(
                     -(swerveCanCoder.getAbsolutePosition() - swerveCanCoder.configGetMagnetOffset())
@@ -212,14 +207,15 @@ public class FalconDriveIO extends DriveIO {
     }
 
     public void setDriveVoltageCompLevel(double voltage) {
-        SupplyCurrentLimitConfiguration currentLimitConfiguration = new SupplyCurrentLimitConfiguration();
-        currentLimitConfiguration.currentLimit = voltage;
+        VoltageConfigs voltageConfigs = new VoltageConfigs();
+        voltageConfigs.PeakForwardVoltage = SWERVE_MOTOR_CURRENT_LIMIT;
+        voltageConfigs.SupplyVoltageTimeConstant = SWERVE_DRIVE_VOLTAGE_LIMIT_AUTO;
         for (TalonFX driveMotor : swerveDriveMotors) {
             if (voltage <= 0) {
-                driveMotor.enableVoltageCompensation(false);
-            } else if (voltage > 0) {
-                driveMotor.configSupplyCurrentLimit(currentLimitConfiguration);
+                voltageConfigs.PeakForwardVoltage = 0;
+                voltageConfigs.SupplyVoltageTimeConstant = 0;
             }
+            driveMotor.getConfigurator().apply(voltageConfigs);
         }
     }
 }
