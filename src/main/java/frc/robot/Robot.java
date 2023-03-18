@@ -25,7 +25,7 @@ import frc.subsytem.MechanismStateManager;
 import frc.subsytem.MechanismStateManager.MechanismStates;
 import frc.subsytem.drive.Drive;
 import frc.subsytem.drive.DriveIO;
-import frc.subsytem.drive.DriveIOSparkMax;
+import frc.subsytem.drive.DriveIOFalcon;
 import frc.subsytem.grabber.Grabber;
 import frc.subsytem.grabber.Grabber.GrabState;
 import frc.subsytem.grabber.GrabberIO;
@@ -181,7 +181,7 @@ public class Robot extends LoggedRobot {
             Logger.getInstance().addDataReceiver(new RLOGServer(5800)); // Publish data to NetworkTables
             powerDistribution = new PowerDistribution(1, ModuleType.kRev); // Enables power distribution logging
 
-            drive = new Drive(new DriveIOSparkMax());
+            drive = new Drive(new DriveIOFalcon());
             elevator = new Elevator(new ElevatorIOSparkMax());
             telescopingArm = new TelescopingArm(new TelescopingArmIOSparkMax());
             grabber = new Grabber(new GrabberIOSparkMax());
