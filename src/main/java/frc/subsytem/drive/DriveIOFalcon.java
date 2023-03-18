@@ -273,4 +273,9 @@ public class DriveIOFalcon extends DriveIO {
             driveMotor.getConfigurator().apply(voltageConfigs);
         }
     }
+
+    @Override
+    public void resetPeriodicFrames() {
+        // We use the default periodic frames, we don't need to do anything here
+    }
 }
