@@ -1,6 +1,6 @@
 package frc.subsytem.robottracker;
 
-import com.ctre.phoenix.sensors.WPI_Pigeon2;
+import com.ctre.phoenixpro.hardware.Pigeon2;
 import edu.wpi.first.math.geometry.Quaternion;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Rotation3d;
@@ -31,18 +31,19 @@ public class GyroInputs implements LoggableInputs {
     protected double gyroTime = 0.0;
 
     // Created here to avoid creating a new array every time
-    private final double[] xyz_dps = new double[3];
     private final double[] rot = new double[4];
 
 
-    public void updateInputs(WPI_Pigeon2 pigeon2) {
-        pigeon2.getRawGyro(xyz_dps);
-        gyroYawVelocity = xyz_dps[2];
-        gyroRollVelocity = xyz_dps[0];
-        gyroPitchVelocity = xyz_dps[1];
+    public void updateInputs(Pigeon2 pigeon2) {
+        gyroYawVelocity = pigeon2.getAngularVelocityZ().getValue();
+        gyroRollVelocity = pigeon2.getAngularVelocityX().getValue();
+        gyroPitchVelocity = pigeon2.getAngularVelocityY().getValue();
 
         rotation2d = pigeon2.getRotation2d();
-        pigeon2.get6dQuaternion(rot);
+        rot[0] = pigeon2.getQuatW().getValue();
+        rot[1] = pigeon2.getQuatX().getValue();
+        rot[2] = pigeon2.getQuatY().getValue();
+        rot[3] = pigeon2.getQuatZ().getValue();
         rotation3d = new Rotation3d(getQuaternion(rot));
 
         gyroTime = Logger.getInstance().getRealTimestamp() * SECONDS_PER_MICROSECOND;

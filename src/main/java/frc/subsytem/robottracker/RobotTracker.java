@@ -1,7 +1,6 @@
 package frc.subsytem.robottracker;
 
-import com.ctre.phoenix.sensors.PigeonIMU_StatusFrame;
-import com.ctre.phoenix.sensors.WPI_Pigeon2;
+import com.ctre.phoenixpro.hardware.Pigeon2;
 import com.dacubeking.AutoBuilder.robot.sender.pathpreview.RobotPositionSender;
 import com.dacubeking.AutoBuilder.robot.sender.pathpreview.RobotState;
 import edu.wpi.first.math.Matrix;
@@ -39,16 +38,7 @@ import static java.lang.Double.isNaN;
 public final class RobotTracker extends AbstractSubsystem {
     public static final double GYRO_VELOCITY_MEASUREMENT_WINDOW = 0.04;
     private final ReentrantReadWriteLock lock = new ReentrantReadWriteLock();
-    private final @NotNull WPI_Pigeon2 gyroSensor = new WPI_Pigeon2(PIGEON_CAN_ID, "rio");
-
-    {
-        gyroSensor.configMountPose(0, 0, 0);
-        gyroSensor.setStatusFramePeriod(PigeonIMU_StatusFrame.CondStatus_10_SixDeg_Quat, 10, 100);
-        gyroSensor.setStatusFramePeriod(PigeonIMU_StatusFrame.BiasedStatus_6_Accel, 10, 100);
-        gyroSensor.setStatusFramePeriod(PigeonIMU_StatusFrame.CondStatus_6_SensorFusion, 10, 100);
-        gyroSensor.setStatusFramePeriod(PigeonIMU_StatusFrame.BiasedStatus_2_Gyro, 10, 100);
-        gyroSensor.setStatusFramePeriod(PigeonIMU_StatusFrame.CondStatus_3_GeneralAccel, 10, 100);
-    }
+    private final @NotNull Pigeon2 gyroSensor = new Pigeon2(PIGEON_CAN_ID, "*");
 
     private final @NotNull Rotation3d ROTATION_IDENTITY = new Rotation3d();
 
@@ -155,11 +145,11 @@ public final class RobotTracker extends AbstractSubsystem {
 
 
     // Created here to avoid garbage collection
-    private final short[] ba_xyz = new short[3];
+    private final double[] ba_xyz = new double[3];
     private final double[] g_xyz = new double[3];
     private final double[] quaternion = new double[4];
 
-    private final short[] last_ba_xyz = new short[3];
+    private final double[] last_ba_xyz = new double[3];
     private final double[] last_g_xyz = new double[3];
     private final double[] last_quaternion = new double[4];
     private @Nullable Rotation3d lastRotation;
@@ -168,9 +158,18 @@ public final class RobotTracker extends AbstractSubsystem {
     private void updateGyroHistory() {
         double time = Logger.getInstance().getRealTimestamp() * SECONDS_PER_MICROSECOND;
 
-        gyroSensor.get6dQuaternion(quaternion);
-        gyroSensor.getBiasedAccelerometer(ba_xyz);
-        gyroSensor.getGravityVector(g_xyz);
+        quaternion[0] = gyroSensor.getQuatW().getValue();
+        quaternion[1] = gyroSensor.getQuatX().getValue();
+        quaternion[2] = gyroSensor.getQuatY().getValue();
+        quaternion[3] = gyroSensor.getQuatZ().getValue();
+
+        ba_xyz[0] = gyroSensor.getAccelerationX().getValue();
+        ba_xyz[1] = gyroSensor.getAccelerationY().getValue();
+        ba_xyz[2] = gyroSensor.getAccelerationZ().getValue();
+
+        g_xyz[0] = gyroSensor.getGravityVectorX().getValue();
+        g_xyz[1] = gyroSensor.getGravityVectorY().getValue();
+        g_xyz[2] = gyroSensor.getGravityVectorZ().getValue();
 
         if (Arrays.equals(quaternion, last_quaternion) && Arrays.equals(ba_xyz, last_ba_xyz)
                 && Arrays.equals(g_xyz, last_g_xyz)) {
@@ -204,9 +203,9 @@ public final class RobotTracker extends AbstractSubsystem {
         gravity = gravity.times(GRAVITY / gravity.getNorm());
 
         //ba_xyz is in fixed point notation (Q2.14) in units of g
-        var x = toFloat(ba_xyz[0]) * GRAVITY;
-        var y = toFloat(ba_xyz[1]) * GRAVITY;
-        var z = toFloat(ba_xyz[2]) * GRAVITY;
+        var x = ba_xyz[0] * GRAVITY;
+        var y = ba_xyz[1] * GRAVITY;
+        var z = ba_xyz[2] * GRAVITY;
         var accel = new Translation3d(y, -x, z) // transform the axis (see above) (robot frame)
                 .minus(gravity)
                 // TODO: Subtract out acceleration due to rotation
