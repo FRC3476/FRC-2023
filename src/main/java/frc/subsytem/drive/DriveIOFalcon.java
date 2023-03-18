@@ -173,7 +173,8 @@ public class DriveIOFalcon extends DriveIO {
             inputs.driveMotorCurrents[i] = swerveDriveMotors[i].getSupplyCurrent().getValue();
             inputs.driveMotorTemps[i] = swerveDriveMotors[i].getDeviceTemp().getValue();
             inputs.driveMotorVoltages[i] = swerveDriveMotors[i].getSupplyVoltage().getValue();
-            inputs.swerveMotorAbsolutePositions[i] = swerveCanCoders[i].getAbsolutePosition().getValue();
+            inputs.swerveMotorAbsolutePositions[i] =
+                    swerveCanCoders[i].getAbsolutePosition().getValue() * 360; //conv rotations to degrees
 
             inputs.swerveMotorCurrents[i] = swerveMotors[i].getSupplyCurrent().getValue();
             inputs.swerveMotorTemps[i] = swerveMotors[i].getDeviceTemp().getValue();
