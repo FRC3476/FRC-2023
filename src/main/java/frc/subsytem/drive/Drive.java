@@ -67,7 +67,6 @@ public final class Drive extends AbstractSubsystem {
     private Trajectory currentAutoTrajectory;
     private Rotation2d autoTargetHeading;
     private double lastTurnUpdate = 0;
-    private boolean useRelativeEncoderPosition = false;
     private @NotNull DriveState driveState = DriveState.TELEOP;
     private SwerveSetpoint lastSwerveSetpoint = new SwerveSetpoint(
             new ChassisSpeeds(0, 0, 0),
@@ -112,7 +111,6 @@ public final class Drive extends AbstractSubsystem {
     public Drive(DriveIO driveIO) {
         super();
         this.io = driveIO;
-
         setDriveState(DriveState.TELEOP);
     }
 
@@ -668,7 +666,7 @@ public final class Drive extends AbstractSubsystem {
      * @return angle in degrees of the module (0-360)
      */
     public double getWheelRotation(int moduleNumber) {
-        if (useRelativeEncoderPosition) {
+        if (USE_RELATIVE_ENCODER_POSITION) {
             double relPos = inputs.swerveMotorRelativePositions[moduleNumber] % 360;
             if (relPos < 0) relPos += 360;
             return relPos;

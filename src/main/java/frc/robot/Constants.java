@@ -26,6 +26,8 @@ public final class Constants {
 
     public static final boolean IS_PRACTICE = Files.exists(new File("/home/lvuser/practice").toPath());
     public static final boolean USE_CANCODERS = true;
+    public static final boolean USE_RELATIVE_ENCODER_POSITION = true; // The relative position is equivalent to the absolute
+    // position on the falcon 500 encoder
     public static final double SECONDS_PER_MICROSECOND = 1e-6;
     public static final long MIN_FREE_SPACE = 60000000; // 60 MB
 
