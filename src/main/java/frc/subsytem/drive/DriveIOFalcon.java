@@ -40,21 +40,23 @@ public class DriveIOFalcon extends DriveIO {
         final @NotNull TalonFX leftFrontTalon, leftBackTalon, rightFrontTalon, rightBackTalon;
         final @NotNull TalonFX leftFrontTalonSwerve, leftBackTalonSwerve, rightFrontTalonSwerve, rightBackTalonSwerve;
 
+        // NOTE: The "*" canbus means use any canivore bus
+
         // Swerve Drive Motors
-        leftFrontTalon = new TalonFX(Constants.DRIVE_LEFT_FRONT_ID);
-        leftBackTalon = new TalonFX(Constants.DRIVE_LEFT_BACK_ID);
-        rightFrontTalon = new TalonFX(Constants.DRIVE_RIGHT_FRONT_ID);
-        rightBackTalon = new TalonFX(Constants.DRIVE_RIGHT_BACK_ID);
+        leftFrontTalon = new TalonFX(Constants.DRIVE_LEFT_FRONT_ID, "*");
+        leftBackTalon = new TalonFX(Constants.DRIVE_LEFT_BACK_ID, "*");
+        rightFrontTalon = new TalonFX(Constants.DRIVE_RIGHT_FRONT_ID, "*");
+        rightBackTalon = new TalonFX(Constants.DRIVE_RIGHT_BACK_ID, "*");
 
         leftFrontTalon.setInverted(false);
         rightFrontTalon.setInverted(false);
         leftBackTalon.setInverted(false);
         rightBackTalon.setInverted(false);
 
-        leftFrontTalonSwerve = new TalonFX(Constants.DRIVE_LEFT_FRONT_SWERVE_ID);
-        leftBackTalonSwerve = new TalonFX(Constants.DRIVE_LEFT_BACK_SWERVE_ID);
-        rightFrontTalonSwerve = new TalonFX(Constants.DRIVE_RIGHT_FRONT_SWERVE_ID);
-        rightBackTalonSwerve = new TalonFX(Constants.DRIVE_RIGHT_BACK_SWERVE_ID);
+        leftFrontTalonSwerve = new TalonFX(Constants.DRIVE_LEFT_FRONT_SWERVE_ID, "*");
+        leftBackTalonSwerve = new TalonFX(Constants.DRIVE_LEFT_BACK_SWERVE_ID, "*");
+        rightFrontTalonSwerve = new TalonFX(Constants.DRIVE_RIGHT_FRONT_SWERVE_ID, "*");
+        rightBackTalonSwerve = new TalonFX(Constants.DRIVE_RIGHT_BACK_SWERVE_ID, "*");
 
 
         swerveMotors[0] = leftFrontTalonSwerve;
