@@ -17,6 +17,7 @@ import edu.wpi.first.wpilibj.*;
 import edu.wpi.first.wpilibj.GenericHID.RumbleType;
 import edu.wpi.first.wpilibj.PowerDistribution.ModuleType;
 import frc.robot.ScoringPositionManager.PositionType;
+import frc.robot.ScoringPositionManager.SelectedPosition;
 import frc.subsytem.AbstractSubsystem;
 import frc.subsytem.Elevator.Elevator;
 import frc.subsytem.Elevator.ElevatorIO;
@@ -273,6 +274,8 @@ public class Robot extends LoggedRobot {
 
         System.out.println("Using GIT SHA: " + BuildConstants.GIT_SHA + " on branch " + BuildConstants.GIT_BRANCH
                 + " built on " + BuildConstants.BUILD_DATE);
+
+        drive.resetPeriodicFrames();
     }
 
     private @Nullable String lastSelectedAuto = null;
@@ -304,7 +307,7 @@ public class Robot extends LoggedRobot {
         // Record video is FMS is attached
         visionHandler.forceRecord(DriverStation.isFMSAttached());
 
-        if (Objects.equals(lastSelectedAuto, autoChooser.get()) || Objects.equals(lastSelectedSide, sideChooser.get())) {
+        if (!(Objects.equals(lastSelectedAuto, autoChooser.get()) || Objects.equals(lastSelectedSide, sideChooser.get()))) {
             lastSelectedAuto = autoChooser.get();
             lastSelectedSide = sideChooser.get();
             System.out.println("Auto: " + autoChooser.get() + " Side: " + sideChooser.get());
@@ -403,19 +406,27 @@ public class Robot extends LoggedRobot {
         buttonPanel.update();
         double wantedRumble = 0;
 
+        Logger.getInstance().recordOutput("Controls/Is Left Toggle Grabber Pressed", xbox.getRawButton(XBOX_TOGGLE_GRABBER));
+        Logger.getInstance().recordOutput("Controls/Is Left Toggle Mech Pressed", xbox.getRawButton(XBOX_TOGGLE_MECH));
+
         var scoringPositionManager = ScoringPositionManager.getInstance();
         if (scoringPositionManager.updateSelectedPosition(buttonPanel)) {
             teleopDrivingAutoAlignPosition = null;
         }
 
         if (xbox.getRisingEdge(XBOX_AUTO_ROTATE)) {
-            updateTeleopDrivingTarget(scoringPositionManager);
+            updateTeleopDrivingTarget(scoringPositionManager, true);
             isTurnToTargetMode = true;
         }
 
         if (xbox.getRawButton(XBOX_START_AUTO_DRIVE)) { //Should be remapped to one of the back buttons
-            if (xbox.getRisingEdge(XBOX_START_AUTO_DRIVE) || teleopDrivingAutoAlignPosition == null) {
-                updateTeleopDrivingTarget(scoringPositionManager);
+            if (xbox.getRisingEdge(XBOX_START_AUTO_DRIVE)) {
+                updateTeleopDrivingTarget(scoringPositionManager, true);
+                assert teleopDrivingAutoAlignPosition != null;
+            } else if (teleopDrivingAutoAlignPosition == null) {
+                // We're not recalculating the grid position b/c we only need to recalculate the path because the operator
+                // changed the grid position
+                updateTeleopDrivingTarget(scoringPositionManager, false);
                 assert teleopDrivingAutoAlignPosition != null;
             }
 
@@ -646,7 +657,10 @@ public class Robot extends LoggedRobot {
         wantToClose = false;
     }
 
-    private void updateTeleopDrivingTarget(ScoringPositionManager scoringPositionManager) {
+
+    private int lastGridIndex = 0;
+
+    private void updateTeleopDrivingTarget(ScoringPositionManager scoringPositionManager, boolean recalculateGridPosition) {
         double x, y;
         Rotation2d rotation;
 
@@ -655,17 +669,35 @@ public class Robot extends LoggedRobot {
         if (isOnRedSide == isRed()) {
             // We're on the same side as our alliance
             // Try to go to the scoring position
-            y = ScoringPositionManager.getBestFieldY(
-                    scoringPositionManager.getSelectedPosition(),
-                    isRed(),
-                    robotTracker.getLatestPose().getTranslation(),
-                    robotTracker.getVelocity()
-            );
+            if (recalculateGridPosition) {
+                var bestY = ScoringPositionManager.getBestFieldY(
+                        scoringPositionManager.getSelectedPosition(),
+                        isRed(),
+                        robotTracker.getLatestPose().getTranslation(),
+                        robotTracker.getVelocity(),
+                        false,
+                        0
+                );
+                y = bestY.y();
+                lastGridIndex = bestY.gridIndex();
+            } else {
+                var bestY = ScoringPositionManager.getBestFieldY(
+                        scoringPositionManager.getSelectedPosition(),
+                        isRed(),
+                        robotTracker.getLatestPose().getTranslation(),
+                        robotTracker.getVelocity(),
+                        true,
+                        lastGridIndex
+                );
+                y = bestY.y();
+            }
 
             Logger.getInstance().recordOutput("Robot/Wanted Y Auto Drive", y);
 
             double scoringPositionOffset;
-            if (scoringPositionManager.getWantedPositionType() == PositionType.CUBE) {
+            if (scoringPositionManager.getSelectedPosition() == SelectedPosition.MIDDLE_LEFT || scoringPositionManager.getSelectedPosition() == SelectedPosition.MIDDLE_RIGHT) {
+                scoringPositionOffset = SCORING_POSITION_OFFSET_CUBE_FROM_WALL;
+            } else if (scoringPositionManager.getWantedPositionType() == PositionType.CUBE) {
                 scoringPositionOffset = SCORING_POSITION_OFFSET_CUBE_FROM_WALL;
             } else {
                 scoringPositionOffset = SCORING_POSITION_OFFSET_CONE_FROM_WALL;

@@ -100,7 +100,7 @@ public class VisionHandler extends AbstractSubsystem {
     private final Pose3d cameraPose = new Pose3d(new Translation3d(Units.inchesToMeters(3.44 + 11.4375),
             Units.inchesToMeters(-3.44 - 0.44),
             Units.inchesToMeters(52.425)),
-            new Rotation3d(VecBuilder.fill(0, 1, 0), Math.toRadians(-28)));
+            new Rotation3d(VecBuilder.fill(0, 1, 0), Math.toRadians(-31)));
 
     private final Pose3d negativeCameraPose = new Pose3d(
             cameraPose.getTranslation().unaryMinus(),
@@ -268,8 +268,14 @@ public class VisionHandler extends AbstractSubsystem {
 //        Renderer.render(drawables);
     }
 
+
+    private boolean recordingWanted = false;
+
     public void forceRecord(boolean record) {
-        NetworkTableInstance.getDefault().getTable("Vision Config").getEntry("Record Video").setBoolean(record);
+        if (record != recordingWanted) {
+            recordingWanted = record;
+            NetworkTableInstance.getDefault().getTable("Vision Config").getEntry("Record Video").setBoolean(record);
+        }
     }
 
     @Override

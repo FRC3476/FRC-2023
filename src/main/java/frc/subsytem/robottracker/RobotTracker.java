@@ -74,7 +74,7 @@ public final class RobotTracker extends AbstractSubsystem {
      */
     private double angularRollRate = 0;
 
-    public static final Matrix<N4, N1> DEFAULT_VISION_DEVIATIONS = VecBuilder.fill(0.1, 0.1, 0.1, Math.toRadians(10));
+    public static final Matrix<N4, N1> DEFAULT_VISION_DEVIATIONS = VecBuilder.fill(0.07, 0.07, 0.05, Math.toRadians(7));
 
     private final SwerveDrivePoseEstimator swerveDriveOdometry;
 
@@ -658,6 +658,10 @@ public final class RobotTracker extends AbstractSubsystem {
     }
 
     public void resetPose(@NotNull Pose3d pose) {
+        if (!Robot.isOnMainThread()) {
+            Robot.runOnMainThread(() -> resetPose(pose));
+            return;
+        }
         lock.writeLock().lock();
         try {
             swerveDriveOdometry.resetPosition(gyroInputs.rotation3d, Robot.getDrive().getModulePositions(), pose);

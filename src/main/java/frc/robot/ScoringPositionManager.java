@@ -338,6 +338,8 @@ public class ScoringPositionManager {
         return possibleYs;
     }
 
+    record BestFieldY(double y, int gridIndex) {}
+
     /**
      * Returns the Y coordinate that the robot should be at in order to score in the selected position that the driver most likely
      * wants based on their current position and velocity.
@@ -353,20 +355,26 @@ public class ScoringPositionManager {
      * @return The Y position the robot should be at in order to score in the selected position that the driver most likely wants
      */
     @Contract(pure = true)
-    public static double getBestFieldY(@NotNull SelectedPosition selectedPosition, boolean isRedAlliance,
-                                       @NotNull Translation2d robotPosition, @NotNull Translation2d robotVelocity) {
+    public static BestFieldY getBestFieldY(@NotNull SelectedPosition selectedPosition, boolean isRedAlliance,
+                                           @NotNull Translation2d robotPosition, @NotNull Translation2d robotVelocity,
+                                           boolean forceGrid, int forcedGridIndex) {
 
         var predictedRobotY = robotPosition.getY() + robotVelocity.getY() * 0.5;
         double[] possibleYs = CUBE_SCORING_Y_CENTER;
         double bestY = possibleYs[0];
-
         int chosenGridIndex = 0;
-        // Find the closest possible Y to the intersection that we found.
-        for (int i = 0; i < 3; i++) {
-            double possibleY = possibleYs[i];
-            if (Math.abs(possibleY - predictedRobotY) < Math.abs(bestY - predictedRobotY)) {
-                bestY = possibleY;
-                chosenGridIndex = i;
+
+        if (forceGrid) {
+            bestY = possibleYs[forcedGridIndex];
+            chosenGridIndex = forcedGridIndex;
+        } else {
+            // Find the closest possible Y to the intersection that we found.
+            for (int i = 0; i < 3; i++) {
+                double possibleY = possibleYs[i];
+                if (Math.abs(possibleY - predictedRobotY) < Math.abs(bestY - predictedRobotY)) {
+                    bestY = possibleY;
+                    chosenGridIndex = i;
+                }
             }
         }
 
@@ -378,6 +386,6 @@ public class ScoringPositionManager {
                 .get(selectedPosition.getScoringDirection());
 
 
-        return bestY;
+        return new BestFieldY(bestY, chosenGridIndex);
     }
 }
