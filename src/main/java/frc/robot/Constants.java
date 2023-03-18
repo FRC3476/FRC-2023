@@ -31,9 +31,7 @@ public final class Constants {
             100000000 : // 100 MB
             1000000000; // 1 GB
 
-    // 2048 sensor units per revolution
-    public static final double FALCON_ENCODER_TICKS_PER_ROTATIONS = 2048;
-    public static final double FALCON_ENCODER_TICKS_PER_100_MS_TO_RPM = 600 / 2048.0d;
+    // Drive Constants
     public static final double SWERVE_MOTOR_POSITION_CONVERSION_FACTOR = 1 / 12.8;
     public static final int DEFAULT_PERIODS_PER_LOG = 0;
     private static final int NOMINAL_DT_MS = 20;
@@ -41,10 +39,7 @@ public final class Constants {
     public static final double BALANCE_P = .040;
     public static final double BALANCE_I = 0;
     public static final double BALANCE_D = 0;
-
-    //Drive Constants
-    public static final double AUTO_BALANCING_VELOCITY = 0.5;
-    public static final int AUTO_BALANCE_VELOCITY_THRESHOLD = 8;
+    public static final int AUTO_BALANCE_VELOCITY_THRESHOLD_DEGREES_PER_SECOND = 8;
 
     public static final int DRIVE_LEFT_FRONT_ID = 11;
     public static final int DRIVE_LEFT_BACK_ID = 12;
@@ -68,7 +63,7 @@ public final class Constants {
     public static final double SWERVE_DRIVE_I = 0.00;
     public static final double SWERVE_DRIVE_F = 0.00;
     public static final double SWERVE_DRIVE_INTEGRAL_ZONE = 0.00;
-    public static final double AUTO_BALANCE_COMPLETE_THRESHOLD = 7;
+    public static final double AUTO_BALANCE_COMPLETE_THRESHOLD_DEGREES = 7;
     public static final double MAX_ERROR_PRINT_TIME = 0.5;
     /**
      * Feed forward constants for the drivetrain.

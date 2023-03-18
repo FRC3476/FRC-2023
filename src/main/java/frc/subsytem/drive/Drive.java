@@ -720,9 +720,9 @@ public final class Drive extends AbstractSubsystem {
     }
 
     LoggedDashboardNumber balanceCompleteThreshold =
-            new LoggedDashboardNumber("Auto Balance Complete Threshold", AUTO_BALANCE_COMPLETE_THRESHOLD);
+            new LoggedDashboardNumber("Auto Balance Complete Threshold", AUTO_BALANCE_COMPLETE_THRESHOLD_DEGREES);
     LoggedDashboardNumber balanceVelocityThreshold =
-            new LoggedDashboardNumber("Auto Balance Velocity Threshold", AUTO_BALANCE_VELOCITY_THRESHOLD);
+            new LoggedDashboardNumber("Auto Balance Velocity Threshold", AUTO_BALANCE_VELOCITY_THRESHOLD_DEGREES_PER_SECOND);
     LoggedDashboardNumber balanceReverseVelocity =
             new LoggedDashboardNumber("Auto Balance Reverse Velocity", BALANCE_REVERSE_SPEED);
 

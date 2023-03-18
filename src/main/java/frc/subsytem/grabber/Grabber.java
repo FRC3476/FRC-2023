@@ -16,7 +16,7 @@ public class Grabber extends AbstractSubsystem {
 
     public static final double MIN_OPEN_TIME = 0.5;
     public static final double MIN_CLOSED_TIME = 0.2;
-    public static final double CURRENT_SPIKE_TIME_THRESHOLD = 0.2;
+    public static final double CURRENT_SPIKE_TIME_THRESHOLD_S = 0.2;
     private final GrabberIO io;
     private final GrabberInputsAutoLogged inputs = new GrabberInputsAutoLogged();
 
@@ -146,7 +146,7 @@ public class Grabber extends AbstractSubsystem {
                 && Timer.getFPGATimestamp() > allowedOpenTime) {
             return Timer.getFPGATimestamp() > grabbedAboveCurrentTime;
         } else {
-            grabbedAboveCurrentTime = Timer.getFPGATimestamp() + CURRENT_SPIKE_TIME_THRESHOLD;
+            grabbedAboveCurrentTime = Timer.getFPGATimestamp() + CURRENT_SPIKE_TIME_THRESHOLD_S;
         }
         return false;
     }
@@ -160,7 +160,7 @@ public class Grabber extends AbstractSubsystem {
                 && Timer.getFPGATimestamp() > allowedOpenTime) {
             return Timer.getFPGATimestamp() > openAboveCurrentTime;
         } else {
-            openAboveCurrentTime = Timer.getFPGATimestamp() + CURRENT_SPIKE_TIME_THRESHOLD;
+            openAboveCurrentTime = Timer.getFPGATimestamp() + CURRENT_SPIKE_TIME_THRESHOLD_S;
         }
         return false;
     }
