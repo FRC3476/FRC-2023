@@ -148,7 +148,7 @@ public class DriveIOFalcon extends DriveIO {
             swerveMotors[i].setRotorPosition(absolutePosition.getValue(), 1);
         }
 
-        isBreaking = false; // ensure it actually sets the values
+        isBraking = false; // ensure it actually sets the values
         setBrakeMode(true);
     }
 
@@ -185,7 +185,7 @@ public class DriveIOFalcon extends DriveIO {
         }
     }
 
-    private boolean isBreaking = false;
+    private boolean isBraking = false;
 
     private final MotorOutputConfigs coastModeInverted = new MotorOutputConfigs();
     private final MotorOutputConfigs brakeModeInverted = new MotorOutputConfigs();
@@ -205,14 +205,14 @@ public class DriveIOFalcon extends DriveIO {
 
     @Override
     protected void setBrakeMode(boolean enable) {
-        if (isBreaking != enable) {
+        if (isBraking != enable) {
             for (TalonFX swerveMotor : swerveMotors) {
                 swerveMotor.getConfigurator().apply(enable ? brakeModeInverted : coastModeInverted);
             }
             for (TalonFX swerveDriveMotor : swerveDriveMotors) {
                 swerveDriveMotor.getConfigurator().apply(enable ? brakeMode : coastMode);
             }
-            isBreaking = enable;
+            isBraking = enable;
         }
     }
 
@@ -225,7 +225,7 @@ public class DriveIOFalcon extends DriveIO {
      */
     @Override
     protected void setSwerveMotorPosition(int motorNum, double position) {
-        positionTorqueCurrentFOC.Position = position / 360;
+        positionTorqueCurrentFOC.Position = position / 360; //conv to rotations
         swerveMotors[motorNum].setControl(positionTorqueCurrentFOC);
     }
 
@@ -241,6 +241,7 @@ public class DriveIOFalcon extends DriveIO {
     @Override
     protected void setDriveMotorVoltage(int motorNum, double voltage) {
         torqueCurrentFOC.MaxAbsDutyCycle = voltage / swerveDriveMotors[motorNum].getSupplyVoltage().getValue();
+        torqueCurrentFOC.Output = Math.copySign(SWERVE_DRIVE_MOTOR_CURRENT_LIMIT, voltage);
         swerveDriveMotors[motorNum].setControl(torqueCurrentFOC);
     }
 
