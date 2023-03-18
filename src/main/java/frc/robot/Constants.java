@@ -25,7 +25,7 @@ public final class Constants {
     public static final double SECONDS_PER_MINUTE = 60;
 
     public static final boolean IS_PRACTICE = Files.exists(new File("/home/lvuser/practice").toPath());
-    public static final boolean USE_CANCODERS = false;
+    public static final boolean USE_CANCODERS = true;
     public static final double SECONDS_PER_MICROSECOND = 1e-6;
     public static final long MIN_FREE_SPACE = 60000000; // 60 MB
 
@@ -129,7 +129,7 @@ public final class Constants {
     public static final double MAX_TURN_ERROR = 30;
 
     public static final int SWERVE_MOTOR_CURRENT_LIMIT = 20;
-    public static final int SWERVE_DRIVE_MOTOR_CURRENT_LIMIT = 40;
+    public static final int SWERVE_DRIVE_MOTOR_CURRENT_LIMIT = 30;
     public static final int SWERVE_DRIVE_VOLTAGE_LIMIT_AUTO = 12;
     public static final int SWERVE_DRIVE_VOLTAGE_LIMIT_TELEOP = 15;
 
