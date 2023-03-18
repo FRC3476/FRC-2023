@@ -71,4 +71,6 @@ public abstract class DriveIO {
      * @param voltage the maximum nominal voltage
      */
     public void setDriveVoltageCompLevel(double voltage) {}
+
+    public void resetPeriodicFrames() {}
 }

@@ -18,9 +18,9 @@ import java.io.File;
 import java.nio.file.Files;
 
 public final class Constants {
-    public static final double ANGULAR_ACCELERATION_BALANCE_THRESHHOLD = 10;
-    public static final double BALANCE_REVERSE_SPEED = .4;
-    public static final String LOG_DIRECTORY = "/u/logs";
+    public static final double ANGULAR_VELOCITY_BALANCE_THRESHHOLD = 10;
+    public static final double BALANCE_REVERSE_SPEED = 0.2;
+    public static final String LOG_DIRECTORY = "/home/lvuser/logs";
 
     public static final double SECONDS_PER_MINUTE = 60;
 
@@ -29,22 +29,19 @@ public final class Constants {
     public static final boolean USE_RELATIVE_ENCODER_POSITION = true; // The relative position is equivalent to the absolute
     // position on the falcon 500 encoder
     public static final double SECONDS_PER_MICROSECOND = 1e-6;
-    public static final long MIN_FREE_SPACE = 60000000; // 60 MB
+    public static final long MIN_FREE_SPACE = IS_PRACTICE ?
+            100000000 : // 100 MB
+            1000000000; // 1 GB
 
-    // 2048 sensor units per revolution
-    public static final double FALCON_ENCODER_TICKS_PER_ROTATIONS = 2048;
-    public static final double FALCON_ENCODER_TICKS_PER_100_MS_TO_RPM = 600 / 2048.0d;
+    // Drive Constants
     public static final double SWERVE_MOTOR_POSITION_CONVERSION_FACTOR = 1 / 12.8;
     public static final int DEFAULT_PERIODS_PER_LOG = 0;
     private static final int NOMINAL_DT_MS = 20;
 
-    public static final double BALANCE_P = .05;
+    public static final double BALANCE_P = .040;
     public static final double BALANCE_I = 0;
     public static final double BALANCE_D = 0;
-
-    //Drive Constants
-    public static final double AUTO_BALANCING_VELOCITY = 0.5;
-    public static final int AUTO_BALANCE_VELOCITY_THRESHOLD = 5;
+    public static final int AUTO_BALANCE_VELOCITY_THRESHOLD_DEGREES_PER_SECOND = 8;
 
     public static final int DRIVE_LEFT_FRONT_ID = 11;
     public static final int DRIVE_LEFT_BACK_ID = 12;
@@ -68,7 +65,7 @@ public final class Constants {
     public static final double SWERVE_DRIVE_I = 0.00;
     public static final double SWERVE_DRIVE_F = 0.00;
     public static final double SWERVE_DRIVE_INTEGRAL_ZONE = 0.00;
-    public static final double AUTO_BALANCE_COMPLETE_THRESHOLD = 9;
+    public static final double AUTO_BALANCE_COMPLETE_THRESHOLD_DEGREES = 7;
     public static final double MAX_ERROR_PRINT_TIME = 0.5;
     /**
      * Feed forward constants for the drivetrain.
@@ -216,7 +213,7 @@ public final class Constants {
     public static final int GRABBED_CURRENT_THRESHOLD = GRABBER_SMART_CURRENT_LIMIT - 10;
     public static final int PIVOT_SMART_CURRENT_LIMIT = 40;
     public static final int GRABBER_ROLLER_SMART_CURRENT_LIMIT = 30;
-
+    public static final double DEGREES_PER_ROTATION = 360;
     public static final int GRABBER_PIVOT_CAN_ID = 50;
     public static final int GRABBER_CAN_ID = 51;
     public static final int GRABBER_ROLLER_MAIN_CAN_ID = 52;
@@ -227,8 +224,9 @@ public final class Constants {
     public static boolean GRABBER_WHEELS_USED = false;
 
     public static final double GRABBER_LENGTH = .308;
-
+    
     public static final boolean IS_AUTO_GRAB_ENABLED = true;
+    public static final boolean USE_PIVOT_ABSOLUTE_ENCODER = !IS_PRACTICE;
 
     public enum KinematicLimits {
         /**
@@ -290,11 +288,11 @@ public final class Constants {
     public static final Rotation2d PICKUP_ANGLE_BLUE = Rotation2d.fromDegrees(180);
 
     public static final double LOWER_PICKUP_POSITION_Y = -3.56;
-    public static final double UPPER_PICKUP_POSITION_Y = -2.05892;
-    public static final double PICKUP_POSITION_X_OFFSET_FROM_WALL = FIELD_WIDTH_METERS - 15.2 + Units.inchesToMeters(3);
+    public static final double UPPER_PICKUP_POSITION_Y = -2.05892 + Units.inchesToMeters(1);
+    public static final double PICKUP_POSITION_X_OFFSET_FROM_WALL = FIELD_WIDTH_METERS - 15.2 + Units.inchesToMeters(-1);
 
-    public static final double SCORING_POSITION_OFFSET_CONE_FROM_WALL = 0.1;
-    public static final double SCORING_POSITION_OFFSET_CUBE_FROM_WALL = 0.1 + Units.inchesToMeters(3);
+    public static final double SCORING_POSITION_OFFSET_CONE_FROM_WALL = 0.05;
+    public static final double SCORING_POSITION_OFFSET_CUBE_FROM_WALL = 0.05 + Units.inchesToMeters(2);
 
     // Constraints
     // TODO: FIND REAL CONSTRAINTS

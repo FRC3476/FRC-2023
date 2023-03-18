@@ -34,6 +34,7 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.littletonrobotics.junction.Logger;
+import org.littletonrobotics.junction.networktables.LoggedDashboardNumber;
 
 import java.lang.reflect.Field;
 import java.util.Optional;
@@ -716,26 +717,43 @@ public final class Drive extends AbstractSubsystem {
         }
     }
 
+    LoggedDashboardNumber balanceCompleteThreshold =
+            new LoggedDashboardNumber("Auto Balance Complete Threshold", AUTO_BALANCE_COMPLETE_THRESHOLD_DEGREES);
+    LoggedDashboardNumber balanceVelocityThreshold =
+            new LoggedDashboardNumber("Auto Balance Velocity Threshold", AUTO_BALANCE_VELOCITY_THRESHOLD_DEGREES_PER_SECOND);
+    LoggedDashboardNumber balanceReverseVelocity =
+            new LoggedDashboardNumber("Auto Balance Reverse Velocity", BALANCE_REVERSE_SPEED);
+
+    {
+        Logger.getInstance().registerDashboardInput(balanceCompleteThreshold);
+        Logger.getInstance().registerDashboardInput(balanceVelocityThreshold);
+        Logger.getInstance().registerDashboardInput(balanceReverseVelocity);
+        SmartDashboard.putData(balancePID);
+    }
+
     public synchronized void autoBalance(@NotNull ControllerDriveInputs inputs) {
         var angle = Robot.getRobotTracker().getGyroYAngle();
         var angleMeasure = Math.toDegrees(angle);
-        Logger.getInstance().recordOutput("Drive/Auto Balance Angle", angleMeasure);
-
         double angularVelocity = Robot.getRobotTracker().getAngularRollVelocity();
+
+        Logger.getInstance().recordOutput("Drive/Auto Balance Angle", angleMeasure);
+        Logger.getInstance().recordOutput("Drive/Auto Balance Angle Velocity", angularVelocity);
+
 
         double xVelocity;
 
-        if (angleMeasure <= AUTO_BALANCE_COMPLETE_THRESHOLD && angleMeasure >= -AUTO_BALANCE_COMPLETE_THRESHOLD) {
+        if (angleMeasure <= balanceCompleteThreshold.get() && angleMeasure >= -balanceCompleteThreshold.get()) {
             // Stops PID if within this range
             xVelocity = 0;
-        } else if (Math.abs(angularVelocity) > Constants.ANGULAR_ACCELERATION_BALANCE_THRESHHOLD) {
+        } else if (Math.abs(angularVelocity) > balanceVelocityThreshold.get()) {
             // Run backwards a little PID if velocity is too high
-            xVelocity = Math.copySign(Constants.BALANCE_REVERSE_SPEED, -angleMeasure);
+            xVelocity = Math.copySign(balanceReverseVelocity.get(), -angleMeasure);
         } else {
             xVelocity = Math.copySign(balancePID.calculate(angleMeasure), angleMeasure);
         }
 
         Logger.getInstance().recordOutput("Drive/Auto Balance Velocity", xVelocity);
+
 
         nextChassisSpeeds = ChassisSpeeds.fromFieldRelativeSpeeds(
                 xVelocity,
@@ -784,5 +802,10 @@ public final class Drive extends AbstractSubsystem {
      */
     public synchronized void setDriveVoltageCompLevel(double voltage) {
         io.setDriveVoltageCompLevel(voltage);
+    }
+
+
+    public synchronized void resetPeriodicFrames() {
+        io.resetPeriodicFrames();
     }
 }

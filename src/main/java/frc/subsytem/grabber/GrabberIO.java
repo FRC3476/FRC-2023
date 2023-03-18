@@ -7,6 +7,8 @@ public abstract class GrabberIO {
     public static class GrabberInputs {
         double pivotPosition = 0.0;
         double pivotVelocity = 0.0;
+        double pivotRelativePosition = 0.0;
+        double pivotRelativeVelocity = 0.0;
         double pivotCurrent = 0.0;
         double pivotTemp = 0.0;
         double pivotVoltage = 0.0;

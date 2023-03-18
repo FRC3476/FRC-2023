@@ -21,6 +21,7 @@ public class TelescopingArmIOSparkMax extends TelescopingArmIO {
         telescopingArmSparkMaxPIDController.setD(Constants.TELESCOPING_ARM_D);
         telescopingArmSparkMax.enableVoltageCompensation(Constants.TELESCOPING_ARM_NOMINAL_VOLTAGE);
         telescopingArmSparkMax.setSmartCurrentLimit(Constants.TELESCOPING_ARM_SMART_CURRENT_LIMIT);
+        telescopingArmSparkMax.setSecondaryCurrentLimit(80);
         telescopingArmSparkMax.setInverted(true);
 
         telescopingArmSparkMax.getEncoder().setPositionConversionFactor(1.0 / TELESCOPING_ARM_ROTATIONS_PER_METER);
