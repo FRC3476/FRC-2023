@@ -16,7 +16,7 @@ import java.util.concurrent.locks.ReentrantLock;
 
 import static frc.robot.Constants.*;
 
-public class FalconDriveIO extends DriveIO {
+public class DriveIOFalcon extends DriveIO {
     /**
      * Motors that turn the wheels around. Uses Falcon500s
      */
@@ -32,7 +32,7 @@ public class FalconDriveIO extends DriveIO {
     private final @NotNull CANcoder[] swerveCanCoders;
     private final ReentrantLock swerveAutoControllerLock = new ReentrantLock();
 
-    public FalconDriveIO() {
+    public DriveIOFalcon() {
         if (!USE_CANCODERS) {
             throw new IllegalStateException("CANCoders are not enabled");
         }
