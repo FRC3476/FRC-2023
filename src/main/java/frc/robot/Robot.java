@@ -81,6 +81,7 @@ public class Robot extends LoggedRobot {
     public static final int XBOX_RESET_HEADING = XboxButtons.A;
     public static final int STICK_TOGGLE_SCORING = 7;
     public static final int STICK_TOGGLE_FLOOR_PICKUP = 9;
+    public static final int CONTROLLER_TOGGLE_FLOOR_PICKUP = XboxAxes.LEFT_TRIGGER;
     public static final int STICK_TOGGLE_PICKUP = 11;
     public static final int STICK_TOGGLE_AUTO_GRAB = 8;
     public static final int XBOX_TOGGLE_GRABBER = XboxButtons.LEFT_BUMPER;
@@ -499,16 +500,8 @@ public class Robot extends LoggedRobot {
             }
         }
 
-        if (stick.getRisingEdge(STICK_TOGGLE_FLOOR_PICKUP)) {
-            if (wantedMechanismState == WantedMechanismState.STOWED) {
-                wantedMechanismState = WantedMechanismState.FLOOR_PICKUP;
-                isGrabberOpen = true;
-            } else {
-                setStowed();
-            }
-        }
-
-        if (xbox.getRawAxis(XboxAxes.LEFT_TRIGGER) > 0.1) {
+        if (stick.getRisingEdge(STICK_TOGGLE_FLOOR_PICKUP) ||
+                xbox.getRisingEdge(CONTROLLER_TOGGLE_FLOOR_PICKUP, 0.1)) {
             if (wantedMechanismState == WantedMechanismState.STOWED) {
                 wantedMechanismState = WantedMechanismState.FLOOR_PICKUP;
                 isGrabberOpen = true;
