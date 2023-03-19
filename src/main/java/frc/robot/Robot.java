@@ -717,17 +717,27 @@ public class Robot extends LoggedRobot {
             var predictedPoseForPickup = robotTracker.getLatestPose().getTranslation().plus(
                     robotTracker.getVelocity().times(0.15));
 
-
-            if (predictedPoseForPickup.getY() < -2.715) {
+            if (ScoringPositionManager.getInstance().getSelectedPosition() == SelectedPosition.SINGLE_SUBSTATION) {
+                y = SINGLE_STATION_Y;
+            } else if (predictedPoseForPickup.getY() < -2.715) {
                 y = LOWER_PICKUP_POSITION_Y;
             } else {
                 y = UPPER_PICKUP_POSITION_Y;
             }
+
             if (isRed()) {
-                x = FIELD_WIDTH_METERS - PICKUP_POSITION_X_OFFSET_FROM_WALL;
+                if (ScoringPositionManager.getInstance().getSelectedPosition() == SelectedPosition.SINGLE_SUBSTATION) {
+                    x = SINGLE_STATION_RED_X;
+                } else {
+                    x = FIELD_WIDTH_METERS - PICKUP_POSITION_X_OFFSET_FROM_WALL;
+                }
                 rotation = PICKUP_ANGLE_RED;
             } else {
-                x = PICKUP_POSITION_X_OFFSET_FROM_WALL;
+                if (ScoringPositionManager.getInstance().getSelectedPosition() == SelectedPosition.SINGLE_SUBSTATION) {
+                    x = SINGLE_STATION_BLUE_X;
+                } else {
+                    x = PICKUP_POSITION_X_OFFSET_FROM_WALL;
+                }
                 rotation = PICKUP_ANGLE_BLUE;
             }
         }

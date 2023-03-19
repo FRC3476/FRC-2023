@@ -224,7 +224,7 @@ public final class Constants {
     public static boolean GRABBER_WHEELS_USED = false;
 
     public static final double GRABBER_LENGTH = .308;
-    
+
     public static final boolean IS_AUTO_GRAB_ENABLED = true;
     public static final boolean USE_PIVOT_ABSOLUTE_ENCODER = !IS_PRACTICE;
 
@@ -250,6 +250,9 @@ public final class Constants {
     public static final float GRIDS_RED_X = 1.373f;
     public static final float GRIDS_BLUE_X = 15.168f;
     public static final float GRIDS_START_Y = -1.5f;
+    public static final float SINGLE_STATION_RED_X = 2.744f;
+    public static final float SINGLE_STATION_BLUE_X = 13.796f;
+    public static final float SINGLE_STATION_Y = -3.551f;
 
     public static final float COMMUNITY_BORDER_LENGTH = 1.5f;
     public static final float COMMUNITY_BORDER_HEIGHT = 0.025f;
