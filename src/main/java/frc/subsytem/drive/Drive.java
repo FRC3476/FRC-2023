@@ -81,6 +81,7 @@ public final class Drive extends AbstractSubsystem {
     private @Nullable HolonomicDriveController swerveAutoController;
     private double nextAllowedPrintError = 0;
     private @NotNull ChassisSpeeds nextChassisSpeeds = new ChassisSpeeds();
+    private boolean isHold = false;
     private KinematicLimit kinematicLimit = KinematicLimits.NORMAL_DRIVING.kinematicLimit;
     private @Nullable CompletableFuture<Optional<Trajectory>> trajectoryToDrive = null;
     private double realtimeTrajectoryStartTime = 0;
@@ -557,9 +558,10 @@ public final class Drive extends AbstractSubsystem {
         io.updateInputs(inputs);
         Logger.getInstance().processInputs("Drive", inputs);
 
+        isHold = false;
         switch (driveState) {
             case TURN, WAITING_FOR_PATH -> updateTurn();
-            case HOLD -> setSwerveModuleStates(Constants.HOLD_MODULE_STATES);
+            case HOLD -> isHold = true;
             case STOP -> {
                 nextChassisSpeeds = new ChassisSpeeds();
                 kinematicLimit = KinematicLimits.NORMAL_DRIVING.kinematicLimit;
@@ -567,7 +569,9 @@ public final class Drive extends AbstractSubsystem {
             case RAMSETE -> updateRamsete();
             case AUTO_BALANCE -> autoBalance(ControllerDriveInputs.ZERO);
         }
-        if (driveState != DriveState.HOLD && !DriverStation.isTest() && DriverStation.isEnabled()) {
+        if (isHold) {
+            setSwerveModuleStates(Constants.HOLD_MODULE_STATES);
+        } else if (!DriverStation.isTest() && DriverStation.isEnabled()) {
             var dt = inputs.driveIoTimestamp - lastTimeStep;
             swerveDrive(nextChassisSpeeds, kinematicLimit, dt);
         }
@@ -754,18 +758,27 @@ public final class Drive extends AbstractSubsystem {
 
         Logger.getInstance().recordOutput("Drive/Auto Balance Velocity", xVelocity);
 
-
-        nextChassisSpeeds = ChassisSpeeds.fromFieldRelativeSpeeds(
-                xVelocity,
-                DRIVE_HIGH_SPEED_M * inputs.getY(),
-                inputs.getRotation() * MAX_TELEOP_TURN_SPEED,
-                Robot.getRobotTracker().getGyroAngle());
+        if (xVelocity == 0 && inputs.getY() == 0) {
+            nextChassisSpeeds = new ChassisSpeeds();
+            isHold = true;
+        } else {
+            nextChassisSpeeds = ChassisSpeeds.fromFieldRelativeSpeeds(
+                    xVelocity,
+                    DRIVE_HIGH_SPEED_M * inputs.getY(),
+                    inputs.getRotation() * MAX_TELEOP_TURN_SPEED,
+                    Robot.getRobotTracker().getGyroAngle());
+        }
     }
 
     public void autoBalance() throws InterruptedException {
         setDriveState(DriveState.AUTO_BALANCE);
         while (DriverStation.isAutonomous()) {
             Thread.sleep(10);
+
+            if (Timer.getFPGATimestamp() - Robot.getAutoStartTime() > 14.8) {
+                setDriveState(DriveState.HOLD);
+                return;
+            }
         }
     }
 

@@ -326,9 +326,11 @@ public class Robot extends LoggedRobot {
         }
     }
 
+    private static double autoStartTime = 0;
 
     @Override
     public void autonomousInit() {
+        autoStartTime = Timer.getFPGATimestamp();
         drive.setBrakeMode(true);
         drive.setDriveVoltageCompLevel(SWERVE_DRIVE_VOLTAGE_LIMIT_AUTO);
         String autoName = autoChooser.get();
@@ -870,5 +872,9 @@ public class Robot extends LoggedRobot {
 
     public static void setCurrentWantedState(WantedMechanismState state) {
         runOnMainThread(() -> wantedMechanismState = state);
+    }
+
+    public static double getAutoStartTime() {
+        return autoStartTime;
     }
 }
