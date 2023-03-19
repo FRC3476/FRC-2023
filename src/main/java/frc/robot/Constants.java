@@ -19,7 +19,7 @@ import java.nio.file.Files;
 
 public final class Constants {
     public static final double ANGULAR_VELOCITY_BALANCE_THRESHHOLD = 10;
-    public static final double BALANCE_REVERSE_SPEED = 0.2;
+    public static final double BALANCE_REVERSE_SPEED = 0.1;
     public static final String LOG_DIRECTORY = "/home/lvuser/logs";
 
     public static final double SECONDS_PER_MINUTE = 60;
@@ -137,6 +137,8 @@ public final class Constants {
 
     public static final double ALLOWED_XY_ERROR_RAMSETE = 0.04;
     public static final double PID_CONTROL_RANGE_AUTO_DRIVE_METERS = 0.1;
+    public static final double ALLOWED_AUTO_DRIVE_POSITION_ERROR_METERS = 0.02;
+    public static final double ALLOWED_AUTO_DRIVE_ANGLE_ERROR_RADIANS = Math.toRadians(1);
     public static final double MAX_VELOCITY_END_PATH = 0.02;
     // TurnPID
 
@@ -153,7 +155,7 @@ public final class Constants {
 
     public static final double NOMINAL_DT = NOMINAL_DT_MS / 1000.0;
 
-    public static final int MAX_TELEOP_TURN_SPEED = 7;
+    public static final int MAX_TELEOP_TURN_SPEED = 10;
     /**
      * Acceleration due to gravity in meters per second squared. (9.80665 m/s^2)
      */
@@ -292,7 +294,7 @@ public final class Constants {
 
     public static final double LOWER_PICKUP_POSITION_Y = -3.56;
     public static final double UPPER_PICKUP_POSITION_Y = -2.05892 + Units.inchesToMeters(1);
-    public static final double PICKUP_POSITION_X_OFFSET_FROM_WALL = FIELD_WIDTH_METERS - 15.2 + Units.inchesToMeters(-1);
+    public static final double PICKUP_POSITION_X_OFFSET_FROM_WALL = FIELD_WIDTH_METERS - 15.2 + Units.inchesToMeters(3);
 
     public static final double SCORING_POSITION_OFFSET_CONE_FROM_WALL = 0.05;
     public static final double SCORING_POSITION_OFFSET_CUBE_FROM_WALL = 0.05 + Units.inchesToMeters(2);
