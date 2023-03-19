@@ -132,13 +132,13 @@ public class DriveIOFalcon extends DriveIO {
             swerveFeedbackConfigs.FeedbackRemoteSensorID = 19 + i;
             swerveFeedbackConfigs.FeedbackSensorSource = FeedbackSensorSourceValue.FusedCANcoder;
             swerveFeedbackConfigs.SensorToMechanismRatio = 1;
-            swerveFeedbackConfigs.RotorToSensorRatio = SWERVE_MOTOR_POSITION_CONVERSION_FACTOR;
+            swerveFeedbackConfigs.RotorToSensorRatio = 1 / SWERVE_MOTOR_POSITION_CONVERSION_FACTOR;
             swerveMotors[i].getConfigurator().apply(swerveFeedbackConfigs);
 
 
             var driveFeedbackConfigs = new FeedbackConfigs();
             driveFeedbackConfigs.FeedbackSensorSource = FeedbackSensorSourceValue.RotorSensor;
-            driveFeedbackConfigs.SensorToMechanismRatio = SWERVE_DRIVE_MOTOR_REDUCTION * SWERVE_METER_PER_ROTATION;
+            driveFeedbackConfigs.SensorToMechanismRatio = 1 / (SWERVE_DRIVE_MOTOR_REDUCTION * SWERVE_METER_PER_ROTATION);
             driveFeedbackConfigs.RotorToSensorRatio = 1;
             swerveDriveMotors[i].getConfigurator().apply(driveFeedbackConfigs);
 
