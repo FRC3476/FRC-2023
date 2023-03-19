@@ -60,7 +60,7 @@ public final class Constants {
 
     public static final double SWERVE_INCHES_PER_ROTATION = 12.5 * 0.976;
     public static final double SWERVE_METER_PER_ROTATION = Units.inchesToMeters(SWERVE_INCHES_PER_ROTATION);
-    public static final double SWERVE_DRIVE_P = .08;
+    public static final double SWERVE_DRIVE_P = 100;
     public static final double SWERVE_DRIVE_D = 0.00;
     public static final double SWERVE_DRIVE_I = 0.00;
     public static final double SWERVE_DRIVE_F = 0.00;
@@ -80,10 +80,10 @@ public final class Constants {
      */
     public static final SimpleMotorFeedforward[] DRIVE_FEEDFORWARD = {
             //ka = 0.55
-            new SimpleMotorFeedforward(0.194596, 2.86, 0),
-            new SimpleMotorFeedforward(0.194596, 2.86, 0),
-            new SimpleMotorFeedforward(0.194596, 2.86, 0),
-            new SimpleMotorFeedforward(0.194596, 2.86, 0)};
+            new SimpleMotorFeedforward(0.256163, 2.48626, 0.2),
+            new SimpleMotorFeedforward(0.256163, 2.48626, 0.2),
+            new SimpleMotorFeedforward(0.256163, 2.48626, 0.2),
+            new SimpleMotorFeedforward(0.256163, 2.48626, 0.2)};
 
 
     /**
@@ -242,7 +242,7 @@ public final class Constants {
 
 
     // Realtime path generation
-    public static final double START_POS_PREDICT_AHEAD = 0.0;
+    public static final double START_POS_PREDICT_AHEAD = 0.05;
     public static final double END_VECTOR_LEN = 0.5;
     public static final double VELOCITY_VECTOR_LEN_SCALE = 0.3;
     public static final double MAX_VELOCITY_ERROR_NEW_PATH = 0.05;

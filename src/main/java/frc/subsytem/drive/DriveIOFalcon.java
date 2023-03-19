@@ -1,8 +1,8 @@
 package frc.subsytem.drive;
 
 import com.ctre.phoenixpro.configs.*;
-import com.ctre.phoenixpro.controls.PositionTorqueCurrentFOC;
-import com.ctre.phoenixpro.controls.TorqueCurrentFOC;
+import com.ctre.phoenixpro.controls.PositionVoltage;
+import com.ctre.phoenixpro.controls.VoltageOut;
 import com.ctre.phoenixpro.hardware.CANcoder;
 import com.ctre.phoenixpro.hardware.TalonFX;
 import com.ctre.phoenixpro.signals.FeedbackSensorSourceValue;
@@ -84,6 +84,10 @@ public class DriveIOFalcon extends DriveIO {
 
 
         for (int i = 0; i < 4; i++) {
+            swerveMotors[i].getConfigurator().defaultTimeoutSeconds = 10;
+            swerveDriveMotors[i].getConfigurator().defaultTimeoutSeconds = 10;
+            swerveCanCoders[i].getConfigurator().defaultTimeoutSeconds = 10;
+
             // Sets swerveMotors PID
             Slot0Configs pIDConfigsSwerve = new Slot0Configs();
             pIDConfigsSwerve.kP = SWERVE_DRIVE_P;
@@ -91,7 +95,7 @@ public class DriveIOFalcon extends DriveIO {
             pIDConfigsSwerve.kD = SWERVE_DRIVE_D;
             pIDConfigsSwerve.kS = 0;
             pIDConfigsSwerve.kV = 0;
-            swerveMotors[i].getConfigurator().apply(pIDConfigsSwerve);
+            swerveMotors[i].getConfigurator().apply(pIDConfigsSwerve, 1000);
 
             Slot0Configs pIDConfigsDrive = new Slot0Configs();
             pIDConfigsDrive.kP = 0;
@@ -99,7 +103,7 @@ public class DriveIOFalcon extends DriveIO {
             pIDConfigsDrive.kD = 0;
             pIDConfigsDrive.kS = DRIVE_FEEDFORWARD[i].ks;
             pIDConfigsDrive.kV = DRIVE_FEEDFORWARD[i].kv;
-            swerveMotors[i].getConfigurator().apply(pIDConfigsDrive);
+            swerveDriveMotors[i].getConfigurator().apply(pIDConfigsDrive);
 
             // Sets current limits for motors
             var swerveCurrentLimitsConfigs = new CurrentLimitsConfigs();
@@ -216,7 +220,7 @@ public class DriveIOFalcon extends DriveIO {
         }
     }
 
-    private final PositionTorqueCurrentFOC positionTorqueCurrentFOC = new PositionTorqueCurrentFOC(0, 0, 0, false);
+    private final PositionVoltage positionVoltage = new PositionVoltage(0, true, 0, 0, true);
     /**
      * Set the target position of the selected swerve motor
      *
@@ -225,12 +229,11 @@ public class DriveIOFalcon extends DriveIO {
      */
     @Override
     protected void setSwerveMotorPosition(int motorNum, double position) {
-        positionTorqueCurrentFOC.Position = position / 360; //conv to rotations
-        swerveMotors[motorNum].setControl(positionTorqueCurrentFOC);
+        positionVoltage.Position = position / 360;
+        swerveMotors[motorNum].setControl(positionVoltage);
     }
 
-    private final TorqueCurrentFOC torqueCurrentFOC
-            = new TorqueCurrentFOC(SWERVE_DRIVE_MOTOR_CURRENT_LIMIT, 0, 1, false);
+    private final VoltageOut voltageOut = new VoltageOut(0, true, false);
 
     /**
      * Set the target position of the selected swerve motor
@@ -240,9 +243,8 @@ public class DriveIOFalcon extends DriveIO {
      */
     @Override
     protected void setDriveMotorVoltage(int motorNum, double voltage) {
-        torqueCurrentFOC.MaxAbsDutyCycle = voltage / swerveDriveMotors[motorNum].getSupplyVoltage().getValue();
-        torqueCurrentFOC.Output = Math.copySign(SWERVE_DRIVE_MOTOR_CURRENT_LIMIT, voltage);
-        swerveDriveMotors[motorNum].setControl(torqueCurrentFOC);
+        voltageOut.Output = voltage;
+        swerveDriveMotors[motorNum].setControl(voltageOut);
     }
 
 
@@ -252,6 +254,7 @@ public class DriveIOFalcon extends DriveIO {
     }
 
     public void resetAbsoluteZeros() {
+        System.out.println("Beginning to Reset Zeros");
         for (int i = 0; i < swerveCanCoders.length; i++) {
             CANcoder swerveCanCoder = swerveCanCoders[i];
             var oldVal = swerveCanCoder.getAbsolutePosition().getValue();
