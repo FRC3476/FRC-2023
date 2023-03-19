@@ -445,8 +445,8 @@ public class Robot extends LoggedRobot {
             }
 
             if (hasReachedAutoAlignPosition) {
-                drive.alignToYAndYaw(teleopDrivingAutoAlignPosition.getTranslation().getY(),
-                        teleopDrivingAutoAlignPosition.getRotation().getRadians(),
+                drive.alignToYAndYaw(teleopDrivingAutoAlignPosition.getRotation().getRadians(),
+                        teleopDrivingAutoAlignPosition.getTranslation().getY(),
                         getControllerDriveInputs());
             } else if (!drive.driveToPosition(
                     teleopDrivingAutoAlignPosition.getTranslation(),
