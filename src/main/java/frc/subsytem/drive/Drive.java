@@ -760,7 +760,7 @@ public final class Drive extends AbstractSubsystem {
 
         Logger.getInstance().recordOutput("Drive/Auto Balance Velocity", xVelocity);
 
-        if (xVelocity == 0) {
+        if (xVelocity == 0 && inputs.getY() == 0) {
             nextChassisSpeeds = new ChassisSpeeds();
             isHold = true;
         } else {
@@ -779,6 +779,7 @@ public final class Drive extends AbstractSubsystem {
 
             if (Timer.getFPGATimestamp() - Robot.getAutoStartTime() > 14.8) {
                 setDriveState(DriveState.HOLD);
+                return;
             }
         }
     }
