@@ -24,6 +24,7 @@ import frc.robot.Constants;
 import frc.robot.Robot;
 import frc.subsytem.AbstractSubsystem;
 import frc.utility.ControllerDriveInputs;
+import frc.utility.OrangeUtility;
 import frc.utility.PathGenerator;
 import frc.utility.net.editing.LiveEditableValue;
 import frc.utility.swerve.SwerveSetpointGenerator;
@@ -141,6 +142,9 @@ public final class Drive extends AbstractSubsystem {
     }
 
     public synchronized void setDriveState(@NotNull DriveState driveState) {
+        if (driveState == DriveState.STOP && this.driveState == DriveState.HOLD) {
+            return;
+        }
         this.driveState = driveState;
     }
 
@@ -354,6 +358,8 @@ public final class Drive extends AbstractSubsystem {
                     setpoint.wheelAccelerations()[i]);
             Logger.getInstance().recordOutput("Drive/SwerveModule " + i + " Angle Error", angleDiff);
             Logger.getInstance().recordOutput("Drive/SwerveModule " + i + " Wanted State", moduleState);
+            Logger.getInstance().recordOutput("Drive/SwerveModule " + i + " Wanted Relative Angle",
+                    inputs.swerveMotorRelativePositions[i] + angleDiff);
         }
     }
 
@@ -773,7 +779,7 @@ public final class Drive extends AbstractSubsystem {
 
         Logger.getInstance().recordOutput("Drive/Auto Balance Velocity", xVelocity);
 
-        if (xVelocity == 0 && inputs.getY() == 0) {
+        if (OrangeUtility.doubleEqual(xVelocity, 0, 0.01) && OrangeUtility.doubleEqual(inputs.getY(), 0, 0.01)) {
             nextChassisSpeeds = new ChassisSpeeds();
             isHold = true;
         } else {
