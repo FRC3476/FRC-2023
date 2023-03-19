@@ -178,8 +178,8 @@ public final class Drive extends AbstractSubsystem {
                         Robot.getRobotTracker().getAngularVelocity() * (EXPECTED_TELEOP_DRIVE_DT * 4)));
     }
 
-    PIDController drivePositionPidX = new PIDController(4.1, 0, 0.41);
-    PIDController drivePositionPidY = new PIDController(4.1, 0, 0.41);
+    PIDController drivePositionPidX = new PIDController(4.1, 0, 0.0);
+    PIDController drivePositionPidY = new PIDController(4.1, 0, 0.0);
 
     {
         SmartDashboard.putData(drivePositionPidX);

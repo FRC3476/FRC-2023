@@ -19,7 +19,7 @@ import java.nio.file.Files;
 
 public final class Constants {
     public static final double ANGULAR_VELOCITY_BALANCE_THRESHHOLD = 10;
-    public static final double BALANCE_REVERSE_SPEED = 0.2;
+    public static final double BALANCE_REVERSE_SPEED = 0.1;
     public static final String LOG_DIRECTORY = "/home/lvuser/logs";
 
     public static final double SECONDS_PER_MINUTE = 60;
@@ -291,7 +291,7 @@ public final class Constants {
 
     public static final double LOWER_PICKUP_POSITION_Y = -3.56;
     public static final double UPPER_PICKUP_POSITION_Y = -2.05892 + Units.inchesToMeters(1);
-    public static final double PICKUP_POSITION_X_OFFSET_FROM_WALL = FIELD_WIDTH_METERS - 15.2 + Units.inchesToMeters(6);
+    public static final double PICKUP_POSITION_X_OFFSET_FROM_WALL = FIELD_WIDTH_METERS - 15.2 + Units.inchesToMeters(3);
 
     public static final double SCORING_POSITION_OFFSET_CONE_FROM_WALL = 0.05;
     public static final double SCORING_POSITION_OFFSET_CUBE_FROM_WALL = 0.05 + Units.inchesToMeters(2);
