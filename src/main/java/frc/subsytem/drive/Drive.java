@@ -135,7 +135,6 @@ public final class Drive extends AbstractSubsystem {
 
     /**
      * @return Returns requested drive wheel velocity in Meters per second
-     * @return Returns requested drive wheel velocity in Meters per second
      */
     private double getSwerveDriveVelocity(int motorNum) {
         return inputs.driveMotorVelocities[motorNum];
@@ -198,11 +197,11 @@ public final class Drive extends AbstractSubsystem {
         Translation2d positionError = Robot.getRobotTracker().getLatestPose().getTranslation().minus(targetPosition);
         if (Math.abs(positionError.getX()) < PID_CONTROL_RANGE_AUTO_DRIVE_METERS
                 && Math.abs(positionError.getY()) < PID_CONTROL_RANGE_AUTO_DRIVE_METERS) {
-            if (Math.abs(positionError.getX()) < 0.02
-                    && Math.abs(positionError.getY()) < 0.02) {
+            if (Math.abs(positionError.getX()) < ALLOWED_AUTO_DRIVE_POSITION_ERROR_METERS
+                    && Math.abs(positionError.getY()) < ALLOWED_AUTO_DRIVE_POSITION_ERROR_METERS) {
                 setTurn(new ControllerDriveInputs(),
                         new State(targetAngle.getRadians(), 0),
-                        Math.toRadians(1));
+                        ALLOWED_AUTO_DRIVE_ANGLE_ERROR_RADIANS);
             } else {
                 var currPos = Robot.getRobotTracker().getLatestPose().getTranslation();
                 setTurn(
@@ -268,6 +267,30 @@ public final class Drive extends AbstractSubsystem {
         }
         return true;
     }
+
+    public synchronized void alignToYAndYaw(double targetYaw, double targetY, ControllerDriveInputs inputs) {
+
+        var currPos = Robot.getRobotTracker().getLatestPose().getTranslation();
+        var wantedYCommand = drivePositionPidY.calculate(currPos.getY(), targetY) / DRIVE_HIGH_SPEED_M;
+
+        if (Math.abs(currPos.getY() - targetY) < ALLOWED_AUTO_DRIVE_POSITION_ERROR_METERS) {
+            setTurn(new ControllerDriveInputs(inputs.getX(), 0, 0),
+                    new State(targetYaw, 0),
+                    ALLOWED_AUTO_DRIVE_ANGLE_ERROR_RADIANS);
+        } else {
+            setTurn(
+                    new ControllerDriveInputs(
+                            inputs.getX(),
+                            wantedYCommand,
+                            0
+                    ),
+                    new State(targetYaw, 0),
+                    0,
+                    true
+            );
+        }
+    }
+
 
     private synchronized void swerveDrive(@NotNull ChassisSpeeds desiredRobotRelativeSpeeds, KinematicLimit kinematicLimit,
                                           double dt) {

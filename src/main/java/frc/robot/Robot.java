@@ -12,6 +12,7 @@ import com.dacubeking.AutoBuilder.robot.robotinterface.AutonomousContainer;
 import com.dacubeking.AutoBuilder.robot.robotinterface.CommandTranslator;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.trajectory.TrapezoidProfile.State;
 import edu.wpi.first.wpilibj.*;
 import edu.wpi.first.wpilibj.GenericHID.RumbleType;
@@ -361,6 +362,7 @@ public class Robot extends LoggedRobot {
 
 
     private @Nullable Pose2d teleopDrivingAutoAlignPosition = new Pose2d();
+    private boolean hasReachedAutoAlignPosition = false;
 
     {
         Logger.getInstance().recordOutput("Auto Align Y", teleopDrivingAutoAlignPosition.getY());
@@ -416,21 +418,35 @@ public class Robot extends LoggedRobot {
 
         if (xbox.getRisingEdge(XBOX_AUTO_ROTATE)) {
             updateTeleopDrivingTarget(scoringPositionManager, true);
+            hasReachedAutoAlignPosition = false;
             isTurnToTargetMode = true;
         }
 
         if (xbox.getRawButton(XBOX_START_AUTO_DRIVE)) { //Should be remapped to one of the back buttons
             if (xbox.getRisingEdge(XBOX_START_AUTO_DRIVE)) {
                 updateTeleopDrivingTarget(scoringPositionManager, true);
+                hasReachedAutoAlignPosition = false;
                 assert teleopDrivingAutoAlignPosition != null;
             } else if (teleopDrivingAutoAlignPosition == null) {
                 // We're not recalculating the grid position b/c we only need to recalculate the path because the operator
                 // changed the grid position
                 updateTeleopDrivingTarget(scoringPositionManager, false);
+                hasReachedAutoAlignPosition = false;
                 assert teleopDrivingAutoAlignPosition != null;
             }
 
-            if (!drive.driveToPosition(
+
+            Translation2d autoDriveAlignError =
+                    teleopDrivingAutoAlignPosition.minus(robotTracker.getLatestPose()).getTranslation();
+            if (Math.abs(autoDriveAlignError.getX()) < 0.2 && Math.abs(autoDriveAlignError.getY()) < 0.05) {
+                hasReachedAutoAlignPosition = true;
+            }
+
+            if (hasReachedAutoAlignPosition) {
+                drive.alignToYAndYaw(teleopDrivingAutoAlignPosition.getTranslation().getY(),
+                        teleopDrivingAutoAlignPosition.getRotation().getRadians(),
+                        getControllerDriveInputs());
+            } else if (!drive.driveToPosition(
                     teleopDrivingAutoAlignPosition.getTranslation(),
                     teleopDrivingAutoAlignPosition.getRotation(),
                     getControllerDriveInputs()
@@ -660,6 +676,14 @@ public class Robot extends LoggedRobot {
 
     private int lastGridIndex = 0;
 
+    private enum AutoDrivePosition {
+        PICKUP_DOUBLE_SUBSTATION,
+        PICKUP_SINGLE_SUBSTATION,
+        SCORING
+    }
+
+    private AutoDrivePosition autoDrivePosition = AutoDrivePosition.SCORING;
+
     private void updateTeleopDrivingTarget(ScoringPositionManager scoringPositionManager, boolean recalculateGridPosition) {
         double x, y;
         Rotation2d rotation;
@@ -709,6 +733,8 @@ public class Robot extends LoggedRobot {
                 x = Constants.GRIDS_BLUE_X - HALF_ROBOT_WIDTH - scoringPositionOffset;
                 rotation = Constants.SCORING_ANGLE_BLUE;
             }
+
+            autoDrivePosition = AutoDrivePosition.SCORING;
         } else {
             // We're on the opposite side as our alliance
             // Try to go to the pickup position
@@ -727,6 +753,8 @@ public class Robot extends LoggedRobot {
                 x = PICKUP_POSITION_X_OFFSET_FROM_WALL;
                 rotation = PICKUP_ANGLE_BLUE;
             }
+
+            autoDrivePosition = AutoDrivePosition.PICKUP_DOUBLE_SUBSTATION;
         }
 
         Logger.getInstance().recordOutput("Auto Align Y", y);
@@ -846,7 +874,7 @@ public class Robot extends LoggedRobot {
         return mechanismStateManager;
     }
 
-    public static PowerDistribution getPowerDistribution() {
+    public static @NotNull PowerDistribution getPowerDistribution() {
         return powerDistribution;
     }
 
