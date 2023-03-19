@@ -25,7 +25,9 @@ public final class Constants {
     public static final double SECONDS_PER_MINUTE = 60;
 
     public static final boolean IS_PRACTICE = Files.exists(new File("/home/lvuser/practice").toPath());
-    public static final boolean USE_CANCODERS = false;
+    public static final boolean USE_CANCODERS = true;
+    public static final boolean USE_RELATIVE_ENCODER_POSITION = true; // The relative position is equivalent to the absolute
+    // position on the falcon 500 encoder
     public static final double SECONDS_PER_MICROSECOND = 1e-6;
     public static final long MIN_FREE_SPACE = IS_PRACTICE ?
             100000000 : // 100 MB
@@ -58,7 +60,7 @@ public final class Constants {
 
     public static final double SWERVE_INCHES_PER_ROTATION = 12.5 * 0.976;
     public static final double SWERVE_METER_PER_ROTATION = Units.inchesToMeters(SWERVE_INCHES_PER_ROTATION);
-    public static final double SWERVE_DRIVE_P = .08;
+    public static final double SWERVE_DRIVE_P = 100;
     public static final double SWERVE_DRIVE_D = 0.00;
     public static final double SWERVE_DRIVE_I = 0.00;
     public static final double SWERVE_DRIVE_F = 0.00;
@@ -78,10 +80,10 @@ public final class Constants {
      */
     public static final SimpleMotorFeedforward[] DRIVE_FEEDFORWARD = {
             //ka = 0.55
-            new SimpleMotorFeedforward(0.194596, 2.86, 0),
-            new SimpleMotorFeedforward(0.194596, 2.86, 0),
-            new SimpleMotorFeedforward(0.194596, 2.86, 0),
-            new SimpleMotorFeedforward(0.194596, 2.86, 0)};
+            new SimpleMotorFeedforward(0.256163, 2.48626, 0.2),
+            new SimpleMotorFeedforward(0.256163, 2.48626, 0.2),
+            new SimpleMotorFeedforward(0.256163, 2.48626, 0.2),
+            new SimpleMotorFeedforward(0.256163, 2.48626, 0.2)};
 
 
     /**
@@ -96,9 +98,9 @@ public final class Constants {
      * 3 -> Right Back
      */
     public static final SwerveSetpoint HOLD_MODULE_STATES = new SwerveSetpoint(new ChassisSpeeds(), new SwerveModuleState[]{
-            new SwerveModuleState(0, Rotation2d.fromDegrees(-45)),
-            new SwerveModuleState(0, Rotation2d.fromDegrees(-45)),
             new SwerveModuleState(0, Rotation2d.fromDegrees(45)),
+            new SwerveModuleState(0, Rotation2d.fromDegrees(-45)),
+            new SwerveModuleState(0, Rotation2d.fromDegrees(-45)),
             new SwerveModuleState(0, Rotation2d.fromDegrees(45))
     }, new double[]{0, 0, 0, 0});
 
@@ -126,7 +128,7 @@ public final class Constants {
     public static final double MAX_TURN_ERROR = 30;
 
     public static final int SWERVE_MOTOR_CURRENT_LIMIT = 20;
-    public static final int SWERVE_DRIVE_MOTOR_CURRENT_LIMIT = 40;
+    public static final int SWERVE_DRIVE_MOTOR_CURRENT_LIMIT = 30;
     public static final int SWERVE_DRIVE_VOLTAGE_LIMIT_AUTO = 12;
     public static final int SWERVE_DRIVE_VOLTAGE_LIMIT_TELEOP = 15;
 
@@ -242,7 +244,7 @@ public final class Constants {
 
 
     // Realtime path generation
-    public static final double START_POS_PREDICT_AHEAD = 0.0;
+    public static final double START_POS_PREDICT_AHEAD = 0.05;
     public static final double END_VECTOR_LEN = 0.5;
     public static final double VELOCITY_VECTOR_LEN_SCALE = 0.3;
     public static final double MAX_VELOCITY_ERROR_NEW_PATH = 0.05;

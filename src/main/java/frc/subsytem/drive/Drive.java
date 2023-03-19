@@ -24,6 +24,7 @@ import frc.robot.Constants;
 import frc.robot.Robot;
 import frc.subsytem.AbstractSubsystem;
 import frc.utility.ControllerDriveInputs;
+import frc.utility.OrangeUtility;
 import frc.utility.PathGenerator;
 import frc.utility.net.editing.LiveEditableValue;
 import frc.utility.swerve.SwerveSetpointGenerator;
@@ -68,7 +69,6 @@ public final class Drive extends AbstractSubsystem {
     private Trajectory currentAutoTrajectory;
     private Rotation2d autoTargetHeading;
     private double lastTurnUpdate = 0;
-    private boolean useRelativeEncoderPosition = false;
     private @NotNull DriveState driveState = DriveState.TELEOP;
     private SwerveSetpoint lastSwerveSetpoint = new SwerveSetpoint(
             new ChassisSpeeds(0, 0, 0),
@@ -82,6 +82,7 @@ public final class Drive extends AbstractSubsystem {
     private @Nullable HolonomicDriveController swerveAutoController;
     private double nextAllowedPrintError = 0;
     private @NotNull ChassisSpeeds nextChassisSpeeds = new ChassisSpeeds();
+    private boolean isHold = false;
     private KinematicLimit kinematicLimit = KinematicLimits.NORMAL_DRIVING.kinematicLimit;
     private @Nullable CompletableFuture<Optional<Trajectory>> trajectoryToDrive = null;
     private double realtimeTrajectoryStartTime = 0;
@@ -113,7 +114,6 @@ public final class Drive extends AbstractSubsystem {
     public Drive(DriveIO driveIO) {
         super();
         this.io = driveIO;
-
         setDriveState(DriveState.TELEOP);
     }
 
@@ -141,6 +141,9 @@ public final class Drive extends AbstractSubsystem {
     }
 
     public synchronized void setDriveState(@NotNull DriveState driveState) {
+        if (driveState == DriveState.STOP && this.driveState == DriveState.HOLD) {
+            return;
+        }
         this.driveState = driveState;
     }
 
@@ -236,12 +239,27 @@ public final class Drive extends AbstractSubsystem {
                     var trajectory = trajectoryToDrive.join();
 
                     if (trajectory.isPresent()) {
-                        setAutoPath(trajectory.get(), realtimeTrajectoryStartTime); // Sets the DriveState to RAMSETE
-                        setAutoRotation(targetAngle);
                         if (Timer.getFPGATimestamp() + EXPECTED_TELEOP_DRIVE_DT > realtimeTrajectoryStartTime) {
                             DriverStation.reportError("Trajectory Generation was late by: "
                                     + (Timer.getFPGATimestamp() - realtimeTrajectoryStartTime) + "s", false);
+
+                            var currPos = Robot.getRobotTracker().getLatestPose().getTranslation();
+
+                            double lastTime = 0;
+                            double lastDistance = Double.MAX_VALUE;
+
+                            for (Trajectory.State state : trajectory.get().getStates()) {
+                                double dist = state.poseMeters.getTranslation().getDistance(currPos);
+                                if (dist > lastDistance) {
+                                    realtimeTrajectoryStartTime = Timer.getFPGATimestamp() - lastTime;
+                                    break;
+                                }
+                                lastTime = state.timeSeconds;
+                                lastDistance = dist;
+                            }
                         }
+                        setAutoPath(trajectory.get(), realtimeTrajectoryStartTime); // Sets the DriveState to RAMSETE
+                        setAutoRotation(targetAngle);
                     } else {
                         nextChassisSpeeds = ChassisSpeeds.fromFieldRelativeSpeeds(
                                 DRIVE_HIGH_SPEED_M * inputs.getX(),
@@ -363,6 +381,8 @@ public final class Drive extends AbstractSubsystem {
                     setpoint.wheelAccelerations()[i]);
             Logger.getInstance().recordOutput("Drive/SwerveModule " + i + " Angle Error", angleDiff);
             Logger.getInstance().recordOutput("Drive/SwerveModule " + i + " Wanted State", moduleState);
+            Logger.getInstance().recordOutput("Drive/SwerveModule " + i + " Wanted Relative Angle",
+                    inputs.swerveMotorRelativePositions[i] + angleDiff);
         }
     }
 
@@ -582,9 +602,10 @@ public final class Drive extends AbstractSubsystem {
         io.updateInputs(inputs);
         Logger.getInstance().processInputs("Drive", inputs);
 
+        isHold = false;
         switch (driveState) {
             case TURN, WAITING_FOR_PATH -> updateTurn();
-            case HOLD -> setSwerveModuleStates(Constants.HOLD_MODULE_STATES);
+            case HOLD -> isHold = true;
             case STOP -> {
                 nextChassisSpeeds = new ChassisSpeeds();
                 kinematicLimit = KinematicLimits.NORMAL_DRIVING.kinematicLimit;
@@ -592,7 +613,9 @@ public final class Drive extends AbstractSubsystem {
             case RAMSETE -> updateRamsete();
             case AUTO_BALANCE -> autoBalance(ControllerDriveInputs.ZERO);
         }
-        if (driveState != DriveState.HOLD && !DriverStation.isTest() && DriverStation.isEnabled()) {
+        if (isHold) {
+            setSwerveModuleStates(Constants.HOLD_MODULE_STATES);
+        } else if (!DriverStation.isTest() && DriverStation.isEnabled()) {
             var dt = inputs.driveIoTimestamp - lastTimeStep;
             swerveDrive(nextChassisSpeeds, kinematicLimit, dt);
         }
@@ -692,7 +715,7 @@ public final class Drive extends AbstractSubsystem {
      * @return angle in degrees of the module (0-360)
      */
     public double getWheelRotation(int moduleNumber) {
-        if (useRelativeEncoderPosition) {
+        if (USE_RELATIVE_ENCODER_POSITION) {
             double relPos = inputs.swerveMotorRelativePositions[moduleNumber] % 360;
             if (relPos < 0) relPos += 360;
             return relPos;
@@ -779,18 +802,27 @@ public final class Drive extends AbstractSubsystem {
 
         Logger.getInstance().recordOutput("Drive/Auto Balance Velocity", xVelocity);
 
-
-        nextChassisSpeeds = ChassisSpeeds.fromFieldRelativeSpeeds(
-                xVelocity,
-                DRIVE_HIGH_SPEED_M * inputs.getY(),
-                inputs.getRotation() * MAX_TELEOP_TURN_SPEED,
-                Robot.getRobotTracker().getGyroAngle());
+        if (OrangeUtility.doubleEqual(xVelocity, 0, 0.01) && OrangeUtility.doubleEqual(inputs.getY(), 0, 0.01)) {
+            nextChassisSpeeds = new ChassisSpeeds();
+            isHold = true;
+        } else {
+            nextChassisSpeeds = ChassisSpeeds.fromFieldRelativeSpeeds(
+                    xVelocity,
+                    DRIVE_HIGH_SPEED_M * inputs.getY(),
+                    inputs.getRotation() * MAX_TELEOP_TURN_SPEED,
+                    Robot.getRobotTracker().getGyroAngle());
+        }
     }
 
     public void autoBalance() throws InterruptedException {
         setDriveState(DriveState.AUTO_BALANCE);
         while (DriverStation.isAutonomous()) {
             Thread.sleep(10);
+
+            if (Timer.getFPGATimestamp() - Robot.getAutoStartTime() > 14.8) {
+                setDriveState(DriveState.HOLD);
+                return;
+            }
         }
     }
 

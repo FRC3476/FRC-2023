@@ -39,7 +39,7 @@ import static java.lang.Double.isNaN;
 public final class RobotTracker extends AbstractSubsystem {
     public static final double GYRO_VELOCITY_MEASUREMENT_WINDOW = 0.04;
     private final ReentrantReadWriteLock lock = new ReentrantReadWriteLock();
-    private final @NotNull WPI_Pigeon2 gyroSensor = new WPI_Pigeon2(PIGEON_CAN_ID, "rio");
+    private final @NotNull WPI_Pigeon2 gyroSensor = new WPI_Pigeon2(PIGEON_CAN_ID, "*");
 
     {
         gyroSensor.configMountPose(0, 0, 0);
@@ -166,7 +166,7 @@ public final class RobotTracker extends AbstractSubsystem {
     private @Nullable Translation3d lastAcceleration;
 
     private void updateGyroHistory() {
-        double time = Logger.getInstance().getRealTimestamp() * SECONDS_PER_MICROSECOND;
+        double time = Logger.getInstance().getRealTimestamp() * SECONDS_PER_MICROSECOND - 0.05;
 
         gyroSensor.get6dQuaternion(quaternion);
         gyroSensor.getBiasedAccelerometer(ba_xyz);

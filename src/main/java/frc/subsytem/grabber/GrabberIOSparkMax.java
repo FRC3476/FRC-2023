@@ -27,16 +27,20 @@ public class GrabberIOSparkMax extends GrabberIO {
         pivotSparkMax = new CANSparkMax(GRABBER_PIVOT_CAN_ID, CANSparkMaxLowLevel.MotorType.kBrushless);
         grabberSparkMax = new CANSparkMax(GRABBER_CAN_ID, CANSparkMaxLowLevel.MotorType.kBrushless);
 
+        pivotSparkMax.getEncoder().setPositionConversionFactor(1.0 / PIVOT_ROTATIONS_PER_DEGREE);
+        pivotSparkMax.getEncoder().setVelocityConversionFactor((1.0 / PIVOT_ROTATIONS_PER_DEGREE) / SECONDS_PER_MINUTE);
+
         if (USE_PIVOT_ABSOLUTE_ENCODER) {
             pivotAbsoluteEncoder = pivotSparkMax.getAbsoluteEncoder(SparkMaxAbsoluteEncoder.Type.kDutyCycle);
             pivotAbsoluteEncoder.setPositionConversionFactor(DEGREES_PER_ROTATION);
             pivotAbsoluteEncoder.setVelocityConversionFactor(DEGREES_PER_ROTATION / SECONDS_PER_MINUTE);
-            pivotSparkMax.getPIDController().setFeedbackDevice(pivotAbsoluteEncoder);
+            resetPivotPosition(pivotAbsoluteEncoder.getPosition());
         } else {
-            pivotSparkMax.getEncoder().setPositionConversionFactor(1.0 / PIVOT_ROTATIONS_PER_DEGREE);
-            pivotSparkMax.getEncoder().setVelocityConversionFactor((1.0 / PIVOT_ROTATIONS_PER_DEGREE) / SECONDS_PER_MINUTE);
+            resetPivotPosition(MAX_WRIST_ANGLE);
         }
-        resetPivotPosition(MAX_WRIST_ANGLE);
+        pivotSparkMax.getPIDController().setFeedbackDevice(pivotSparkMax.getEncoder());
+        pivotSparkMax.getPIDController().setPositionPIDWrappingEnabled(false);
+
 
         pivotSparkMax.enableVoltageCompensation(Constants.GRABBER_NOMINAL_VOLTAGE);
         pivotSparkMax.setSmartCurrentLimit(Constants.PIVOT_SMART_CURRENT_LIMIT);
@@ -81,14 +85,10 @@ public class GrabberIOSparkMax extends GrabberIO {
 
     @Override
     public synchronized void updateInputs(GrabberInputsAutoLogged inputs) {
-        if (USE_PIVOT_ABSOLUTE_ENCODER) {
-            assert pivotAbsoluteEncoder != null;
-            inputs.pivotPosition = pivotAbsoluteEncoder.getPosition();
-            inputs.pivotVelocity = pivotAbsoluteEncoder.getVelocity();
-        } else {
-            inputs.pivotPosition = pivotSparkMax.getEncoder().getPosition();
-            inputs.pivotVelocity = pivotSparkMax.getEncoder().getVelocity();
-        }
+
+        inputs.pivotPosition = pivotSparkMax.getEncoder().getPosition();
+        inputs.pivotVelocity = pivotSparkMax.getEncoder().getVelocity();
+
         inputs.pivotRelativePosition = pivotSparkMax.getEncoder().getPosition();
         inputs.pivotRelativeVelocity = pivotSparkMax.getEncoder().getVelocity();
 
