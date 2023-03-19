@@ -155,7 +155,7 @@ public final class Constants {
 
     public static final double NOMINAL_DT = NOMINAL_DT_MS / 1000.0;
 
-    public static final int MAX_TELEOP_TURN_SPEED = 7;
+    public static final int MAX_TELEOP_TURN_SPEED = 10;
     /**
      * Acceleration due to gravity in meters per second squared. (9.80665 m/s^2)
      */
