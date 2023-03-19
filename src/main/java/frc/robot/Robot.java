@@ -37,6 +37,7 @@ import frc.subsytem.telescopingarm.TelescopingArmIO;
 import frc.subsytem.telescopingarm.TelescopingArmIOSparkMax;
 import frc.subsytem.vision.VisionHandler;
 import frc.utility.Controller;
+import frc.utility.Controller.XboxAxes;
 import frc.utility.Controller.XboxButtons;
 import frc.utility.ControllerDriveInputs;
 import frc.utility.PathGenerator;
@@ -507,6 +508,15 @@ public class Robot extends LoggedRobot {
             }
         }
 
+        if (xbox.getRawAxis(XboxAxes.LEFT_TRIGGER) > 0.1) {
+            if (wantedMechanismState == WantedMechanismState.STOWED) {
+                wantedMechanismState = WantedMechanismState.FLOOR_PICKUP;
+                isGrabberOpen = true;
+            } else {
+                setStowed();
+            }
+        }
+
         if (stick.getRisingEdge(STICK_TOGGLE_PICKUP)) {
             if (wantedMechanismState == WantedMechanismState.STOWED) {
                 wantedMechanismState = WantedMechanismState.STATION_PICKUP;
@@ -714,7 +724,8 @@ public class Robot extends LoggedRobot {
         } else {
             // We're on the opposite side as our alliance
             // Try to go to the pickup position
-            var predictedPoseForPickup = robotTracker.getLatestPose().getTranslation().plus(robotTracker.getVelocity().times(0.15));
+            var predictedPoseForPickup = robotTracker.getLatestPose().getTranslation().plus(
+                    robotTracker.getVelocity().times(0.15));
 
 
             if (predictedPoseForPickup.getY() < -2.715) {
