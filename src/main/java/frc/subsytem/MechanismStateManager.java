@@ -79,7 +79,8 @@ public class MechanismStateManager extends AbstractSubsystem {
         CONE_HIGH_SCORING(new MechanismStateCoordinates(Units.inchesToMeters(36), Units.inchesToMeters(57), 65)),
         CUBE_HIGH_SCORING(new MechanismStateCoordinates(Units.inchesToMeters(36), Units.inchesToMeters(54), 33)),
         STATION_PICKUP(new MechanismStateCoordinates(0.531, 2.3 - 0.015 - (!IS_PRACTICE ? Units.inchesToMeters(3.2) : 0), 12)),
-        FLOOR_PICKUP(new MechanismStateCoordinates(0.08, 0.06, !IS_PRACTICE ? -10 : 0));
+        FLOOR_PICKUP(new MechanismStateCoordinates(0.08, 0.06, !IS_PRACTICE ? -10 : 0)),
+        TIPPED_FLOOR_PICKUP(new MechanismStateCoordinates(0.08, 0.06, MIN_WRIST_ANGLE)); //Estimated values
         private final MechanismStateCoordinates state;
 
         MechanismStates(MechanismStateCoordinates state) {

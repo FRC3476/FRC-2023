@@ -83,6 +83,7 @@ public class Robot extends LoggedRobot {
     public static final int STICK_TOGGLE_SCORING = 7;
     public static final int STICK_TOGGLE_FLOOR_PICKUP = 9;
     public static final int CONTROLLER_TOGGLE_FLOOR_PICKUP = XboxAxes.LEFT_TRIGGER;
+    public static final int CONTROLLER_TOGGLE_TIPPED_FLOOR_PICKUP = XboxAxes.RIGHT_TRIGGER;
     public static final int STICK_TOGGLE_PICKUP = 11;
     public static final int STICK_TOGGLE_AUTO_GRAB = 8;
     public static final int XBOX_TOGGLE_GRABBER = XboxButtons.LEFT_BUMPER;
@@ -376,7 +377,7 @@ public class Robot extends LoggedRobot {
 
 
     enum WantedMechanismState {
-        STOWED, SCORING, FLOOR_PICKUP, STATION_PICKUP
+        STOWED, SCORING, FLOOR_PICKUP, TIPPED_FLOOR_PICKUP, STATION_PICKUP
     }
 
     private static WantedMechanismState wantedMechanismState = WantedMechanismState.STOWED;
@@ -526,6 +527,15 @@ public class Robot extends LoggedRobot {
             }
         }
 
+        if (xbox.getRisingEdge(CONTROLLER_TOGGLE_TIPPED_FLOOR_PICKUP, 0.1)) {
+            if (wantedMechanismState == WantedMechanismState.STOWED) {
+                wantedMechanismState = WantedMechanismState.TIPPED_FLOOR_PICKUP;
+                isGrabberOpen = true;
+            } else {
+                setStowed();
+            }
+        }
+
         if (stick.getRisingEdge(STICK_TOGGLE_PICKUP)) {
             if (wantedMechanismState == WantedMechanismState.STOWED) {
                 wantedMechanismState = WantedMechanismState.STATION_PICKUP;
@@ -576,6 +586,7 @@ public class Robot extends LoggedRobot {
                     }
                 }
                 case FLOOR_PICKUP -> mechanismStateManager.setState(MechanismStates.FLOOR_PICKUP);
+                case TIPPED_FLOOR_PICKUP -> mechanismStateManager.setState(MechanismStates.TIPPED_FLOOR_PICKUP);
                 case STATION_PICKUP -> mechanismStateManager.setState(MechanismStates.STATION_PICKUP);
             }
 
