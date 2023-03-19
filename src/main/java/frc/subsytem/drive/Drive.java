@@ -236,12 +236,27 @@ public final class Drive extends AbstractSubsystem {
                     var trajectory = trajectoryToDrive.join();
 
                     if (trajectory.isPresent()) {
-                        setAutoPath(trajectory.get(), realtimeTrajectoryStartTime); // Sets the DriveState to RAMSETE
-                        setAutoRotation(targetAngle);
                         if (Timer.getFPGATimestamp() + EXPECTED_TELEOP_DRIVE_DT > realtimeTrajectoryStartTime) {
                             DriverStation.reportError("Trajectory Generation was late by: "
                                     + (Timer.getFPGATimestamp() - realtimeTrajectoryStartTime) + "s", false);
+
+                            var currPos = Robot.getRobotTracker().getLatestPose().getTranslation();
+
+                            double lastTime = 0;
+                            double lastDistance = Double.MAX_VALUE;
+
+                            for (Trajectory.State state : trajectory.get().getStates()) {
+                                double dist = state.poseMeters.getTranslation().getDistance(currPos);
+                                if (dist > lastDistance) {
+                                    realtimeTrajectoryStartTime = Timer.getFPGATimestamp() - lastTime;
+                                    break;
+                                }
+                                lastTime = state.timeSeconds;
+                                lastDistance = dist;
+                            }
                         }
+                        setAutoPath(trajectory.get(), realtimeTrajectoryStartTime); // Sets the DriveState to RAMSETE
+                        setAutoRotation(targetAngle);
                     } else {
                         nextChassisSpeeds = ChassisSpeeds.fromFieldRelativeSpeeds(
                                 DRIVE_HIGH_SPEED_M * inputs.getX(),
