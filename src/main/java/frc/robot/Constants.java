@@ -252,9 +252,6 @@ public final class Constants {
     public static final float GRIDS_RED_X = 1.373f;
     public static final float GRIDS_BLUE_X = 15.168f;
     public static final float GRIDS_START_Y = -1.5f;
-    public static final float SINGLE_STATION_RED_X = 2.744f;
-    public static final float SINGLE_STATION_BLUE_X = 13.796f;
-    public static final float SINGLE_STATION_Y = -3.551f;
 
     public static final float COMMUNITY_BORDER_LENGTH = 1.5f;
     public static final float COMMUNITY_BORDER_HEIGHT = 0.025f;
@@ -298,6 +295,14 @@ public final class Constants {
 
     public static final double SCORING_POSITION_OFFSET_CONE_FROM_WALL = 0.05;
     public static final double SCORING_POSITION_OFFSET_CUBE_FROM_WALL = 0.05 + Units.inchesToMeters(2);
+
+    public static final double SINGLE_STATION_RED_X = 14.41;
+    public static final double SINGLE_STATION_BLUE_X = FIELD_WALL_RIGHT_X - SINGLE_STATION_RED_X;
+    public static final double SINGLE_STATION_Y = -3.23;
+    public static final Rotation2d SINGLE_STATION_ANGLE = Rotation2d.fromDegrees(-90);
+
+    public static final double SINGLE_SUBSTATION_PICKUP_ANGLE_CUTOFF_DEGREES = -30;
+
 
     // Constraints
     // TODO: FIND REAL CONSTRAINTS

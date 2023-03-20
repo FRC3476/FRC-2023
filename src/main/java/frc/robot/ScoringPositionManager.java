@@ -56,10 +56,7 @@ public class ScoringPositionManager {
 
         TOP_LEFT(9, PositionType.CONE),
         TOP_MIDDLE(12, PositionType.CUBE),
-        TOP_RIGHT(11, PositionType.CONE),
-
-        SINGLE_SUBSTATION(4, PositionType.BOTH);
-
+        TOP_RIGHT(11, PositionType.CONE);
 
         /**
          * @return The level of the scoring position. 0 is the lowest, 2 is the highest.
