@@ -661,12 +661,18 @@ public class Robot extends LoggedRobot {
                         && scoringPositionManager.getSelectedPosition().getLevel() == 1
                         && scoringPositionManager.getWantedPositionType() == PositionType.CONE) {
                     mechanismStateManager.setState(MechanismStates.FINAL_CONE_MIDDLE_SCORING);
-                }
-                isGrabberOpen = !isGrabberOpen;
-                if (isGrabberOpen) {
-                    grabberOpenTime = Timer.getFPGATimestamp();
+                } else {
+                    isGrabberOpen = !isGrabberOpen;
+                    if (isGrabberOpen) {
+                        grabberOpenTime = Timer.getFPGATimestamp();
+                    }
                 }
             }
+        }
+
+        if (mechanismStateManager.isMechAtFinalPos()
+                && mechanismStateManager.getCurrentWantedState() == MechanismStates.FINAL_CONE_MIDDLE_SCORING.state) {
+            isGrabberOpen = true;
         }
 
         if (isGrabberOpen) {
@@ -813,7 +819,6 @@ public class Robot extends LoggedRobot {
                 }
                 autoDrivePosition = AutoDrivePosition.PICKUP_DOUBLE_SUBSTATION;
             }
-
         }
 
         Logger.getInstance().recordOutput("Auto Align Y", y);
