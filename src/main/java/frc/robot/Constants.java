@@ -134,7 +134,7 @@ public final class Constants {
 
 
     public static final double SWERVE_DRIVE_MOTOR_REDUCTION = 1 / 6.75; // L2 gear ratio
-    public static final double CONE_LOWER_METERS = Units.inchesToMeters(4);
+    public static final double CONE_LOWER_METERS = Units.inchesToMeters(10);
     public static final double ALLOWED_XY_ERROR_RAMSETE = 0.04;
     public static final double PID_CONTROL_RANGE_AUTO_DRIVE_METERS = 0.1;
     public static final double ALLOWED_AUTO_DRIVE_POSITION_ERROR_METERS = 0.02;

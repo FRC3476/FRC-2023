@@ -75,10 +75,10 @@ public class MechanismStateManager extends AbstractSubsystem {
         STOWED(new MechanismStateCoordinates(-0.445, 0.285, MAX_WRIST_ANGLE - 2)),
         LOW_SCORING(new MechanismStateCoordinates(0.08, 0.1, 0)),
         CUBE_MIDDLE_SCORING(new MechanismStateCoordinates(Units.inchesToMeters(16), Units.inchesToMeters(40), 0)),
-        CONE_MIDDLE_SCORING(new MechanismStateCoordinates(Units.inchesToMeters(10), Units.inchesToMeters(47.5), 15)),
+        CONE_MIDDLE_SCORING(new MechanismStateCoordinates(Units.inchesToMeters(10), Units.inchesToMeters(47.5), 25)),
         FINAL_CONE_MIDDLE_SCORING(
-                new MechanismStateCoordinates(Units.inchesToMeters(10), Units.inchesToMeters(47.5) - CONE_LOWER_METERS,
-                        15)),
+                new MechanismStateCoordinates(Units.inchesToMeters(18), Units.inchesToMeters(47.5) - CONE_LOWER_METERS,
+                        25)),
         CONE_HIGH_SCORING(new MechanismStateCoordinates(Units.inchesToMeters(36), Units.inchesToMeters(57), 65)),
         CUBE_HIGH_SCORING(new MechanismStateCoordinates(Units.inchesToMeters(36), Units.inchesToMeters(54), 33)),
         DOUBLE_STATION_PICKUP(new MechanismStateCoordinates(0.531, 2.3 - 0.015 - (!IS_PRACTICE ? Units.inchesToMeters(3.2) : 0),
@@ -244,7 +244,7 @@ public class MechanismStateManager extends AbstractSubsystem {
         if (!(lastNotStowState == MechanismStates.FLOOR_PICKUP || lastNotStowState == MechanismStates.LOW_SCORING
                 || lastNotStowState == MechanismStates.SINGLE_SUBSTATION_PICKUP_CONE
                 || lastNotStowState == MechanismStates.SINGLE_SUBSTATION_PICKUP_CUBE
-                || lastNotStowState == MechanismStates.CONE_MIDDLE_SCORING)
+                || lastNotStowState == MechanismStates.FINAL_CONE_MIDDLE_SCORING)
                 && areKeepoutsEnabled) {
             if (lastNotStowState != MechanismStates.DOUBLE_STATION_PICKUP) {
                 // Use scoring keepouts
