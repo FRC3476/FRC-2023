@@ -564,6 +564,7 @@ public class Robot extends LoggedRobot {
                     } else if (level == 1) {
                         if (scoringPositionManager.getWantedPositionType() == PositionType.CONE) {
                             mechanismStateManager.setState(MechanismStates.CONE_MIDDLE_SCORING);
+                            mechanismStateManager.setState(MechanismStates.FINAL_CONE_MIDDLE_SCORING);
                         } else {
                             mechanismStateManager.setState(MechanismStates.CUBE_MIDDLE_SCORING);
                         }
@@ -644,11 +645,6 @@ public class Robot extends LoggedRobot {
                         && grabber.isOpen() && IS_AUTO_GRAB_ENABLED && mechanismStateManager.isMechAtFinalPos() && grabber.isAutoGrabEnabled()) {
                     isGrabberOpen = false;
                 } else {
-                    if (wantedMechanismState == WantedMechanismState.SCORING
-                            && scoringPositionManager.getSelectedPosition().getLevel() == 1
-                            && scoringPositionManager.getWantedPositionType() == PositionType.CONE) {
-                        elevator.setPosition(elevator.getPosition() - .03);
-                    }
                     grabber.setGrabState(GrabState.OPEN);
                 }
             }
