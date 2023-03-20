@@ -81,7 +81,7 @@ public class MechanismStateManager extends AbstractSubsystem {
         DOUBLE_STATION_PICKUP(new MechanismStateCoordinates(0.531, 2.3 - 0.015 - (!IS_PRACTICE ? Units.inchesToMeters(3.2) : 0),
                 12)),
         FLOOR_PICKUP(new MechanismStateCoordinates(0.08, 0.06, !IS_PRACTICE ? -10 : 0)),
-        SINGLE_SUBSTATION_PICKUP_CUBE(new MechanismStateCoordinates(0.036, 0.65, 50.55)),
+        SINGLE_SUBSTATION_PICKUP_CUBE(new MechanismStateCoordinates(0.036, 0.67, 50.55)),
         SINGLE_SUBSTATION_PICKUP_CONE(new MechanismStateCoordinates(0.04296, 0.63057, 68.6));
         private final MechanismStateCoordinates state;
 

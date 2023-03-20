@@ -458,7 +458,9 @@ public class Robot extends LoggedRobot {
             } else if (!drive.driveToPosition(
                     teleopDrivingAutoAlignPosition.getTranslation(),
                     teleopDrivingAutoAlignPosition.getRotation(),
-                    getControllerDriveInputs()
+                    getControllerDriveInputs(),
+                    autoDrivePosition == AutoDrivePosition.PICKUP_SINGLE_SUBSTATION
+
             )) {
                 // We failed to generate a trajectory
                 wantedRumble = 1;
@@ -788,6 +790,7 @@ public class Robot extends LoggedRobot {
                     x = SINGLE_STATION_BLUE_X;
                 }
                 rotation = SINGLE_STATION_ANGLE;
+                autoDrivePosition = AutoDrivePosition.PICKUP_SINGLE_SUBSTATION;
             } else {
                 if (predictedPoseForPickup.getY() < -2.715) {
                     y = LOWER_PICKUP_POSITION_Y;
@@ -803,9 +806,9 @@ public class Robot extends LoggedRobot {
                     x = PICKUP_POSITION_X_OFFSET_FROM_WALL;
                     rotation = PICKUP_ANGLE_BLUE;
                 }
+                autoDrivePosition = AutoDrivePosition.PICKUP_DOUBLE_SUBSTATION;
             }
 
-            autoDrivePosition = AutoDrivePosition.PICKUP_DOUBLE_SUBSTATION;
         }
 
         Logger.getInstance().recordOutput("Auto Align Y", y);
