@@ -80,8 +80,11 @@ public class MechanismStateManager extends AbstractSubsystem {
                 15)),
         CONE_HIGH_SCORING(new MechanismStateCoordinates(Units.inchesToMeters(36), Units.inchesToMeters(57), 65)),
         CUBE_HIGH_SCORING(new MechanismStateCoordinates(Units.inchesToMeters(36), Units.inchesToMeters(54), 33)),
-        STATION_PICKUP(new MechanismStateCoordinates(0.531, 2.3 - 0.015 - (!IS_PRACTICE ? Units.inchesToMeters(3.2) : 0), 12)),
-        FLOOR_PICKUP(new MechanismStateCoordinates(0.08, 0.06, !IS_PRACTICE ? -10 : 0));
+        DOUBLE_STATION_PICKUP(new MechanismStateCoordinates(0.531, 2.3 - 0.015 - (!IS_PRACTICE ? Units.inchesToMeters(3.2) : 0),
+                12)),
+        FLOOR_PICKUP(new MechanismStateCoordinates(0.08, 0.06, !IS_PRACTICE ? -10 : 0)),
+        SINGLE_SUBSTATION_PICKUP_CUBE(new MechanismStateCoordinates(0.036, 0.67, 50.55)),
+        SINGLE_SUBSTATION_PICKUP_CONE(new MechanismStateCoordinates(0.04296, 0.63057, 68.6));
         private final MechanismStateCoordinates state;
 
         MechanismStates(MechanismStateCoordinates state) {
@@ -237,9 +240,11 @@ public class MechanismStateManager extends AbstractSubsystem {
 
 
         MechanismStateSubsystemPositions limitedStatePositions = coordinatesToSubsystemPositions(limitedStateCoordinates);
-        if (!(lastNotStowState == MechanismStates.FLOOR_PICKUP || lastNotStowState == MechanismStates.LOW_SCORING)
+        if (!(lastNotStowState == MechanismStates.FLOOR_PICKUP || lastNotStowState == MechanismStates.LOW_SCORING
+                || lastNotStowState == MechanismStates.SINGLE_SUBSTATION_PICKUP_CONE
+                || lastNotStowState == MechanismStates.SINGLE_SUBSTATION_PICKUP_CUBE)
                 && areKeepoutsEnabled) {
-            if (lastNotStowState != MechanismStates.STATION_PICKUP) {
+            if (lastNotStowState != MechanismStates.DOUBLE_STATION_PICKUP) {
                 // Use scoring keepouts
                 double armEndX = limitedStateCoordinates.xMeters - limitedStateCoordinates.grabberX();
                 double armEndY = limitedStateCoordinates.yMeters - limitedStateCoordinates.grabberY();

@@ -155,7 +155,7 @@ public final class Constants {
 
     public static final double NOMINAL_DT = NOMINAL_DT_MS / 1000.0;
 
-    public static final int MAX_TELEOP_TURN_SPEED = 7;
+    public static final int MAX_TELEOP_TURN_SPEED = 10;
     /**
      * Acceleration due to gravity in meters per second squared. (9.80665 m/s^2)
      */
@@ -295,6 +295,14 @@ public final class Constants {
 
     public static final double SCORING_POSITION_OFFSET_CONE_FROM_WALL = 0.05;
     public static final double SCORING_POSITION_OFFSET_CUBE_FROM_WALL = 0.05 + Units.inchesToMeters(2);
+
+    public static final double SINGLE_STATION_RED_X = 14.39;
+    public static final double SINGLE_STATION_BLUE_X = FIELD_WALL_RIGHT_X - SINGLE_STATION_RED_X;
+    public static final double SINGLE_STATION_Y = -3.21;
+    public static final Rotation2d SINGLE_STATION_ANGLE = Rotation2d.fromDegrees(-90);
+
+    public static final double SINGLE_SUBSTATION_PICKUP_ANGLE_CUTOFF_DEGREES = -30;
+
 
     // Constraints
     // TODO: FIND REAL CONSTRAINTS
