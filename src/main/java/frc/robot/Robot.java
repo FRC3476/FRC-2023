@@ -564,7 +564,6 @@ public class Robot extends LoggedRobot {
                     } else if (level == 1) {
                         if (scoringPositionManager.getWantedPositionType() == PositionType.CONE) {
                             mechanismStateManager.setState(MechanismStates.CONE_MIDDLE_SCORING);
-                            mechanismStateManager.setState(MechanismStates.FINAL_CONE_MIDDLE_SCORING);
                         } else {
                             mechanismStateManager.setState(MechanismStates.CUBE_MIDDLE_SCORING);
                         }
@@ -627,6 +626,11 @@ public class Robot extends LoggedRobot {
                 // Auto Grab isn't letting us close so disable it
                 grabber.setAutoGrab(false);
             } else {
+                if (wantedMechanismState == WantedMechanismState.SCORING
+                        && scoringPositionManager.getSelectedPosition().getLevel() == 1
+                        && scoringPositionManager.getWantedPositionType() == PositionType.CONE) {
+                    mechanismStateManager.setState(MechanismStates.FINAL_CONE_MIDDLE_SCORING);
+                }
                 isGrabberOpen = !isGrabberOpen;
                 if (isGrabberOpen) {
                     grabberOpenTime = Timer.getFPGATimestamp();
