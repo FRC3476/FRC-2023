@@ -647,7 +647,7 @@ public class Robot extends LoggedRobot {
                     if (wantedMechanismState == WantedMechanismState.SCORING
                             && scoringPositionManager.getSelectedPosition().getLevel() == 1
                             && scoringPositionManager.getWantedPositionType() == PositionType.CONE) {
-                        elevator.setPosition(elevator.getPosition() - 3);
+                        elevator.setPosition(elevator.getPosition() - .03);
                     }
                     grabber.setGrabState(GrabState.OPEN);
                 }
