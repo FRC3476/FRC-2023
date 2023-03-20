@@ -644,6 +644,11 @@ public class Robot extends LoggedRobot {
                         && grabber.isOpen() && IS_AUTO_GRAB_ENABLED && mechanismStateManager.isMechAtFinalPos() && grabber.isAutoGrabEnabled()) {
                     isGrabberOpen = false;
                 } else {
+                    if (wantedMechanismState == WantedMechanismState.SCORING
+                            && scoringPositionManager.getSelectedPosition().getLevel() == 1
+                            && scoringPositionManager.getWantedPositionType() == PositionType.CONE) {
+                        elevator.setPosition(elevator.getPosition() - 3);
+                    }
                     grabber.setGrabState(GrabState.OPEN);
                 }
             }
