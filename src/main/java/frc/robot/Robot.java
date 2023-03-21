@@ -660,6 +660,8 @@ public class Robot extends LoggedRobot {
                 if (wantedMechanismState == WantedMechanismState.SCORING
                         && scoringPositionManager.getSelectedPosition().getLevel() == 1
                         && scoringPositionManager.getWantedPositionType() == PositionType.CONE) {
+                    // We're in the scoring in the middle level with a cone. Instead of opening the grabber, we want to
+                    // shove the cone down onto the pole
                     mechanismStateManager.setState(MechanismStates.FINAL_CONE_MIDDLE_SCORING);
                 } else {
                     isGrabberOpen = !isGrabberOpen;
@@ -672,6 +674,7 @@ public class Robot extends LoggedRobot {
 
         if (mechanismStateManager.isMechAtFinalPos()
                 && mechanismStateManager.getCurrentWantedState() == MechanismStates.FINAL_CONE_MIDDLE_SCORING.state) {
+            // We've finished shoving the cone down onto the pole. Now we want to open the grabber
             isGrabberOpen = true;
         }
 
