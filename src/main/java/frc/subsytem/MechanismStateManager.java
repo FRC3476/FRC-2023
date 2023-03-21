@@ -77,12 +77,13 @@ public class MechanismStateManager extends AbstractSubsystem {
         CUBE_MIDDLE_SCORING(new MechanismStateCoordinates(Units.inchesToMeters(16), Units.inchesToMeters(40), 0)),
         CONE_MIDDLE_SCORING(new MechanismStateCoordinates(Units.inchesToMeters(10), Units.inchesToMeters(47.5), 25)),
         FINAL_CONE_MIDDLE_SCORING(
-                new MechanismStateCoordinates(Units.inchesToMeters(18), Units.inchesToMeters(47.5) - CONE_LOWER_METERS,
-                        25)),
+                new MechanismStateCoordinates(Units.inchesToMeters(18), Units.inchesToMeters(47.5) - CONE_LOWER_METERS, 25)
+        ),
         CONE_HIGH_SCORING(new MechanismStateCoordinates(Units.inchesToMeters(36), Units.inchesToMeters(57), 65)),
         CUBE_HIGH_SCORING(new MechanismStateCoordinates(Units.inchesToMeters(36), Units.inchesToMeters(54), 33)),
-        DOUBLE_STATION_PICKUP(new MechanismStateCoordinates(0.531, 2.3 - 0.015 - (!IS_PRACTICE ? Units.inchesToMeters(3.2) : 0),
-                12)),
+        DOUBLE_STATION_PICKUP(
+                new MechanismStateCoordinates(0.531, 2.3 - 0.015 - (!IS_PRACTICE ? Units.inchesToMeters(3.2) : 0), 12)
+        ),
         FLOOR_PICKUP(new MechanismStateCoordinates(0.08, 0.06, !IS_PRACTICE ? -10 : 0)),
         SINGLE_SUBSTATION_PICKUP_CUBE(new MechanismStateCoordinates(0.036, 0.67, 50.55)),
         SINGLE_SUBSTATION_PICKUP_CONE(new MechanismStateCoordinates(0.04296, 0.63057, 68.6));
