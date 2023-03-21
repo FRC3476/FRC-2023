@@ -531,6 +531,7 @@ public class Robot extends LoggedRobot {
             if (wantedMechanismState == WantedMechanismState.STOWED) {
                 wantedMechanismState = WantedMechanismState.TIPPED_FLOOR_PICKUP;
                 isGrabberOpen = true;
+                useAutoGrab = true;
             } else {
                 setStowed();
             }
