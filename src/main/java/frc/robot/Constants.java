@@ -134,7 +134,7 @@ public final class Constants {
 
 
     public static final double SWERVE_DRIVE_MOTOR_REDUCTION = 1 / 6.75; // L2 gear ratio
-
+    public static final double CONE_LOWER_METERS = Units.inchesToMeters(10);
     public static final double ALLOWED_XY_ERROR_RAMSETE = 0.04;
     public static final double PID_CONTROL_RANGE_AUTO_DRIVE_METERS = 0.1;
     public static final double ALLOWED_AUTO_DRIVE_POSITION_ERROR_METERS = 0.02;
@@ -155,7 +155,7 @@ public final class Constants {
 
     public static final double NOMINAL_DT = NOMINAL_DT_MS / 1000.0;
 
-    public static final int MAX_TELEOP_TURN_SPEED = 7;
+    public static final int MAX_TELEOP_TURN_SPEED = 10;
     /**
      * Acceleration due to gravity in meters per second squared. (9.80665 m/s^2)
      */
@@ -226,7 +226,7 @@ public final class Constants {
     public static boolean GRABBER_WHEELS_USED = false;
 
     public static final double GRABBER_LENGTH = .308;
-    
+
     public static final boolean IS_AUTO_GRAB_ENABLED = true;
     public static final boolean USE_PIVOT_ABSOLUTE_ENCODER = !IS_PRACTICE;
 
@@ -295,6 +295,14 @@ public final class Constants {
 
     public static final double SCORING_POSITION_OFFSET_CONE_FROM_WALL = 0.05;
     public static final double SCORING_POSITION_OFFSET_CUBE_FROM_WALL = 0.05 + Units.inchesToMeters(2);
+
+    public static final double SINGLE_STATION_RED_X = 14.39;
+    public static final double SINGLE_STATION_BLUE_X = FIELD_WALL_RIGHT_X - SINGLE_STATION_RED_X;
+    public static final double SINGLE_STATION_Y = -3.21;
+    public static final Rotation2d SINGLE_STATION_ANGLE = Rotation2d.fromDegrees(-90);
+
+    public static final double SINGLE_SUBSTATION_PICKUP_ANGLE_CUTOFF_DEGREES = -30;
+
 
     // Constraints
     // TODO: FIND REAL CONSTRAINTS
