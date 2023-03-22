@@ -531,7 +531,6 @@ public class Robot extends LoggedRobot {
             if (wantedMechanismState == WantedMechanismState.STOWED) {
                 wantedMechanismState = WantedMechanismState.TIPPED_FLOOR_PICKUP;
                 isGrabberOpen = true;
-                useAutoGrab = true;
             } else {
                 setStowed();
             }
@@ -652,7 +651,9 @@ public class Robot extends LoggedRobot {
                     isGrabberOpen = false;
                 }
             } else {
-                if ((wantedMechanismState == WantedMechanismState.FLOOR_PICKUP || wantedMechanismState == WantedMechanismState.STATION_PICKUP)
+                if ((wantedMechanismState == WantedMechanismState.FLOOR_PICKUP
+                        || wantedMechanismState == WantedMechanismState.TIPPED_FLOOR_PICKUP
+                        || wantedMechanismState == WantedMechanismState.STATION_PICKUP)
                         && grabber.isOpen() && IS_AUTO_GRAB_ENABLED && mechanismStateManager.isMechAtFinalPos() && grabber.isAutoGrabEnabled()) {
                     isGrabberOpen = false;
                 } else {
