@@ -378,7 +378,18 @@ public class Robot extends LoggedRobot {
 
 
     enum WantedMechanismState {
-        STOWED, SCORING, FLOOR_PICKUP, TIPPED_FLOOR_PICKUP, STATION_PICKUP_DOUBLE, STATION_PICKUP_SINGLE
+        STOWED(false),
+        SCORING(false),
+        FLOOR_PICKUP(true),
+        TIPPED_FLOOR_PICKUP(true),
+        STATION_PICKUP_DOUBLE(true),
+        STATION_PICKUP_SINGLE(true);
+
+        public final boolean shouldAutoGrab;
+
+        WantedMechanismState(boolean shouldAutoGrab) {
+            this.shouldAutoGrab = shouldAutoGrab;
+        }
     }
 
     private static WantedMechanismState wantedMechanismState = WantedMechanismState.STOWED;
@@ -493,10 +504,7 @@ public class Robot extends LoggedRobot {
             }
         }
 
-        if (grabber.isGrabbed() &&
-                (wantedMechanismState == WantedMechanismState.STATION_PICKUP_DOUBLE
-                        || wantedMechanismState == WantedMechanismState.FLOOR_PICKUP
-                        || wantedMechanismState == WantedMechanismState.STATION_PICKUP_SINGLE)) {
+        if (grabber.isGrabbed() && wantedMechanismState.shouldAutoGrab) {
             setStowed();
         }
 
@@ -619,16 +627,10 @@ public class Robot extends LoggedRobot {
             }
 
             if (wantedMechanismState != lastWantedMechanismState && useAutoGrab) {
-                Robot.getGrabber().setAutoGrab(
-                        wantedMechanismState == WantedMechanismState.STATION_PICKUP_DOUBLE
-                                || wantedMechanismState == WantedMechanismState.FLOOR_PICKUP
-                                || wantedMechanismState == WantedMechanismState.STATION_PICKUP_SINGLE
-                );
+                Robot.getGrabber().setAutoGrab(wantedMechanismState.shouldAutoGrab);
             }
         }
-
         lastWantedMechanismState = wantedMechanismState;
-
 
         var limitedMechCoords = MechanismStateManager.limitCoordinates(mechanismStateManager.getCurrentWantedState());
 
@@ -695,11 +697,7 @@ public class Robot extends LoggedRobot {
                     isGrabberOpen = false;
                 }
             } else {
-                if ((wantedMechanismState == WantedMechanismState.FLOOR_PICKUP
-                        || wantedMechanismState == WantedMechanismState.TIPPED_FLOOR_PICKUP
-
-                        || wantedMechanismState == WantedMechanismState.STATION_PICKUP_DOUBLE
-                        || wantedMechanismState == WantedMechanismState.STATION_PICKUP_SINGLE)
+                if (wantedMechanismState.shouldAutoGrab
                         && grabber.isOpen() && IS_AUTO_GRAB_ENABLED && mechanismStateManager.isMechAtFinalPos() && grabber.isAutoGrabEnabled()) {
                     isGrabberOpen = false;
                 } else {

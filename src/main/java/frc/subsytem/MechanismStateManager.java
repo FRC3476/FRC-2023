@@ -72,26 +72,62 @@ public class MechanismStateManager extends AbstractSubsystem {
 
 
     public enum MechanismStates {
-        STOWED(new MechanismStateCoordinates(-0.445, 0.285, MAX_WRIST_ANGLE - 2)),
-        LOW_SCORING(new MechanismStateCoordinates(0.08, 0.1, 0)),
-        CUBE_MIDDLE_SCORING(new MechanismStateCoordinates(Units.inchesToMeters(16), Units.inchesToMeters(40), 0)),
-        CONE_MIDDLE_SCORING(new MechanismStateCoordinates(Units.inchesToMeters(10), Units.inchesToMeters(47.5), 25)),
+        STOWED(
+                new MechanismStateCoordinates(-0.445, 0.285, MAX_WRIST_ANGLE - 2),
+                false
+        ),
+        LOW_SCORING(
+                new MechanismStateCoordinates(0.08, 0.1, 0),
+                true
+        ),
+        CUBE_MIDDLE_SCORING(
+                new MechanismStateCoordinates(Units.inchesToMeters(16), Units.inchesToMeters(40), 0),
+                false
+        ),
+        CONE_MIDDLE_SCORING(
+                new MechanismStateCoordinates(Units.inchesToMeters(10), Units.inchesToMeters(47.5), 25),
+                false
+        ),
         FINAL_CONE_MIDDLE_SCORING(
-                new MechanismStateCoordinates(Units.inchesToMeters(18), Units.inchesToMeters(47.5) - CONE_LOWER_METERS, 25)
+                new MechanismStateCoordinates(Units.inchesToMeters(18), Units.inchesToMeters(47.5) - CONE_LOWER_METERS, 25),
+                true
         ),
-        CONE_HIGH_SCORING(new MechanismStateCoordinates(Units.inchesToMeters(36), Units.inchesToMeters(57), 65)),
-        CUBE_HIGH_SCORING(new MechanismStateCoordinates(Units.inchesToMeters(36), Units.inchesToMeters(54), 33)),
-        TIPPED_FLOOR_PICKUP(new MechanismStateCoordinates(0.08, 0.06, MIN_WRIST_ANGLE)), //Estimated values
+        CONE_HIGH_SCORING(
+                new MechanismStateCoordinates(Units.inchesToMeters(36), Units.inchesToMeters(57), 65),
+                false
+        ),
+        CUBE_HIGH_SCORING(
+                new MechanismStateCoordinates(Units.inchesToMeters(36), Units.inchesToMeters(54), 33),
+                false
+        ),
+        TIPPED_FLOOR_PICKUP(
+                new MechanismStateCoordinates(0.08, 0.06, MIN_WRIST_ANGLE),
+                false
+        ), //Estimated values
         DOUBLE_STATION_PICKUP(
-                new MechanismStateCoordinates(0.531, 2.3 - 0.015 - (!IS_PRACTICE ? Units.inchesToMeters(3.2) : 0), 12)
+                new MechanismStateCoordinates(0.531, 2.3 - 0.015 - (!IS_PRACTICE ? Units.inchesToMeters(3.2) : 0), 12),
+                false
         ),
-        FLOOR_PICKUP(new MechanismStateCoordinates(0.08, 0.06, !IS_PRACTICE ? -10 : 0)),
-        SINGLE_SUBSTATION_PICKUP_CUBE(new MechanismStateCoordinates(0.036, 0.67, 50.55)),
-        SINGLE_SUBSTATION_PICKUP_CONE(new MechanismStateCoordinates(0.04296, 0.63057, 68.6));
-        public final MechanismStateCoordinates state;
+        FLOOR_PICKUP(
+                new MechanismStateCoordinates(0.08, 0.06, !IS_PRACTICE ? -10 : 0),
+                true
+        ),
+        SINGLE_SUBSTATION_PICKUP_CUBE(
+                new MechanismStateCoordinates(0.036, 0.67, 50.55),
+                true
+        ),
+        SINGLE_SUBSTATION_PICKUP_CONE(
+                new MechanismStateCoordinates(0.04296, 0.63057, 68.6),
+                true
+        );
 
-        MechanismStates(MechanismStateCoordinates state) {
+
+        public final MechanismStateCoordinates state;
+        public final boolean isKeepoutExempt;
+
+        MechanismStates(MechanismStateCoordinates state, boolean isKeepoutExempt) {
             this.state = state;
+            this.isKeepoutExempt = isKeepoutExempt;
         }
     }
 
@@ -243,11 +279,7 @@ public class MechanismStateManager extends AbstractSubsystem {
 
 
         MechanismStateSubsystemPositions limitedStatePositions = coordinatesToSubsystemPositions(limitedStateCoordinates);
-        if (!(lastNotStowState == MechanismStates.FLOOR_PICKUP || lastNotStowState == MechanismStates.LOW_SCORING
-                || lastNotStowState == MechanismStates.SINGLE_SUBSTATION_PICKUP_CONE
-                || lastNotStowState == MechanismStates.SINGLE_SUBSTATION_PICKUP_CUBE
-                || lastNotStowState == MechanismStates.FINAL_CONE_MIDDLE_SCORING)
-                && areKeepoutsEnabled) {
+        if (!lastNotStowState.isKeepoutExempt && areKeepoutsEnabled) {
             if (lastNotStowState != MechanismStates.DOUBLE_STATION_PICKUP) {
                 // Use scoring keepouts
                 double armEndX = limitedStateCoordinates.xMeters - limitedStateCoordinates.grabberX();
