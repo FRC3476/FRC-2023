@@ -187,7 +187,7 @@ public final class Constants {
     public static final double ELEVATOR_TILT_RADIANS = Math.toRadians(64.24203436);
     public static final double ELEVATOR_STALLING_CURRENT = 35;
     public static final double ELEVATOR_MIN_HOME_TIME = 0.2;
-    public static final double MOTOR_SPEED_DECREASING_RATE = -0.1;
+    public static final double ELEVATOR_HOME_VOLTAGE = -1.5;
 
     public static final int ELEVATOR_MAIN_CAN_ID = 40;
     public static final int ELEVATOR_FOLLOWER_CAN_ID = 42;
@@ -199,10 +199,10 @@ public final class Constants {
     public static final double TELESCOPING_ARM_D = 60.0;
     public static final double TELESCOPING_ARM_MIN_HOME_TIME = 0.2;
     public static final double TELESCOPING_ARM_STALLING_CURRENT = 35;
-    public static final double ARM_NOMINAL_VOLTAGE = 9;
     public static final double TELESCOPING_ARM_ROTATIONS_PER_METER = 96.664 / (Math.PI);
     public static final double TELESCOPING_ARM_NOMINAL_VOLTAGE = 9;
     public static final int TELESCOPING_ARM_SMART_CURRENT_LIMIT = 40;
+    public static final double TELESCOPING_ARM_HOME_VOLTAGE = -1.5;
     public static final int TELESCOPING_ARM_CAN_ID = 60;
     public static final double TELESCOPING_ARM_ALLOWED_ERROR = 0.0001;
     public static final ArmFeedforward GRABBER_FEEDFORWARD = new ArmFeedforward(0.32, 0.34, 0, 0);

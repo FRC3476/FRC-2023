@@ -25,15 +25,6 @@ public class TelescopingArm extends AbstractSubsystem {
     private double trapezoidProfileStartTime = 0;
 
     /**
-     * Controls elevator motor with percent output
-     *
-     * @param percent Spans from -1 to 1 where the extremes are full power and direction depends on the sign
-     */
-    public void setPercentOutput(double percent) {
-        io.setTelescopingArmVoltage(percent * ARM_NOMINAL_VOLTAGE);
-    }
-
-    /**
      * @param position The position to set the telescoping arm (meters)
      */
     public void setPosition(double position) {
@@ -68,7 +59,7 @@ public class TelescopingArm extends AbstractSubsystem {
         if (homing) {
             if (DriverStation.isEnabled()) {
                 homeTime -= Constants.NOMINAL_DT;
-                setPercentOutput(MOTOR_SPEED_DECREASING_RATE);
+                io.setTelescopingArmVoltage(TELESCOPING_ARM_HOME_VOLTAGE);
                 if (homeTime <= 0 && avg(inputs.current) > TELESCOPING_ARM_STALLING_CURRENT) {
                     homing = false;
                     io.resetTelescopingArmPosition(0);
