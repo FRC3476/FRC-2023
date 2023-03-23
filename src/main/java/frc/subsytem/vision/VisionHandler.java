@@ -24,6 +24,7 @@ import edu.wpi.first.wpilibj.Timer;
 import frc.robot.Robot;
 import frc.subsytem.AbstractSubsystem;
 import frc.subsytem.robottracker.RobotTracker;
+import frc.utility.LimelightHelpers;
 import org.jetbrains.annotations.NotNull;
 import org.littletonrobotics.junction.Logger;
 import org.littletonrobotics.junction.networktables.LoggedDashboardBoolean;
@@ -31,10 +32,10 @@ import org.littletonrobotics.junction.networktables.LoggedDashboardBoolean;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.EnumSet;
-import java.util.HashMap;
 
 import static frc.robot.Constants.*;
 import static frc.utility.OrangeUtility.fixCoords;
+import static frc.utility.geometry.GeometryUtils.dist2;
 import static org.joml.Math.tan;
 
 /**
@@ -56,7 +57,7 @@ public class VisionHandler extends AbstractSubsystem {
     static final Rotation3d POSITIVE_Y_90 = new Rotation3d(POSITIVE_Y, Math.toRadians(90.0));
     static final Rotation3d POSITIVE_X_NEGATIVE_90 = new Rotation3d(POSITIVE_X, Math.toRadians(-90.0));
     static final Rotation3d POSITIVE_Z_180 = new Rotation3d(POSITIVE_Z, Math.toRadians(180));
-    private static final @NotNull HashMap<Integer, Pose3d> fieldTagCache;
+    private static final @NotNull Pose3d[] fieldTags;
 
     static {
         try {
@@ -80,10 +81,10 @@ public class VisionHandler extends AbstractSubsystem {
             fieldLayout = new AprilTagFieldLayout(adjustedAprilTags, FIELD_HEIGHT_METERS, FIELD_WIDTH_METERS);
 
             // Initialize Cache
-            fieldTagCache = new HashMap<>();
+            fieldTags = new Pose3d[fieldLayout.getTags().size()];
 
             for (AprilTag tag : fieldLayout.getTags()) {
-                fieldTagCache.put(tag.ID, tag.pose);
+                fieldTags[tag.ID] = tag.pose;
             }
 
 //            System.out.println("AprilTag Positions: ");
@@ -155,17 +156,37 @@ public class VisionHandler extends AbstractSubsystem {
                         }
                     });
         }
+
+        NetworkTableInstance.getDefault().addListener(
+                // table name of null gets the default table
+                LimelightHelpers.getLimelightNTTableEntry(null, "botpose_wpired").getTopic(),
+                EnumSet.of(Kind.kValueRemote),
+                (event) -> {
+                    synchronized (this) {
+                        // https://docs.limelightvision.io/en/latest/apriltags_in_3d.html#using-wpilib-s-pose-estimator
+                        double[] botpose = event.valueData.value.getDoubleArray();
+                        Pose3d llPose = LimelightHelpers.toPose3D(botpose);
+                        Pose3d adjustedPose = new Pose3d(
+                                llPose.getTranslation().plus(new Translation3d(0, -FIELD_HEIGHT_METERS / 2, 0)),
+                                llPose.getRotation()
+                        );
+                        visionInputs.limelightUpdates.add(new LimelightUpdate(
+                                adjustedPose,
+                                Timer.getFPGATimestamp() - (botpose[6] / 1000.0)
+                        ));
+                    }
+                });
     }
 
     private final MatBuilder<N4, N1> visionStdMatBuilder = new MatBuilder<>(Nat.N4(), Nat.N1());
 
     private void processNewTagPosition(VisionUpdate data) {
-        final var expectedTagPosition = fieldTagCache.get(data.tagId); // We should never get an
+        final var expectedTagPosition = fieldTags[data.tagId]; // We should never get an
         // unknown tag
 
         final var tagTranslation = new Translation3d(data.posZ, -data.posX, -data.posY); //camera to tag
         var distanceToTag = tagTranslation.getNorm();
-//negative camera pose  -> camera to robot
+        //negative camera pose  -> camera to robot
         //camera pose
         final var tagTranslationRobotCentric = tagTranslation
                 .rotateBy(negativeCameraPose.getRotation())
@@ -225,14 +246,14 @@ public class VisionHandler extends AbstractSubsystem {
                 new RobotState(poseToFeedToRobotTracker.toPose2d(), data.timestamp, "Fed Vision Pose Tag: " + data.tagId));
         RobotPositionSender.addRobotPosition(
                 new RobotState(visionOnlyPose.toPose2d(), data.timestamp, "Vision Only Pose Tag: " + data.tagId));
-        var defaultDevs = RobotTracker.DEFAULT_VISION_DEVIATIONS;
+        var defaultDevs = RobotTracker.REALSENSE_DEFAULT_VISION_DEVIATIONS;
         if (distanceToTag == 0) return;
-        var distanceToTag3 = distanceToTag * distanceToTag;
+        var distanceToTag2 = distanceToTag * distanceToTag;
         var devs = visionStdMatBuilder.fill(
-                defaultDevs.get(0, 0) * distanceToTag3,
-                defaultDevs.get(1, 0) * distanceToTag3,
-                defaultDevs.get(2, 0) * distanceToTag3,
-                Math.atan(tan(defaultDevs.get(3, 0)) * distanceToTag3 * distanceToTag));
+                defaultDevs.get(0, 0) * distanceToTag2,
+                defaultDevs.get(1, 0) * distanceToTag2,
+                defaultDevs.get(2, 0) * distanceToTag2,
+                Math.atan(tan(defaultDevs.get(3, 0)) * distanceToTag2 * distanceToTag));
         Robot.getRobotTracker().addVisionMeasurement(poseToFeedToRobotTracker, data.timestamp, devs);
 
         Logger.getInstance().recordOutput("VisionHandler/VisionOnlyPoseAngles/" + data.tagId + "/X",
@@ -290,6 +311,30 @@ public class VisionHandler extends AbstractSubsystem {
             processNewTagPosition(visionUpdate);
         }
         visionInputs.visionUpdates.clear();
+
+        for (var limelightUpdate : visionInputs.limelightUpdates) {
+            var defaultDevs = RobotTracker.REALSENSE_DEFAULT_VISION_DEVIATIONS;
+            var distanceToTag2 = Double.MAX_VALUE;
+
+            var pose = limelightUpdate.pose3d();
+
+            for (var tags : fieldTags) {
+                var dist2 = dist2(tags.getTranslation().minus(pose.getTranslation()));
+                if (dist2 < distanceToTag2) {
+                    distanceToTag2 = dist2;
+                }
+            }
+
+            var devs = visionStdMatBuilder.fill(
+                    defaultDevs.get(0, 0) * distanceToTag2,
+                    defaultDevs.get(1, 0) * distanceToTag2,
+                    defaultDevs.get(2, 0) * distanceToTag2,
+                    Math.atan(tan(defaultDevs.get(3, 0)) * distanceToTag2 * distanceToTag2));
+
+            Robot.getRobotTracker().addVisionMeasurement(pose, limelightUpdate.timestamp(), devs);
+        }
+
+        visionInputs.limelightUpdates.clear();
     }
 
     record VisionUpdate(double posX, double posY, double posZ, double rotX, double rotY, double rotZ, double rotW,
@@ -320,4 +365,6 @@ public class VisionHandler extends AbstractSubsystem {
                     (int) Math.round(array[8]));
         }
     }
+
+    record LimelightUpdate(Pose3d pose3d, double timestamp) {}
 }

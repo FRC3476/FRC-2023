@@ -74,7 +74,9 @@ public final class RobotTracker extends AbstractSubsystem {
      */
     private double angularRollRate = 0;
 
-    public static final Matrix<N4, N1> DEFAULT_VISION_DEVIATIONS = VecBuilder.fill(0.07, 0.07, 0.05, Math.toRadians(7));
+    public static final Matrix<N4, N1> REALSENSE_DEFAULT_VISION_DEVIATIONS = VecBuilder.fill(0.07, 0.07, 0.05, Math.toRadians(7));
+    public static final Matrix<N4, N1> LIMELIGHT_DEFAULT_VISION_DEVIATIONS = VecBuilder.fill(0.07, 0.07, 0.05, Math.toRadians(7));
+
 
     private final SwerveDrivePoseEstimator swerveDriveOdometry;
 
@@ -126,7 +128,7 @@ public final class RobotTracker extends AbstractSubsystem {
                 Robot.getDrive().getModulePositions(),
                 new Pose3d(),
                 VecBuilder.fill(0.1, 0.1, 0.1, 0.01),
-                DEFAULT_VISION_DEVIATIONS
+                REALSENSE_DEFAULT_VISION_DEVIATIONS
         );
 
         new ScheduledThreadPoolExecutor(1).scheduleAtFixedRate(this::updateGyroHistory, 0, 1,
@@ -508,7 +510,7 @@ public final class RobotTracker extends AbstractSubsystem {
                     continue;
                 }
 
-                var visionMeasurementStds = visionMeasurement.visionMeasurementStds().orElse(DEFAULT_VISION_DEVIATIONS);
+                var visionMeasurementStds = visionMeasurement.visionMeasurementStds().orElse(REALSENSE_DEFAULT_VISION_DEVIATIONS);
 
                 pastVisionMeasurements.putIfAbsent(visionMeasurement.timestamp(), new ArrayList<>());
                 pastVisionMeasurements.get(visionMeasurement.timestamp()).add(
@@ -516,7 +518,7 @@ public final class RobotTracker extends AbstractSubsystem {
                                 swerveDriveOdometry.getEstimatedPosition3d())
                 );
 
-                var stds = visionMeasurement.visionMeasurementStds().orElse(DEFAULT_VISION_DEVIATIONS);
+                var stds = visionMeasurement.visionMeasurementStds().orElse(REALSENSE_DEFAULT_VISION_DEVIATIONS);
                 var reducedStds = VecBuilder.fill(stds.get(0, 0), stds.get(1, 0), stds.get(3, 0));
 
                 var visionPose = visionMeasurement.pose();

@@ -2,6 +2,7 @@ package frc.utility.geometry;
 
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
+import edu.wpi.first.math.geometry.Translation3d;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
@@ -60,6 +61,13 @@ public final class GeometryUtils {
         double x = translation2d.getX();
         double y = translation2d.getY();
         return x * x + y * y;
+    }
+
+    public static double dist2(@NotNull Translation3d translation3d) {
+        double x = translation3d.getX();
+        double y = translation3d.getY();
+        double z = translation3d.getZ();
+        return x * x + y * y + z * z;
     }
 
 
