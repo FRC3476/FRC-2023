@@ -350,7 +350,7 @@ public class SwerveDrivePoseEstimator {
             m_poseEstimate = old_estimate.exp(odometry_fastforward);
         } catch (IllegalArgumentException e) {
             if (Timer.getFPGATimestamp() - errorTime >= Constants.MAX_ERROR_PRINT_TIME) {
-                DriverStation.reportError("Failed to add Vision Measurement: " + e.getMessage(), false);
+                DriverStation.reportError("Failed to add Vision Measurement", false);
             }
             errorTime = Timer.getFPGATimestamp();
         }
