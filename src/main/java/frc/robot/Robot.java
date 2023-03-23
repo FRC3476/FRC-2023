@@ -642,7 +642,7 @@ public class Robot extends LoggedRobot {
             mechWantedY = limitedMechCoords.yMeters();
             mechWantedAngle = limitedMechCoords.grabberAngleDegrees();
 
-            mechWantedAngle += mechInputs.getY() * ARCADE_WRIST_ANGLE_SPEED * NOMINAL_DT;
+            mechWantedAngle += -mechInputs.getY() * ARCADE_WRIST_ANGLE_SPEED * NOMINAL_DT;
 
             mechWantedX += mechDx * ARCADE_MODE_TRANSLATION_SPEED * NOMINAL_DT;
             mechWantedY += mechDy * ARCADE_MODE_TRANSLATION_SPEED * NOMINAL_DT;
