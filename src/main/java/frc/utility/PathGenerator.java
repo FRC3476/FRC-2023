@@ -33,7 +33,7 @@ public class PathGenerator {
 
     //set initial velocity, copy it then
     private static final double MAX_VELOCITY = 3.5;
-    private static final double MAX_ACCELERATION = 3;
+    private static final double MAX_ACCELERATION = 2.85;
 
     private static final ArrayList<TrajectoryConstraint> constraints = new ArrayList<>();
 
@@ -46,11 +46,19 @@ public class PathGenerator {
 
     public static CompletableFuture<Optional<Trajectory>> generateTrajectory(
             Translation2d robotVelocity, Translation2d robotTranslation, Translation2d targetPosition,
-            double startPosPredictAhead) {
-        // Implicitly determine the goal vector based on the position of the target position
-        double dir = targetPosition.getX() > Constants.FIELD_WIDTH_METERS / 2 ? END_VECTOR_LEN : -END_VECTOR_LEN; //based on
-        // alliance flip end vector
-        return generateTrajectory(robotVelocity, robotTranslation, targetPosition, new Translation2d(dir, 0),
+            double startPosPredictAhead, boolean singleStationPickup) {
+        Translation2d endDirTranslation;
+        if (singleStationPickup) {
+            endDirTranslation = new Translation2d(0, -END_VECTOR_LEN);
+        } else {
+            // Implicitly determine the goal vector based on the position of the target position
+            endDirTranslation = new Translation2d(
+                    //based on alliance flip end vector
+                    targetPosition.getX() > Constants.FIELD_WIDTH_METERS / 2 ? END_VECTOR_LEN : -END_VECTOR_LEN,
+                    0
+            );
+        }
+        return generateTrajectory(robotVelocity, robotTranslation, targetPosition, endDirTranslation,
                 startPosPredictAhead, Robot.isRed());
     }
 

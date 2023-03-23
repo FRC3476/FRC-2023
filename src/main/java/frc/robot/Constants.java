@@ -18,31 +18,30 @@ import java.io.File;
 import java.nio.file.Files;
 
 public final class Constants {
-    public static final double ANGULAR_ACCELERATION_BALANCE_THRESHHOLD = 10;
-    public static final double BALANCE_REVERSE_SPEED = .4;
-    public static final String LOG_DIRECTORY = "/u/logs";
+    public static final double ANGULAR_VELOCITY_BALANCE_THRESHHOLD = 10;
+    public static final double BALANCE_REVERSE_SPEED = 0.1;
+    public static final String LOG_DIRECTORY = "/home/lvuser/logs";
 
     public static final double SECONDS_PER_MINUTE = 60;
 
     public static final boolean IS_PRACTICE = Files.exists(new File("/home/lvuser/practice").toPath());
-    public static final boolean USE_CANCODERS = false;
+    public static final boolean USE_CANCODERS = true;
+    public static final boolean USE_RELATIVE_ENCODER_POSITION = true; // The relative position is equivalent to the absolute
+    // position on the falcon 500 encoder
     public static final double SECONDS_PER_MICROSECOND = 1e-6;
-    public static final long MIN_FREE_SPACE = 60000000; // 60 MB
+    public static final long MIN_FREE_SPACE = IS_PRACTICE ?
+            100000000 : // 100 MB
+            1000000000; // 1 GB
 
-    // 2048 sensor units per revolution
-    public static final double FALCON_ENCODER_TICKS_PER_ROTATIONS = 2048;
-    public static final double FALCON_ENCODER_TICKS_PER_100_MS_TO_RPM = 600 / 2048.0d;
+    // Drive Constants
     public static final double SWERVE_MOTOR_POSITION_CONVERSION_FACTOR = 1 / 12.8;
     public static final int DEFAULT_PERIODS_PER_LOG = 0;
     private static final int NOMINAL_DT_MS = 20;
 
-    public static final double BALANCE_P = .05;
+    public static final double BALANCE_P = .040;
     public static final double BALANCE_I = 0;
     public static final double BALANCE_D = 0;
-
-    //Drive Constants
-    public static final double AUTO_BALANCING_VELOCITY = 0.5;
-    public static final int AUTO_BALANCE_VELOCITY_THRESHOLD = 5;
+    public static final int AUTO_BALANCE_VELOCITY_THRESHOLD_DEGREES_PER_SECOND = 8;
 
     public static final int DRIVE_LEFT_FRONT_ID = 11;
     public static final int DRIVE_LEFT_BACK_ID = 12;
@@ -61,12 +60,12 @@ public final class Constants {
 
     public static final double SWERVE_INCHES_PER_ROTATION = 12.5 * 0.976;
     public static final double SWERVE_METER_PER_ROTATION = Units.inchesToMeters(SWERVE_INCHES_PER_ROTATION);
-    public static final double SWERVE_DRIVE_P = .08;
+    public static final double SWERVE_DRIVE_P = 100;
     public static final double SWERVE_DRIVE_D = 0.00;
     public static final double SWERVE_DRIVE_I = 0.00;
     public static final double SWERVE_DRIVE_F = 0.00;
     public static final double SWERVE_DRIVE_INTEGRAL_ZONE = 0.00;
-    public static final double AUTO_BALANCE_COMPLETE_THRESHOLD = 9;
+    public static final double AUTO_BALANCE_COMPLETE_THRESHOLD_DEGREES = 7;
     public static final double MAX_ERROR_PRINT_TIME = 0.5;
     /**
      * Feed forward constants for the drivetrain.
@@ -81,10 +80,10 @@ public final class Constants {
      */
     public static final SimpleMotorFeedforward[] DRIVE_FEEDFORWARD = {
             //ka = 0.55
-            new SimpleMotorFeedforward(0.194596, 2.86, 0),
-            new SimpleMotorFeedforward(0.194596, 2.86, 0),
-            new SimpleMotorFeedforward(0.194596, 2.86, 0),
-            new SimpleMotorFeedforward(0.194596, 2.86, 0)};
+            new SimpleMotorFeedforward(0.256163, 2.48626, 0.2),
+            new SimpleMotorFeedforward(0.256163, 2.48626, 0.2),
+            new SimpleMotorFeedforward(0.256163, 2.48626, 0.2),
+            new SimpleMotorFeedforward(0.256163, 2.48626, 0.2)};
 
 
     /**
@@ -99,9 +98,9 @@ public final class Constants {
      * 3 -> Right Back
      */
     public static final SwerveSetpoint HOLD_MODULE_STATES = new SwerveSetpoint(new ChassisSpeeds(), new SwerveModuleState[]{
-            new SwerveModuleState(0, Rotation2d.fromDegrees(-45)),
-            new SwerveModuleState(0, Rotation2d.fromDegrees(-45)),
             new SwerveModuleState(0, Rotation2d.fromDegrees(45)),
+            new SwerveModuleState(0, Rotation2d.fromDegrees(-45)),
+            new SwerveModuleState(0, Rotation2d.fromDegrees(-45)),
             new SwerveModuleState(0, Rotation2d.fromDegrees(45))
     }, new double[]{0, 0, 0, 0});
 
@@ -129,15 +128,17 @@ public final class Constants {
     public static final double MAX_TURN_ERROR = 30;
 
     public static final int SWERVE_MOTOR_CURRENT_LIMIT = 20;
-    public static final int SWERVE_DRIVE_MOTOR_CURRENT_LIMIT = 40;
+    public static final int SWERVE_DRIVE_MOTOR_CURRENT_LIMIT = 30;
     public static final int SWERVE_DRIVE_VOLTAGE_LIMIT_AUTO = 12;
     public static final int SWERVE_DRIVE_VOLTAGE_LIMIT_TELEOP = 15;
 
 
     public static final double SWERVE_DRIVE_MOTOR_REDUCTION = 1 / 6.75; // L2 gear ratio
-
+    public static final double CONE_LOWER_METERS = Units.inchesToMeters(10);
     public static final double ALLOWED_XY_ERROR_RAMSETE = 0.04;
     public static final double PID_CONTROL_RANGE_AUTO_DRIVE_METERS = 0.1;
+    public static final double ALLOWED_AUTO_DRIVE_POSITION_ERROR_METERS = 0.02;
+    public static final double ALLOWED_AUTO_DRIVE_ANGLE_ERROR_RADIANS = Math.toRadians(1);
     public static final double MAX_VELOCITY_END_PATH = 0.02;
     // TurnPID
 
@@ -154,7 +155,7 @@ public final class Constants {
 
     public static final double NOMINAL_DT = NOMINAL_DT_MS / 1000.0;
 
-    public static final int MAX_TELEOP_TURN_SPEED = 7;
+    public static final int MAX_TELEOP_TURN_SPEED = 10;
     /**
      * Acceleration due to gravity in meters per second squared. (9.80665 m/s^2)
      */
@@ -217,7 +218,7 @@ public final class Constants {
     public static final int GRABBED_CURRENT_THRESHOLD = GRABBER_SMART_CURRENT_LIMIT - 10;
     public static final int PIVOT_SMART_CURRENT_LIMIT = 40;
     public static final int GRABBER_ROLLER_SMART_CURRENT_LIMIT = 30;
-
+    public static final double DEGREES_PER_ROTATION = 360;
     public static final int GRABBER_PIVOT_CAN_ID = 50;
     public static final int GRABBER_CAN_ID = 51;
     public static final int GRABBER_ROLLER_MAIN_CAN_ID = 52;
@@ -230,6 +231,7 @@ public final class Constants {
     public static final double GRABBER_LENGTH = .308;
 
     public static final boolean IS_AUTO_GRAB_ENABLED = true;
+    public static final boolean USE_PIVOT_ABSOLUTE_ENCODER = !IS_PRACTICE;
 
     public enum KinematicLimits {
         /**
@@ -245,7 +247,7 @@ public final class Constants {
 
 
     // Realtime path generation
-    public static final double START_POS_PREDICT_AHEAD = 0.0;
+    public static final double START_POS_PREDICT_AHEAD = 0.05;
     public static final double END_VECTOR_LEN = 0.5;
     public static final double VELOCITY_VECTOR_LEN_SCALE = 0.3;
     public static final double MAX_VELOCITY_ERROR_NEW_PATH = 0.05;
@@ -291,11 +293,19 @@ public final class Constants {
     public static final Rotation2d PICKUP_ANGLE_BLUE = Rotation2d.fromDegrees(180);
 
     public static final double LOWER_PICKUP_POSITION_Y = -3.56;
-    public static final double UPPER_PICKUP_POSITION_Y = -2.05892;
+    public static final double UPPER_PICKUP_POSITION_Y = -2.05892 + Units.inchesToMeters(1);
     public static final double PICKUP_POSITION_X_OFFSET_FROM_WALL = FIELD_WIDTH_METERS - 15.2 + Units.inchesToMeters(3);
 
-    public static final double SCORING_POSITION_OFFSET_CONE_FROM_WALL = 0.1;
-    public static final double SCORING_POSITION_OFFSET_CUBE_FROM_WALL = 0.1 + Units.inchesToMeters(3);
+    public static final double SCORING_POSITION_OFFSET_CONE_FROM_WALL = 0.05;
+    public static final double SCORING_POSITION_OFFSET_CUBE_FROM_WALL = 0.05 + Units.inchesToMeters(2);
+
+    public static final double SINGLE_STATION_RED_X = 14.39;
+    public static final double SINGLE_STATION_BLUE_X = FIELD_WALL_RIGHT_X - SINGLE_STATION_RED_X;
+    public static final double SINGLE_STATION_Y = -3.21;
+    public static final Rotation2d SINGLE_STATION_ANGLE = Rotation2d.fromDegrees(-90);
+
+    public static final double SINGLE_SUBSTATION_PICKUP_ANGLE_CUTOFF_DEGREES = -30;
+
 
     // Constraints
     // TODO: FIND REAL CONSTRAINTS

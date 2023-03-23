@@ -1,12 +1,9 @@
 package frc.subsytem.grabber;
 
-import com.revrobotics.CANSparkMax;
+import com.revrobotics.*;
 import com.revrobotics.CANSparkMax.ControlType;
 import com.revrobotics.CANSparkMax.IdleMode;
-import com.revrobotics.CANSparkMaxLowLevel;
-import com.revrobotics.SparkMaxLimitSwitch;
 import com.revrobotics.SparkMaxLimitSwitch.Type;
-import com.revrobotics.SparkMaxPIDController;
 import com.revrobotics.SparkMaxPIDController.AccelStrategy;
 import frc.robot.Constants;
 import org.jetbrains.annotations.NotNull;
@@ -21,6 +18,7 @@ public class GrabberIOSparkMax extends GrabberIO {
     private final CANSparkMax grabberSparkMax;
     private @Nullable CANSparkMax rollerSparkMax1;
     private @Nullable CANSparkMax rollerSparkMax2;
+    private @Nullable SparkMaxAbsoluteEncoder pivotAbsoluteEncoder;
 
     private @NotNull SparkMaxLimitSwitch reverseLimitSwitch;
 
@@ -31,7 +29,18 @@ public class GrabberIOSparkMax extends GrabberIO {
 
         pivotSparkMax.getEncoder().setPositionConversionFactor(1.0 / PIVOT_ROTATIONS_PER_DEGREE);
         pivotSparkMax.getEncoder().setVelocityConversionFactor((1.0 / PIVOT_ROTATIONS_PER_DEGREE) / SECONDS_PER_MINUTE);
-        resetPivotPosition(MAX_WRIST_ANGLE);
+
+        if (USE_PIVOT_ABSOLUTE_ENCODER) {
+            pivotAbsoluteEncoder = pivotSparkMax.getAbsoluteEncoder(SparkMaxAbsoluteEncoder.Type.kDutyCycle);
+            pivotAbsoluteEncoder.setPositionConversionFactor(DEGREES_PER_ROTATION);
+            pivotAbsoluteEncoder.setVelocityConversionFactor(DEGREES_PER_ROTATION / SECONDS_PER_MINUTE);
+            resetPivotPosition(pivotAbsoluteEncoder.getPosition());
+        } else {
+            resetPivotPosition(MAX_WRIST_ANGLE);
+        }
+        pivotSparkMax.getPIDController().setFeedbackDevice(pivotSparkMax.getEncoder());
+        pivotSparkMax.getPIDController().setPositionPIDWrappingEnabled(false);
+
 
         pivotSparkMax.enableVoltageCompensation(Constants.GRABBER_NOMINAL_VOLTAGE);
         pivotSparkMax.setSmartCurrentLimit(Constants.PIVOT_SMART_CURRENT_LIMIT);
@@ -76,8 +85,13 @@ public class GrabberIOSparkMax extends GrabberIO {
 
     @Override
     public synchronized void updateInputs(GrabberInputsAutoLogged inputs) {
+
         inputs.pivotPosition = pivotSparkMax.getEncoder().getPosition();
         inputs.pivotVelocity = pivotSparkMax.getEncoder().getVelocity();
+
+        inputs.pivotRelativePosition = pivotSparkMax.getEncoder().getPosition();
+        inputs.pivotRelativeVelocity = pivotSparkMax.getEncoder().getVelocity();
+
         inputs.pivotCurrent = pivotSparkMax.getOutputCurrent();
         inputs.pivotTemp = pivotSparkMax.getMotorTemperature();
         inputs.pivotVoltage = pivotSparkMax.getAppliedOutput() * pivotSparkMax.getBusVoltage();

@@ -350,7 +350,7 @@ public class SwerveDrivePoseEstimator {
             m_poseEstimate = old_estimate.exp(odometry_fastforward);
         } catch (IllegalArgumentException e) {
             if (Timer.getFPGATimestamp() - errorTime >= Constants.MAX_ERROR_PRINT_TIME) {
-                DriverStation.reportError("Failed to add Vision Measurement: " + e.getMessage(), false);
+                DriverStation.reportError("Failed to add Vision Measurement", false);
             }
             errorTime = Timer.getFPGATimestamp();
         }
@@ -467,6 +467,8 @@ public class SwerveDrivePoseEstimator {
      */
     public Pose3d updateWithTime(
             double currentTimeSeconds, Rotation3d gyroAngle, SwerveModulePosition[] modulePositions) {
+
+
         if (modulePositions.length != m_numModules) {
             throw new IllegalArgumentException(
                     "Number of modules is not consistent with number of wheel locations provided in "
@@ -475,11 +477,18 @@ public class SwerveDrivePoseEstimator {
 
         var lastOdom = m_odometry.getPoseMeters3d();
         var currOdom = m_odometry.update(gyroAngle, modulePositions);
-        m_poseBuffer.addSample(currentTimeSeconds, currOdom);
+        try {
+            m_poseBuffer.addSample(currentTimeSeconds, currOdom);
 
-        m_poseEstimate = m_poseEstimate.exp(lastOdom.log(currOdom));
+            m_poseEstimate = m_poseEstimate.exp(lastOdom.log(currOdom));
 
-        return getEstimatedPosition3d();
+            return getEstimatedPosition3d();
+        } catch (Exception e) {
+            m_poseBuffer.getInternalBuffer().put(currentTimeSeconds, currOdom);
+            e.printStackTrace();
+
+            return currOdom;
+        }
     }
 
     /**

@@ -12,11 +12,13 @@ import com.dacubeking.AutoBuilder.robot.robotinterface.AutonomousContainer;
 import com.dacubeking.AutoBuilder.robot.robotinterface.CommandTranslator;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.trajectory.TrapezoidProfile.State;
 import edu.wpi.first.wpilibj.*;
 import edu.wpi.first.wpilibj.GenericHID.RumbleType;
 import edu.wpi.first.wpilibj.PowerDistribution.ModuleType;
 import frc.robot.ScoringPositionManager.PositionType;
+import frc.robot.ScoringPositionManager.SelectedPosition;
 import frc.subsytem.AbstractSubsystem;
 import frc.subsytem.Elevator.Elevator;
 import frc.subsytem.Elevator.ElevatorIO;
@@ -25,7 +27,7 @@ import frc.subsytem.MechanismStateManager;
 import frc.subsytem.MechanismStateManager.MechanismStates;
 import frc.subsytem.drive.Drive;
 import frc.subsytem.drive.DriveIO;
-import frc.subsytem.drive.DriveIOSparkMax;
+import frc.subsytem.drive.DriveIOFalcon;
 import frc.subsytem.grabber.Grabber;
 import frc.subsytem.grabber.Grabber.GrabState;
 import frc.subsytem.grabber.GrabberIO;
@@ -36,6 +38,7 @@ import frc.subsytem.telescopingarm.TelescopingArmIO;
 import frc.subsytem.telescopingarm.TelescopingArmIOSparkMax;
 import frc.subsytem.vision.VisionHandler;
 import frc.utility.Controller;
+import frc.utility.Controller.XboxAxes;
 import frc.utility.Controller.XboxButtons;
 import frc.utility.ControllerDriveInputs;
 import frc.utility.PathGenerator;
@@ -79,7 +82,10 @@ public class Robot extends LoggedRobot {
     public static final int XBOX_RESET_HEADING = XboxButtons.A;
     public static final int STICK_TOGGLE_SCORING = 7;
     public static final int STICK_TOGGLE_FLOOR_PICKUP = 9;
-    public static final int STICK_TOGGLE_PICKUP = 11;
+    public static final int CONTROLLER_TOGGLE_FLOOR_PICKUP = XboxAxes.LEFT_TRIGGER;
+    public static final int STICK_TOGGLE_PICKUP_DOUBLE = 11;
+    public static final int STICK_TOGGLE_PICKUP_SINGLE = 12;
+
     public static final int STICK_TOGGLE_AUTO_GRAB = 8;
     public static final int XBOX_TOGGLE_GRABBER = XboxButtons.LEFT_BUMPER;
     private double disabledTime = 0;
@@ -181,7 +187,7 @@ public class Robot extends LoggedRobot {
             Logger.getInstance().addDataReceiver(new RLOGServer(5800)); // Publish data to NetworkTables
             powerDistribution = new PowerDistribution(1, ModuleType.kRev); // Enables power distribution logging
 
-            drive = new Drive(new DriveIOSparkMax());
+            drive = new Drive(new DriveIOFalcon());
             elevator = new Elevator(new ElevatorIOSparkMax());
             telescopingArm = new TelescopingArm(new TelescopingArmIOSparkMax());
             grabber = new Grabber(new GrabberIOSparkMax());
@@ -273,6 +279,8 @@ public class Robot extends LoggedRobot {
 
         System.out.println("Using GIT SHA: " + BuildConstants.GIT_SHA + " on branch " + BuildConstants.GIT_BRANCH
                 + " built on " + BuildConstants.BUILD_DATE);
+
+        drive.resetPeriodicFrames();
     }
 
     private @Nullable String lastSelectedAuto = null;
@@ -304,7 +312,7 @@ public class Robot extends LoggedRobot {
         // Record video is FMS is attached
         visionHandler.forceRecord(DriverStation.isFMSAttached());
 
-        if (Objects.equals(lastSelectedAuto, autoChooser.get()) || Objects.equals(lastSelectedSide, sideChooser.get())) {
+        if (!(Objects.equals(lastSelectedAuto, autoChooser.get()) || Objects.equals(lastSelectedSide, sideChooser.get()))) {
             lastSelectedAuto = autoChooser.get();
             lastSelectedSide = sideChooser.get();
             System.out.println("Auto: " + autoChooser.get() + " Side: " + sideChooser.get());
@@ -323,9 +331,11 @@ public class Robot extends LoggedRobot {
         }
     }
 
+    private static double autoStartTime = 0;
 
     @Override
     public void autonomousInit() {
+        autoStartTime = Timer.getFPGATimestamp();
         drive.setBrakeMode(true);
         drive.setDriveVoltageCompLevel(SWERVE_DRIVE_VOLTAGE_LIMIT_AUTO);
         String autoName = autoChooser.get();
@@ -358,6 +368,7 @@ public class Robot extends LoggedRobot {
 
 
     private @Nullable Pose2d teleopDrivingAutoAlignPosition = new Pose2d();
+    private boolean hasReachedAutoAlignPosition = false;
 
     {
         Logger.getInstance().recordOutput("Auto Align Y", teleopDrivingAutoAlignPosition.getY());
@@ -367,7 +378,7 @@ public class Robot extends LoggedRobot {
 
 
     enum WantedMechanismState {
-        STOWED, SCORING, FLOOR_PICKUP, STATION_PICKUP
+        STOWED, SCORING, FLOOR_PICKUP, STATION_PICKUP_DOUBLE, STATION_PICKUP_SINGLE
     }
 
     private static WantedMechanismState wantedMechanismState = WantedMechanismState.STOWED;
@@ -403,26 +414,53 @@ public class Robot extends LoggedRobot {
         buttonPanel.update();
         double wantedRumble = 0;
 
+        Logger.getInstance().recordOutput("Controls/Is Left Toggle Grabber Pressed", xbox.getRawButton(XBOX_TOGGLE_GRABBER));
+        Logger.getInstance().recordOutput("Controls/Is Left Toggle Mech Pressed", xbox.getRawButton(XBOX_TOGGLE_MECH));
+
         var scoringPositionManager = ScoringPositionManager.getInstance();
         if (scoringPositionManager.updateSelectedPosition(buttonPanel)) {
             teleopDrivingAutoAlignPosition = null;
         }
 
         if (xbox.getRisingEdge(XBOX_AUTO_ROTATE)) {
-            updateTeleopDrivingTarget(scoringPositionManager);
+            updateTeleopDrivingTarget(scoringPositionManager, true);
+            hasReachedAutoAlignPosition = false;
             isTurnToTargetMode = true;
         }
 
         if (xbox.getRawButton(XBOX_START_AUTO_DRIVE)) { //Should be remapped to one of the back buttons
-            if (xbox.getRisingEdge(XBOX_START_AUTO_DRIVE) || teleopDrivingAutoAlignPosition == null) {
-                updateTeleopDrivingTarget(scoringPositionManager);
+            if (xbox.getRisingEdge(XBOX_START_AUTO_DRIVE)) {
+                updateTeleopDrivingTarget(scoringPositionManager, true);
+                hasReachedAutoAlignPosition = false;
+                assert teleopDrivingAutoAlignPosition != null;
+            } else if (teleopDrivingAutoAlignPosition == null) {
+                // We're not recalculating the grid position b/c we only need to recalculate the path because the operator
+                // changed the grid position
+                updateTeleopDrivingTarget(scoringPositionManager, false);
+                hasReachedAutoAlignPosition = false;
                 assert teleopDrivingAutoAlignPosition != null;
             }
 
-            if (!drive.driveToPosition(
+
+            Translation2d autoDriveAlignError =
+                    teleopDrivingAutoAlignPosition.minus(robotTracker.getLatestPose()).getTranslation();
+            if (Math.abs(autoDriveAlignError.getX()) < 0.2 && Math.abs(
+                    autoDriveAlignError.getY()) < 0.05 && !isOnAllianceSide()
+                    && mechanismStateManager.isMechAtFinalPos()
+                    && wantedMechanismState == WantedMechanismState.STATION_PICKUP_DOUBLE) {
+                hasReachedAutoAlignPosition = true;
+            }
+
+            if (hasReachedAutoAlignPosition) {
+                drive.alignToYAndYaw(teleopDrivingAutoAlignPosition.getRotation().getRadians(),
+                        teleopDrivingAutoAlignPosition.getTranslation().getY(),
+                        getControllerDriveInputs());
+            } else if (!drive.driveToPosition(
                     teleopDrivingAutoAlignPosition.getTranslation(),
                     teleopDrivingAutoAlignPosition.getRotation(),
-                    getControllerDriveInputs()
+                    getControllerDriveInputs(),
+                    autoDrivePosition == AutoDrivePosition.PICKUP_SINGLE_SUBSTATION
+
             )) {
                 // We failed to generate a trajectory
                 wantedRumble = 1;
@@ -456,7 +494,9 @@ public class Robot extends LoggedRobot {
         }
 
         if (grabber.isGrabbed() &&
-                (wantedMechanismState == WantedMechanismState.STATION_PICKUP || wantedMechanismState == WantedMechanismState.FLOOR_PICKUP)) {
+                (wantedMechanismState == WantedMechanismState.STATION_PICKUP_DOUBLE
+                        || wantedMechanismState == WantedMechanismState.FLOOR_PICKUP
+                        || wantedMechanismState == WantedMechanismState.STATION_PICKUP_SINGLE)) {
             setStowed();
         }
 
@@ -485,7 +525,8 @@ public class Robot extends LoggedRobot {
             }
         }
 
-        if (stick.getRisingEdge(STICK_TOGGLE_FLOOR_PICKUP)) {
+        if (stick.getRisingEdge(STICK_TOGGLE_FLOOR_PICKUP) ||
+                (xbox.getRawAxis(CONTROLLER_TOGGLE_FLOOR_PICKUP) > 0.1 && wantedMechanismState == WantedMechanismState.STOWED)) {
             if (wantedMechanismState == WantedMechanismState.STOWED) {
                 wantedMechanismState = WantedMechanismState.FLOOR_PICKUP;
                 isGrabberOpen = true;
@@ -494,9 +535,18 @@ public class Robot extends LoggedRobot {
             }
         }
 
-        if (stick.getRisingEdge(STICK_TOGGLE_PICKUP)) {
+        if (stick.getRisingEdge(STICK_TOGGLE_PICKUP_DOUBLE)) {
             if (wantedMechanismState == WantedMechanismState.STOWED) {
-                wantedMechanismState = WantedMechanismState.STATION_PICKUP;
+                wantedMechanismState = WantedMechanismState.STATION_PICKUP_DOUBLE;
+                isGrabberOpen = true;
+            } else {
+                setStowed();
+            }
+        }
+
+        if (stick.getRisingEdge(STICK_TOGGLE_PICKUP_SINGLE)) {
+            if (wantedMechanismState == WantedMechanismState.STOWED) {
+                wantedMechanismState = WantedMechanismState.STATION_PICKUP_SINGLE;
                 isGrabberOpen = true;
             } else {
                 setStowed();
@@ -508,7 +558,11 @@ public class Robot extends LoggedRobot {
                 if (isOnAllianceSide()) {
                     wantedMechanismState = WantedMechanismState.SCORING;
                 } else {
-                    wantedMechanismState = WantedMechanismState.STATION_PICKUP;
+                    if (robotTracker.getLatestPose().getRotation().getDegrees() < SINGLE_SUBSTATION_PICKUP_ANGLE_CUTOFF_DEGREES) {
+                        wantedMechanismState = WantedMechanismState.STATION_PICKUP_SINGLE;
+                    } else {
+                        wantedMechanismState = WantedMechanismState.STATION_PICKUP_DOUBLE;
+                    }
                     isGrabberOpen = true;
                 }
             } else {
@@ -544,12 +598,21 @@ public class Robot extends LoggedRobot {
                     }
                 }
                 case FLOOR_PICKUP -> mechanismStateManager.setState(MechanismStates.FLOOR_PICKUP);
-                case STATION_PICKUP -> mechanismStateManager.setState(MechanismStates.STATION_PICKUP);
+                case STATION_PICKUP_DOUBLE -> mechanismStateManager.setState(MechanismStates.DOUBLE_STATION_PICKUP);
+                case STATION_PICKUP_SINGLE -> {
+                    if (scoringPositionManager.getWantedPositionType() == PositionType.CONE) {
+                        mechanismStateManager.setState(MechanismStates.SINGLE_SUBSTATION_PICKUP_CONE);
+                    } else {
+                        mechanismStateManager.setState(MechanismStates.SINGLE_SUBSTATION_PICKUP_CUBE);
+                    }
+                }
             }
 
             if (wantedMechanismState != lastWantedMechanismState && useAutoGrab) {
                 Robot.getGrabber().setAutoGrab(
-                        wantedMechanismState == WantedMechanismState.STATION_PICKUP || wantedMechanismState == WantedMechanismState.FLOOR_PICKUP
+                        wantedMechanismState == WantedMechanismState.STATION_PICKUP_DOUBLE
+                                || wantedMechanismState == WantedMechanismState.FLOOR_PICKUP
+                                || wantedMechanismState == WantedMechanismState.STATION_PICKUP_SINGLE
                 );
             }
         }
@@ -594,11 +657,25 @@ public class Robot extends LoggedRobot {
                 // Auto Grab isn't letting us close so disable it
                 grabber.setAutoGrab(false);
             } else {
-                isGrabberOpen = !isGrabberOpen;
-                if (isGrabberOpen) {
-                    grabberOpenTime = Timer.getFPGATimestamp();
+                if (wantedMechanismState == WantedMechanismState.SCORING
+                        && scoringPositionManager.getSelectedPosition().getLevel() == 1
+                        && scoringPositionManager.getWantedPositionType() == PositionType.CONE) {
+                    // We're in the scoring in the middle level with a cone. Instead of opening the grabber, we want to
+                    // shove the cone down onto the pole
+                    mechanismStateManager.setState(MechanismStates.FINAL_CONE_MIDDLE_SCORING);
+                } else {
+                    isGrabberOpen = !isGrabberOpen;
+                    if (isGrabberOpen) {
+                        grabberOpenTime = Timer.getFPGATimestamp();
+                    }
                 }
             }
+        }
+
+        if (mechanismStateManager.isMechAtFinalPos()
+                && mechanismStateManager.getCurrentWantedState() == MechanismStates.FINAL_CONE_MIDDLE_SCORING.state) {
+            // We've finished shoving the cone down onto the pole. Now we want to open the grabber
+            isGrabberOpen = true;
         }
 
         if (isGrabberOpen) {
@@ -608,7 +685,9 @@ public class Robot extends LoggedRobot {
                     isGrabberOpen = false;
                 }
             } else {
-                if ((wantedMechanismState == WantedMechanismState.FLOOR_PICKUP || wantedMechanismState == WantedMechanismState.STATION_PICKUP)
+                if ((wantedMechanismState == WantedMechanismState.FLOOR_PICKUP
+                        || wantedMechanismState == WantedMechanismState.STATION_PICKUP_DOUBLE
+                        || wantedMechanismState == WantedMechanismState.STATION_PICKUP_SINGLE)
                         && grabber.isOpen() && IS_AUTO_GRAB_ENABLED && mechanismStateManager.isMechAtFinalPos() && grabber.isAutoGrabEnabled()) {
                     isGrabberOpen = false;
                 } else {
@@ -625,7 +704,9 @@ public class Robot extends LoggedRobot {
 
         Logger.getInstance().recordOutput("Robot/Is Grabber Open", isGrabberOpen);
 
-        if ((wantedMechanismState == WantedMechanismState.FLOOR_PICKUP || wantedMechanismState == WantedMechanismState.STATION_PICKUP)
+        if ((wantedMechanismState == WantedMechanismState.FLOOR_PICKUP
+                || wantedMechanismState == WantedMechanismState.STATION_PICKUP_DOUBLE
+                || wantedMechanismState == WantedMechanismState.STATION_PICKUP_SINGLE)
                 && isGrabberOpen) {
             grabber.setRollerVoltage(GRABBER_ROLLER_VOLTAGE);
         } else if (!isGrabberOpen) {
@@ -653,7 +734,18 @@ public class Robot extends LoggedRobot {
         wantToClose = false;
     }
 
-    private void updateTeleopDrivingTarget(ScoringPositionManager scoringPositionManager) {
+
+    private int lastGridIndex = 0;
+
+    private enum AutoDrivePosition {
+        PICKUP_DOUBLE_SUBSTATION,
+        PICKUP_SINGLE_SUBSTATION,
+        SCORING
+    }
+
+    private AutoDrivePosition autoDrivePosition = AutoDrivePosition.SCORING;
+
+    private void updateTeleopDrivingTarget(ScoringPositionManager scoringPositionManager, boolean recalculateGridPosition) {
         double x, y;
         Rotation2d rotation;
 
@@ -662,17 +754,35 @@ public class Robot extends LoggedRobot {
         if (isOnRedSide == isRed()) {
             // We're on the same side as our alliance
             // Try to go to the scoring position
-            y = ScoringPositionManager.getBestFieldY(
-                    scoringPositionManager.getSelectedPosition(),
-                    isRed(),
-                    robotTracker.getLatestPose().getTranslation(),
-                    robotTracker.getVelocity()
-            );
+            if (recalculateGridPosition) {
+                var bestY = ScoringPositionManager.getBestFieldY(
+                        scoringPositionManager.getSelectedPosition(),
+                        isRed(),
+                        robotTracker.getLatestPose().getTranslation(),
+                        robotTracker.getVelocity(),
+                        false,
+                        0
+                );
+                y = bestY.y();
+                lastGridIndex = bestY.gridIndex();
+            } else {
+                var bestY = ScoringPositionManager.getBestFieldY(
+                        scoringPositionManager.getSelectedPosition(),
+                        isRed(),
+                        robotTracker.getLatestPose().getTranslation(),
+                        robotTracker.getVelocity(),
+                        true,
+                        lastGridIndex
+                );
+                y = bestY.y();
+            }
 
             Logger.getInstance().recordOutput("Robot/Wanted Y Auto Drive", y);
 
             double scoringPositionOffset;
-            if (scoringPositionManager.getWantedPositionType() == PositionType.CUBE) {
+            if (scoringPositionManager.getSelectedPosition() == SelectedPosition.MIDDLE_LEFT || scoringPositionManager.getSelectedPosition() == SelectedPosition.MIDDLE_RIGHT) {
+                scoringPositionOffset = SCORING_POSITION_OFFSET_CUBE_FROM_WALL;
+            } else if (scoringPositionManager.getWantedPositionType() == PositionType.CUBE) {
                 scoringPositionOffset = SCORING_POSITION_OFFSET_CUBE_FROM_WALL;
             } else {
                 scoringPositionOffset = SCORING_POSITION_OFFSET_CONE_FROM_WALL;
@@ -684,23 +794,40 @@ public class Robot extends LoggedRobot {
                 x = Constants.GRIDS_BLUE_X - HALF_ROBOT_WIDTH - scoringPositionOffset;
                 rotation = Constants.SCORING_ANGLE_BLUE;
             }
+
+            autoDrivePosition = AutoDrivePosition.SCORING;
         } else {
             // We're on the opposite side as our alliance
             // Try to go to the pickup position
-            var predictedPoseForPickup = robotTracker.getLatestPose().getTranslation().plus(robotTracker.getVelocity().times(0.15));
+            var predictedPoseForPickup = robotTracker.getLatestPose().getTranslation().plus(
+                    robotTracker.getVelocity().times(0.15));
+
+            if (robotTracker.getLatestPose().getRotation().getDegrees() < SINGLE_SUBSTATION_PICKUP_ANGLE_CUTOFF_DEGREES) {
+                y = SINGLE_STATION_Y;
+
+                if (isRed()) {
+                    x = SINGLE_STATION_RED_X;
+                } else {
+                    x = SINGLE_STATION_BLUE_X;
+                }
+                rotation = SINGLE_STATION_ANGLE;
+                autoDrivePosition = AutoDrivePosition.PICKUP_SINGLE_SUBSTATION;
+            } else {
+                if (predictedPoseForPickup.getY() < -2.715) {
+                    y = LOWER_PICKUP_POSITION_Y;
+                } else {
+                    y = UPPER_PICKUP_POSITION_Y;
+                }
 
 
-            if (predictedPoseForPickup.getY() < -2.715) {
-                y = LOWER_PICKUP_POSITION_Y;
-            } else {
-                y = UPPER_PICKUP_POSITION_Y;
-            }
-            if (isRed()) {
-                x = FIELD_WIDTH_METERS - PICKUP_POSITION_X_OFFSET_FROM_WALL;
-                rotation = PICKUP_ANGLE_RED;
-            } else {
-                x = PICKUP_POSITION_X_OFFSET_FROM_WALL;
-                rotation = PICKUP_ANGLE_BLUE;
+                if (isRed()) {
+                    x = FIELD_WIDTH_METERS - PICKUP_POSITION_X_OFFSET_FROM_WALL;
+                    rotation = PICKUP_ANGLE_RED;
+                } else {
+                    x = PICKUP_POSITION_X_OFFSET_FROM_WALL;
+                    rotation = PICKUP_ANGLE_BLUE;
+                }
+                autoDrivePosition = AutoDrivePosition.PICKUP_DOUBLE_SUBSTATION;
             }
         }
 
@@ -821,7 +948,7 @@ public class Robot extends LoggedRobot {
         return mechanismStateManager;
     }
 
-    public static PowerDistribution getPowerDistribution() {
+    public static @NotNull PowerDistribution getPowerDistribution() {
         return powerDistribution;
     }
 
@@ -844,5 +971,9 @@ public class Robot extends LoggedRobot {
 
     public static void setCurrentWantedState(WantedMechanismState state) {
         runOnMainThread(() -> wantedMechanismState = state);
+    }
+
+    public static double getAutoStartTime() {
+        return autoStartTime;
     }
 }
