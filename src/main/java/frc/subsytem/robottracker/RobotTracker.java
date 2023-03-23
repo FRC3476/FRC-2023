@@ -234,10 +234,12 @@ public final class RobotTracker extends AbstractSubsystem {
     private Translation3d accumulatedVelocityError = new Translation3d();
 
     {
-        Logger.getInstance().recordOutput("Velocity Mismatch Count", mismatchedVelocityCount);
+        Logger.getInstance().recordOutput("RobotTracker/Velocity Mismatch Count", mismatchedVelocityCount);
     }
 
-    long gyroUpdates = 0;
+    long angleUpdates = 0;
+    long accelerationUpdates = 0;
+
     private double gyroYVelocity = 0;
     private double gyroYAngle = 0;
 
@@ -263,9 +265,13 @@ public final class RobotTracker extends AbstractSubsystem {
                 for (Entry<Translation3d> translation3dEntry : gyroInputs.accelerations) {
                     accelerationHistory.addSample(translation3dEntry.timestamp(), translation3dEntry.value());
                 }
-                gyroUpdates += gyroInputs.rotations.size();
-                Logger.getInstance().recordOutput("Robot Tracker/Angle Updates", gyroUpdates);
-                isGyroConnected.set(gyroInputs.rotations.size() > 0);
+                angleUpdates += gyroInputs.rotations.size();
+                Logger.getInstance().recordOutput("RobotTracker/Angle Updates", angleUpdates);
+
+                accelerationUpdates += gyroInputs.accelerations.size();
+                Logger.getInstance().recordOutput("RobotTracker/Acceleration Updates", accelerationUpdates);
+
+                isGyroConnected.set(gyroInputs.rotations.size() > 0 || gyroInputs.accelerations.size() > 0);
 
                 angularRollRate = gyroInputs.gyroRollVelocity;
                 angularRate = gyroInputs.gyroYawVelocity;
