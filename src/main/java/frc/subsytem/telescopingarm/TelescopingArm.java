@@ -8,7 +8,6 @@ import frc.subsytem.AbstractSubsystem;
 import org.littletonrobotics.junction.Logger;
 
 import static frc.robot.Constants.*;
-import static frc.utility.MathUtil.avg;
 
 public class TelescopingArm extends AbstractSubsystem {
 
@@ -60,7 +59,7 @@ public class TelescopingArm extends AbstractSubsystem {
             if (DriverStation.isEnabled()) {
                 homeTime -= Constants.NOMINAL_DT;
                 io.setTelescopingArmVoltage(TELESCOPING_ARM_HOME_VOLTAGE);
-                if (homeTime <= 0 && avg(inputs.current) > TELESCOPING_ARM_STALLING_CURRENT) {
+                if (homeTime <= 0 && inputs.current > TELESCOPING_ARM_STALLING_CURRENT) {
                     homing = false;
                     io.resetTelescopingArmPosition(0);
                 }
