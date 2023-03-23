@@ -429,16 +429,19 @@ public class Robot extends LoggedRobot {
         }
 
         if (xbox.getRawButton(XBOX_START_AUTO_DRIVE)) { //Should be remapped to one of the back buttons
-            if (xbox.getRisingEdge(XBOX_START_AUTO_DRIVE)) {
-                updateTeleopDrivingTarget(scoringPositionManager, true);
-                hasReachedAutoAlignPosition = false;
-                assert teleopDrivingAutoAlignPosition != null;
-            } else if (teleopDrivingAutoAlignPosition == null) {
-                // We're not recalculating the grid position b/c we only need to recalculate the path because the operator
-                // changed the grid position
-                updateTeleopDrivingTarget(scoringPositionManager, false);
-                hasReachedAutoAlignPosition = false;
-                assert teleopDrivingAutoAlignPosition != null;
+            if ((isRed() && robotTracker.getLatestPose().getX() < 3.9) || (!isRed() && robotTracker.getLatestPose()
+                    .getX() > 12.65)) {
+                if (xbox.getRisingEdge(XBOX_START_AUTO_DRIVE)) {
+                    updateTeleopDrivingTarget(scoringPositionManager, true);
+                    hasReachedAutoAlignPosition = false;
+                    assert teleopDrivingAutoAlignPosition != null;
+                } else if (teleopDrivingAutoAlignPosition == null) {
+                    // We're not recalculating the grid position b/c we only need to recalculate the path because the operator
+                    // changed the grid position
+                    updateTeleopDrivingTarget(scoringPositionManager, false);
+                    hasReachedAutoAlignPosition = false;
+                    assert teleopDrivingAutoAlignPosition != null;
+                }
             }
 
 
