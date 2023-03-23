@@ -389,9 +389,9 @@ public class Robot extends LoggedRobot {
     private boolean setFutureGrabberClose = false;
 
 
-    private double wantedX = -0.489;
-    private double wantedY = 0.249;
-    private double wantedAngle = MAX_WRIST_ANGLE - 2;
+    private double mechWantedX = -0.489;
+    private double mechWantedY = 0.249;
+    private double mechWantedAngle = MAX_WRIST_ANGLE - 2;
     public boolean isTurnToTargetMode = false;
 
     private double grabberOpenTime = 0;
@@ -622,9 +622,9 @@ public class Robot extends LoggedRobot {
 
         var limitedMechCoords = MechanismStateManager.limitCoordinates(mechanismStateManager.getCurrentWantedState());
 
-        Logger.getInstance().recordOutput("Robot/Wanted X", wantedX);
-        Logger.getInstance().recordOutput("Robot/Wanted Y", wantedY);
-        Logger.getInstance().recordOutput("Robot/Wanted Angle", wantedAngle);
+        Logger.getInstance().recordOutput("Robot/Mechanism Wanted X", mechWantedX);
+        Logger.getInstance().recordOutput("Robot/Mechanism Wanted Y", mechWantedY);
+        Logger.getInstance().recordOutput("Robot/Mechanism Wanted Angle", mechWantedAngle);
 
         var mechInputs = new ControllerDriveInputs(stick.getRawAxis(0), stick.getRawAxis(1), stick.getRawAxis(3));
         mechInputs.applyDeadZone(0.1, 0.1, 0.25, 0.2);
@@ -638,16 +638,17 @@ public class Robot extends LoggedRobot {
         if (abs(mechDy) < 0.1) mechDy = 0;
 
         if (mechInputs.getX() != 0 || mechDx != 0 || mechDy != 0) {
-            wantedX = limitedMechCoords.xMeters();
-            wantedY = limitedMechCoords.yMeters();
-            wantedAngle = limitedMechCoords.grabberAngleDegrees();
+            mechWantedX = limitedMechCoords.xMeters();
+            mechWantedY = limitedMechCoords.yMeters();
+            mechWantedAngle = limitedMechCoords.grabberAngleDegrees();
 
-            wantedAngle += mechInputs.getY() * ARCADE_WRIST_ANGLE_SPEED * NOMINAL_DT;
+            mechWantedAngle += mechInputs.getY() * ARCADE_WRIST_ANGLE_SPEED * NOMINAL_DT;
 
-            wantedX += mechDx * ARCADE_MODE_TRANSLATION_SPEED * NOMINAL_DT;
-            wantedY += mechDy * ARCADE_MODE_TRANSLATION_SPEED * NOMINAL_DT;
+            mechWantedX += mechDx * ARCADE_MODE_TRANSLATION_SPEED * NOMINAL_DT;
+            mechWantedY += mechDy * ARCADE_MODE_TRANSLATION_SPEED * NOMINAL_DT;
 
-            mechanismStateManager.setState(new MechanismStateManager.MechanismStateCoordinates(wantedX, wantedY, wantedAngle));
+            mechanismStateManager.setState(
+                    new MechanismStateManager.MechanismStateCoordinates(mechWantedX, mechWantedY, mechWantedAngle));
         }
 
         Logger.getInstance().recordOutput("Robot/Wanted Mechanism State", wantedMechanismState.name());
@@ -824,9 +825,9 @@ public class Robot extends LoggedRobot {
             }
         }
 
-        Logger.getInstance().recordOutput("Auto Align Y", y);
-        Logger.getInstance().recordOutput("Auto Align X", x);
-        Logger.getInstance().recordOutput("Auto Align Angle", rotation.getDegrees());
+        Logger.getInstance().recordOutput("Robot/Auto Align Y", y);
+        Logger.getInstance().recordOutput("Robot/Auto Align X", x);
+        Logger.getInstance().recordOutput("Robot/Auto Align Angle", rotation.getDegrees());
 
         teleopDrivingAutoAlignPosition = new Pose2d(x, y, rotation);
     }
@@ -891,9 +892,9 @@ public class Robot extends LoggedRobot {
         }
 
         inputs.squareInputs();
-        Logger.getInstance().recordOutput("Robot/Controller X", inputs.getX());
-        Logger.getInstance().recordOutput("Robot/Controller Y", inputs.getY());
-        Logger.getInstance().recordOutput("Robot/Controller Rotation", inputs.getRotation());
+        Logger.getInstance().recordOutput("Robot/Xbox Controller X", inputs.getX());
+        Logger.getInstance().recordOutput("Robot/Xbox Controller Y", inputs.getY());
+        Logger.getInstance().recordOutput("Robot/Xbox Controller Rotation", inputs.getRotation());
 
         return inputs;
     }
