@@ -284,7 +284,7 @@ public class VisionHandler extends AbstractSubsystem {
 
         isVisionConnected.set(Timer.getFPGATimestamp() - visionInputs.lastVisionUpdate < NO_VISION_UPDATES_TIME_THRESHOLD);
 
-        Logger.getInstance().recordOutput("Vision Handler/Tags Updates", visionInputs.visionUpdates.size());
+        Logger.getInstance().recordOutput("VisionHandler/Tags Updates", visionInputs.visionUpdates.size());
         // Process vision updates
         for (var visionUpdate : visionInputs.visionUpdates) {
             processNewTagPosition(visionUpdate);
