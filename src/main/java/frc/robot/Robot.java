@@ -80,14 +80,18 @@ public class Robot extends LoggedRobot {
     public static final int XBOX_AUTO_BALANCE = XboxButtons.Y;
     public static final int XBOX_AUTO_ROTATE = XboxButtons.RIGHT_BUMPER;
     public static final int XBOX_RESET_HEADING = XboxButtons.A;
+    public static final int CONTROLLER_TOGGLE_FLOOR_PICKUP = XboxAxes.LEFT_TRIGGER;
+    public static final int XBOX_TOGGLE_GRABBER = XboxButtons.LEFT_BUMPER;
     public static final int STICK_TOGGLE_SCORING = 7;
     public static final int STICK_TOGGLE_FLOOR_PICKUP = 9;
-    public static final int CONTROLLER_TOGGLE_FLOOR_PICKUP = XboxAxes.LEFT_TRIGGER;
     public static final int STICK_TOGGLE_PICKUP_DOUBLE = 11;
     public static final int STICK_TOGGLE_PICKUP_SINGLE = 12;
-
     public static final int STICK_TOGGLE_AUTO_GRAB = 8;
-    public static final int XBOX_TOGGLE_GRABBER = XboxButtons.LEFT_BUMPER;
+
+    //TODO: Change these to the correct buttons
+    public static final int STICK_HOME_ELEVATOR = 1;
+    public static final int STICK_HOME_TELESCOPING_ARM = 2;
+
     private double disabledTime = 0;
 
     private @NotNull
@@ -715,14 +719,23 @@ public class Robot extends LoggedRobot {
             grabber.setRollerVoltage(0);
         }
 
-        xbox.setRumble(RumbleType.kBothRumble, wantedRumble);
-
-        // True if both buttons pressed
-        if((buttonPanel.getRisingEdge(1) && buttonPanel.getRawButton(2))
-            || (buttonPanel.getRawButton(1) && buttonPanel.getRisingEdge(2))) {
-            System.out.println("Homing Subsystems");
-            elevator.homeElevator();
+        if (stick.getRisingEdge(STICK_HOME_ELEVATOR)) {
+            elevator.home();
         }
+
+        if (stick.getFallingEdge(STICK_HOME_ELEVATOR)) {
+            elevator.cancelHome();
+        }
+
+        if (stick.getRisingEdge(STICK_HOME_TELESCOPING_ARM)) {
+            telescopingArm.home();
+        }
+
+        if (stick.getFallingEdge(STICK_HOME_TELESCOPING_ARM)) {
+            telescopingArm.cancelHome();
+        }
+
+        xbox.setRumble(RumbleType.kBothRumble, wantedRumble);
     }
 
     /**

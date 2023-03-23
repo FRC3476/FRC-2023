@@ -57,9 +57,13 @@ public class Elevator extends AbstractSubsystem {
     private boolean homing = false;
     private double homeTime = 0;
 
-    public void homeElevator() {
+    public void home() {
         homeTime = ELEVATOR_MIN_HOME_TIME;
         homing = true;
+    }
+
+    public void cancelHome() {
+        homing = false;
     }
 
     @Override

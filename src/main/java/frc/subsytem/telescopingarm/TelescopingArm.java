@@ -49,9 +49,13 @@ public class TelescopingArm extends AbstractSubsystem {
     private boolean homing = false;
     private double homeTime = 0;
 
-    public void homeArm() {
-        homeTime = ARM_MIN_HOME_TIME;
+    public void home() {
+        homeTime = TELESCOPING_ARM_MIN_HOME_TIME;
         homing = true;
+    }
+
+    public void cancelHome() {
+        homing = false;
     }
 
     private double pastVelocity = 0, pastTime = 0;
@@ -65,7 +69,7 @@ public class TelescopingArm extends AbstractSubsystem {
             if (DriverStation.isEnabled()) {
                 homeTime -= Constants.NOMINAL_DT;
                 setPercentOutput(MOTOR_SPEED_DECREASING_RATE);
-                if (homeTime <= 0 && avg(inputs.current) > Constants.ELEVATOR_STALLING_CURRENT) {
+                if (homeTime <= 0 && avg(inputs.current) > TELESCOPING_ARM_STALLING_CURRENT) {
                     homing = false;
                     io.resetTelescopingArmPosition(0);
                 }

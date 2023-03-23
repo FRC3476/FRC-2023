@@ -185,8 +185,8 @@ public final class Constants {
 
     // TODO: Figure out how much the elevator is angled at
     public static final double ELEVATOR_TILT_RADIANS = Math.toRadians(64.24203436);
-    public static final double ELEVATOR_STALLING_CURRENT = 12;
-    public static final double ELEVATOR_MIN_HOME_TIME = 0.5;
+    public static final double ELEVATOR_STALLING_CURRENT = 35;
+    public static final double ELEVATOR_MIN_HOME_TIME = 0.2;
     public static final double MOTOR_SPEED_DECREASING_RATE = -0.1;
 
     public static final int ELEVATOR_MAIN_CAN_ID = 40;
@@ -196,9 +196,9 @@ public final class Constants {
     public static final ElevatorFeedforward TELESCOPING_ARM_FEEDFORWARD = new ElevatorFeedforward(0, 0, 0, 0);
     public static final double TELESCOPING_ARM_P = 10;
     public static final double TELESCOPING_ARM_I = 0.0;
-    public static final double TELESCOPING_ARM_D = 30.0;
-    public static final double ARM_MIN_HOME_TIME = 0.5;
-    public static final double ARM_STALLING_CURRENT = 12;
+    public static final double TELESCOPING_ARM_D = 60.0;
+    public static final double TELESCOPING_ARM_MIN_HOME_TIME = 0.2;
+    public static final double TELESCOPING_ARM_STALLING_CURRENT = 35;
     public static final double ARM_NOMINAL_VOLTAGE = 9;
     public static final double TELESCOPING_ARM_ROTATIONS_PER_METER = 96.664 / (Math.PI);
     public static final double TELESCOPING_ARM_NOMINAL_VOLTAGE = 9;
