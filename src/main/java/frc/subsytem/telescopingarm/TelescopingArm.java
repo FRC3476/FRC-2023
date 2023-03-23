@@ -63,7 +63,7 @@ public class TelescopingArm extends AbstractSubsystem {
                     homing = false;
                     io.resetTelescopingArmPosition(0);
                 }
-                Logger.getInstance().recordOutput("Elevator/Home time", homeTime);
+                Logger.getInstance().recordOutput("Telescoping Arm/Home time", homeTime);
             }
             return;
         }
