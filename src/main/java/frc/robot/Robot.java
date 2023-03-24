@@ -580,23 +580,20 @@ public class Robot extends LoggedRobot {
             switch (wantedMechanismState) {
                 case STOWED -> mechanismStateManager.setState(MechanismStates.STOWED);
                 case SCORING -> {
-                    if ((isRed() && robotTracker.getLatestPose().getX() < 3.3)
-                            || (!isRed() && robotTracker.getLatestPose().getX() > 13.23)) {
-                        int level = scoringPositionManager.getSelectedPosition().getLevel();
-                        if (level == 0) {
-                            mechanismStateManager.setState(MechanismStates.LOW_SCORING);
-                        } else if (level == 1) {
-                            if (scoringPositionManager.getWantedPositionType() == PositionType.CONE) {
-                                mechanismStateManager.setState(MechanismStates.CONE_MIDDLE_SCORING);
-                            } else {
-                                mechanismStateManager.setState(MechanismStates.CUBE_MIDDLE_SCORING);
-                            }
-                        } else if (level == 2) {
-                            if (scoringPositionManager.getWantedPositionType() == PositionType.CONE) {
-                                mechanismStateManager.setState(MechanismStates.CONE_HIGH_SCORING);
-                            } else {
-                                mechanismStateManager.setState(MechanismStates.CUBE_HIGH_SCORING);
-                            }
+                    int level = scoringPositionManager.getSelectedPosition().getLevel();
+                    if (level == 0) {
+                        mechanismStateManager.setState(MechanismStates.LOW_SCORING);
+                    } else if (level == 1) {
+                        if (scoringPositionManager.getWantedPositionType() == PositionType.CONE) {
+                            mechanismStateManager.setState(MechanismStates.CONE_MIDDLE_SCORING);
+                        } else {
+                            mechanismStateManager.setState(MechanismStates.CUBE_MIDDLE_SCORING);
+                        }
+                    } else if (level == 2) {
+                        if (scoringPositionManager.getWantedPositionType() == PositionType.CONE) {
+                            mechanismStateManager.setState(MechanismStates.CONE_HIGH_SCORING);
+                        } else {
+                            mechanismStateManager.setState(MechanismStates.CUBE_HIGH_SCORING);
                         }
                     }
                 }
