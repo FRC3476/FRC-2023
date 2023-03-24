@@ -83,9 +83,9 @@ public class Robot extends LoggedRobot {
     public static final int STICK_TOGGLE_SCORING = 7;
     public static final int STICK_TOGGLE_FLOOR_PICKUP = 9;
     public static final int CONTROLLER_TOGGLE_FLOOR_PICKUP = XboxAxes.LEFT_TRIGGER;
+    public static final int CONTROLLER_TOGGLE_TIPPED_FLOOR_PICKUP = XboxAxes.RIGHT_TRIGGER;
     public static final int STICK_TOGGLE_PICKUP_DOUBLE = 11;
     public static final int STICK_TOGGLE_PICKUP_SINGLE = 12;
-
     public static final int STICK_TOGGLE_AUTO_GRAB = 8;
     public static final int XBOX_TOGGLE_GRABBER = XboxButtons.LEFT_BUMPER;
     private double disabledTime = 0;
@@ -378,7 +378,18 @@ public class Robot extends LoggedRobot {
 
 
     enum WantedMechanismState {
-        STOWED, SCORING, FLOOR_PICKUP, STATION_PICKUP_DOUBLE, STATION_PICKUP_SINGLE
+        STOWED(false),
+        SCORING(false),
+        FLOOR_PICKUP(true),
+        TIPPED_FLOOR_PICKUP(true),
+        STATION_PICKUP_DOUBLE(true),
+        STATION_PICKUP_SINGLE(true);
+
+        public final boolean shouldAutoGrab;
+
+        WantedMechanismState(boolean shouldAutoGrab) {
+            this.shouldAutoGrab = shouldAutoGrab;
+        }
     }
 
     private static WantedMechanismState wantedMechanismState = WantedMechanismState.STOWED;
@@ -493,10 +504,7 @@ public class Robot extends LoggedRobot {
             }
         }
 
-        if (grabber.isGrabbed() &&
-                (wantedMechanismState == WantedMechanismState.STATION_PICKUP_DOUBLE
-                        || wantedMechanismState == WantedMechanismState.FLOOR_PICKUP
-                        || wantedMechanismState == WantedMechanismState.STATION_PICKUP_SINGLE)) {
+        if (grabber.isGrabbed() && wantedMechanismState.shouldAutoGrab) {
             setStowed();
         }
 
@@ -529,6 +537,15 @@ public class Robot extends LoggedRobot {
                 (xbox.getRawAxis(CONTROLLER_TOGGLE_FLOOR_PICKUP) > 0.1 && wantedMechanismState == WantedMechanismState.STOWED)) {
             if (wantedMechanismState == WantedMechanismState.STOWED) {
                 wantedMechanismState = WantedMechanismState.FLOOR_PICKUP;
+                isGrabberOpen = true;
+            } else {
+                setStowed();
+            }
+        }
+
+        if (xbox.getRisingEdge(CONTROLLER_TOGGLE_TIPPED_FLOOR_PICKUP, 0.1)) {
+            if (wantedMechanismState == WantedMechanismState.STOWED) {
+                wantedMechanismState = WantedMechanismState.TIPPED_FLOOR_PICKUP;
                 isGrabberOpen = true;
             } else {
                 setStowed();
@@ -598,6 +615,7 @@ public class Robot extends LoggedRobot {
                     }
                 }
                 case FLOOR_PICKUP -> mechanismStateManager.setState(MechanismStates.FLOOR_PICKUP);
+                case TIPPED_FLOOR_PICKUP -> mechanismStateManager.setState(MechanismStates.TIPPED_FLOOR_PICKUP);
                 case STATION_PICKUP_DOUBLE -> mechanismStateManager.setState(MechanismStates.DOUBLE_STATION_PICKUP);
                 case STATION_PICKUP_SINGLE -> {
                     if (scoringPositionManager.getWantedPositionType() == PositionType.CONE) {
@@ -609,16 +627,10 @@ public class Robot extends LoggedRobot {
             }
 
             if (wantedMechanismState != lastWantedMechanismState && useAutoGrab) {
-                Robot.getGrabber().setAutoGrab(
-                        wantedMechanismState == WantedMechanismState.STATION_PICKUP_DOUBLE
-                                || wantedMechanismState == WantedMechanismState.FLOOR_PICKUP
-                                || wantedMechanismState == WantedMechanismState.STATION_PICKUP_SINGLE
-                );
+                Robot.getGrabber().setAutoGrab(wantedMechanismState.shouldAutoGrab);
             }
         }
-
         lastWantedMechanismState = wantedMechanismState;
-
 
         var limitedMechCoords = MechanismStateManager.limitCoordinates(mechanismStateManager.getCurrentWantedState());
 
@@ -686,9 +698,7 @@ public class Robot extends LoggedRobot {
                     isGrabberOpen = false;
                 }
             } else {
-                if ((wantedMechanismState == WantedMechanismState.FLOOR_PICKUP
-                        || wantedMechanismState == WantedMechanismState.STATION_PICKUP_DOUBLE
-                        || wantedMechanismState == WantedMechanismState.STATION_PICKUP_SINGLE)
+                if (wantedMechanismState.shouldAutoGrab
                         && grabber.isOpen() && IS_AUTO_GRAB_ENABLED && mechanismStateManager.isMechAtFinalPos() && grabber.isAutoGrabEnabled()) {
                     isGrabberOpen = false;
                 } else {

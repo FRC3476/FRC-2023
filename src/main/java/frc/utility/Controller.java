@@ -106,6 +106,8 @@ public class Controller extends Joystick {
     public void update() {
         oldButtons = currentButtons;
         currentButtons = DriverStation.getStickButtons(getPort());
+
+        // Reset the axis and pov arrays if the number of axes or povs changes
         if (axisCount != DriverStation.getStickAxisCount(getPort())) {
             axisCount = DriverStation.getStickAxisCount(getPort());
             oldAxis = new double[axisCount];
@@ -115,11 +117,16 @@ public class Controller extends Joystick {
             povCount = DriverStation.getStickPOVCount(getPort());
             currentPOV = new int[povCount];
         }
-        oldAxis = currentAxis;
+
+        // Copy the current axis into the old axis array
+        System.arraycopy(currentAxis, 0, oldAxis, 0, axisCount);
+
+        // Get the current axis and pov values
         for (int i = 0; i < axisCount; i++) {
             currentAxis[i] = DriverStation.getStickAxis(getPort(), i);
         }
 
+        // Get the current pov values
         for (int i = 0; i < povCount; i++) {
             currentPOV[i] = DriverStation.getStickPOV(getPort(), i);
         }
