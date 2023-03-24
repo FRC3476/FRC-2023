@@ -84,7 +84,7 @@ public class VisionHandler extends AbstractSubsystem {
             fieldTags = new Pose3d[fieldLayout.getTags().size()];
 
             for (AprilTag tag : fieldLayout.getTags()) {
-                fieldTags[tag.ID] = tag.pose;
+                fieldTags[tag.ID - 1] = tag.pose;
             }
 
 //            System.out.println("AprilTag Positions: ");
@@ -181,8 +181,7 @@ public class VisionHandler extends AbstractSubsystem {
     private final MatBuilder<N4, N1> visionStdMatBuilder = new MatBuilder<>(Nat.N4(), Nat.N1());
 
     private void processNewTagPosition(VisionUpdate data) {
-        final var expectedTagPosition = fieldTags[data.tagId]; // We should never get an
-        // unknown tag
+        final var expectedTagPosition = fieldTags[data.tagId - 1]; // We should never get an unknown tag
 
         final var tagTranslation = new Translation3d(data.posZ, -data.posX, -data.posY); //camera to tag
         var distanceToTag = tagTranslation.getNorm();
