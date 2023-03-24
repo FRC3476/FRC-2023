@@ -555,7 +555,8 @@ public class Robot extends LoggedRobot {
 
         if (xbox.getRisingEdge(XBOX_TOGGLE_MECH)) {
             if (wantedMechanismState == WantedMechanismState.STOWED) {
-                if (isOnAllianceSide()) {
+                if ((isRed() && robotTracker.getLatestPose().getX() < 3.3)
+                        || (!isRed() && robotTracker.getLatestPose().getX() > 13.23)) {
                     wantedMechanismState = WantedMechanismState.SCORING;
                 } else {
                     if (robotTracker.getLatestPose().getRotation().getDegrees() < SINGLE_SUBSTATION_PICKUP_ANGLE_CUTOFF_DEGREES) {
