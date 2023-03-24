@@ -7,6 +7,8 @@ import frc.robot.Constants;
 import frc.subsytem.AbstractSubsystem;
 import org.littletonrobotics.junction.Logger;
 
+import static frc.robot.Constants.*;
+
 public class TelescopingArm extends AbstractSubsystem {
 
     private final TelescopingArmIO io;
@@ -34,12 +36,37 @@ public class TelescopingArm extends AbstractSubsystem {
         Logger.getInstance().recordOutput("Telescoping Arm/Goal position", position);
     }
 
+    private boolean homing = false;
+    private double homeTime = 0;
+
+    public void home() {
+        homeTime = TELESCOPING_ARM_MIN_HOME_TIME;
+        homing = true;
+    }
+
+    public void cancelHome() {
+        homing = false;
+    }
+
     private double pastVelocity = 0, pastTime = 0;
 
     @Override
     public void update() {
         io.updateInputs(inputs);
         Logger.getInstance().processInputs("Telescoping Arm", inputs);
+
+        if (homing) {
+            if (DriverStation.isEnabled()) {
+                homeTime -= Constants.NOMINAL_DT;
+                io.setTelescopingArmVoltage(TELESCOPING_ARM_HOME_VOLTAGE);
+                if (homeTime <= 0 && inputs.current > TELESCOPING_ARM_STALLING_CURRENT) {
+                    homing = false;
+                    io.resetTelescopingArmPosition(0);
+                }
+                Logger.getInstance().recordOutput("Telescoping Arm/Home time", homeTime);
+            }
+            return;
+        }
 
         double currentTime = Timer.getFPGATimestamp();
         if (trapezoidProfileStartTime == -1) {
