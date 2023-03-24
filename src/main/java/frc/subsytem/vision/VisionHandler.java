@@ -157,25 +157,29 @@ public class VisionHandler extends AbstractSubsystem {
                     });
         }
 
-        NetworkTableInstance.getDefault().addListener(
-                // table name of null gets the default table
-                LimelightHelpers.getLimelightNTTableEntry(null, "botpose_wpired").getTopic(),
-                EnumSet.of(Kind.kValueRemote),
-                (event) -> {
-                    synchronized (this) {
-                        // https://docs.limelightvision.io/en/latest/apriltags_in_3d.html#using-wpilib-s-pose-estimator
-                        double[] botpose = event.valueData.value.getDoubleArray();
-                        Pose3d llPose = LimelightHelpers.toPose3D(botpose);
-                        Pose3d adjustedPose = new Pose3d(
-                                llPose.getTranslation().plus(new Translation3d(0, -FIELD_HEIGHT_METERS / 2, 0)),
-                                llPose.getRotation()
-                        );
-                        visionInputs.limelightUpdates.add(new LimelightUpdate(
-                                adjustedPose,
-                                Timer.getFPGATimestamp() - (botpose[6] / 1000.0)
-                        ));
-                    }
-                });
+        var limelightNames = new String[]{"limelight-left", "limelight-right"};
+
+        for (String limelightName : limelightNames) {
+            NetworkTableInstance.getDefault().addListener(
+                    // table name of null gets the default table
+                    LimelightHelpers.getLimelightNTTableEntry(limelightName, "botpose_wpired").getTopic(),
+                    EnumSet.of(Kind.kValueRemote),
+                    (event) -> {
+                        synchronized (this) {
+                            // https://docs.limelightvision.io/en/latest/apriltags_in_3d.html#using-wpilib-s-pose-estimator
+                            double[] botpose = event.valueData.value.getDoubleArray();
+                            Pose3d llPose = LimelightHelpers.toPose3D(botpose);
+                            Pose3d adjustedPose = new Pose3d(
+                                    llPose.getTranslation().plus(new Translation3d(0, -FIELD_HEIGHT_METERS / 2, 0)),
+                                    llPose.getRotation()
+                            );
+                            visionInputs.limelightUpdates.add(new LimelightUpdate(
+                                    adjustedPose,
+                                    Timer.getFPGATimestamp() - (botpose[6] / 1000.0)
+                            ));
+                        }
+                    });
+        }
     }
 
     private final MatBuilder<N4, N1> visionStdMatBuilder = new MatBuilder<>(Nat.N4(), Nat.N1());
@@ -312,7 +316,7 @@ public class VisionHandler extends AbstractSubsystem {
         visionInputs.visionUpdates.clear();
 
         for (var limelightUpdate : visionInputs.limelightUpdates) {
-            var defaultDevs = RobotTracker.REALSENSE_DEFAULT_VISION_DEVIATIONS;
+            var defaultDevs = RobotTracker.LIMELIGHT_DEFAULT_VISION_DEVIATIONS;
             var distanceToTag2 = Double.MAX_VALUE;
 
             var pose = limelightUpdate.pose3d();
