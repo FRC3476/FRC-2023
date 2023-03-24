@@ -42,6 +42,7 @@ import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 
 import static frc.robot.Constants.*;
+import static frc.utility.geometry.GeometryUtils.dist2;
 
 public final class Drive extends AbstractSubsystem {
     private static final Pose2d IDENTITY_POSE = new Pose2d();
@@ -181,9 +182,13 @@ public final class Drive extends AbstractSubsystem {
     PIDController drivePositionPidX = new PIDController(4.1, 0, 0.0);
     PIDController drivePositionPidY = new PIDController(4.1, 0, 0.0);
 
+    LoggedDashboardNumber autoDrivePathEarlyEndSeconds =
+            new LoggedDashboardNumber("Auto Drive Path Early End Seconds", AUTO_DRIVE_PATH_EARLY_END_SECONDS);
+
     {
         SmartDashboard.putData(drivePositionPidX);
         SmartDashboard.putData(drivePositionPidY);
+        Logger.getInstance().registerDashboardInput(autoDrivePathEarlyEndSeconds);
     }
 
     /**
@@ -198,8 +203,14 @@ public final class Drive extends AbstractSubsystem {
                                                 ControllerDriveInputs inputs, boolean singleStationPickup) {
 
         Translation2d positionError = Robot.getRobotTracker().getLatestPose().getTranslation().minus(targetPosition);
-        if (Math.abs(positionError.getX()) < PID_CONTROL_RANGE_AUTO_DRIVE_METERS
-                && Math.abs(positionError.getY()) < PID_CONTROL_RANGE_AUTO_DRIVE_METERS) {
+        if (// Are we close enough to the target position?
+                Math.abs(positionError.getX()) < PID_CONTROL_RANGE_AUTO_DRIVE_METERS
+                        && Math.abs(positionError.getY()) < PID_CONTROL_RANGE_AUTO_DRIVE_METERS
+
+                        // Is the trajectory done? (bypass this check if we have no trajectory)
+                        && (trajectoryToDrive == null || !trajectoryToDrive.isDone() || trajectoryToDrive.join().isEmpty()
+                        || getAutoElapsedTime() + autoDrivePathEarlyEndSeconds.get() >=
+                        trajectoryToDrive.join().get().getTotalTimeSeconds())) {
             if (Math.abs(positionError.getX()) < ALLOWED_AUTO_DRIVE_POSITION_ERROR_METERS
                     && Math.abs(positionError.getY()) < ALLOWED_AUTO_DRIVE_POSITION_ERROR_METERS) {
                 setTurn(new ControllerDriveInputs(),
@@ -246,17 +257,16 @@ public final class Drive extends AbstractSubsystem {
                             var currPos = Robot.getRobotTracker().getLatestPose().getTranslation();
 
                             double lastTime = 0;
-                            double lastDistance = Double.MAX_VALUE;
+                            double lastDistance2 = Double.MAX_VALUE;
 
                             for (Trajectory.State state : trajectory.get().getStates()) {
-                                double dist = state.poseMeters.getTranslation().getDistance(currPos);
-                                if (dist > lastDistance) {
-                                    realtimeTrajectoryStartTime = Timer.getFPGATimestamp() - lastTime;
-                                    break;
+                                double dist2 = dist2(state.poseMeters.getTranslation(), currPos);
+                                if (dist2 < lastDistance2) {
+                                    lastTime = state.timeSeconds;
+                                    lastDistance2 = dist2;
                                 }
-                                lastTime = state.timeSeconds;
-                                lastDistance = dist;
                             }
+                            realtimeTrajectoryStartTime = Timer.getFPGATimestamp() - lastTime;
                         }
                         setAutoPath(trajectory.get(), realtimeTrajectoryStartTime); // Sets the DriveState to RAMSETE
                         setAutoRotation(targetAngle);
