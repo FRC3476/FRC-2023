@@ -92,8 +92,8 @@ public class Robot extends LoggedRobot {
     public static final int STICK_TOGGLE_AUTO_GRAB = 8;
 
     //TODO: Change these to the correct buttons
-    public static final int STICK_HOME_ELEVATOR = 1;
-    public static final int STICK_HOME_TELESCOPING_ARM = 2;
+    public static final int STICK_HOME_ELEVATOR = 3;
+    public static final int STICK_HOME_TELESCOPING_ARM = 4;
 
     private double disabledTime = 0;
 
