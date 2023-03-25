@@ -14,6 +14,7 @@ public abstract class GrabberIO {
         double pivotVoltage = 0.0;
 
         double grabberPosition = 0.0;
+        double grabberAbsolutePosition = 0.0;
         double grabberVelocity = 0.0;
         double grabberCurrent = 0.0;
         double grabberTemp = 0.0;
@@ -44,10 +45,6 @@ public abstract class GrabberIO {
     public void resetPivotPosition(double position) {}
 
     public void resetGrabberPosition(double position) {}
-
-    public double getGrabberPosition() {
-        return 0;
-    }
 
     public void setRollerVoltage(double voltage) {}
 

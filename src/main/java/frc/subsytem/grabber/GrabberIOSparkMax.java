@@ -106,6 +106,7 @@ public class GrabberIOSparkMax extends GrabberIO {
         inputs.grabberCurrent = grabberSparkMax.getOutputCurrent();
         inputs.grabberTemp = grabberSparkMax.getMotorTemperature();
         inputs.grabberVoltage = grabberSparkMax.getAppliedOutput() * grabberSparkMax.getBusVoltage();
+        inputs.grabberAbsolutePosition = grabberSparkMax.getEncoder().getPosition();
 
         if (GRABBER_WHEELS_USED) {
             assert rollerSparkMax1 != null;
@@ -149,11 +150,6 @@ public class GrabberIOSparkMax extends GrabberIO {
     @Override
     public void resetGrabberPosition(double position) {
         grabberSparkMax.getEncoder().setPosition(position);
-    }
-
-    @Override
-    public double getGrabberPosition() {
-        return grabberSparkMax.getEncoder().getPosition();
     }
 
     @Override
