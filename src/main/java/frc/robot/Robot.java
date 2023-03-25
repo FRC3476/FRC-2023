@@ -24,6 +24,7 @@ import frc.subsytem.Elevator.Elevator;
 import frc.subsytem.Elevator.ElevatorIO;
 import frc.subsytem.Elevator.ElevatorIOSparkMax;
 import frc.subsytem.MechanismStateManager;
+import frc.subsytem.MechanismStateManager.MechanismStateCoordinates;
 import frc.subsytem.MechanismStateManager.MechanismStates;
 import frc.subsytem.drive.Drive;
 import frc.subsytem.drive.DriveIO;
@@ -42,6 +43,7 @@ import frc.utility.Controller.XboxAxes;
 import frc.utility.Controller.XboxButtons;
 import frc.utility.ControllerDriveInputs;
 import frc.utility.PathGenerator;
+import org.checkerframework.checker.units.qual.A;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.littletonrobotics.junction.LogFileUtil;
@@ -58,6 +60,7 @@ import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Field;
 import java.nio.file.Files;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.NoSuchElementException;
 import java.util.Objects;
@@ -444,6 +447,16 @@ public class Robot extends LoggedRobot {
             isTurnToTargetMode = true;
         }
 
+        ArrayList<MechanismStateCoordinates> mechanismStates = new ArrayList<>() {
+            {
+                add(MechanismStates.CONE_MIDDLE_SCORING.state);
+                add(MechanismStates.CUBE_MIDDLE_SCORING.state);
+                add(MechanismStates.CONE_HIGH_SCORING.state);
+                add(MechanismStates.CUBE_MIDDLE_SCORING.state);
+                add(MechanismStates.FINAL_CONE_MIDDLE_SCORING.state);
+            }
+        };
+
         if (xbox.getRawButton(XBOX_START_AUTO_DRIVE)) { //Should be remapped to one of the back buttons
             if (xbox.getRisingEdge(XBOX_START_AUTO_DRIVE)) {
                 updateTeleopDrivingTarget(scoringPositionManager, true);
@@ -497,7 +510,11 @@ public class Robot extends LoggedRobot {
                     isTurnToTargetMode = false;
                 }
             } else {
-                drive.swerveDriveFieldRelative(getControllerDriveInputs());
+                ControllerDriveInputs controllerDriveInputs = getControllerDriveInputs();
+                if (mechanismStates.contains(mechanismStateManager.getCurrentWantedState())) {
+                    controllerDriveInputs.scaleInputs(0.5);
+                }
+                drive.swerveDriveFieldRelative(controllerDriveInputs);
             }
         }
 
