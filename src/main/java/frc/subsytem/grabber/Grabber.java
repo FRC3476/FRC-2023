@@ -15,7 +15,7 @@ public class Grabber extends AbstractSubsystem {
 
     public static final double MIN_OPEN_TIME = 0.5;
     public static final double MIN_CLOSED_TIME = 0.2;
-    public static final double CURRENT_SPIKE_TIME_THRESHOLD_S = 0.2;
+    public static final double CURRENT_SPIKE_TIME_THRESHOLD_S = 0.1;
     private final GrabberIO io;
     private final GrabberInputsAutoLogged inputs = new GrabberInputsAutoLogged();
 

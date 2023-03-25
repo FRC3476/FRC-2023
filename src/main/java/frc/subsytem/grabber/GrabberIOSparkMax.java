@@ -110,7 +110,8 @@ public class GrabberIOSparkMax extends GrabberIO {
         inputs.grabberTemp = grabberSparkMax.getMotorTemperature();
         inputs.grabberVoltage = grabberSparkMax.getAppliedOutput() * grabberSparkMax.getBusVoltage();
         if (USE_GRABBER_ENCODER) {
-            inputs.grabberAbsolutePosition = grabberSparkMax.getEncoder().getPosition();
+            assert grabberAbsoluteEncoder != null;
+            inputs.grabberAbsolutePosition = grabberAbsoluteEncoder.getPosition() - 180; // Closed is 180 to avoid wrapping issues
         }
 
         if (GRABBER_WHEELS_USED) {
