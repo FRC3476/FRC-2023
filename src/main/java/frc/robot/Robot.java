@@ -43,7 +43,6 @@ import frc.utility.Controller.XboxAxes;
 import frc.utility.Controller.XboxButtons;
 import frc.utility.ControllerDriveInputs;
 import frc.utility.PathGenerator;
-import org.checkerframework.checker.units.qual.A;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.littletonrobotics.junction.LogFileUtil;
@@ -447,12 +446,12 @@ public class Robot extends LoggedRobot {
             isTurnToTargetMode = true;
         }
 
-        ArrayList<MechanismStateCoordinates> mechanismStates = new ArrayList<>() {
+        ArrayList<MechanismStateCoordinates> halfSpeedMechanismStates = new ArrayList<>() {
             {
                 add(MechanismStates.CONE_MIDDLE_SCORING.state);
                 add(MechanismStates.CUBE_MIDDLE_SCORING.state);
                 add(MechanismStates.CONE_HIGH_SCORING.state);
-                add(MechanismStates.CUBE_MIDDLE_SCORING.state);
+                add(MechanismStates.CUBE_HIGH_SCORING.state);
                 add(MechanismStates.FINAL_CONE_MIDDLE_SCORING.state);
             }
         };
@@ -511,7 +510,7 @@ public class Robot extends LoggedRobot {
                 }
             } else {
                 ControllerDriveInputs controllerDriveInputs = getControllerDriveInputs();
-                if (mechanismStates.contains(mechanismStateManager.getCurrentWantedState())) {
+                if (halfSpeedMechanismStates.contains(mechanismStateManager.getCurrentWantedState())) {
                     controllerDriveInputs.scaleInputs(0.5);
                 }
                 drive.swerveDriveFieldRelative(controllerDriveInputs);
@@ -565,7 +564,7 @@ public class Robot extends LoggedRobot {
             }
         }
 
-        if (xbox.getRisingEdge(CONTROLLER_TOGGLE_TIPPED_FLOOR_PICKUP, 0.1)) {
+        if (xbox.getRisingEdge(CONTROLLER_TOGGLE_TIPPED_FLOOR_PICKUP, 0.1) && false) {
             if (wantedMechanismState == WantedMechanismState.STOWED) {
                 wantedMechanismState = WantedMechanismState.TIPPED_FLOOR_PICKUP;
                 isGrabberOpen = true;
@@ -597,7 +596,13 @@ public class Robot extends LoggedRobot {
                 if (isOnAllianceSide()) {
                     wantedMechanismState = WantedMechanismState.SCORING;
                 } else {
-                    if (robotTracker.getLatestPose().getRotation().getDegrees() < SINGLE_SUBSTATION_PICKUP_ANGLE_CUTOFF_DEGREES) {
+                    if ((isRed() && robotTracker.getLatestPose().getRotation()
+                            .getDegrees() < SINGLE_SUBSTATION_PICKUP_ANGLE_CUTOFF_DEGREES)
+                            || (!isRed()
+                            && robotTracker.getLatestPose().getRotation().getDegrees() > -135
+                            && robotTracker.getLatestPose().getRotation().getDegrees() < 0)
+
+                    ) {
                         wantedMechanismState = WantedMechanismState.STATION_PICKUP_SINGLE;
                     } else {
                         wantedMechanismState = WantedMechanismState.STATION_PICKUP_DOUBLE;
@@ -844,7 +849,11 @@ public class Robot extends LoggedRobot {
             var predictedPoseForPickup = robotTracker.getLatestPose().getTranslation().plus(
                     robotTracker.getVelocity().times(0.15));
 
-            if (robotTracker.getLatestPose().getRotation().getDegrees() < SINGLE_SUBSTATION_PICKUP_ANGLE_CUTOFF_DEGREES) {
+            if ((isRed() && robotTracker.getLatestPose().getRotation()
+                    .getDegrees() < SINGLE_SUBSTATION_PICKUP_ANGLE_CUTOFF_DEGREES)
+                    || (!isRed()
+                    && robotTracker.getLatestPose().getRotation().getDegrees() > -135
+                    && robotTracker.getLatestPose().getRotation().getDegrees() < 0)) {
                 y = SINGLE_STATION_Y;
 
                 if (isRed()) {

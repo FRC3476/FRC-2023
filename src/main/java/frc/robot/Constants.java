@@ -298,7 +298,7 @@ public final class Constants {
 
     public static final double LOWER_PICKUP_POSITION_Y = -3.56;
     public static final double UPPER_PICKUP_POSITION_Y = -2.05892 + Units.inchesToMeters(1);
-    public static final double PICKUP_POSITION_X_OFFSET_FROM_WALL = FIELD_WIDTH_METERS - 15.2 + Units.inchesToMeters(3);
+    public static final double PICKUP_POSITION_X_OFFSET_FROM_WALL = FIELD_WIDTH_METERS - 15.2 + Units.inchesToMeters(-1.5);
 
     public static final double SCORING_POSITION_OFFSET_CONE_FROM_WALL = 0.05;
     public static final double SCORING_POSITION_OFFSET_CUBE_FROM_WALL = 0.05 + Units.inchesToMeters(2);
@@ -308,7 +308,7 @@ public final class Constants {
     public static final double SINGLE_STATION_Y = -3.21;
     public static final Rotation2d SINGLE_STATION_ANGLE = Rotation2d.fromDegrees(-90);
 
-    public static final double SINGLE_SUBSTATION_PICKUP_ANGLE_CUTOFF_DEGREES = -30;
+    public static final double SINGLE_SUBSTATION_PICKUP_ANGLE_CUTOFF_DEGREES = -45;
 
 
     // Constraints
