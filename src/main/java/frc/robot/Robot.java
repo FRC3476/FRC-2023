@@ -580,7 +580,13 @@ public class Robot extends LoggedRobot {
                 if (isOnAllianceSide()) {
                     wantedMechanismState = WantedMechanismState.SCORING;
                 } else {
-                    if (robotTracker.getLatestPose().getRotation().getDegrees() < SINGLE_SUBSTATION_PICKUP_ANGLE_CUTOFF_DEGREES) {
+                    if ((isRed() && robotTracker.getLatestPose().getRotation()
+                            .getDegrees() < SINGLE_SUBSTATION_PICKUP_ANGLE_CUTOFF_DEGREES)
+                            || (!isRed()
+                            && robotTracker.getLatestPose().getRotation().getDegrees() > -135
+                            && robotTracker.getLatestPose().getRotation().getDegrees() < 0)
+
+                    ) {
                         wantedMechanismState = WantedMechanismState.STATION_PICKUP_SINGLE;
                     } else {
                         wantedMechanismState = WantedMechanismState.STATION_PICKUP_DOUBLE;
@@ -827,7 +833,11 @@ public class Robot extends LoggedRobot {
             var predictedPoseForPickup = robotTracker.getLatestPose().getTranslation().plus(
                     robotTracker.getVelocity().times(0.15));
 
-            if (robotTracker.getLatestPose().getRotation().getDegrees() < SINGLE_SUBSTATION_PICKUP_ANGLE_CUTOFF_DEGREES) {
+            if ((isRed() && robotTracker.getLatestPose().getRotation()
+                    .getDegrees() < SINGLE_SUBSTATION_PICKUP_ANGLE_CUTOFF_DEGREES)
+                    || (!isRed()
+                    && robotTracker.getLatestPose().getRotation().getDegrees() > -135
+                    && robotTracker.getLatestPose().getRotation().getDegrees() < 0)) {
                 y = SINGLE_STATION_Y;
 
                 if (isRed()) {
