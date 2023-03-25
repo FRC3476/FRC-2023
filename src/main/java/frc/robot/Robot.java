@@ -548,7 +548,7 @@ public class Robot extends LoggedRobot {
             }
         }
 
-        if (xbox.getRisingEdge(CONTROLLER_TOGGLE_TIPPED_FLOOR_PICKUP, 0.1)) {
+        if (xbox.getRisingEdge(CONTROLLER_TOGGLE_TIPPED_FLOOR_PICKUP, 0.1) && false) {
             if (wantedMechanismState == WantedMechanismState.STOWED) {
                 wantedMechanismState = WantedMechanismState.TIPPED_FLOOR_PICKUP;
                 isGrabberOpen = true;
