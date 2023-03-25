@@ -43,6 +43,12 @@ public abstract class GrabberIO {
 
     public void resetPivotPosition(double position) {}
 
+    public void resetGrabberPosition(double position) {}
+
+    public double getGrabberPosition() {
+        return 0;
+    }
+
     public void setRollerVoltage(double voltage) {}
 
     public void setAutoGrab(boolean enabled) {}

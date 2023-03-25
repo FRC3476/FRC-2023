@@ -19,6 +19,7 @@ public class GrabberIOSparkMax extends GrabberIO {
     private @Nullable CANSparkMax rollerSparkMax1;
     private @Nullable CANSparkMax rollerSparkMax2;
     private @Nullable SparkMaxAbsoluteEncoder pivotAbsoluteEncoder;
+    private @Nullable SparkMaxAbsoluteEncoder grabberAbsoluteEncoder;
 
     private @NotNull SparkMaxLimitSwitch reverseLimitSwitch;
 
@@ -41,6 +42,10 @@ public class GrabberIOSparkMax extends GrabberIO {
         pivotSparkMax.getPIDController().setFeedbackDevice(pivotSparkMax.getEncoder());
         pivotSparkMax.getPIDController().setPositionPIDWrappingEnabled(false);
 
+        grabberAbsoluteEncoder = grabberSparkMax.getAbsoluteEncoder(SparkMaxAbsoluteEncoder.Type.kDutyCycle);
+        grabberAbsoluteEncoder.setPositionConversionFactor(DEGREES_PER_ROTATION);
+        grabberAbsoluteEncoder.setVelocityConversionFactor(DEGREES_PER_ROTATION / SECONDS_PER_MINUTE);
+        resetGrabberPosition(grabberAbsoluteEncoder.getPosition());
 
         pivotSparkMax.enableVoltageCompensation(Constants.GRABBER_NOMINAL_VOLTAGE);
         pivotSparkMax.setSmartCurrentLimit(Constants.PIVOT_SMART_CURRENT_LIMIT);
@@ -139,6 +144,16 @@ public class GrabberIOSparkMax extends GrabberIO {
     @Override
     public void resetPivotPosition(double position) {
         pivotSparkMax.getEncoder().setPosition(position);
+    }
+
+    @Override
+    public void resetGrabberPosition(double position) {
+        grabberSparkMax.getEncoder().setPosition(position);
+    }
+
+    @Override
+    public double getGrabberPosition() {
+        return grabberSparkMax.getEncoder().getPosition();
     }
 
     @Override

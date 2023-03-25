@@ -143,7 +143,8 @@ public class Grabber extends AbstractSubsystem {
     public synchronized boolean isGrabbed() {
         if (Math.abs(inputs.grabberCurrent) > GRABBED_CURRENT_THRESHOLD
                 && (lastGrabState == GrabState.GRAB_CONE || lastGrabState == GrabState.GRAB_CUBE)
-                && Timer.getFPGATimestamp() > allowedOpenTime) {
+                && Timer.getFPGATimestamp() > allowedOpenTime
+                && io.getGrabberPosition() <= Constants.GRABBER_CLOSE_THRESHOLD) {
             return Timer.getFPGATimestamp() > grabbedAboveCurrentTime;
         } else {
             grabbedAboveCurrentTime = Timer.getFPGATimestamp() + CURRENT_SPIKE_TIME_THRESHOLD_S;
