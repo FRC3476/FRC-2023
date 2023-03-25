@@ -46,6 +46,7 @@ public class GrabberIOSparkMax extends GrabberIO {
             grabberAbsoluteEncoder = grabberSparkMax.getAbsoluteEncoder(SparkMaxAbsoluteEncoder.Type.kDutyCycle);
             grabberAbsoluteEncoder.setPositionConversionFactor(DEGREES_PER_ROTATION);
             grabberAbsoluteEncoder.setVelocityConversionFactor(DEGREES_PER_ROTATION / SECONDS_PER_MINUTE);
+            grabberAbsoluteEncoder.setInverted(true);
             resetGrabberPosition(grabberAbsoluteEncoder.getPosition());
         }
 
