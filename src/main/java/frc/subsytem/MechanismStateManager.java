@@ -101,8 +101,8 @@ public class MechanismStateManager extends AbstractSubsystem {
                 false
         ),
         TIPPED_FLOOR_PICKUP(
-                new MechanismStateCoordinates(0.08, 0.06, MIN_WRIST_ANGLE),
-                false
+                new MechanismStateCoordinates(0.16, -0.03, -85),
+                true
         ), //Estimated values
         DOUBLE_STATION_PICKUP(
                 new MechanismStateCoordinates(0.531, 2.3 - 0.015 - (!IS_PRACTICE ? Units.inchesToMeters(3.2) : 0), 12),
