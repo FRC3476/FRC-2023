@@ -173,6 +173,7 @@ public class DriveIOSparkMax extends DriveIO {
             inputs.driveMotorCurrents[i] = swerveDriveMotors[i].getOutputCurrent();
             inputs.driveMotorTemps[i] = swerveDriveMotors[i].getMotorTemperature();
             inputs.driveMotorVoltages[i] = swerveDriveMotors[i].getBusVoltage() * swerveDriveMotors[i].getAppliedOutput();
+            inputs.supplyDriveMotorVoltages[i] = swerveDriveMotors[i].getBusVoltage();
 
             if (USE_CANCODERS) {
                 inputs.swerveMotorAbsolutePositions[i] = swerveCanCoders[i].getAbsolutePosition();
@@ -184,6 +185,7 @@ public class DriveIOSparkMax extends DriveIO {
             inputs.swerveMotorCurrents[i] = swerveMotors[i].getOutputCurrent();
             inputs.swerveMotorTemps[i] = swerveMotors[i].getMotorTemperature();
             inputs.swerveMotorVoltages[i] = swerveMotors[i].getBusVoltage() * swerveMotors[i].getAppliedOutput();
+            inputs.supplySwerveMotorVoltages[i] = swerveMotors[i].getBusVoltage();
             inputs.swerveMotorRelativePositions[i] = swerveMotors[i].getEncoder().getPosition();
             inputs.driveMotorFaults[i] = swerveDriveMotors[i].getStickyFaults();
             inputs.swerveMotorFaults[i] = swerveMotors[i].getStickyFaults();
@@ -229,7 +231,7 @@ public class DriveIOSparkMax extends DriveIO {
 
 
     @Override
-    protected void setDriveMotorVoltage(int motorNum, double voltage) {
+    protected void setDriveMotorVoltage(int motorNum, double voltage, boolean voltageControl) {
         swerveDriveMotors[motorNum].getPIDController().setReference(voltage, ControlType.kVoltage);
     }
 

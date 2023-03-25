@@ -49,9 +49,19 @@ public abstract class DriveIO {
         double[] driveMotorVoltages = new double[4];
 
         /**
+         * supply voltage of the drive motor in volts
+         */
+        double[] supplyDriveMotorVoltages = new double[4];
+
+        /**
          * voltage of the swerve motor in volts
          */
         double[] swerveMotorVoltages = new double[4];
+
+        /**
+         * supply voltage of the swerve motor in volts
+         */
+        double[] supplySwerveMotorVoltages = new double[4];
 
 
         double[] swerveMotorFaults = new double[4];
@@ -95,7 +105,7 @@ public abstract class DriveIO {
      * @param motorNum the selected swerve motor
      * @param voltage  the target voltage in volts
      */
-    protected void setDriveMotorVoltage(int motorNum, double voltage) {}
+    protected void setDriveMotorVoltage(int motorNum, double voltage, boolean voltageControl) {}
 
 
     public void resetAbsoluteZeros() {}

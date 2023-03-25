@@ -366,6 +366,10 @@ public final class Drive extends AbstractSubsystem {
 
     private synchronized void setSwerveModuleStates(SwerveSetpoint setpoint) {
         Logger.getInstance().recordOutput("Drive/Wanted Swerve Module States", setpoint.moduleStates());
+        var moduleStates = setpoint.moduleStates();
+        SwerveDriveKinematics.desaturateWheelSpeeds(setpoint.moduleStates(),
+                DRIVE_FEEDFORWARD[0].maxAchievableVelocity(SWERVE_DRIVE_VOLTAGE_LIMIT_AUTO, 0));
+
         for (int i = 0; i < 4; i++) {
             var moduleState = setpoint.moduleStates()[i];
             double currentAngle = getWheelRotation(i);
@@ -429,8 +433,7 @@ public final class Drive extends AbstractSubsystem {
         }
 
         double ffv = DRIVE_FEEDFORWARD[module].calculate(velocity, 0);
-        // Converts ffv voltage to percent output and sets it to motor
-        io.setDriveMotorVoltage(module, ffv);
+        io.setDriveMotorVoltage(module, ffv, driveState != DriveState.TELEOP);
 
         Logger.getInstance().recordOutput("Drive/Out Volts Ks" + module, DRIVE_FEEDFORWARD[module].ks * Math.signum(velocity));
         Logger.getInstance().recordOutput("Drive/Out Volts Kv" + module, DRIVE_FEEDFORWARD[module].kv * velocity);

@@ -2,6 +2,7 @@ package frc.subsytem.drive;
 
 import com.ctre.phoenixpro.configs.*;
 import com.ctre.phoenixpro.controls.PositionVoltage;
+import com.ctre.phoenixpro.controls.TorqueCurrentFOC;
 import com.ctre.phoenixpro.controls.VoltageOut;
 import com.ctre.phoenixpro.hardware.CANcoder;
 import com.ctre.phoenixpro.hardware.TalonFX;
@@ -177,12 +178,14 @@ public class DriveIOFalcon extends DriveIO {
             inputs.driveMotorCurrents[i] = swerveDriveMotors[i].getSupplyCurrent().getValue();
             inputs.driveMotorTemps[i] = swerveDriveMotors[i].getDeviceTemp().getValue();
             inputs.driveMotorVoltages[i] = swerveDriveMotors[i].getSupplyVoltage().getValue();
+            inputs.supplyDriveMotorVoltages[i] = swerveDriveMotors[i].getSupplyVoltage().getValue();
             inputs.swerveMotorAbsolutePositions[i] =
                     swerveCanCoders[i].getAbsolutePosition().getValue() * 360; //conv rotations to degrees
 
             inputs.swerveMotorCurrents[i] = swerveMotors[i].getSupplyCurrent().getValue();
             inputs.swerveMotorTemps[i] = swerveMotors[i].getDeviceTemp().getValue();
             inputs.swerveMotorVoltages[i] = swerveMotors[i].getSupplyVoltage().getValue();
+            inputs.supplySwerveMotorVoltages[i] = swerveMotors[i].getSupplyVoltage().getValue();
             inputs.swerveMotorRelativePositions[i] = swerveMotors[i].getPosition().getValue() * 360; //conv rotations to degrees
             inputs.driveMotorFaults[i] = swerveDriveMotors[i].getStickyFaultField().getValue(); //Which faults do we need here
             inputs.swerveMotorFaults[i] = swerveMotors[i].getStickyFaultField().getValue(); //Which faults do we need here
@@ -234,6 +237,9 @@ public class DriveIOFalcon extends DriveIO {
     }
 
     private final VoltageOut voltageOut = new VoltageOut(0, true, false);
+    private final TorqueCurrentFOC currentOut
+            = new TorqueCurrentFOC(SWERVE_DRIVE_MOTOR_CURRENT_LIMIT, 0, 1, false);
+
 
     /**
      * Set the target position of the selected swerve motor
@@ -242,9 +248,14 @@ public class DriveIOFalcon extends DriveIO {
      * @param voltage  the wanted voltage
      */
     @Override
-    protected void setDriveMotorVoltage(int motorNum, double voltage) {
-        voltageOut.Output = voltage;
-        swerveDriveMotors[motorNum].setControl(voltageOut);
+    protected void setDriveMotorVoltage(int motorNum, double voltage, boolean voltageControl) {
+        if (voltageControl) {
+            voltageOut.Output = voltage;
+            swerveDriveMotors[motorNum].setControl(voltageOut);
+        } else {
+            currentOut.Output = voltage / SWERVE_DRIVE_VOLTAGE_LIMIT_AUTO;
+            swerveDriveMotors[motorNum].setControl(currentOut);
+        }
     }
 
 
