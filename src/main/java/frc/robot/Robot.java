@@ -43,7 +43,6 @@ import frc.utility.Controller.XboxAxes;
 import frc.utility.Controller.XboxButtons;
 import frc.utility.ControllerDriveInputs;
 import frc.utility.PathGenerator;
-import org.checkerframework.checker.units.qual.A;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.littletonrobotics.junction.LogFileUtil;
@@ -447,12 +446,12 @@ public class Robot extends LoggedRobot {
             isTurnToTargetMode = true;
         }
 
-        ArrayList<MechanismStateCoordinates> mechanismStates = new ArrayList<>() {
+        ArrayList<MechanismStateCoordinates> halfSpeedMechanismStates = new ArrayList<>() {
             {
                 add(MechanismStates.CONE_MIDDLE_SCORING.state);
                 add(MechanismStates.CUBE_MIDDLE_SCORING.state);
                 add(MechanismStates.CONE_HIGH_SCORING.state);
-                add(MechanismStates.CUBE_MIDDLE_SCORING.state);
+                add(MechanismStates.CUBE_HIGH_SCORING.state);
                 add(MechanismStates.FINAL_CONE_MIDDLE_SCORING.state);
             }
         };
@@ -511,7 +510,7 @@ public class Robot extends LoggedRobot {
                 }
             } else {
                 ControllerDriveInputs controllerDriveInputs = getControllerDriveInputs();
-                if (mechanismStates.contains(mechanismStateManager.getCurrentWantedState())) {
+                if (halfSpeedMechanismStates.contains(mechanismStateManager.getCurrentWantedState())) {
                     controllerDriveInputs.scaleInputs(0.5);
                 }
                 drive.swerveDriveFieldRelative(controllerDriveInputs);
