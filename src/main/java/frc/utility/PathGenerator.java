@@ -33,8 +33,6 @@ public class PathGenerator {
 
     //set initial velocity, copy it then
     private static final double MAX_VELOCITY = 3.5;
-    private static final double MAX_ACCELERATION = 2.85;
-
     private static final ArrayList<TrajectoryConstraint> constraints = new ArrayList<>();
 
     private static ExecutorService threadPoolExecutor;
@@ -46,7 +44,7 @@ public class PathGenerator {
 
     public static CompletableFuture<Optional<Trajectory>> generateTrajectory(
             Translation2d robotVelocity, Translation2d robotTranslation, Translation2d targetPosition,
-            double startPosPredictAhead, boolean singleStationPickup) {
+            double startPosPredictAhead, boolean singleStationPickup, double maxAcceleration) {
         Translation2d endDirTranslation;
         if (singleStationPickup) {
             endDirTranslation = new Translation2d(0, -END_VECTOR_LEN);
@@ -59,7 +57,7 @@ public class PathGenerator {
             );
         }
         return generateTrajectory(robotVelocity, robotTranslation, targetPosition, endDirTranslation,
-                startPosPredictAhead, Robot.isRed());
+                startPosPredictAhead, Robot.isRed(), maxAcceleration);
     }
 
     /**
@@ -75,7 +73,7 @@ public class PathGenerator {
      */
     public static CompletableFuture<Optional<Trajectory>> generateTrajectory(
             Translation2d robotVelocity, Translation2d robotTranslation, Translation2d targetPosition, Translation2d endDir,
-            double startPosPredictAhead, boolean isRedAlliance) {
+            double startPosPredictAhead, boolean isRedAlliance, double maxAcceleration) {
         var trajectoryFuture = new CompletableFuture<Optional<Trajectory>>();
         return trajectoryFuture.completeAsync(() -> {
             var startPos = robotTranslation.plus(robotVelocity.times(startPosPredictAhead));
@@ -120,7 +118,7 @@ public class PathGenerator {
                     new double[]{targetPosition.getY(), endDir.getY(), 0}
             ));
             Trajectory trajectory;
-            TrajectoryConfig config = new TrajectoryConfig(Math.max(MAX_VELOCITY, robotVelocityNorm), MAX_ACCELERATION);
+            TrajectoryConfig config = new TrajectoryConfig(Math.max(MAX_VELOCITY, robotVelocityNorm), maxAcceleration);
             //config.setKinematics(Constants.SWERVE_DRIVE_KINEMATICS); // The Kinematics has mutable state, so we can't use the same one
             config.setStartVelocity(robotVelocityNorm);
             config.setEndVelocity(0);

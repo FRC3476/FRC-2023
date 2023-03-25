@@ -85,13 +85,13 @@ public class Robot extends LoggedRobot {
     public static final int CONTROLLER_TOGGLE_FLOOR_PICKUP = XboxAxes.LEFT_TRIGGER;
     public static final int CONTROLLER_TOGGLE_TIPPED_FLOOR_PICKUP = XboxAxes.RIGHT_TRIGGER;
     public static final int XBOX_TOGGLE_GRABBER = XboxButtons.LEFT_BUMPER;
+    public static final int XBOX_BABY_BIRD = XboxButtons.X;
+
     public static final int STICK_TOGGLE_SCORING = 7;
     public static final int STICK_TOGGLE_FLOOR_PICKUP = 9;
     public static final int STICK_TOGGLE_PICKUP_DOUBLE = 11;
     public static final int STICK_TOGGLE_PICKUP_SINGLE = 12;
     public static final int STICK_TOGGLE_AUTO_GRAB = 8;
-
-    //TODO: Change these to the correct buttons
     public static final int STICK_HOME_ELEVATOR = 3;
     public static final int STICK_HOME_TELESCOPING_ARM = 4;
 
@@ -422,6 +422,16 @@ public class Robot extends LoggedRobot {
         Logger.getInstance().registerDashboardInput(autoGrabDashboard);
     }
 
+    ArrayList<MechanismStateCoordinates> halfSpeedMechanismStates = new ArrayList<>() {
+        {
+            add(MechanismStates.CONE_MIDDLE_SCORING.state);
+            add(MechanismStates.CUBE_MIDDLE_SCORING.state);
+            add(MechanismStates.CONE_HIGH_SCORING.state);
+            add(MechanismStates.CUBE_HIGH_SCORING.state);
+            add(MechanismStates.FINAL_CONE_MIDDLE_SCORING.state);
+        }
+    };
+
     /**
      * This method is called periodically during operator control.
      */
@@ -441,20 +451,10 @@ public class Robot extends LoggedRobot {
         }
 
         if (xbox.getRisingEdge(XBOX_AUTO_ROTATE)) {
-            updateTeleopDrivingTarget(scoringPositionManager, true);
+            teleopDrivingAutoAlignPosition = null;
             hasReachedAutoAlignPosition = false;
             isTurnToTargetMode = true;
         }
-
-        ArrayList<MechanismStateCoordinates> halfSpeedMechanismStates = new ArrayList<>() {
-            {
-                add(MechanismStates.CONE_MIDDLE_SCORING.state);
-                add(MechanismStates.CUBE_MIDDLE_SCORING.state);
-                add(MechanismStates.CONE_HIGH_SCORING.state);
-                add(MechanismStates.CUBE_HIGH_SCORING.state);
-                add(MechanismStates.FINAL_CONE_MIDDLE_SCORING.state);
-            }
-        };
 
         if (xbox.getRawButton(XBOX_START_AUTO_DRIVE)) { //Should be remapped to one of the back buttons
             if (xbox.getRisingEdge(XBOX_START_AUTO_DRIVE)) {
@@ -479,6 +479,9 @@ public class Robot extends LoggedRobot {
                 hasReachedAutoAlignPosition = true;
             }
 
+            double maxAutoDriveAccel = autoDrivePosition == AutoDrivePosition.PICKUP_DOUBLE_SUBSTATION ?
+                    MAX_ACCEL_SINGLE_SUBSTATION_PICKUP : MAX_ACCEL_AUTO_DRIVE;
+
             if (hasReachedAutoAlignPosition) {
                 drive.alignToYAndYaw(teleopDrivingAutoAlignPosition.getRotation().getRadians(),
                         teleopDrivingAutoAlignPosition.getTranslation().getY(),
@@ -487,8 +490,8 @@ public class Robot extends LoggedRobot {
                     teleopDrivingAutoAlignPosition.getTranslation(),
                     teleopDrivingAutoAlignPosition.getRotation(),
                     getControllerDriveInputs(),
-                    autoDrivePosition == AutoDrivePosition.PICKUP_SINGLE_SUBSTATION
-
+                    autoDrivePosition == AutoDrivePosition.PICKUP_SINGLE_SUBSTATION,
+                    maxAutoDriveAccel
             )) {
                 // We failed to generate a trajectory
                 wantedRumble = 1;
@@ -497,7 +500,9 @@ public class Robot extends LoggedRobot {
             drive.autoBalance(getControllerDriveInputs());
         } else {
             if (isTurnToTargetMode) {
-                assert teleopDrivingAutoAlignPosition != null;
+                if (teleopDrivingAutoAlignPosition == null) {
+                    updateTeleopDrivingTarget(scoringPositionManager, true);
+                }
                 var controllerDriveInputs = getControllerDriveInputs();
                 if (teleopDrivingAutoAlignPosition != null) {
                     drive.setTurn(controllerDriveInputs,
@@ -555,7 +560,7 @@ public class Robot extends LoggedRobot {
         }
 
         if (stick.getRisingEdge(STICK_TOGGLE_FLOOR_PICKUP) ||
-                (xbox.getRawAxis(CONTROLLER_TOGGLE_FLOOR_PICKUP) > 0.1 && wantedMechanismState == WantedMechanismState.STOWED)) {
+                xbox.getRisingEdge(CONTROLLER_TOGGLE_FLOOR_PICKUP, 0.1)) {
             if (wantedMechanismState == WantedMechanismState.STOWED) {
                 wantedMechanismState = WantedMechanismState.FLOOR_PICKUP;
                 isGrabberOpen = true;
@@ -589,6 +594,14 @@ public class Robot extends LoggedRobot {
             } else {
                 setStowed();
             }
+        }
+
+        if (xbox.getRisingEdge(XBOX_BABY_BIRD)) {
+            wantedMechanismState = WantedMechanismState.STATION_PICKUP_SINGLE;
+            teleopDrivingAutoAlignPosition = new Pose2d(new Translation2d(), SINGLE_STATION_ANGLE);
+            hasReachedAutoAlignPosition = false;
+            isTurnToTargetMode = true;
+            isGrabberOpen = true;
         }
 
         if (xbox.getRisingEdge(XBOX_TOGGLE_MECH)) {
@@ -847,7 +860,7 @@ public class Robot extends LoggedRobot {
             // We're on the opposite side as our alliance
             // Try to go to the pickup position
             var predictedPoseForPickup = robotTracker.getLatestPose().getTranslation().plus(
-                    robotTracker.getVelocity().times(0.15));
+                    robotTracker.getVelocity().times(0));
 
             if ((isRed() && robotTracker.getLatestPose().getRotation()
                     .getDegrees() < SINGLE_SUBSTATION_PICKUP_ANGLE_CUTOFF_DEGREES)

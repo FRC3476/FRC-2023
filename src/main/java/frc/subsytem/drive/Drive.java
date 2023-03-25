@@ -200,7 +200,8 @@ public final class Drive extends AbstractSubsystem {
      * @return A boolean indicating whether the robot was successfully able to generate a trajectory to the target position.
      */
     public synchronized boolean driveToPosition(Translation2d targetPosition, Rotation2d targetAngle,
-                                                ControllerDriveInputs inputs, boolean singleStationPickup) {
+                                                ControllerDriveInputs inputs, boolean singleStationPickup,
+                                                double maxAcceleration) {
 
         Translation2d positionError = Robot.getRobotTracker().getLatestPose().getTranslation().minus(targetPosition);
         if (// Are we close enough to the target position?
@@ -238,7 +239,7 @@ public final class Drive extends AbstractSubsystem {
                     realtimeTrajectoryStartVelocity,
                     robotTracker.getLatestPose().getTranslation(),
                     targetPosition,
-                    START_POS_PREDICT_AHEAD, singleStationPickup);
+                    START_POS_PREDICT_AHEAD, singleStationPickup, maxAcceleration);
             realtimeTrajectoryStartTime = Timer.getFPGATimestamp() + START_POS_PREDICT_AHEAD;
             setDriveState(DriveState.WAITING_FOR_PATH);
         }
