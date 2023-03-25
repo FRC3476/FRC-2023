@@ -49,6 +49,12 @@ public class Grabber extends AbstractSubsystem {
         io.updateInputs(inputs);
         Logger.getInstance().processInputs("Grabber", inputs);
 
+        if (isAutoGrabEnabled() && Timer.getFPGATimestamp() > allowedOpenTime
+                && (lastGrabState == GrabState.GRAB_CONE || lastGrabState == GrabState.GRAB_CUBE)
+                && !inputs.isLimitSwitchTriggered) {
+            setAutoGrab(false);
+        }
+
         double currentTime = Timer.getFPGATimestamp();
         if (trapezoidProfileStartTime == -1) {
             trapezoidProfileStartTime = currentTime;

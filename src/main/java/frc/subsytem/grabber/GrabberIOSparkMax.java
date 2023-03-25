@@ -59,7 +59,7 @@ public class GrabberIOSparkMax extends GrabberIO {
         grabberSparkMax.setSmartCurrentLimit(Constants.GRABBER_SMART_CURRENT_LIMIT);
         grabberSparkMax.setClosedLoopRampRate(0.75);
         grabberSparkMax.setIdleMode(IdleMode.kBrake);
-        reverseLimitSwitch = grabberSparkMax.getReverseLimitSwitch(Type.kNormallyClosed);
+        reverseLimitSwitch = grabberSparkMax.getReverseLimitSwitch(Type.kNormallyOpen);
 
         if (GRABBER_WHEELS_USED) {
             rollerSparkMax1 = new CANSparkMax(GRABBER_ROLLER_MAIN_CAN_ID, CANSparkMaxLowLevel.MotorType.kBrushless);
