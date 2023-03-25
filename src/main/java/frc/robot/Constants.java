@@ -295,10 +295,10 @@ public final class Constants {
 
     public static final double LOWER_PICKUP_POSITION_Y = -3.56;
     public static final double UPPER_PICKUP_POSITION_Y = -2.05892 + Units.inchesToMeters(1);
-    public static final double PICKUP_POSITION_X_OFFSET_FROM_WALL = FIELD_WIDTH_METERS - 15.2 + Units.inchesToMeters(3);
+    public static final double PICKUP_POSITION_X_OFFSET_FROM_WALL = FIELD_WIDTH_METERS - 15.2 + Units.inchesToMeters(-1.5);
 
     public static final double SCORING_POSITION_OFFSET_CONE_FROM_WALL = 0.05;
-    public static final double SCORING_POSITION_OFFSET_CUBE_FROM_WALL = 0.05 + Units.inchesToMeters(-1);
+    public static final double SCORING_POSITION_OFFSET_CUBE_FROM_WALL = 0.05 + Units.inchesToMeters(2);
 
     public static final double SINGLE_STATION_RED_X = 14.39;
     public static final double SINGLE_STATION_BLUE_X = FIELD_WALL_RIGHT_X - SINGLE_STATION_RED_X;
