@@ -238,7 +238,7 @@ public class DriveIOFalcon extends DriveIO {
 
     private final VoltageOut voltageOut = new VoltageOut(0, true, false);
     private final TorqueCurrentFOC currentOut
-            = new TorqueCurrentFOC(SWERVE_DRIVE_MOTOR_CURRENT_LIMIT, 0, 1, false);
+            = new TorqueCurrentFOC(800, 0, 1, false);
 
 
     /**
@@ -249,11 +249,12 @@ public class DriveIOFalcon extends DriveIO {
      */
     @Override
     protected void setDriveMotorVoltage(int motorNum, double voltage, boolean voltageControl) {
-        if (voltageControl) {
+        if (voltageControl || true) {
             voltageOut.Output = voltage;
             swerveDriveMotors[motorNum].setControl(voltageOut);
         } else {
-            currentOut.Output = voltage / SWERVE_DRIVE_VOLTAGE_LIMIT_AUTO;
+            currentOut.MaxAbsDutyCycle = Math.abs(voltage / SWERVE_DRIVE_VOLTAGE_LIMIT_AUTO);
+            currentOut.Output = Math.copySign(currentOut.Output, voltage);
             swerveDriveMotors[motorNum].setControl(currentOut);
         }
     }
