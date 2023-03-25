@@ -169,6 +169,9 @@ public class VisionHandler extends AbstractSubsystem {
                             // https://docs.limelightvision.io/en/latest/apriltags_in_3d.html#using-wpilib-s-pose-estimator
                             double[] botpose = event.valueData.value.getDoubleArray();
                             Pose3d llPose = LimelightHelpers.toPose3D(botpose);
+                            if (dist2(llPose.getTranslation()) < 0.1) {
+                                return;
+                            }
                             Pose3d adjustedPose = new Pose3d(
                                     llPose.getTranslation().plus(new Translation3d(0, -FIELD_HEIGHT_METERS / 2, 0)),
                                     llPose.getRotation()
