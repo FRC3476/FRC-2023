@@ -227,7 +227,9 @@ public final class Constants {
 
     public static final double GRABBER_ROLLER_VOLTAGE = -6;
     public static final double GRABBER_ROLLER_IDLE = -0;
-    public static final double GRABBER_CLOSE_THRESHOLD = 20;
+    public static final double GRABBER_CLOSE_THRESHOLD_DEGREES = 20;
+    public static final double GRABBER_OPEN_THRESHOLD_DEGREES = 50;
+    public static final boolean USE_GRABBER_ENCODER = !IS_PRACTICE;
     public static boolean GRABBER_WHEELS_USED = false;
 
     public static final double GRABBER_LENGTH = .308;

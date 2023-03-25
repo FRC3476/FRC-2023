@@ -42,10 +42,12 @@ public class GrabberIOSparkMax extends GrabberIO {
         pivotSparkMax.getPIDController().setFeedbackDevice(pivotSparkMax.getEncoder());
         pivotSparkMax.getPIDController().setPositionPIDWrappingEnabled(false);
 
-        grabberAbsoluteEncoder = grabberSparkMax.getAbsoluteEncoder(SparkMaxAbsoluteEncoder.Type.kDutyCycle);
-        grabberAbsoluteEncoder.setPositionConversionFactor(DEGREES_PER_ROTATION);
-        grabberAbsoluteEncoder.setVelocityConversionFactor(DEGREES_PER_ROTATION / SECONDS_PER_MINUTE);
-        resetGrabberPosition(grabberAbsoluteEncoder.getPosition());
+        if (USE_GRABBER_ENCODER) {
+            grabberAbsoluteEncoder = grabberSparkMax.getAbsoluteEncoder(SparkMaxAbsoluteEncoder.Type.kDutyCycle);
+            grabberAbsoluteEncoder.setPositionConversionFactor(DEGREES_PER_ROTATION);
+            grabberAbsoluteEncoder.setVelocityConversionFactor(DEGREES_PER_ROTATION / SECONDS_PER_MINUTE);
+            resetGrabberPosition(grabberAbsoluteEncoder.getPosition());
+        }
 
         pivotSparkMax.enableVoltageCompensation(Constants.GRABBER_NOMINAL_VOLTAGE);
         pivotSparkMax.setSmartCurrentLimit(Constants.PIVOT_SMART_CURRENT_LIMIT);
@@ -106,7 +108,9 @@ public class GrabberIOSparkMax extends GrabberIO {
         inputs.grabberCurrent = grabberSparkMax.getOutputCurrent();
         inputs.grabberTemp = grabberSparkMax.getMotorTemperature();
         inputs.grabberVoltage = grabberSparkMax.getAppliedOutput() * grabberSparkMax.getBusVoltage();
-        inputs.grabberAbsolutePosition = grabberSparkMax.getEncoder().getPosition();
+        if (USE_GRABBER_ENCODER) {
+            inputs.grabberAbsolutePosition = grabberSparkMax.getEncoder().getPosition();
+        }
 
         if (GRABBER_WHEELS_USED) {
             assert rollerSparkMax1 != null;

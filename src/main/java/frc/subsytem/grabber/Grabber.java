@@ -9,8 +9,7 @@ import frc.robot.Robot;
 import frc.subsytem.AbstractSubsystem;
 import org.littletonrobotics.junction.Logger;
 
-import static frc.robot.Constants.GRABBED_CURRENT_THRESHOLD;
-import static frc.robot.Constants.IS_AUTO_GRAB_ENABLED;
+import static frc.robot.Constants.*;
 
 public class Grabber extends AbstractSubsystem {
 
@@ -144,7 +143,7 @@ public class Grabber extends AbstractSubsystem {
         if (Math.abs(inputs.grabberCurrent) > GRABBED_CURRENT_THRESHOLD
                 && (lastGrabState == GrabState.GRAB_CONE || lastGrabState == GrabState.GRAB_CUBE)
                 && Timer.getFPGATimestamp() > allowedOpenTime
-                && inputs.grabberAbsolutePosition <= Constants.GRABBER_CLOSE_THRESHOLD) {
+                && (inputs.grabberAbsolutePosition <= Constants.GRABBER_CLOSE_THRESHOLD_DEGREES || !USE_GRABBER_ENCODER)) {
             return Timer.getFPGATimestamp() > grabbedAboveCurrentTime;
         } else {
             grabbedAboveCurrentTime = Timer.getFPGATimestamp() + CURRENT_SPIKE_TIME_THRESHOLD_S;
@@ -158,7 +157,8 @@ public class Grabber extends AbstractSubsystem {
     public synchronized boolean isOpen() {
         if (Math.abs(inputs.grabberCurrent) > GRABBED_CURRENT_THRESHOLD
                 && (lastGrabState == GrabState.OPEN)
-                && Timer.getFPGATimestamp() > allowedOpenTime) {
+                && Timer.getFPGATimestamp() > allowedOpenTime
+                && (inputs.grabberAbsolutePosition >= Constants.GRABBER_OPEN_THRESHOLD_DEGREES || !USE_GRABBER_ENCODER)) {
             return Timer.getFPGATimestamp() > openAboveCurrentTime;
         } else {
             openAboveCurrentTime = Timer.getFPGATimestamp() + CURRENT_SPIKE_TIME_THRESHOLD_S;
