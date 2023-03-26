@@ -143,7 +143,7 @@ public final class Constants {
     public static final double MAX_VELOCITY_END_PATH = 0.02;
 
     public static final double MAX_ACCEL_SINGLE_SUBSTATION_PICKUP = 2.6;
-    public static final double MAX_ACCEL_AUTO_DRIVE = 3.3;
+    public static final double MAX_ACCEL_AUTO_DRIVE = 3.1;
 
 
     // TurnPID

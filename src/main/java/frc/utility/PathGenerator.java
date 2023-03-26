@@ -38,7 +38,7 @@ public class PathGenerator {
     private static ExecutorService threadPoolExecutor;
 
     static {
-        constraints.add(new CentripetalAccelerationConstraint(5));
+        constraints.add(new CentripetalAccelerationConstraint(10));
         threadPoolExecutor = Executors.newSingleThreadExecutor();
     }
 
