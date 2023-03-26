@@ -45,6 +45,10 @@ import static org.joml.Math.tan;
 public class VisionHandler extends AbstractSubsystem {
 
     public static final double NO_VISION_UPDATES_TIME_THRESHOLD = 0.1;
+    public static final double REALSENSE_THROWOUT_THRESHOLD_METERS = 1.5;
+    public static final double LIMELIGHT_LED_ON_DISTANCE_THRESHOLD_SQUARED = 2.2 * 2.2;
+    public static final int USE_LIMELIGHT_THRESHOLD_METERS = 4;
+
     private final LoggedDashboardBoolean isRealsenseConnected
             = new LoggedDashboardBoolean("Realsesnse Connected", false);
     private final LoggedDashboardBoolean isLimelightLeftConnected
@@ -343,40 +347,7 @@ public class VisionHandler extends AbstractSubsystem {
                 Timer.getFPGATimestamp() - visionInputs.lastVisionUpdateLimelightRight < NO_VISION_UPDATES_TIME_THRESHOLD);
 
 
-        Logger.getInstance().recordOutput("VisionHandler/Tags Updates", visionInputs.visionUpdates.size());
-        // Process vision updates
-        for (var visionUpdate : visionInputs.visionUpdates) {
-            processNewTagPosition(visionUpdate);
-        }
-        visionInputs.visionUpdates.clear();
-
-        {
-
-        }
-
-        for (var limelightUpdate : visionInputs.limelightUpdates) {
-            var defaultDevs = RobotTracker.LIMELIGHT_DEFAULT_VISION_DEVIATIONS;
-
-            var pose = limelightUpdate.pose3d();
-
-
-            var distanceToTag2 = Double.MAX_VALUE;
-            for (var tags : fieldTags) {
-                var dist2 = dist2(tags.getTranslation().minus(pose.getTranslation()));
-                if (dist2 < distanceToTag2) {
-                    distanceToTag2 = dist2;
-                }
-            }
-
-            var devs = visionStdMatBuilder.fill(
-                    defaultDevs.get(0, 0) * distanceToTag2,
-                    defaultDevs.get(1, 0) * distanceToTag2,
-                    defaultDevs.get(2, 0) * distanceToTag2,
-                    Math.atan(tan(defaultDevs.get(3, 0)) * distanceToTag2 * distanceToTag2));
-
-            Robot.getRobotTracker().addVisionMeasurement(pose, limelightUpdate.timestamp(), devs);
-        }
-
+        // Find the distance to the closest tag
         var distanceToTag2 = Double.MAX_VALUE;
         for (var tags : fieldTags) {
             var dist2 = dist2(tags.getTranslation().minus(Robot.getRobotTracker().getLatestPose3d().getTranslation()));
@@ -385,13 +356,52 @@ public class VisionHandler extends AbstractSubsystem {
             }
         }
 
-        if (distanceToTag2 < LIMELIGHT_LED_ON_DISTANCE_TRESHOLD) {
+        Logger.getInstance().recordOutput("VisionHandler/Tags Updates", visionInputs.visionUpdates.size());
+
+        // Process vision updates
+
+        if (distanceToTag2 > REALSENSE_THROWOUT_THRESHOLD_METERS * REALSENSE_THROWOUT_THRESHOLD_METERS) {
+            for (var visionUpdate : visionInputs.visionUpdates) {
+                processNewTagPosition(visionUpdate);
+            }
+        }
+        visionInputs.visionUpdates.clear();
+
+        // Turn on the limelight LEDs if we are close to a tag
+        if (distanceToTag2 < LIMELIGHT_LED_ON_DISTANCE_THRESHOLD_SQUARED) {
             for (String limelightName : limelightNames) {
-                LimelightHelpers.setLEDMode_ForceOn(limelightName);
+                LimelightHelpers.setLEDMode_PipelineControl(limelightName);
             }
         } else {
             for (String limelightName : limelightNames) {
                 LimelightHelpers.setLEDMode_ForceOff(limelightName);
+            }
+        }
+
+
+        if (distanceToTag2 < USE_LIMELIGHT_THRESHOLD_METERS) {
+            for (var limelightUpdate : visionInputs.limelightUpdates) {
+                var defaultDevs = RobotTracker.LIMELIGHT_DEFAULT_VISION_DEVIATIONS;
+
+                var pose = limelightUpdate.pose3d();
+
+
+                // Find the closest tag to this pose estimate
+                var distanceToTagLimelight2 = Double.MAX_VALUE;
+                for (var tags : fieldTags) {
+                    var dist2 = dist2(tags.getTranslation().minus(pose.getTranslation()));
+                    if (dist2 < distanceToTagLimelight2) {
+                        distanceToTagLimelight2 = dist2;
+                    }
+                }
+
+                var devs = visionStdMatBuilder.fill(
+                        defaultDevs.get(0, 0) * distanceToTagLimelight2,
+                        defaultDevs.get(1, 0) * distanceToTagLimelight2,
+                        defaultDevs.get(2, 0) * distanceToTagLimelight2,
+                        Math.atan(tan(defaultDevs.get(3, 0)) * distanceToTagLimelight2 * distanceToTagLimelight2));
+
+                Robot.getRobotTracker().addVisionMeasurement(pose, limelightUpdate.timestamp(), devs);
             }
         }
 
