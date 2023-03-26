@@ -14,9 +14,12 @@ import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.trajectory.TrapezoidProfile.State;
-import edu.wpi.first.wpilibj.*;
 import edu.wpi.first.wpilibj.GenericHID.RumbleType;
+import edu.wpi.first.wpilibj.IterativeRobotBase;
+import edu.wpi.first.wpilibj.PowerDistribution;
 import edu.wpi.first.wpilibj.PowerDistribution.ModuleType;
+import edu.wpi.first.wpilibj.Timer;
+import edu.wpi.first.wpilibj.Watchdog;
 import frc.robot.ScoringPositionManager.PositionType;
 import frc.robot.ScoringPositionManager.SelectedPosition;
 import frc.subsytem.AbstractSubsystem;
@@ -450,13 +453,13 @@ public class Robot extends LoggedRobot {
             teleopDrivingAutoAlignPosition = null;
         }
 
-        if (xbox.getRisingEdge(XBOX_AUTO_ROTATE)) {
+        if (xbox.getRisingEdge(XBOX_AUTO_ROTATE) || (xbox.getRisingEdge(XBOX_START_AUTO_DRIVE) && !isOnAllianceSide())) {
             teleopDrivingAutoAlignPosition = null;
             hasReachedAutoAlignPosition = false;
             isTurnToTargetMode = true;
         }
 
-        if (xbox.getRawButton(XBOX_START_AUTO_DRIVE)) { //Should be remapped to one of the back buttons
+        if (xbox.getRawButton(XBOX_START_AUTO_DRIVE) && isOnAllianceSide()) { //Should be remapped to one of the back buttons
             if (xbox.getRisingEdge(XBOX_START_AUTO_DRIVE)) {
                 updateTeleopDrivingTarget(scoringPositionManager, true);
                 hasReachedAutoAlignPosition = false;
