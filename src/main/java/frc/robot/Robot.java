@@ -317,7 +317,7 @@ public class Robot extends LoggedRobot {
         AbstractSubsystem.tick();
 
         // Record video is FMS is attached
-        visionHandler.forceRecord(DriverStation.isFMSAttached());
+        visionHandler.forceRecord(true);
 
         if (!(Objects.equals(lastSelectedAuto, autoChooser.get()) || Objects.equals(lastSelectedSide, sideChooser.get()))) {
             lastSelectedAuto = autoChooser.get();
