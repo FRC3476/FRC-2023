@@ -353,4 +353,7 @@ public final class Constants {
 
     //Led Constants
     public static final int LED_LENGTH = 5;
+
+
+    public static final double LIMELIGHT_LED_ON_DISTANCE_TRESHOLD = 2.5;
 }

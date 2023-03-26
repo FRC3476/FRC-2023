@@ -62,9 +62,12 @@ public class VisionHandler extends AbstractSubsystem {
     static final Vector<N3> POSITIVE_Y = VecBuilder.fill(0, 1, 0);
     static final Vector<N3> POSITIVE_Z = VecBuilder.fill(0, 0, 1);
 
-    static final Rotation3d POSITIVE_Y_90 = new Rotation3d(POSITIVE_Y, Math.toRadians(90.0));
-    static final Rotation3d POSITIVE_X_NEGATIVE_90 = new Rotation3d(POSITIVE_X, Math.toRadians(-90.0));
-    static final Rotation3d POSITIVE_Z_180 = new Rotation3d(POSITIVE_Z, Math.toRadians(180));
+    private static final Rotation3d POSITIVE_Y_90 = new Rotation3d(POSITIVE_Y, Math.toRadians(90.0));
+    private static final Rotation3d POSITIVE_X_NEGATIVE_90 = new Rotation3d(POSITIVE_X, Math.toRadians(-90.0));
+    private static final Rotation3d POSITIVE_Z_180 = new Rotation3d(POSITIVE_Z, Math.toRadians(180));
+
+    private static String[] limelightNames = new String[]{"limelight-left", "limelight-right"};
+
     private static final @NotNull Pose3d[] fieldTags;
 
     static {
@@ -165,8 +168,6 @@ public class VisionHandler extends AbstractSubsystem {
                         }
                     });
         }
-
-        var limelightNames = new String[]{"limelight-left", "limelight-right"};
 
         for (String limelightName : limelightNames) {
             NetworkTableInstance.getDefault().addListener(
@@ -349,12 +350,17 @@ public class VisionHandler extends AbstractSubsystem {
         }
         visionInputs.visionUpdates.clear();
 
+        {
+
+        }
+
         for (var limelightUpdate : visionInputs.limelightUpdates) {
             var defaultDevs = RobotTracker.LIMELIGHT_DEFAULT_VISION_DEVIATIONS;
-            var distanceToTag2 = Double.MAX_VALUE;
 
             var pose = limelightUpdate.pose3d();
 
+
+            var distanceToTag2 = Double.MAX_VALUE;
             for (var tags : fieldTags) {
                 var dist2 = dist2(tags.getTranslation().minus(pose.getTranslation()));
                 if (dist2 < distanceToTag2) {
@@ -369,6 +375,24 @@ public class VisionHandler extends AbstractSubsystem {
                     Math.atan(tan(defaultDevs.get(3, 0)) * distanceToTag2 * distanceToTag2));
 
             Robot.getRobotTracker().addVisionMeasurement(pose, limelightUpdate.timestamp(), devs);
+        }
+
+        var distanceToTag2 = Double.MAX_VALUE;
+        for (var tags : fieldTags) {
+            var dist2 = dist2(tags.getTranslation().minus(Robot.getRobotTracker().getLatestPose3d().getTranslation()));
+            if (dist2 < distanceToTag2) {
+                distanceToTag2 = dist2;
+            }
+        }
+
+        if (distanceToTag2 < LIMELIGHT_LED_ON_DISTANCE_TRESHOLD) {
+            for (String limelightName : limelightNames) {
+                LimelightHelpers.setLEDMode_ForceOn(limelightName);
+            }
+        } else {
+            for (String limelightName : limelightNames) {
+                LimelightHelpers.setLEDMode_ForceOff(limelightName);
+            }
         }
 
         visionInputs.limelightUpdates.clear();
