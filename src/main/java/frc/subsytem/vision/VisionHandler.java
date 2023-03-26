@@ -34,6 +34,7 @@ import java.util.ArrayList;
 import java.util.EnumSet;
 
 import static frc.robot.Constants.*;
+import static frc.utility.LimelightHelpers.getLimelightNTTableEntry;
 import static frc.utility.OrangeUtility.fixCoords;
 import static frc.utility.geometry.GeometryUtils.dist2;
 import static org.joml.Math.tan;
@@ -44,10 +45,17 @@ import static org.joml.Math.tan;
 public class VisionHandler extends AbstractSubsystem {
 
     public static final double NO_VISION_UPDATES_TIME_THRESHOLD = 0.1;
-    private final LoggedDashboardBoolean isVisionConnected = new LoggedDashboardBoolean("Vision Connected", false);
+    private final LoggedDashboardBoolean isRealsenseConnected
+            = new LoggedDashboardBoolean("Realsesnse Connected", false);
+    private final LoggedDashboardBoolean isLimelightLeftConnected
+            = new LoggedDashboardBoolean("Limelight Left Connected", false);
+    private final LoggedDashboardBoolean isLimelightRightConnected
+            = new LoggedDashboardBoolean("Limelight Right Connected", false);
 
     {
-        Logger.getInstance().registerDashboardInput(isVisionConnected);
+        Logger.getInstance().registerDashboardInput(isRealsenseConnected);
+        Logger.getInstance().registerDashboardInput(isLimelightLeftConnected);
+        Logger.getInstance().registerDashboardInput(isLimelightRightConnected);
     }
 
     static final Vector<N3> POSITIVE_X = VecBuilder.fill(1, 0, 0);
@@ -140,9 +148,10 @@ public class VisionHandler extends AbstractSubsystem {
                 EnumSet.of(Kind.kValueRemote),
                 (event) -> {
                     synchronized (this) {
-                        visionInputs.lastVisionUpdate = Timer.getFPGATimestamp();
+                        visionInputs.lastVisionUpdateRealsense = Timer.getFPGATimestamp();
                     }
                 });
+
 
         for (int i = 1; i <= 8; i++) {
             var table = visionTable.getEntry(String.valueOf(i));
@@ -162,7 +171,7 @@ public class VisionHandler extends AbstractSubsystem {
         for (String limelightName : limelightNames) {
             NetworkTableInstance.getDefault().addListener(
                     // table name of null gets the default table
-                    LimelightHelpers.getLimelightNTTableEntry(limelightName, "botpose_wpired").getTopic(),
+                    getLimelightNTTableEntry(limelightName, "botpose_wpired").getTopic(),
                     EnumSet.of(Kind.kValueRemote),
                     (event) -> {
                         synchronized (this) {
@@ -183,6 +192,22 @@ public class VisionHandler extends AbstractSubsystem {
                         }
                     });
         }
+
+        NetworkTableInstance.getDefault().addListener(getLimelightNTTableEntry("limelight-left", "tl").getTopic(),
+                EnumSet.of(Kind.kValueRemote),
+                (event) -> {
+                    synchronized (this) {
+                        visionInputs.lastVisionUpdateLimelightLeft = Timer.getFPGATimestamp();
+                    }
+                });
+
+        NetworkTableInstance.getDefault().addListener(getLimelightNTTableEntry("limelight-right", "tl").getTopic(),
+                EnumSet.of(Kind.kValueRemote),
+                (event) -> {
+                    synchronized (this) {
+                        visionInputs.lastVisionUpdateLimelightRight = Timer.getFPGATimestamp();
+                    }
+                });
     }
 
     private final MatBuilder<N4, N1> visionStdMatBuilder = new MatBuilder<>(Nat.N4(), Nat.N1());
@@ -309,7 +334,13 @@ public class VisionHandler extends AbstractSubsystem {
     public synchronized void update() {
         Logger.getInstance().processInputs("VisionHandler", visionInputs);
 
-        isVisionConnected.set(Timer.getFPGATimestamp() - visionInputs.lastVisionUpdate < NO_VISION_UPDATES_TIME_THRESHOLD);
+        isRealsenseConnected.set(
+                Timer.getFPGATimestamp() - visionInputs.lastVisionUpdateRealsense < NO_VISION_UPDATES_TIME_THRESHOLD);
+        isLimelightLeftConnected.set(
+                Timer.getFPGATimestamp() - visionInputs.lastVisionUpdateLimelightLeft < NO_VISION_UPDATES_TIME_THRESHOLD);
+        isLimelightRightConnected.set(
+                Timer.getFPGATimestamp() - visionInputs.lastVisionUpdateLimelightRight < NO_VISION_UPDATES_TIME_THRESHOLD);
+
 
         Logger.getInstance().recordOutput("VisionHandler/Tags Updates", visionInputs.visionUpdates.size());
         // Process vision updates
