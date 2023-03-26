@@ -14,9 +14,12 @@ import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.trajectory.TrapezoidProfile.State;
-import edu.wpi.first.wpilibj.*;
 import edu.wpi.first.wpilibj.GenericHID.RumbleType;
+import edu.wpi.first.wpilibj.IterativeRobotBase;
+import edu.wpi.first.wpilibj.PowerDistribution;
 import edu.wpi.first.wpilibj.PowerDistribution.ModuleType;
+import edu.wpi.first.wpilibj.Timer;
+import edu.wpi.first.wpilibj.Watchdog;
 import frc.robot.ScoringPositionManager.PositionType;
 import frc.robot.ScoringPositionManager.SelectedPosition;
 import frc.subsytem.AbstractSubsystem;
@@ -80,7 +83,7 @@ public class Robot extends LoggedRobot {
     public static final int XBOX_TOGGLE_MECH = XboxButtons.LEFT_CLICK;
 
     public static final int XBOX_AUTO_BALANCE = XboxButtons.Y;
-    public static final int XBOX_AUTO_ROTATE = XboxButtons.RIGHT_BUMPER;
+    public static final int XBOX_AUTO_DRIVE_LOWER_SUBSTATION = XboxButtons.RIGHT_BUMPER;
     public static final int XBOX_RESET_HEADING = XboxButtons.A;
     public static final int CONTROLLER_TOGGLE_FLOOR_PICKUP = XboxAxes.LEFT_TRIGGER;
     public static final int CONTROLLER_TOGGLE_TIPPED_FLOOR_PICKUP = XboxAxes.RIGHT_TRIGGER;
@@ -450,21 +453,16 @@ public class Robot extends LoggedRobot {
             teleopDrivingAutoAlignPosition = null;
         }
 
-        if (xbox.getRisingEdge(XBOX_AUTO_ROTATE)) {
-            teleopDrivingAutoAlignPosition = null;
-            hasReachedAutoAlignPosition = false;
-            isTurnToTargetMode = true;
-        }
-
-        if (xbox.getRawButton(XBOX_START_AUTO_DRIVE)) { //Should be remapped to one of the back buttons
-            if (xbox.getRisingEdge(XBOX_START_AUTO_DRIVE)) {
-                updateTeleopDrivingTarget(scoringPositionManager, true);
+        if (xbox.getRawButton(XBOX_START_AUTO_DRIVE) || xbox.getRawButton(
+                XBOX_AUTO_DRIVE_LOWER_SUBSTATION)) { //Should be remapped to one of the back buttons
+            if (xbox.getRisingEdge(XBOX_START_AUTO_DRIVE) || xbox.getRisingEdge(XBOX_AUTO_DRIVE_LOWER_SUBSTATION)) {
+                updateTeleopDrivingTarget(true);
                 hasReachedAutoAlignPosition = false;
                 assert teleopDrivingAutoAlignPosition != null;
             } else if (teleopDrivingAutoAlignPosition == null) {
                 // We're not recalculating the grid position b/c we only need to recalculate the path because the operator
                 // changed the grid position
-                updateTeleopDrivingTarget(scoringPositionManager, false);
+                updateTeleopDrivingTarget(false);
                 hasReachedAutoAlignPosition = false;
                 assert teleopDrivingAutoAlignPosition != null;
             }
@@ -501,7 +499,7 @@ public class Robot extends LoggedRobot {
         } else {
             if (isTurnToTargetMode) {
                 if (teleopDrivingAutoAlignPosition == null) {
-                    updateTeleopDrivingTarget(scoringPositionManager, true);
+                    updateTeleopDrivingTarget(true);
                 }
                 var controllerDriveInputs = getControllerDriveInputs();
                 if (teleopDrivingAutoAlignPosition != null) {
@@ -805,7 +803,9 @@ public class Robot extends LoggedRobot {
 
     private AutoDrivePosition autoDrivePosition = AutoDrivePosition.SCORING;
 
-    private void updateTeleopDrivingTarget(ScoringPositionManager scoringPositionManager, boolean recalculateGridPosition) {
+    private void updateTeleopDrivingTarget(boolean recalculateGridPosition) {
+        ScoringPositionManager scoringPositionManager = ScoringPositionManager.getInstance();
+
         double x, y;
         Rotation2d rotation;
 
@@ -877,12 +877,11 @@ public class Robot extends LoggedRobot {
                 rotation = SINGLE_STATION_ANGLE;
                 autoDrivePosition = AutoDrivePosition.PICKUP_SINGLE_SUBSTATION;
             } else {
-                if (predictedPoseForPickup.getY() < -2.715) {
+                if (xbox.getRawButton(XBOX_AUTO_DRIVE_LOWER_SUBSTATION)) {
                     y = LOWER_PICKUP_POSITION_Y;
                 } else {
                     y = UPPER_PICKUP_POSITION_Y;
                 }
-
 
                 if (isRed()) {
                     x = FIELD_WIDTH_METERS - PICKUP_POSITION_X_OFFSET_FROM_WALL;
