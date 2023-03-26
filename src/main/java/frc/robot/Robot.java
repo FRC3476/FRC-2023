@@ -461,13 +461,13 @@ public class Robot extends LoggedRobot {
 
         if (xbox.getRawButton(XBOX_START_AUTO_DRIVE) && isOnAllianceSide()) { //Should be remapped to one of the back buttons
             if (xbox.getRisingEdge(XBOX_START_AUTO_DRIVE)) {
-                updateTeleopDrivingTarget(scoringPositionManager, true);
+                updateTeleopDrivingTarget(true);
                 hasReachedAutoAlignPosition = false;
                 assert teleopDrivingAutoAlignPosition != null;
             } else if (teleopDrivingAutoAlignPosition == null) {
                 // We're not recalculating the grid position b/c we only need to recalculate the path because the operator
                 // changed the grid position
-                updateTeleopDrivingTarget(scoringPositionManager, false);
+                updateTeleopDrivingTarget(false);
                 hasReachedAutoAlignPosition = false;
                 assert teleopDrivingAutoAlignPosition != null;
             }
@@ -504,7 +504,7 @@ public class Robot extends LoggedRobot {
         } else {
             if (isTurnToTargetMode) {
                 if (teleopDrivingAutoAlignPosition == null) {
-                    updateTeleopDrivingTarget(scoringPositionManager, true);
+                    updateTeleopDrivingTarget(true);
                 }
                 var controllerDriveInputs = getControllerDriveInputs();
                 if (teleopDrivingAutoAlignPosition != null) {
@@ -808,7 +808,9 @@ public class Robot extends LoggedRobot {
 
     private AutoDrivePosition autoDrivePosition = AutoDrivePosition.SCORING;
 
-    private void updateTeleopDrivingTarget(ScoringPositionManager scoringPositionManager, boolean recalculateGridPosition) {
+    private void updateTeleopDrivingTarget(boolean recalculateGridPosition) {
+        ScoringPositionManager scoringPositionManager = ScoringPositionManager.getInstance();
+
         double x, y;
         Rotation2d rotation;
 
@@ -885,7 +887,6 @@ public class Robot extends LoggedRobot {
                 } else {
                     y = UPPER_PICKUP_POSITION_Y;
                 }
-
 
                 if (isRed()) {
                     x = FIELD_WIDTH_METERS - PICKUP_POSITION_X_OFFSET_FROM_WALL;

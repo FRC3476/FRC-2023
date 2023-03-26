@@ -16,7 +16,10 @@ public class VisionInputs implements LoggableInputs {
 
     public final ArrayList<LimelightUpdate> limelightUpdates = new ArrayList<>();
 
-    public double lastVisionUpdate = -10000;
+    public double lastVisionUpdateRealsense = -10000;
+    public double lastVisionUpdateLimelightLeft = -10000;
+    public double lastVisionUpdateLimelightRight = -10000;
+
 
     @Override
     public void toLog(LogTable table) {

@@ -58,7 +58,7 @@ public final class Constants {
     public static final int CAN_RIGHT_FRONT_ID = 21;
     public static final int CAN_RIGHT_BACK_ID = 22;
 
-    public static final double SWERVE_INCHES_PER_ROTATION = 12.5 * 0.976;
+    public static final double SWERVE_INCHES_PER_ROTATION = 12.5 * 0.976 * 0.96488764044943820224719101123596;
     public static final double SWERVE_METER_PER_ROTATION = Units.inchesToMeters(SWERVE_INCHES_PER_ROTATION);
     public static final double SWERVE_DRIVE_P = 100;
     public static final double SWERVE_DRIVE_D = 0.00;
