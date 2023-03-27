@@ -46,7 +46,7 @@ public class VisionHandler extends AbstractSubsystem {
 
     public static final double NO_VISION_UPDATES_TIME_THRESHOLD = 0.15;
     public static final double REALSENSE_THROWOUT_THRESHOLD_METERS = 0;
-    public static final double LIMELIGHT_LED_ON_DISTANCE_THRESHOLD_SQUARED = 2.2 * 2.2;
+    public static final double LIMELIGHT_LED_ON_DISTANCE_THRESHOLD_SQUARED = 1.5 * 1.5;
     public static final int USE_LIMELIGHT_THRESHOLD_METERS = 4;
 
     private final LoggedDashboardBoolean isRealsenseConnected
