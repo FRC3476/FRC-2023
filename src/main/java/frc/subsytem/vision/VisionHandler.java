@@ -44,13 +44,13 @@ import static org.joml.Math.tan;
  */
 public class VisionHandler extends AbstractSubsystem {
 
-    public static final double NO_VISION_UPDATES_TIME_THRESHOLD = 0.1;
-    public static final double REALSENSE_THROWOUT_THRESHOLD_METERS = 1.5;
+    public static final double NO_VISION_UPDATES_TIME_THRESHOLD = 0.15;
+    public static final double REALSENSE_THROWOUT_THRESHOLD_METERS = 0;
     public static final double LIMELIGHT_LED_ON_DISTANCE_THRESHOLD_SQUARED = 2.2 * 2.2;
     public static final int USE_LIMELIGHT_THRESHOLD_METERS = 4;
 
     private final LoggedDashboardBoolean isRealsenseConnected
-            = new LoggedDashboardBoolean("Realsesnse Connected", false);
+            = new LoggedDashboardBoolean("RealSense Connected", false);
     private final LoggedDashboardBoolean isLimelightLeftConnected
             = new LoggedDashboardBoolean("Limelight Left Connected", false);
     private final LoggedDashboardBoolean isLimelightRightConnected
