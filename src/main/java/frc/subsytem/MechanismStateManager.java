@@ -81,15 +81,15 @@ public class MechanismStateManager extends AbstractSubsystem {
                 true
         ),
         CUBE_MIDDLE_SCORING(
-                new MechanismStateCoordinates(Units.inchesToMeters(16), Units.inchesToMeters(40), 0),
+                new MechanismStateCoordinates(Units.inchesToMeters(16), Units.inchesToMeters(37), 0),
                 false
         ),
         CONE_MIDDLE_SCORING(
-                new MechanismStateCoordinates(Units.inchesToMeters(11), Units.inchesToMeters(44.5), 25),
+                new MechanismStateCoordinates(Units.inchesToMeters(11), Units.inchesToMeters(41.5), 25),
                 false
         ),
         FINAL_CONE_MIDDLE_SCORING(
-                new MechanismStateCoordinates(Units.inchesToMeters(19), Units.inchesToMeters(44.5) - CONE_LOWER_METERS, 25),
+                new MechanismStateCoordinates(Units.inchesToMeters(19), Units.inchesToMeters(41.5) - CONE_LOWER_METERS, 25),
                 true
         ),
         CONE_HIGH_SCORING(
