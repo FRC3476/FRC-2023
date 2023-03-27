@@ -514,7 +514,7 @@ public class Robot extends LoggedRobot {
             } else {
                 ControllerDriveInputs controllerDriveInputs = getControllerDriveInputs();
                 if (halfSpeedMechanismStates.contains(mechanismStateManager.getCurrentWantedState())) {
-                    controllerDriveInputs.scaleInputs(0.5);
+                    controllerDriveInputs.scaleInputs(0.25);
                 }
                 drive.swerveDriveFieldRelative(controllerDriveInputs);
             }
