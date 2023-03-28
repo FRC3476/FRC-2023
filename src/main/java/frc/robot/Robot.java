@@ -27,7 +27,6 @@ import frc.subsytem.Elevator.Elevator;
 import frc.subsytem.Elevator.ElevatorIO;
 import frc.subsytem.Elevator.ElevatorIOSparkMax;
 import frc.subsytem.MechanismStateManager;
-import frc.subsytem.MechanismStateManager.MechanismStateCoordinates;
 import frc.subsytem.MechanismStateManager.MechanismStates;
 import frc.subsytem.drive.Drive;
 import frc.subsytem.drive.DriveIO;
@@ -425,15 +424,13 @@ public class Robot extends LoggedRobot {
         Logger.getInstance().registerDashboardInput(autoGrabDashboard);
     }
 
-    ArrayList<MechanismStateCoordinates> halfSpeedMechanismStates = new ArrayList<>() {
-        {
-            add(MechanismStates.CONE_MIDDLE_SCORING.state);
-            add(MechanismStates.CUBE_MIDDLE_SCORING.state);
-            add(MechanismStates.CONE_HIGH_SCORING.state);
-            add(MechanismStates.CUBE_HIGH_SCORING.state);
-            add(MechanismStates.FINAL_CONE_MIDDLE_SCORING.state);
-        }
-    };
+    private final ArrayList<MechanismStates> halfSpeedMechanismStates = new ArrayList<>() {{
+        add(MechanismStates.CONE_MIDDLE_SCORING);
+        add(MechanismStates.CUBE_MIDDLE_SCORING);
+        add(MechanismStates.CONE_HIGH_SCORING);
+        add(MechanismStates.CUBE_HIGH_SCORING);
+        add(MechanismStates.FINAL_CONE_MIDDLE_SCORING);
+    }};
 
     /**
      * This method is called periodically during operator control.
@@ -513,7 +510,7 @@ public class Robot extends LoggedRobot {
                 }
             } else {
                 ControllerDriveInputs controllerDriveInputs = getControllerDriveInputs();
-                if (halfSpeedMechanismStates.contains(mechanismStateManager.getCurrentWantedState())) {
+                if (halfSpeedMechanismStates.contains(mechanismStateManager.getLastState())) {
                     controllerDriveInputs.scaleInputs(0.25);
                 }
                 drive.swerveDriveFieldRelative(controllerDriveInputs);
@@ -713,7 +710,12 @@ public class Robot extends LoggedRobot {
                         && scoringPositionManager.getWantedPositionType() == PositionType.CONE) {
                     // We're in the scoring in the middle level with a cone. Instead of opening the grabber, we want to
                     // shove the cone down onto the pole
+
+                    // Update the last state so we can open the grabber later, and disable the keepouts
                     mechanismStateManager.setState(MechanismStates.FINAL_CONE_MIDDLE_SCORING);
+                    mechanismStateManager.setState(mechanismStateManager.getCurrentWantedState()
+                            .adjust(MechanismStateManager.CONE_DUNK_LOWER_METERS,
+                                    -MechanismStateManager.CONE_DUNK_LOWER_METERS, 0));
                 } else {
                     isGrabberOpen = !isGrabberOpen;
                     if (isGrabberOpen) {
@@ -724,7 +726,7 @@ public class Robot extends LoggedRobot {
         }
 
         if (mechanismStateManager.isMechAtFinalPos()
-                && mechanismStateManager.getCurrentWantedState() == MechanismStates.FINAL_CONE_MIDDLE_SCORING.state) {
+                && mechanismStateManager.getLastState() == MechanismStates.FINAL_CONE_MIDDLE_SCORING) {
             // We've finished shoving the cone down onto the pole. Now we want to open the grabber
             isGrabberOpen = true;
         }

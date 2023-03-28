@@ -20,6 +20,7 @@ public class MechanismStateManager extends AbstractSubsystem {
 
     private boolean areKeepoutsEnabled = true;
 
+    // Used in autos
     public synchronized void setKeepoutsEnabled(boolean enabled) {
         this.areKeepoutsEnabled = enabled;
     }
@@ -68,7 +69,14 @@ public class MechanismStateManager extends AbstractSubsystem {
                     OrangeUtility.doubleEqual(that.yMeters, yMeters, epsilon) &&
                     OrangeUtility.doubleEqual(that.grabberAngleDegrees, grabberAngleDegrees, angleEpsilon);
         }
+
+        public MechanismStateCoordinates adjust(double x, double y, double angle) {
+            return new MechanismStateCoordinates(xMeters + x, yMeters + y, grabberAngleDegrees + angle);
+        }
     }
+
+    public static final double CONE_DUNK_LOWER_METERS = Units.inchesToMeters(10);
+    public static final double CONE_DUNK_EXTEND_METERS = Units.inchesToMeters(8);
 
 
     public enum MechanismStates {
@@ -89,7 +97,7 @@ public class MechanismStateManager extends AbstractSubsystem {
                 false
         ),
         FINAL_CONE_MIDDLE_SCORING(
-                new MechanismStateCoordinates(Units.inchesToMeters(19), Units.inchesToMeters(41.5) - CONE_LOWER_METERS, 25),
+                CONE_MIDDLE_SCORING.state.adjust(CONE_DUNK_EXTEND_METERS, -CONE_DUNK_LOWER_METERS, 0),
                 true
         ),
         CONE_HIGH_SCORING(
@@ -134,9 +142,16 @@ public class MechanismStateManager extends AbstractSubsystem {
 
     private @NotNull MechanismStateManager.MechanismStateCoordinates currentWantedState = MechanismStates.STOWED.state;
 
-    MechanismStates lastNotStowState = MechanismStates.STOWED;
+    public MechanismStates getLastNotStowState() {
+        return lastNotStowState;
+    }
 
-    MechanismStates lastState = MechanismStates.STOWED;
+    public MechanismStates getLastState() {
+        return lastState;
+    }
+
+    private MechanismStates lastNotStowState = MechanismStates.STOWED;
+    private MechanismStates lastState = MechanismStates.STOWED;
 
     public synchronized void setState(@NotNull MechanismStates state) {
         setState(state.state);
