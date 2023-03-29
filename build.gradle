@@ -1,7 +1,7 @@
 plugins {
     id "java"
     id "com.peterabeles.gversion" version "1.10"
-    id "edu.wpi.first.GradleRIO" version "2023.4.2"
+    id "edu.wpi.first.GradleRIO" version "2023.4.3"
 }
 
 sourceCompatibility = JavaVersion.VERSION_17
