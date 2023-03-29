@@ -165,6 +165,7 @@ public class VisionHandler extends AbstractSubsystem {
             int finalI = i;
             NetworkTableInstance.getDefault().addListener(table.getTopic(),
                     EnumSet.of(Kind.kValueRemote),
+
                     (event) -> {
                         var visionUpdate = new VisionUpdate(event.valueData.value.getDoubleArray(), finalI);
                         synchronized (this) {
@@ -175,21 +176,20 @@ public class VisionHandler extends AbstractSubsystem {
 
         for (String limelightName : limelightNames) {
             NetworkTableInstance.getDefault().addListener(
-                    // table name of null gets the default table
                     getLimelightNTTableEntry(limelightName, "botpose_wpired").getTopic(),
                     EnumSet.of(Kind.kValueRemote),
                     (event) -> {
+                        // https://docs.limelightvision.io/en/latest/apriltags_in_3d.html#using-wpilib-s-pose-estimator
+                        double[] botpose = event.valueData.value.getDoubleArray();
+                        Pose3d llPose = LimelightHelpers.toPose3D(botpose);
+                        if (dist2(llPose.getTranslation()) < 0.1) {
+                            return;
+                        }
+                        Pose3d adjustedPose = new Pose3d(
+                                llPose.getTranslation().plus(new Translation3d(0, -FIELD_HEIGHT_METERS / 2, 0)),
+                                llPose.getRotation()
+                        );
                         synchronized (this) {
-                            // https://docs.limelightvision.io/en/latest/apriltags_in_3d.html#using-wpilib-s-pose-estimator
-                            double[] botpose = event.valueData.value.getDoubleArray();
-                            Pose3d llPose = LimelightHelpers.toPose3D(botpose);
-                            if (dist2(llPose.getTranslation()) < 0.1) {
-                                return;
-                            }
-                            Pose3d adjustedPose = new Pose3d(
-                                    llPose.getTranslation().plus(new Translation3d(0, -FIELD_HEIGHT_METERS / 2, 0)),
-                                    llPose.getRotation()
-                            );
                             visionInputs.limelightUpdates.add(new LimelightUpdate(
                                     adjustedPose,
                                     Timer.getFPGATimestamp() - (botpose[6] / 1000.0)
