@@ -121,7 +121,7 @@ public final class Drive extends AbstractSubsystem {
     private void resetAuto() {
         ProfiledPIDController autoTurnPIDController
                 = new ProfiledPIDController(turnP.get(), turnI.get(), turnD.get(),
-                new TrapezoidProfile.Constraints(1.7 * Math.PI, Math.PI * 5));
+                new TrapezoidProfile.Constraints(2.2 * Math.PI, Math.PI * 5));
         autoTurnPIDController.enableContinuousInput(-Math.PI, Math.PI);
         autoTurnPIDController.setTolerance(Math.toRadians(1));
 
