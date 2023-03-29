@@ -94,7 +94,7 @@ public class MechanismStateManager extends AbstractSubsystem {
                 false
         ),
         CONE_MIDDLE_SCORING(
-                new MechanismStateCoordinates(Units.inchesToMeters(12), Units.inchesToMeters(41.5), 25),
+                new MechanismStateCoordinates(Units.inchesToMeters(11), Units.inchesToMeters(41.5), 25),
                 false
         ),
         FINAL_CONE_MIDDLE_SCORING(
