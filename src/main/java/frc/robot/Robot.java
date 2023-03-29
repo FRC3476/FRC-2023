@@ -922,6 +922,8 @@ public class Robot extends LoggedRobot {
         Logger.getInstance().recordOutput("Robot/Auto Align Y", y);
         Logger.getInstance().recordOutput("Robot/Auto Align X", x);
         Logger.getInstance().recordOutput("Robot/Auto Align Angle", rotation.getDegrees());
+        Logger.getInstance().recordOutput("Robot/Auto Drive Position", autoDrivePosition.name());
+
 
         teleopDrivingAutoAlignPosition = new Pose2d(x, y, rotation);
     }

@@ -19,8 +19,11 @@ public class ScoringPositionManager {
     /**
      * The Y coordinate of the center of the cube scoring platforms
      */
-    private static final double[] CUBE_SCORING_Y_CENTER = {-0.415 - Units.inchesToMeters(1), 1.26 - Units.inchesToMeters(
-            1), 2.94 - Units.inchesToMeters(1)};
+    private static final double[] CUBE_SCORING_Y_CENTER = {
+            -0.415 - Units.inchesToMeters(1),
+            1.26 - Units.inchesToMeters(1),
+            2.94 - Units.inchesToMeters(1)
+    };
     private static ScoringPositionManager instance = new ScoringPositionManager();
 
     public static ScoringPositionManager getInstance() {
