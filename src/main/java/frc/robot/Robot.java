@@ -27,6 +27,8 @@ import frc.subsytem.Elevator.Elevator;
 import frc.subsytem.Elevator.ElevatorIO;
 import frc.subsytem.Elevator.ElevatorIOSparkMax;
 import frc.subsytem.MechanismStateManager;
+import frc.subsytem.MechanismStateManager.MechanismStateCoordinates;
+import frc.subsytem.MechanismStateManager.MechanismStateSubsystemPositions;
 import frc.subsytem.MechanismStateManager.MechanismStates;
 import frc.subsytem.drive.Drive;
 import frc.subsytem.drive.DriveIO;
@@ -674,7 +676,7 @@ public class Robot extends LoggedRobot {
         Logger.getInstance().recordOutput("Robot/Mechanism Wanted Angle", mechWantedAngle);
 
         var mechInputs = new ControllerDriveInputs(stick.getRawAxis(0), stick.getRawAxis(1), stick.getRawAxis(3));
-        mechInputs.applyDeadZone(0.1, 0.1, 0.25, 0.2);
+        mechInputs.applyDeadZone(0.1, 0.1, 0.25, 0.1);
         mechInputs.squareInputs();
 
         var mechDx = -buttonPanel.getRawAxis(0);
@@ -689,7 +691,28 @@ public class Robot extends LoggedRobot {
             mechWantedY = limitedMechCoords.yMeters();
             mechWantedAngle = limitedMechCoords.grabberAngleDegrees();
 
-            mechWantedAngle += -mechInputs.getY() * ARCADE_WRIST_ANGLE_SPEED * NOMINAL_DT;
+            // Calculate the current wanted subsystem positions
+            var currentWantedSubsystemPositions =
+                    MechanismStateManager.coordinatesToSubsystemPositions(
+                            new MechanismStateCoordinates(mechWantedX, mechWantedY, mechWantedAngle)
+                    );
+
+            // Adjust the grabber angle in the current wanted subsystem positions (so that adjusting the grabber angle doesn't
+            // move the mechanism)
+            currentWantedSubsystemPositions = new MechanismStateSubsystemPositions(
+                    currentWantedSubsystemPositions.elevatorPositionMeters(),
+                    currentWantedSubsystemPositions.telescopingArmPositionMeters(),
+                    currentWantedSubsystemPositions.grabberAngleDegrees() - mechInputs.getY() * ARCADE_WRIST_ANGLE_SPEED * NOMINAL_DT
+            );
+
+
+            // Calculate the new wanted coordinates from the current wanted subsystem positions
+            var newWantedCoordinates = MechanismStateManager.subsystemPositionsToCoordinates(currentWantedSubsystemPositions);
+
+            mechWantedX = newWantedCoordinates.xMeters();
+            mechWantedY = newWantedCoordinates.yMeters();
+            mechWantedAngle = newWantedCoordinates.grabberAngleDegrees();
+
 
             mechWantedX += mechDx * ARCADE_MODE_TRANSLATION_SPEED * NOMINAL_DT;
             mechWantedY += mechDy * ARCADE_MODE_TRANSLATION_SPEED * NOMINAL_DT;

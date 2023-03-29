@@ -4,6 +4,7 @@ import edu.wpi.first.math.util.Units;
 import frc.robot.Constants;
 import frc.robot.Robot;
 import frc.utility.OrangeUtility;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.littletonrobotics.junction.Logger;
 
@@ -200,8 +201,6 @@ public class MechanismStateManager extends AbstractSubsystem {
         return new MechanismStateSubsystemPositions(elevatorRealMovement, telescopingArmMovement, Math.toDegrees(angleRad));
     }
 
-    private static final double GRABBER_ZERO_X_OFFSET = GRABBER_LENGTH;
-
     public static MechanismStateCoordinates limitCoordinates(MechanismStateCoordinates mechanismState) {
         //wanted states
         double mutableX = mechanismState.xMeters;
@@ -281,6 +280,24 @@ public class MechanismStateManager extends AbstractSubsystem {
         y += Constants.GRABBER_LENGTH * Math.sin(Math.toRadians(Robot.getGrabber().getPivotDegrees()));
 
         double wristAngle = Robot.getGrabber().getPivotDegrees();
+
+        return new MechanismStateCoordinates(x, y, wristAngle);
+    }
+
+    @Contract("_ -> new")
+    public static @NotNull MechanismStateCoordinates subsystemPositionsToCoordinates(
+            @NotNull MechanismStateSubsystemPositions mechanismState) {
+        double x = -Constants.GRABBER_LENGTH;
+        x += Math.cos(Constants.ELEVATOR_TILT_RADIANS) * mechanismState.elevatorPositionMeters();
+        x += Constants.GRABBER_LENGTH * Math.cos(mechanismState.grabberAngleRadians());
+        x += mechanismState.telescopingArmPositionMeters();
+
+        double y = 0;
+
+        y += Math.sin(Constants.ELEVATOR_TILT_RADIANS) * mechanismState.elevatorPositionMeters();
+        y += Constants.GRABBER_LENGTH * Math.sin(mechanismState.grabberAngleRadians());
+
+        double wristAngle = Math.toDegrees(mechanismState.grabberAngleRadians());
 
         return new MechanismStateCoordinates(x, y, wristAngle);
     }
