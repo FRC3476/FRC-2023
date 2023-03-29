@@ -4,6 +4,7 @@ import edu.wpi.first.math.util.Units;
 import frc.robot.Constants;
 import frc.robot.Robot;
 import frc.utility.OrangeUtility;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.littletonrobotics.junction.Logger;
 
@@ -20,6 +21,7 @@ public class MechanismStateManager extends AbstractSubsystem {
 
     private boolean areKeepoutsEnabled = true;
 
+    // Used in autos
     public synchronized void setKeepoutsEnabled(boolean enabled) {
         this.areKeepoutsEnabled = enabled;
     }
@@ -68,7 +70,14 @@ public class MechanismStateManager extends AbstractSubsystem {
                     OrangeUtility.doubleEqual(that.yMeters, yMeters, epsilon) &&
                     OrangeUtility.doubleEqual(that.grabberAngleDegrees, grabberAngleDegrees, angleEpsilon);
         }
+
+        public MechanismStateCoordinates adjust(double x, double y, double angle) {
+            return new MechanismStateCoordinates(xMeters + x, yMeters + y, grabberAngleDegrees + angle);
+        }
     }
+
+    public static final double CONE_DUNK_LOWER_METERS = Units.inchesToMeters(10);
+    public static final double CONE_DUNK_EXTEND_METERS = Units.inchesToMeters(8);
 
 
     public enum MechanismStates {
@@ -89,7 +98,7 @@ public class MechanismStateManager extends AbstractSubsystem {
                 false
         ),
         FINAL_CONE_MIDDLE_SCORING(
-                new MechanismStateCoordinates(Units.inchesToMeters(19), Units.inchesToMeters(41.5) - CONE_LOWER_METERS, 25),
+                CONE_MIDDLE_SCORING.state.adjust(CONE_DUNK_EXTEND_METERS, -CONE_DUNK_LOWER_METERS, 0),
                 true
         ),
         CONE_HIGH_SCORING(
@@ -134,9 +143,16 @@ public class MechanismStateManager extends AbstractSubsystem {
 
     private @NotNull MechanismStateManager.MechanismStateCoordinates currentWantedState = MechanismStates.STOWED.state;
 
-    MechanismStates lastNotStowState = MechanismStates.STOWED;
+    public MechanismStates getLastNotStowState() {
+        return lastNotStowState;
+    }
 
-    MechanismStates lastState = MechanismStates.STOWED;
+    public MechanismStates getLastState() {
+        return lastState;
+    }
+
+    private MechanismStates lastNotStowState = MechanismStates.STOWED;
+    private MechanismStates lastState = MechanismStates.STOWED;
 
     public synchronized void setState(@NotNull MechanismStates state) {
         setState(state.state);
@@ -184,8 +200,6 @@ public class MechanismStateManager extends AbstractSubsystem {
 
         return new MechanismStateSubsystemPositions(elevatorRealMovement, telescopingArmMovement, Math.toDegrees(angleRad));
     }
-
-    private static final double GRABBER_ZERO_X_OFFSET = GRABBER_LENGTH;
 
     public static MechanismStateCoordinates limitCoordinates(MechanismStateCoordinates mechanismState) {
         //wanted states
@@ -266,6 +280,24 @@ public class MechanismStateManager extends AbstractSubsystem {
         y += Constants.GRABBER_LENGTH * Math.sin(Math.toRadians(Robot.getGrabber().getPivotDegrees()));
 
         double wristAngle = Robot.getGrabber().getPivotDegrees();
+
+        return new MechanismStateCoordinates(x, y, wristAngle);
+    }
+
+    @Contract("_ -> new")
+    public static @NotNull MechanismStateCoordinates subsystemPositionsToCoordinates(
+            @NotNull MechanismStateSubsystemPositions mechanismState) {
+        double x = -Constants.GRABBER_LENGTH;
+        x += Math.cos(Constants.ELEVATOR_TILT_RADIANS) * mechanismState.elevatorPositionMeters();
+        x += Constants.GRABBER_LENGTH * Math.cos(mechanismState.grabberAngleRadians());
+        x += mechanismState.telescopingArmPositionMeters();
+
+        double y = 0;
+
+        y += Math.sin(Constants.ELEVATOR_TILT_RADIANS) * mechanismState.elevatorPositionMeters();
+        y += Constants.GRABBER_LENGTH * Math.sin(mechanismState.grabberAngleRadians());
+
+        double wristAngle = Math.toDegrees(mechanismState.grabberAngleRadians());
 
         return new MechanismStateCoordinates(x, y, wristAngle);
     }
