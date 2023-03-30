@@ -292,6 +292,8 @@ public class Robot extends LoggedRobot {
                 + " built on " + BuildConstants.BUILD_DATE);
 
         drive.resetPeriodicFrames();
+        System.out.println("Running Warm Up Auto");
+        AutonomousContainer.getInstance().runAutonomous("warmup", "red", false);
     }
 
     private @Nullable String lastSelectedAuto = null;
@@ -344,6 +346,7 @@ public class Robot extends LoggedRobot {
 
     private static double autoStartTime = 0;
 
+    private boolean wasAuto = false;
     @Override
     public void autonomousInit() {
         autoStartTime = Timer.getFPGATimestamp();
@@ -354,6 +357,7 @@ public class Robot extends LoggedRobot {
             autoName = "";
         }
 
+        wasAuto = true;
         AutonomousContainer.getInstance().runAutonomous(autoName, sideChooser.get(), true);
     }
 
@@ -375,6 +379,12 @@ public class Robot extends LoggedRobot {
         drive.setBrakeMode(true);
         drive.setDriveVoltageCompLevel(SWERVE_DRIVE_VOLTAGE_LIMIT_TELEOP);
         mechanismStateManager.setKeepoutsEnabled(true);
+        if (wasAuto) {
+            mechanismStateManager.setState(MechanismStates.STOWED);
+            setCurrentWantedState(WantedMechanismState.STOWED);
+            setFutureGrabberClose = true;
+            wasAuto = false;
+        }
     }
 
 
@@ -959,6 +969,7 @@ public class Robot extends LoggedRobot {
         // Disable the grabber
         grabber.setAutoGrab(false);
         grabber.setGrabState(GrabState.IDLE);
+        wasAuto = false;
     }
 
 
