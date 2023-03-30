@@ -400,9 +400,9 @@ public class VisionHandler extends AbstractSubsystem {
 
 
                 var rotDiff = poseRotation.minus(expectedPoseRotation);
-                if (rotDiff.getX() > Math.toRadians(2)
-                        || rotDiff.getY() > Math.toRadians(2)
-                        || rotDiff.getZ() > Math.toRadians(2)) {
+                if (rotDiff.getX() > Math.toRadians(5)
+                        || rotDiff.getY() > Math.toRadians(5)
+                        || rotDiff.getZ() > Math.toRadians(5)) {
                     continue;
                 }
 

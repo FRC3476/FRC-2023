@@ -338,8 +338,8 @@ public final class RobotTracker extends AbstractSubsystem {
         noVisionOdometry.update(gyroAngle3d, modulePositions);
 
 
-        lock.readLock().lock();
-        try {
+//        lock.readLock().lock();
+//        try {
 //            // Get the velocity of the robot from the odometry (first derivative)
 //            var averageVelocity = getVelocityAverageVelocityInPeriodFromOdometry(
 //                    timestamp - VELOCITY_MEASUREMENT_WINDOW, timestamp)
@@ -480,9 +480,9 @@ public final class RobotTracker extends AbstractSubsystem {
 //            Logger.getInstance().recordOutput("RobotTracker/Accumulated Error X", accumulatedVelocityError.getX());
 //            Logger.getInstance().recordOutput("RobotTracker/Accumulated Error Y", accumulatedVelocityError.getY());
 //            Logger.getInstance().recordOutput("RobotTracker/Accumulated Error Z", accumulatedVelocityError.getZ());
-        } finally {
-            lock.readLock().unlock();
-        }
+//        } finally {
+//            lock.readLock().unlock();
+//        }
 
 
         if (isVelocityMismatched) {
@@ -516,7 +516,8 @@ public final class RobotTracker extends AbstractSubsystem {
                 if (visionMeasurement.pose.getX() > FIELD_WIDTH_METERS - HALF_ROBOT_WIDTH
                         || visionMeasurement.pose.getX() < HALF_ROBOT_WIDTH
                         || visionMeasurement.pose.getY() > FIELD_HEIGHT_METERS - HALF_ROBOT_LENGTH + FIELD_HEIGHT_METERS / 2
-                        || visionMeasurement.pose.getY() < HALF_ROBOT_LENGTH - FIELD_HEIGHT_METERS / 2) {
+                        || visionMeasurement.pose.getY() < HALF_ROBOT_LENGTH - FIELD_HEIGHT_METERS / 2
+                        || visionMeasurement.pose.getZ() > 0.75) {
                     // ensure that the vision measurement is within the field
                     continue;
                 }
@@ -530,9 +531,9 @@ public final class RobotTracker extends AbstractSubsystem {
                 );
 
                 var stds = visionMeasurement.visionMeasurementStds().orElse(REALSENSE_DEFAULT_VISION_DEVIATIONS);
-                //var reducedStds = VecBuilder.fill(stds.get(0, 0), stds.get(1, 0), stds.get(3, 0));
+                // var reducedStds = VecBuilder.fill(stds.get(0, 0), stds.get(1, 0), stds.get(3, 0));
 
-                var visionPose = visionMeasurement.pose();
+                // var visionPose = visionMeasurement.pose();
                 // visionPose = new Pose3d(visionPose.getTranslation(), visionPose.getRotation());
 
                 swerveDriveOdometry.addVisionMeasurement(visionMeasurement.pose(), visionMeasurement.timestamp(),
