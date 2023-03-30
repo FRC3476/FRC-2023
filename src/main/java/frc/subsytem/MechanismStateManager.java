@@ -77,7 +77,7 @@ public class MechanismStateManager extends AbstractSubsystem {
     }
 
     public static final double CONE_DUNK_LOWER_METERS = Units.inchesToMeters(3);
-    public static final double CONE_DUNK_EXTEND_METERS = Units.inchesToMeters(8);
+    public static final double CONE_DUNK_EXTEND_METERS = Units.inchesToMeters(2);
 
 
     public enum MechanismStates {
@@ -94,7 +94,7 @@ public class MechanismStateManager extends AbstractSubsystem {
                 false
         ),
         CONE_MIDDLE_SCORING(
-                new MechanismStateCoordinates(Units.inchesToMeters(11), Units.inchesToMeters(41.5), 25),
+                new MechanismStateCoordinates(Units.inchesToMeters(12), Units.inchesToMeters(41.5), 25),
                 false
         ),
         FINAL_CONE_MIDDLE_SCORING(
