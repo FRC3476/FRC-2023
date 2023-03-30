@@ -32,13 +32,13 @@ public class PathGenerator {
     private PathGenerator() {}
 
     //set initial velocity, copy it then
-    private static final double MAX_VELOCITY = 3.5;
+    private static final double MAX_VELOCITY = 3.3;
     private static final ArrayList<TrajectoryConstraint> constraints = new ArrayList<>();
 
     private static ExecutorService threadPoolExecutor;
 
     static {
-        constraints.add(new CentripetalAccelerationConstraint(10));
+        constraints.add(new CentripetalAccelerationConstraint(7));
         threadPoolExecutor = Executors.newSingleThreadExecutor();
     }
 

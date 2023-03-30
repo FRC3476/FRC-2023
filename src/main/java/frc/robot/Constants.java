@@ -142,7 +142,7 @@ public final class Constants {
     public static final double MAX_VELOCITY_END_PATH = 0.02;
 
     public static final double MAX_ACCEL_SINGLE_SUBSTATION_PICKUP = 2.6;
-    public static final double MAX_ACCEL_AUTO_DRIVE = 3.1;
+    public static final double MAX_ACCEL_AUTO_DRIVE = 2.9;
 
 
     // TurnPID
@@ -305,7 +305,7 @@ public final class Constants {
     public static final double PICKUP_POSITION_X_OFFSET_FROM_WALL = FIELD_WIDTH_METERS - 15.2 + Units.inchesToMeters(-1.5);
 
     public static final double SCORING_POSITION_OFFSET_CONE_FROM_WALL = 0.05;
-    public static final double SCORING_POSITION_OFFSET_CUBE_FROM_WALL = 0.05 + Units.inchesToMeters(2.5);
+    public static final double SCORING_POSITION_OFFSET_CUBE_FROM_WALL = 0.05 + Units.inchesToMeters(3.5);
 
     public static final double SINGLE_STATION_RED_X = 14.39;
     public static final double SINGLE_STATION_BLUE_X = FIELD_WALL_RIGHT_X - SINGLE_STATION_RED_X;

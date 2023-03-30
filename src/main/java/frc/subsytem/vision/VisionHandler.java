@@ -22,6 +22,8 @@ import edu.wpi.first.networktables.NetworkTableEvent.Kind;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.wpilibj.Timer;
 import frc.robot.Robot;
+import frc.robot.ScoringPositionManager;
+import frc.robot.ScoringPositionManager.PositionType;
 import frc.subsytem.AbstractSubsystem;
 import frc.subsytem.robottracker.RobotTracker;
 import frc.utility.LimelightHelpers;
@@ -32,6 +34,8 @@ import org.littletonrobotics.junction.networktables.LoggedDashboardBoolean;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.EnumSet;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import static frc.robot.Constants.*;
 import static frc.utility.LimelightHelpers.getLimelightNTTableEntry;
@@ -45,9 +49,9 @@ import static org.joml.Math.tan;
 public class VisionHandler extends AbstractSubsystem {
 
     public static final double NO_VISION_UPDATES_TIME_THRESHOLD = 0.15;
-    public static final double REALSENSE_THROWOUT_THRESHOLD_METERS = 1.5;
-    public static final double LIMELIGHT_LED_ON_DISTANCE_THRESHOLD_SQUARED = 1.5 * 1.5;
-    public static final int USE_LIMELIGHT_THRESHOLD_METERS = 4;
+    public static final double REALSENSE_THROWOUT_THRESHOLD_METERS = 0.0;
+    public static final double LIMELIGHT_LED_ON_DISTANCE_THRESHOLD_SQUARED = 2 * 2;
+    public static final double USE_LIMELIGHT_THRESHOLD_METERS_SQUARED = 4;
 
     private final LoggedDashboardBoolean isRealsenseConnected
             = new LoggedDashboardBoolean("RealSense Connected", false);
@@ -61,6 +65,8 @@ public class VisionHandler extends AbstractSubsystem {
         Logger.getInstance().registerDashboardInput(isLimelightLeftConnected);
         Logger.getInstance().registerDashboardInput(isLimelightRightConnected);
     }
+
+    private final ExecutorService asyncVisionUpdateSaver = Executors.newSingleThreadExecutor();
 
     static final Vector<N3> POSITIVE_X = VecBuilder.fill(1, 0, 0);
     static final Vector<N3> POSITIVE_Y = VecBuilder.fill(0, 1, 0);
@@ -147,7 +153,7 @@ public class VisionHandler extends AbstractSubsystem {
         configTable.getEntry("Do Stream").setBoolean(false);
         configTable.getEntry("Stream Port").setDouble(5810);
         configTable.getEntry("Stream Ip").setString("10.34.76.225");
-        configTable.getEntry("Decision Margin").setDouble(10);
+        configTable.getEntry("Decision Margin").setDouble(13);
         configTable.getEntry("Encode Quality").setDouble(50);
         configTable.getEntry("Record Video").setBoolean(false);
 
@@ -165,20 +171,19 @@ public class VisionHandler extends AbstractSubsystem {
             int finalI = i;
             NetworkTableInstance.getDefault().addListener(table.getTopic(),
                     EnumSet.of(Kind.kValueRemote),
-
-                    (event) -> {
+                    (event) -> asyncVisionUpdateSaver.submit(() -> {
                         var visionUpdate = new VisionUpdate(event.valueData.value.getDoubleArray(), finalI);
                         synchronized (this) {
                             visionInputs.visionUpdates.add(visionUpdate);
                         }
-                    });
+                    }));
         }
 
         for (String limelightName : limelightNames) {
             NetworkTableInstance.getDefault().addListener(
                     getLimelightNTTableEntry(limelightName, "botpose_wpired").getTopic(),
                     EnumSet.of(Kind.kValueRemote),
-                    (event) -> {
+                    (event) -> asyncVisionUpdateSaver.submit(() -> {
                         // https://docs.limelightvision.io/en/latest/apriltags_in_3d.html#using-wpilib-s-pose-estimator
                         double[] botpose = event.valueData.value.getDoubleArray();
                         Pose3d llPose = LimelightHelpers.toPose3D(botpose);
@@ -195,24 +200,26 @@ public class VisionHandler extends AbstractSubsystem {
                                     Timer.getFPGATimestamp() - (botpose[6] / 1000.0)
                             ));
                         }
-                    });
+                    }));
         }
 
         NetworkTableInstance.getDefault().addListener(getLimelightNTTableEntry("limelight-left", "tl").getTopic(),
                 EnumSet.of(Kind.kValueRemote),
-                (event) -> {
+                (event) -> asyncVisionUpdateSaver.submit(() -> {
                     synchronized (this) {
                         visionInputs.lastVisionUpdateLimelightLeft = Timer.getFPGATimestamp();
                     }
-                });
+                }));
 
         NetworkTableInstance.getDefault().addListener(getLimelightNTTableEntry("limelight-right", "tl").getTopic(),
                 EnumSet.of(Kind.kValueRemote),
-                (event) -> {
+                (event) -> asyncVisionUpdateSaver.submit(() -> {
                     synchronized (this) {
                         visionInputs.lastVisionUpdateLimelightRight = Timer.getFPGATimestamp();
                     }
-                });
+                }));
+
+        asyncVisionUpdateSaver.submit(() -> {System.out.println("Warming Up the vision update thread pool");});
     }
 
     private final MatBuilder<N4, N1> visionStdMatBuilder = new MatBuilder<>(Nat.N4(), Nat.N1());
@@ -360,7 +367,8 @@ public class VisionHandler extends AbstractSubsystem {
 
         // Process vision updates
 
-        if (distanceToTag2 > REALSENSE_THROWOUT_THRESHOLD_METERS * REALSENSE_THROWOUT_THRESHOLD_METERS) {
+        if (distanceToTag2 > REALSENSE_THROWOUT_THRESHOLD_METERS * REALSENSE_THROWOUT_THRESHOLD_METERS
+                || ScoringPositionManager.getInstance().getSelectedPosition().positionType == PositionType.CUBE) {
             for (var visionUpdate : visionInputs.visionUpdates) {
                 processNewTagPosition(visionUpdate);
             }
@@ -379,11 +387,24 @@ public class VisionHandler extends AbstractSubsystem {
         }
 
 
-        if (distanceToTag2 < USE_LIMELIGHT_THRESHOLD_METERS) {
+        if (distanceToTag2 < USE_LIMELIGHT_THRESHOLD_METERS_SQUARED) {
             for (var limelightUpdate : visionInputs.limelightUpdates) {
                 var defaultDevs = RobotTracker.LIMELIGHT_DEFAULT_VISION_DEVIATIONS;
 
+                var expectedPoseRotation = Robot.getRobotTracker().getLatestPose3d().getRotation();
                 var pose = limelightUpdate.pose3d();
+
+                var poseRotation = pose.getRotation();
+
+                // Check if the expected pose has a similar rotation to the pose we got from the limelight
+
+
+                var rotDiff = poseRotation.minus(expectedPoseRotation);
+                if (rotDiff.getX() > Math.toRadians(2)
+                        || rotDiff.getY() > Math.toRadians(2)
+                        || rotDiff.getZ() > Math.toRadians(2)) {
+                    continue;
+                }
 
 
                 // Find the closest tag to this pose estimate

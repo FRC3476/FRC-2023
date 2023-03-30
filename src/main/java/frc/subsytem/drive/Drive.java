@@ -42,7 +42,6 @@ import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 
 import static frc.robot.Constants.*;
-import static frc.utility.geometry.GeometryUtils.dist2;
 
 public final class Drive extends AbstractSubsystem {
     private static final Pose2d IDENTITY_POSE = new Pose2d();
@@ -257,17 +256,8 @@ public final class Drive extends AbstractSubsystem {
 
                             var currPos = Robot.getRobotTracker().getLatestPose().getTranslation();
 
-                            double lastTime = 0;
-                            double lastDistance2 = Double.MAX_VALUE;
-
-                            for (Trajectory.State state : trajectory.get().getStates()) {
-                                double dist2 = dist2(state.poseMeters.getTranslation(), currPos);
-                                if (dist2 < lastDistance2) {
-                                    lastTime = state.timeSeconds;
-                                    lastDistance2 = dist2;
-                                }
-                            }
-                            realtimeTrajectoryStartTime = Timer.getFPGATimestamp() - lastTime;
+                            realtimeTrajectoryStartTime =
+                                    (Timer.getFPGATimestamp() - realtimeTrajectoryStartTime) / 3 + Timer.getFPGATimestamp();
                         }
                         setAutoPath(trajectory.get(), realtimeTrajectoryStartTime); // Sets the DriveState to RAMSETE
                         setAutoRotation(targetAngle);
