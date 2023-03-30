@@ -479,7 +479,8 @@ public class Robot extends LoggedRobot {
 
             Translation2d autoDriveAlignError =
                     teleopDrivingAutoAlignPosition.minus(robotTracker.getLatestPose()).getTranslation();
-            if (Math.abs(autoDriveAlignError.getX()) < 0.2 && Math.abs(
+            if (false &&
+                    Math.abs(autoDriveAlignError.getX()) < 0.2 && Math.abs(
                     autoDriveAlignError.getY()) < 0.05 && !isOnAllianceSide()
                     && mechanismStateManager.isMechAtFinalPos()
                     && wantedMechanismState == WantedMechanismState.STATION_PICKUP_DOUBLE) {

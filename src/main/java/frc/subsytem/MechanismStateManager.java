@@ -419,6 +419,8 @@ public class MechanismStateManager extends AbstractSubsystem {
         Logger.getInstance().recordOutput("MechanismStateManager/isAtFinalPosition",
                 isAtFinalPosition);
 
+        Logger.getInstance().recordOutput("MechanismStateManager/LastState", lastState.name());
+
 
         synchronized (this) {
             this.isAtFinalPosition = isAtFinalPosition;
