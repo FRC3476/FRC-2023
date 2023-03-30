@@ -25,6 +25,7 @@ import frc.robot.Robot;
 import frc.robot.ScoringPositionManager;
 import frc.robot.ScoringPositionManager.PositionType;
 import frc.subsytem.AbstractSubsystem;
+import frc.subsytem.MechanismStateManager.MechanismStates;
 import frc.subsytem.robottracker.RobotTracker;
 import frc.utility.LimelightHelpers;
 import org.jetbrains.annotations.NotNull;
@@ -387,7 +388,8 @@ public class VisionHandler extends AbstractSubsystem {
         }
 
 
-        if (distanceToTag2 < USE_LIMELIGHT_THRESHOLD_METERS_SQUARED) {
+        if (distanceToTag2 < USE_LIMELIGHT_THRESHOLD_METERS_SQUARED
+                || Robot.getMechanismStateManager().getLastState() != MechanismStates.STOWED) {
             for (var limelightUpdate : visionInputs.limelightUpdates) {
                 var defaultDevs = RobotTracker.LIMELIGHT_DEFAULT_VISION_DEVIATIONS;
 
@@ -397,12 +399,11 @@ public class VisionHandler extends AbstractSubsystem {
                 var poseRotation = pose.getRotation();
 
                 // Check if the expected pose has a similar rotation to the pose we got from the limelight
-
-
+                double maxAllowedLimelightAngleError = Robot.isOnAllianceSide() ? 5 : 12;
                 var rotDiff = poseRotation.minus(expectedPoseRotation);
-                if (rotDiff.getX() > Math.toRadians(5)
-                        || rotDiff.getY() > Math.toRadians(5)
-                        || rotDiff.getZ() > Math.toRadians(5)) {
+                if ((rotDiff.getX() > Math.toRadians(maxAllowedLimelightAngleError)
+                        || rotDiff.getY() > Math.toRadians(maxAllowedLimelightAngleError)
+                        || rotDiff.getZ() > Math.toRadians(maxAllowedLimelightAngleError))) {
                     continue;
                 }
 
