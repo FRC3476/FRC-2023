@@ -64,17 +64,18 @@ public class VisionInputs implements LoggableInputs {
 
         double[] limelightData = table.getDoubleArray("LimelightUpdates", new double[0]);
         limelightUpdates.clear();
+        final double[] update2 = new double[8];
         for (int i = 0; i < limelightData.length; i += 8) {
-            System.arraycopy(limelightData, i, update, 0, update.length);
+            System.arraycopy(limelightData, i, update2, 0, update2.length);
             limelightUpdates.add(
                     new LimelightUpdate(
                             new Pose3d(
-                                    update[0],
-                                    update[1],
-                                    update[2],
-                                    new Rotation3d(new Quaternion(update[3], update[4], update[5], update[6]))
+                                    update2[0],
+                                    update2[1],
+                                    update2[2],
+                                    new Rotation3d(new Quaternion(update2[3], update2[4], update2[5], update2[6]))
                             ),
-                            update[7]
+                            update2[7]
                     )
             );
         }

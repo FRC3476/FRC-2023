@@ -20,6 +20,7 @@ import edu.wpi.first.math.util.Units;
 import edu.wpi.first.networktables.NetworkTable;
 import edu.wpi.first.networktables.NetworkTableEvent.Kind;
 import edu.wpi.first.networktables.NetworkTableInstance;
+import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.Timer;
 import frc.robot.Robot;
 import frc.robot.ScoringPositionManager;
@@ -35,6 +36,7 @@ import org.littletonrobotics.junction.networktables.LoggedDashboardBoolean;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.EnumSet;
+import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -80,6 +82,8 @@ public class VisionHandler extends AbstractSubsystem {
     private static String[] limelightNames = new String[]{"limelight-left", "limelight-right"};
 
     private static final @NotNull Pose3d[] fieldTags;
+
+    private static List<Integer> redTags = List.of(1, 2, 3, 4);
 
     static {
         try {
@@ -371,6 +375,9 @@ public class VisionHandler extends AbstractSubsystem {
         if (distanceToTag2 > REALSENSE_THROWOUT_THRESHOLD_METERS * REALSENSE_THROWOUT_THRESHOLD_METERS
                 || ScoringPositionManager.getInstance().getSelectedPosition().positionType == PositionType.CUBE) {
             for (var visionUpdate : visionInputs.visionUpdates) {
+                if (DriverStation.isAutonomous() && Robot.isRed() != redTags.contains(visionUpdate.tagId)) {
+                    continue;
+                }
                 processNewTagPosition(visionUpdate);
             }
         }
@@ -387,7 +394,7 @@ public class VisionHandler extends AbstractSubsystem {
             }
         }
 
-
+        int limelightUpdatesSent = 0;
         if (distanceToTag2 < USE_LIMELIGHT_THRESHOLD_METERS_SQUARED
                 || Robot.getMechanismStateManager().getLastState() != MechanismStates.STOWED) {
             for (var limelightUpdate : visionInputs.limelightUpdates) {
@@ -399,7 +406,7 @@ public class VisionHandler extends AbstractSubsystem {
                 var poseRotation = pose.getRotation();
 
                 // Check if the expected pose has a similar rotation to the pose we got from the limelight
-                double maxAllowedLimelightAngleError = Robot.isOnAllianceSide() ? 5 : 12;
+                double maxAllowedLimelightAngleError = Robot.isOnAllianceSide() ? 5 : 20;
                 var rotDiff = poseRotation.minus(expectedPoseRotation);
                 if ((rotDiff.getX() > Math.toRadians(maxAllowedLimelightAngleError)
                         || rotDiff.getY() > Math.toRadians(maxAllowedLimelightAngleError)
@@ -424,8 +431,11 @@ public class VisionHandler extends AbstractSubsystem {
                         Math.atan(tan(defaultDevs.get(3, 0)) * distanceToTagLimelight2 * distanceToTagLimelight2));
 
                 Robot.getRobotTracker().addVisionMeasurement(pose, limelightUpdate.timestamp(), devs);
+                limelightUpdatesSent++;
             }
         }
+
+        Logger.getInstance().recordOutput("VisionManager/Limelight Updates Sent", limelightUpdatesSent);
 
         visionInputs.limelightUpdates.clear();
     }
