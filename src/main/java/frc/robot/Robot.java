@@ -68,6 +68,7 @@ import java.util.Arrays;
 import java.util.NoSuchElementException;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentLinkedDeque;
+import java.util.concurrent.ExecutionException;
 
 import static frc.robot.Constants.*;
 import static java.lang.Math.abs;
@@ -294,14 +295,22 @@ public class Robot extends LoggedRobot {
         drive.resetPeriodicFrames();
         System.out.println("Running Warm Up Auto");
         AutonomousContainer.getInstance().runAutonomous("warmup", "red", false);
-
-        var path = PathGenerator.generateTrajectory(new Translation2d(2, 3), new Translation2d(0, 0), new Translation2d(10, 3),
-                0, false, 3);
-
-        path.thenCompose((trajectory -> {
-            System.out.println("Finished Generating Path: " + trajectory.get().getTotalTimeSeconds() + "s");
-            return null;
-        }));
+        for (int i = 0; i < 10; i++) {
+            double pathGenStartTime = Timer.getFPGATimestamp();
+            var path = PathGenerator.generateTrajectory(new Translation2d(2, 3), new Translation2d(0, 0),
+                    new Translation2d(10, 3),
+                    0, false, 3);
+            path.thenCompose((trajectory -> {
+                System.out.println("Finished Generating Path. Path len: " + trajectory.get().getTotalTimeSeconds()
+                        + "s. Took: " + (Timer.getFPGATimestamp() - pathGenStartTime));
+                return null;
+            }));
+            try {
+                path.get();
+            } catch (InterruptedException | ExecutionException e) {
+                throw new RuntimeException(e);
+            }
+        }
     }
 
     private @Nullable String lastSelectedAuto = null;
