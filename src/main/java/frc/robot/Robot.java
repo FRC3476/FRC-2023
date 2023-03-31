@@ -294,6 +294,14 @@ public class Robot extends LoggedRobot {
         drive.resetPeriodicFrames();
         System.out.println("Running Warm Up Auto");
         AutonomousContainer.getInstance().runAutonomous("warmup", "red", false);
+
+        var path = PathGenerator.generateTrajectory(new Translation2d(2, 3), new Translation2d(0, 0), new Translation2d(10, 3),
+                0, false, 3);
+
+        path.thenCompose((trajectory -> {
+            System.out.println("Finished Generating Path: " + trajectory.get().getTotalTimeSeconds() + "s");
+            return null;
+        }));
     }
 
     private @Nullable String lastSelectedAuto = null;
@@ -1008,7 +1016,7 @@ public class Robot extends LoggedRobot {
     }
 
     public static boolean isRed() {
-        return sideChooser.get().equals("red");
+        return Objects.equals(sideChooser.get(), "red");
     }
 
     public static boolean isOnAllianceSide() {
