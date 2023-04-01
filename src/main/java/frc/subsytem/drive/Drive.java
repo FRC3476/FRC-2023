@@ -241,9 +241,19 @@ public final class Drive extends AbstractSubsystem {
                     START_POS_PREDICT_AHEAD, singleStationPickup, maxAcceleration);
             realtimeTrajectoryStartTime = Timer.getFPGATimestamp() + START_POS_PREDICT_AHEAD;
             setDriveState(DriveState.WAITING_FOR_PATH);
+            setTurn(new ControllerDriveInputs(
+                            realtimeTrajectoryStartVelocity.getX() / DRIVE_HIGH_SPEED_M,
+                            realtimeTrajectoryStartVelocity.getY() / DRIVE_HIGH_SPEED_M,
+                            0
+                    ),
+                    new State(targetAngle.getRadians(), 0),
+                    0,
+                    false);
+            kinematicLimit = KinematicLimits.NORMAL_DRIVING.kinematicLimit;
         }
         if (driveState == DriveState.WAITING_FOR_PATH) {
             assert trajectoryToDrive != null;
+            assert realtimeTrajectoryStartVelocity != null;
             if (trajectoryToDrive.isDone()) {
                 if (Timer.getFPGATimestamp() > realtimeTrajectoryStartTime) {
                     // Optional of the trajectory. Empty if the trajectory failed to be generated
@@ -262,11 +272,14 @@ public final class Drive extends AbstractSubsystem {
                         setAutoPath(trajectory.get(), realtimeTrajectoryStartTime); // Sets the DriveState to RAMSETE
                         setAutoRotation(targetAngle);
                     } else {
-                        nextChassisSpeeds = ChassisSpeeds.fromFieldRelativeSpeeds(
-                                DRIVE_HIGH_SPEED_M * inputs.getX(),
-                                DRIVE_HIGH_SPEED_M * inputs.getY(),
-                                inputs.getRotation() * MAX_TELEOP_TURN_SPEED,
-                                getPredictedRobotAngleInLoopCenter());
+                        setTurn(new ControllerDriveInputs(
+                                        realtimeTrajectoryStartVelocity.getX() / DRIVE_HIGH_SPEED_M,
+                                        realtimeTrajectoryStartVelocity.getY() / DRIVE_HIGH_SPEED_M,
+                                        0
+                                ),
+                                new State(targetAngle.getRadians(), 0),
+                                0,
+                                false);
                         kinematicLimit = KinematicLimits.NORMAL_DRIVING.kinematicLimit;
                         return false;
                     }
@@ -668,6 +681,9 @@ public final class Drive extends AbstractSubsystem {
     }
 
     private synchronized void updateTurn() {
+        if (TurnInputs.controllerDriveInputs == null) {
+            TurnInputs.controllerDriveInputs = new ControllerDriveInputs();
+        }
         double pidDeltaSpeed = getTurnPidDeltaSpeed(TurnInputs.goal,
                 !(TurnInputs.controllerDriveInputs.getX() == 0 && TurnInputs.controllerDriveInputs.getY() == 0));
 
