@@ -77,7 +77,7 @@ public class MechanismStateManager extends AbstractSubsystem {
     }
 
     public static final double CONE_DUNK_LOWER_METERS = Units.inchesToMeters(3);
-    public static final double CONE_DUNK_EXTEND_METERS = Units.inchesToMeters(2);
+    public static final double CONE_DUNK_EXTEND_METERS = Units.inchesToMeters(3);
 
 
     public enum MechanismStates {

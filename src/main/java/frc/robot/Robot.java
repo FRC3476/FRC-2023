@@ -765,12 +765,19 @@ public class Robot extends LoggedRobot {
                     // Update the last state so we can open the grabber later, and disable the keepouts
                     mechanismStateManager.setState(MechanismStates.FINAL_CONE_MIDDLE_SCORING);
                     mechanismStateManager.setState(mechanismStateManager.getCurrentWantedState()
-                            .adjust(MechanismStateManager.CONE_DUNK_LOWER_METERS,
+                            .adjust(MechanismStateManager.CONE_DUNK_EXTEND_METERS,
                                     -MechanismStateManager.CONE_DUNK_LOWER_METERS, 0));
                 } else {
-                    isGrabberOpen = !isGrabberOpen;
-                    if (isGrabberOpen) {
-                        grabberOpenTime = Timer.getFPGATimestamp();
+                    if (wantedMechanismState != WantedMechanismState.STOWED) {
+                        isGrabberOpen = !isGrabberOpen;
+                        if (isGrabberOpen) {
+                            grabberOpenTime = Timer.getFPGATimestamp();
+                        }
+                    } else {
+                        if (!isGrabberOpen) {
+                            grabberOpenTime = Timer.getFPGATimestamp();
+                        }
+                        isGrabberOpen = false;
                     }
                 }
             }
