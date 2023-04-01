@@ -46,6 +46,7 @@ import frc.utility.Controller;
 import frc.utility.Controller.XboxAxes;
 import frc.utility.Controller.XboxButtons;
 import frc.utility.ControllerDriveInputs;
+import frc.utility.OrangeUtility;
 import frc.utility.PathGenerator;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -81,10 +82,8 @@ import static java.lang.Math.abs;
  */
 public class Robot extends LoggedRobot {
 
-    public static final int XBOX_START_AUTO_DRIVE = XboxButtons.RIGHT_CLICK;
-    public static final int XBOX_TOGGLE_MECH = XboxButtons.LEFT_CLICK;
-
-    public static final int XBOX_AUTO_BALANCE = XboxButtons.Y;
+    public static final int XBOX_START_AUTO_DRIVE = XboxButtons.B;
+    public static final int XBOX_TOGGLE_MECH = XboxButtons.Y;
     public static final int XBOX_AUTO_DRIVE_LOWER_SUBSTATION = XboxButtons.RIGHT_BUMPER;
     public static final int XBOX_RESET_HEADING = XboxButtons.A;
     public static final int CONTROLLER_TOGGLE_FLOOR_PICKUP = XboxAxes.LEFT_TRIGGER;
@@ -295,6 +294,7 @@ public class Robot extends LoggedRobot {
         drive.resetPeriodicFrames();
         System.out.println("Running Warm Up Auto");
         AutonomousContainer.getInstance().runAutonomous("warmup", "red", false);
+        OrangeUtility.sleep(2000);
         for (int i = 0; i < 10; i++) {
             double pathGenStartTime = Timer.getFPGATimestamp();
             var path = PathGenerator.generateTrajectory(new Translation2d(2, 3), new Translation2d(0, 0),
@@ -521,8 +521,6 @@ public class Robot extends LoggedRobot {
                 // We failed to generate a trajectory
                 wantedRumble = 1;
             }
-        } else if (xbox.getRawButton(XBOX_AUTO_BALANCE)) {
-            drive.autoBalance(getControllerDriveInputs());
         } else {
             if (isTurnToTargetMode) {
                 if (teleopDrivingAutoAlignPosition == null) {
