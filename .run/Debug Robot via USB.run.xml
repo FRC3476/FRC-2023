@@ -3,10 +3,14 @@
     <module name="FRC2023.main" />
     <option name="USE_SOCKET_TRANSPORT" value="true" />
     <option name="SERVER_MODE" value="false" />
-    <option name="SHMEM_ADDRESS" value="javadebug" />
+    <option name="SHMEM_ADDRESS" />
     <option name="HOST" value="172.22.11.2" />
     <option name="PORT" value="8349" />
     <option name="AUTO_RESTART" value="false" />
+    <RunnerSettings RunnerId="Debug">
+      <option name="DEBUG_PORT" value="8349" />
+      <option name="LOCAL" value="false" />
+    </RunnerSettings>
     <method v="2" />
   </configuration>
 </component>
