@@ -131,7 +131,7 @@ public final class RobotTracker extends AbstractSubsystem {
                 REALSENSE_DEFAULT_VISION_DEVIATIONS
         );
 
-        new ScheduledThreadPoolExecutor(1).scheduleAtFixedRate(this::updateGyroHistory, 0, 1,
+        new ScheduledThreadPoolExecutor(1).scheduleAtFixedRate(this::updateGyroHistory, 0, 10,
                 TimeUnit.MILLISECONDS);
     }
 
