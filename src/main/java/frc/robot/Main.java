@@ -53,8 +53,9 @@ public final class Main {
             "-XX:+AlwaysPreTouch", // Pre-touch memory pages used by the JVM during initialization
             "-XX:+ParallelRefProcEnabled", // Use multiple threads to clean up reference objects
             // Causes GC to write to file system which can cause major latency if disk IO is high -- See https://www.evanjones.ca/jvm-mmap-pause.html
-            "-XX:+PerfDisableSharedMem"
+            "-XX:+PerfDisableSharedMem",
             //"-Xlog:gc*:logs/gc.log:time,uptime:filecount=5,filesize=1M", // Log GC events to a file
+            USING_MODIFIABLE_JVM_ARGS_FLAG
     );
 
     private static void doPreInit() {
@@ -66,14 +67,20 @@ public final class Main {
             return;
         }
 
+        if (!arguments.contains("-Don.robot=true")) {
+            // We are not running on the robot, so we don't need to modify the JVM args
+            // (this is useful for debugging)
+            System.out.println("Not running on the robot; continuing");
+            return;
+        }
+
         // We are not using the modified arguments, so we need to restart the JVM with the modified arguments
         String javaHome = System.getProperty("java.home");
         String javaBin = javaHome + "/bin/java";
         String classpath = System.getProperty("java.class.path");
         String mainClass = Main.class.getCanonicalName();
         String jvmArgs = String.join(" ", WANTED_ARGS);
-        String command = String.format("%s %s -cp %s %s %s", javaBin, jvmArgs, classpath, mainClass,
-                USING_MODIFIABLE_JVM_ARGS_FLAG);
+        String command = String.format("%s %s -cp %s %s", javaBin, jvmArgs, classpath, mainClass);
         System.out.println("Restarting with modified JVM args: " + command);
         try {
             ProcessBuilder builder = new ProcessBuilder(command.split(" "));

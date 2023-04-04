@@ -26,7 +26,7 @@ deploy {
                 // getTargetTypeClass is a shortcut to get the class type using a string
 
                 frcJava(getArtifactTypeClass('FRCJavaArtifact')) {
-
+                    jvmArgs.add("-Don.robot=true") // This won't be used in simulation
                 }
 
                 // Static files artifact
