@@ -404,25 +404,31 @@ public class VisionHandler extends AbstractSubsystem {
             for (var limelightUpdate : visionInputs.limelightUpdates) {
                 var defaultDevs = RobotTracker.LIMELIGHT_DEFAULT_VISION_DEVIATIONS;
 
-                var expectedPoseRotation = Robot.getRobotTracker().getLatestPose3d().getRotation();
+                var expectedPoseRotation = Robot.getRobotTracker().getGyroAngleAtTime(limelightUpdate.timestamp);
                 var pose = limelightUpdate.pose3d();
-
                 var poseRotation = pose.getRotation();
 
-                // Check if the expected pose has a similar rotation to the pose we got from the limelight
+                // Check if the expected angle has a similar rotation to what we got from the limelight
                 double maxAllowedLimelightAngleError = Robot.isOnAllianceSide() ? 5 : 20;
                 var rotDiff = poseRotation.minus(expectedPoseRotation);
-                if ((rotDiff.getX() > Math.toRadians(maxAllowedLimelightAngleError)
-                        || rotDiff.getY() > Math.toRadians(maxAllowedLimelightAngleError)
-                        || rotDiff.getZ() > Math.toRadians(maxAllowedLimelightAngleError))) {
+                if ((Math.abs(rotDiff.getX()) > Math.toRadians(maxAllowedLimelightAngleError)
+                        || Math.abs(rotDiff.getY()) > Math.toRadians(maxAllowedLimelightAngleError)
+                        || Math.abs(rotDiff.getZ()) > Math.toRadians(maxAllowedLimelightAngleError))) {
                     continue;
                 }
 
+                // Don't use the orientation from the limelight
+                var robotTranslationFromGyro = pose.getTranslation()
+                        .rotateBy(pose.getRotation().unaryMinus())
+                        .rotateBy(expectedPoseRotation);
+
+                // Throw out rotation from the limelight
+                var poseToFeedToRobotTracker = new Pose3d(robotTranslationFromGyro, expectedPoseRotation);
 
                 // Find the closest tag to this pose estimate
                 var distanceToTagLimelight2 = Double.MAX_VALUE;
                 for (var tags : fieldTags) {
-                    var dist2 = dist2(tags.getTranslation().minus(pose.getTranslation()));
+                    var dist2 = dist2(tags.getTranslation().minus(poseToFeedToRobotTracker.getTranslation()));
                     if (dist2 < distanceToTagLimelight2) {
                         distanceToTagLimelight2 = dist2;
                     }
