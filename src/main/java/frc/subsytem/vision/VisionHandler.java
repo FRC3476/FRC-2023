@@ -436,7 +436,8 @@ public class VisionHandler extends AbstractSubsystem {
 
                 Robot.getRobotTracker().addVisionMeasurement(pose, limelightUpdate.timestamp(), devs);
                 limelightUpdatesSent++;
-                Logger.getInstance().recordOutput("VisionManager/Limelight Pose " + limelightUpdate.limelightIndex, pose);
+                Logger.getInstance().recordOutput("VisionManager/Limelight Pose " + limelightUpdate.limelightIndex,
+                        fixCoords(pose));
             }
         }
 
