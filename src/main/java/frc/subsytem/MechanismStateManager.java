@@ -128,6 +128,10 @@ public class MechanismStateManager extends AbstractSubsystem {
         SINGLE_SUBSTATION_PICKUP_CONE(
                 new MechanismStateCoordinates(0.04296, 0.63057, 68.6),
                 true
+        ),
+        PRE_SCORING(
+                new MechanismStateCoordinates(Units.inchesToMeters(17), Units.inchesToMeters(46), 0),
+                false
         );
 
 

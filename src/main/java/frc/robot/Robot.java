@@ -418,6 +418,7 @@ public class Robot extends LoggedRobot {
     enum WantedMechanismState {
         STOWED(false),
         SCORING(false),
+        PRE_SCORING(false),
         FLOOR_PICKUP(true),
         TIPPED_FLOOR_PICKUP(true),
         STATION_PICKUP_DOUBLE(true),
@@ -521,6 +522,17 @@ public class Robot extends LoggedRobot {
                 // We failed to generate a trajectory
                 wantedRumble = 1;
             }
+
+            if (isOnAllianceSide()
+                    && scoringPositionManager.getSelectedPosition().getLevel() > 0) {
+                if (drive.getRemainingAutoDriveTime() <= 0) {
+                    // We're done driving let's score
+                    wantedMechanismState = WantedMechanismState.SCORING;
+                } else if (drive.getRemainingAutoDriveTime() < 0.5) {
+                    // We're almost done driving let's go to pre-scoring to move the arm partly into place
+                    wantedMechanismState = WantedMechanismState.PRE_SCORING;
+                }
+            }
         } else {
             if (isTurnToTargetMode) {
                 if (teleopDrivingAutoAlignPosition == null) {
@@ -543,6 +555,12 @@ public class Robot extends LoggedRobot {
                 }
                 drive.swerveDriveFieldRelative(controllerDriveInputs);
             }
+        }
+
+        if (wantedMechanismState == WantedMechanismState.PRE_SCORING
+                && scoringPositionManager.getSelectedPosition().getLevel() == 0) {
+            // We're on the ground, and we're trying to pre-score, but we shouldn't pre-score on the ground, just go back to stowed
+            wantedMechanismState = WantedMechanismState.STOWED;
         }
 
         if (xbox.getRisingEdge(XBOX_RESET_HEADING)) {
@@ -575,7 +593,7 @@ public class Robot extends LoggedRobot {
         }
 
         if (stick.getRisingEdge(STICK_TOGGLE_SCORING)) {
-            if (wantedMechanismState == WantedMechanismState.STOWED) {
+            if (wantedMechanismState == WantedMechanismState.STOWED || wantedMechanismState == WantedMechanismState.PRE_SCORING) {
                 wantedMechanismState = WantedMechanismState.SCORING;
             } else {
                 setStowed();
@@ -628,7 +646,7 @@ public class Robot extends LoggedRobot {
         }
 
         if (xbox.getRisingEdge(XBOX_TOGGLE_MECH)) {
-            if (wantedMechanismState == WantedMechanismState.STOWED) {
+            if (wantedMechanismState == WantedMechanismState.STOWED || wantedMechanismState == WantedMechanismState.PRE_SCORING) {
                 if (isOnAllianceSide()) {
                     wantedMechanismState = WantedMechanismState.SCORING;
                 } else {
@@ -677,6 +695,7 @@ public class Robot extends LoggedRobot {
                         }
                     }
                 }
+                case PRE_SCORING -> mechanismStateManager.setState(MechanismStates.PRE_SCORING);
                 case FLOOR_PICKUP -> mechanismStateManager.setState(MechanismStates.FLOOR_PICKUP);
                 case TIPPED_FLOOR_PICKUP -> mechanismStateManager.setState(MechanismStates.TIPPED_FLOOR_PICKUP);
                 case STATION_PICKUP_DOUBLE -> mechanismStateManager.setState(MechanismStates.DOUBLE_STATION_PICKUP);
