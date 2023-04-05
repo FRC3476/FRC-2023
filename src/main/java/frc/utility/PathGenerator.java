@@ -49,10 +49,16 @@ public class PathGenerator {
         if (singleStationPickup) {
             endDirTranslation = new Translation2d(0, -END_VECTOR_LEN);
         } else {
+            // Use a longer end vector if we're picking up from the double substation
+            // This ensures the robot's arm won't his the polycarb that protects the human player loading in the game piece and
+            // that the robot won't sideswipe the game piece
+            double endVectorLen = (targetPosition.getX() > Constants.FIELD_WIDTH_METERS / 2) == Robot.isRed() ?
+                    END_VECTOR_LEN : LONGER_END_VECTOR_LEN;
+
             // Implicitly determine the goal vector based on the position of the target position
             endDirTranslation = new Translation2d(
                     //based on alliance flip end vector
-                    targetPosition.getX() > Constants.FIELD_WIDTH_METERS / 2 ? END_VECTOR_LEN : -END_VECTOR_LEN,
+                    targetPosition.getX() > Constants.FIELD_WIDTH_METERS / 2 ? endVectorLen : -endVectorLen,
                     0
             );
         }
