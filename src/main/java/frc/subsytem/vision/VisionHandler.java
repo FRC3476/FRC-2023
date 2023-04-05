@@ -184,7 +184,10 @@ public class VisionHandler extends AbstractSubsystem {
                     }));
         }
 
-        for (String limelightName : limelightNames) {
+        for (int i = 0; i < 2; i++) {
+            var limelightName = limelightNames[i];
+
+            int finalI = i;
             NetworkTableInstance.getDefault().addListener(
                     getLimelightNTTableEntry(limelightName, "botpose_wpired").getTopic(),
                     EnumSet.of(Kind.kValueRemote),
@@ -202,7 +205,8 @@ public class VisionHandler extends AbstractSubsystem {
                         synchronized (this) {
                             visionInputs.limelightUpdates.add(new LimelightUpdate(
                                     adjustedPose,
-                                    Timer.getFPGATimestamp() - (botpose[6] / 1000.0)
+                                    Timer.getFPGATimestamp() - (botpose[6] / 1000.0),
+                                    finalI
                             ));
                         }
                     }));
@@ -432,6 +436,7 @@ public class VisionHandler extends AbstractSubsystem {
 
                 Robot.getRobotTracker().addVisionMeasurement(pose, limelightUpdate.timestamp(), devs);
                 limelightUpdatesSent++;
+                Logger.getInstance().recordOutput("VisionManager/Limelight Pose " + limelightUpdate.limelightIndex, pose);
             }
         }
 
@@ -469,5 +474,5 @@ public class VisionHandler extends AbstractSubsystem {
         }
     }
 
-    record LimelightUpdate(Pose3d pose3d, double timestamp) {}
+    record LimelightUpdate(Pose3d pose3d, double timestamp, int limelightIndex) {}
 }

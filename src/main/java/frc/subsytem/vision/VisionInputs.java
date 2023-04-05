@@ -31,9 +31,9 @@ public class VisionInputs implements LoggableInputs {
 
         table.put("VisionUpdates", realsenseData);
 
-        double[] limelightData = new double[limelightUpdates.size() * 8];
+        double[] limelightData = new double[limelightUpdates.size() * 9];
         for (int i = 0; i < limelightUpdates.size(); i++) {
-            double[] update = new double[8];
+            double[] update = new double[9];
 
             update[0] = limelightUpdates.get(i).pose3d().getX();
             update[1] = limelightUpdates.get(i).pose3d().getY();
@@ -45,7 +45,8 @@ public class VisionInputs implements LoggableInputs {
             update[6] = limelightUpdates.get(i).pose3d().getRotation().getQuaternion().getZ();
 
             update[7] = limelightUpdates.get(i).timestamp();
-            System.arraycopy(update, 0, limelightData, i * 8, update.length);
+            update[8] = limelightUpdates.get(i).limelightIndex();
+            System.arraycopy(update, 0, limelightData, i * 9, update.length);
         }
 
         table.put("LimelightUpdates", limelightData);
@@ -67,8 +68,8 @@ public class VisionInputs implements LoggableInputs {
 
         double[] limelightData = table.getDoubleArray("LimelightUpdates", new double[0]);
         limelightUpdates.clear();
-        final double[] update2 = new double[8];
-        for (int i = 0; i < limelightData.length; i += 8) {
+        final double[] update2 = new double[9];
+        for (int i = 0; i < limelightData.length; i += 9) {
             System.arraycopy(limelightData, i, update2, 0, update2.length);
             limelightUpdates.add(
                     new LimelightUpdate(
@@ -78,7 +79,8 @@ public class VisionInputs implements LoggableInputs {
                                     update2[2],
                                     new Rotation3d(new Quaternion(update2[3], update2[4], update2[5], update2[6]))
                             ),
-                            update2[7]
+                            update2[7],
+                            (int) update2[8]
                     )
             );
         }
