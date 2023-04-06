@@ -54,7 +54,7 @@ public final class Main {
             "-XX:+ParallelRefProcEnabled", // Use multiple threads to clean up reference objects
             // Causes GC to write to file system which can cause major latency if disk IO is high -- See https://www.evanjones.ca/jvm-mmap-pause.html
             "-XX:+PerfDisableSharedMem",
-            //"-Xlog:gc*:logs/gc.log:time,uptime:filecount=5,filesize=1M", // Log GC events to a file
+            "-Xlog:gc*:logs/gc.log:time,uptime:filecount=5,filesize=1M", // Log GC events to a file
             USING_MODIFIABLE_JVM_ARGS_FLAG
     );
 
