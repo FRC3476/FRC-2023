@@ -72,6 +72,7 @@ import java.util.concurrent.ConcurrentLinkedDeque;
 import java.util.concurrent.ExecutionException;
 
 import static frc.robot.Constants.*;
+import static frc.utility.geometry.GeometryUtils.dist2;
 import static java.lang.Math.abs;
 
 
@@ -525,10 +526,11 @@ public class Robot extends LoggedRobot {
 
             if (isOnAllianceSide()
                     && scoringPositionManager.getSelectedPosition().getLevel() > 0) {
-                if (drive.getRemainingAutoDriveTime() <= 0) {
+                if (drive.getRemainingAutoDriveTime() <= SCORE_TIME_S
+                        && dist2(autoDriveAlignError) <= SCORE_POSITION_ERROR_SQUARED) {
                     // We're done driving let's score
                     wantedMechanismState = WantedMechanismState.SCORING;
-                } else if (drive.getRemainingAutoDriveTime() < 0.5) {
+                } else if (drive.getRemainingAutoDriveTime() <= PRE_SCORE_TIME_S) {
                     // We're almost done driving let's go to pre-scoring to move the arm partly into place
                     wantedMechanismState = WantedMechanismState.PRE_SCORING;
                 }
