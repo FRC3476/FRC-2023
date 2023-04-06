@@ -256,7 +256,16 @@ public final class Constants {
 
     // Realtime path generation
     public static final double START_POS_PREDICT_AHEAD = 0.05;
+    /**
+     * The length of the end vector of the path. This has the effect of requiring the robot to move in a straight line before the
+     * end of the path.
+     */
     public static final double END_VECTOR_LEN = 0.5;
+
+    /**
+     * The length of the end vector of the path. This has the effect of requiring the robot to move in a straight line before the
+     * end of the path. (Longer to require more straightening out for the double substation pickups)
+     */
     public static final double LONGER_END_VECTOR_LEN = 0.75;
 
     public static final double VELOCITY_VECTOR_LEN_SCALE = 0.3;
