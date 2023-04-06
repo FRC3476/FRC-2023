@@ -771,6 +771,10 @@ public class Robot extends LoggedRobot {
                         if (isGrabberOpen) {
                             grabberOpenTime = Timer.getFPGATimestamp();
                         }
+                        if (!isGrabberOpen) {
+                            // We're closing the grabber. If we're in auto grab mode, disable it
+                            grabber.setAutoGrab(false);
+                        }
                     } else {
                         if (!isGrabberOpen) {
                             grabberOpenTime = Timer.getFPGATimestamp();
@@ -787,26 +791,28 @@ public class Robot extends LoggedRobot {
             isGrabberOpen = true;
         }
 
-        if (isGrabberOpen) {
+        if (grabber.isAutoGrabEnabled()) {
+            if (grabber.isOpen() && mechanismStateManager.isMechAtFinalPos()) {
+                closeGrabber();
+                isGrabberOpen = false;
+                // We're enabling auto grab mode. The limit switch will prevent the grabber from closing until it detects a game piece
+                // Auto grab is automatically disabled detects a game piece, so we don't need to do anything else, the normal
+                // grabber will take over once the game piece is detected
+            } else {
+                grabber.setGrabState(GrabState.OPEN);
+                isGrabberOpen = true;
+            }
+        } else if (isGrabberOpen) {
             if (wantedMechanismState == WantedMechanismState.STOWED) {
                 grabber.setGrabState(GrabState.IDLE);
                 if (setFutureGrabberClose && telescopingArm.getPosition() < 0.2) {
                     isGrabberOpen = false;
                 }
             } else {
-                if (wantedMechanismState.shouldAutoGrab
-                        && grabber.isOpen() && IS_AUTO_GRAB_ENABLED && mechanismStateManager.isMechAtFinalPos() && grabber.isAutoGrabEnabled()) {
-                    isGrabberOpen = false;
-                } else {
-                    grabber.setGrabState(GrabState.OPEN);
-                }
+                grabber.setGrabState(GrabState.OPEN);
             }
         } else {
-            if (scoringPositionManager.getWantedPositionType() == PositionType.CONE) {
-                grabber.setGrabState(GrabState.GRAB_CONE);
-            } else {
-                grabber.setGrabState(GrabState.GRAB_CUBE);
-            }
+            closeGrabber();
         }
 
         Logger.getInstance().recordOutput("Robot/Is Grabber Open", isGrabberOpen);
@@ -841,6 +847,14 @@ public class Robot extends LoggedRobot {
         xbox.setRumble(RumbleType.kBothRumble, wantedRumble);
     }
 
+    private static void closeGrabber() {
+        if (ScoringPositionManager.getInstance().getWantedPositionType() == PositionType.CONE) {
+            grabber.setGrabState(GrabState.GRAB_CONE);
+        } else {
+            grabber.setGrabState(GrabState.GRAB_CUBE);
+        }
+    }
+
     /**
      * Sets the mechanism state to stowed and closes the grabber
      */
@@ -848,6 +862,7 @@ public class Robot extends LoggedRobot {
         wantedMechanismState = WantedMechanismState.STOWED;
         setFutureGrabberClose = true;
         wantToClose = false;
+        grabber.setAutoGrab(false);
     }
 
 
