@@ -33,6 +33,8 @@ public final class Constants {
             100000000 : // 100 MB
             1000000000; // 1 GB
 
+    public static final double GYRO_IS_FLAT_FOR_PICKUP_THRESHOLD_DEGREES = 2;
+
     // Drive Constants
     public static final double SWERVE_MOTOR_POSITION_CONVERSION_FACTOR = 1 / 12.8;
     public static final int DEFAULT_PERIODS_PER_LOG = 0;
