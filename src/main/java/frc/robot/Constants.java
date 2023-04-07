@@ -33,6 +33,11 @@ public final class Constants {
             100000000 : // 100 MB
             1000000000; // 1 GB
 
+    public static final double PRE_SCORE_TIME_S = 0.5;
+    public static final double SCORE_TIME_S = 0.0;
+    public static final double SCORE_POSITION_ERROR_SQUARED = 0.04 * 0.04; // 4 cm
+
+
     // Drive Constants
     public static final double SWERVE_MOTOR_POSITION_CONVERSION_FACTOR = 1 / 12.8;
     public static final int DEFAULT_PERIODS_PER_LOG = 0;
