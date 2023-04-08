@@ -1,7 +1,6 @@
 package frc.robot;
 
 import edu.wpi.first.math.geometry.Translation2d;
-import edu.wpi.first.math.util.Units;
 import frc.utility.Controller;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -20,9 +19,9 @@ public class ScoringPositionManager {
      * The Y coordinate of the center of the cube scoring platforms
      */
     private static final double[] CUBE_SCORING_Y_CENTER = {
-            -0.415 - Units.inchesToMeters(1),
-            1.26 - Units.inchesToMeters(1),
-            2.94 - Units.inchesToMeters(1)
+            -0.415,
+            1.26,
+            2.94
     };
     private static ScoringPositionManager instance = new ScoringPositionManager();
 
