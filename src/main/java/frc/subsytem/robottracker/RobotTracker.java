@@ -15,7 +15,6 @@ import edu.wpi.first.math.numbers.N1;
 import edu.wpi.first.math.numbers.N3;
 import edu.wpi.first.math.numbers.N4;
 import edu.wpi.first.wpilibj.DriverStation;
-import edu.wpi.first.wpilibj.Timer;
 import frc.robot.Robot;
 import frc.subsytem.AbstractSubsystem;
 import frc.subsytem.robottracker.GyroInputs.Entry;
@@ -538,14 +537,14 @@ public final class RobotTracker extends AbstractSubsystem {
         Logger.getInstance().recordOutput("RobotTracker/Rotation Y", Math.toDegrees(getLatestPose3d().getRotation().getY()));
         Logger.getInstance().recordOutput("RobotTracker/Rotation Z", Math.toDegrees(getLatestPose3d().getRotation().getZ()));
 
-        var currGyroAngle = getGyroAngleAtTime(Timer.getFPGATimestamp());
+        var currGyroAngle = getRawGyroAngle();
 
         Logger.getInstance().recordOutput("RobotTracker/Raw Rotation X", Math.toDegrees(currGyroAngle.getX()));
         Logger.getInstance().recordOutput("RobotTracker/Raw Rotation Y", Math.toDegrees(currGyroAngle.getY()));
         Logger.getInstance().recordOutput("RobotTracker/Raw Rotation Z", Math.toDegrees(currGyroAngle.getZ()));
 
         Logger.getInstance().recordOutput("RobotTracker/Y Axis Angle", Math.toDegrees(gyroYAngle));
-        Logger.getInstance().recordOutput("RobotTracker/Y Axis Angle", Math.toDegrees(gyroYVelocity));
+        Logger.getInstance().recordOutput("RobotTracker/Y Axis Velocity", Math.toDegrees(gyroYVelocity));
 
 
         RobotPositionSender.addRobotPosition(new RobotState(getLatestPose(), getVelocity().getX(),
@@ -601,6 +600,10 @@ public final class RobotTracker extends AbstractSubsystem {
 
         // The deltaVelocity over our measurement window
         return mutDeltaVelocity.getTranslation3d();
+    }
+
+    public synchronized Rotation3d getRawGyroAngle() {
+        return gyroInputs.rotation3d;
     }
 
     public double getGyroYVelocity() {

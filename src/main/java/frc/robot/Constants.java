@@ -33,7 +33,7 @@ public final class Constants {
             100000000 : // 100 MB
             1000000000; // 1 GB
 
-    public static final double GYRO_IS_FLAT_FOR_PICKUP_THRESHOLD_DEGREES = 2;
+    public static final double GYRO_IS_FLAT_FOR_PICKUP_THRESHOLD_DEGREES = 5;
     public static final double PRE_SCORE_TIME_S = 1;
     public static final double SCORE_TIME_S = 0.0;
     public static final double SCORE_POSITION_ERROR_SQUARED = 0.08 * 0.8; // 4 cm

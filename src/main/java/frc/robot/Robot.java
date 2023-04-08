@@ -838,15 +838,14 @@ public class Robot extends LoggedRobot {
         if (grabber.isAutoGrabEnabled()) {
 
             // Note: due to execution order, this is the gyro angle from the previous loop (~20ms ago)
-            double gyroAngle = robotTracker.getGyroYAngle();
+            double gyroAngle = robotTracker.getRawGyroAngle().getY();
 
             // We don't care if we tilt forward b/c that means we're picking up from the base. We only care if we're tilted
             // back (making it so that the grabber would pick up from the tip of the cone) which is why the tilt check is only
             // in one direction.
-            boolean isFlat = isRed() ? gyroAngle > -GYRO_IS_FLAT_FOR_PICKUP_THRESHOLD_DEGREES :
-                    gyroAngle < GYRO_IS_FLAT_FOR_PICKUP_THRESHOLD_DEGREES;
+            boolean isFlat = Math.abs(Math.toDegrees(gyroAngle)) < GYRO_IS_FLAT_FOR_PICKUP_THRESHOLD_DEGREES;
 
-            if (grabber.isOpen() && mechanismStateManager.isMechAtFinalPos() &&
+            if ((grabber.isOpen() || !isGrabberOpen) && mechanismStateManager.isMechAtFinalPos() &&
                     // Only care about the flatness if we're in doing a double substation pickup
                     (wantedMechanismState != WantedMechanismState.STATION_PICKUP_DOUBLE || isFlat)) {
                 closeGrabber();
@@ -856,7 +855,6 @@ public class Robot extends LoggedRobot {
                 // grabber will take over once the game piece is detected
             } else {
                 grabber.setGrabState(GrabState.OPEN);
-                isGrabberOpen = true;
             }
         } else if (isGrabberOpen) {
             if (wantedMechanismState == WantedMechanismState.STOWED) {
