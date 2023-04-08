@@ -301,7 +301,7 @@ public final class Drive extends AbstractSubsystem {
     }
 
     public synchronized double getRemainingAutoDriveTime() {
-        if (driveState == DriveState.RAMSETE
+        if ((driveState == DriveState.RAMSETE || driveState == DriveState.TURN)
                 && trajectoryToDrive != null
                 && trajectoryToDrive.isDone()
                 && trajectoryToDrive.join().isPresent()) {

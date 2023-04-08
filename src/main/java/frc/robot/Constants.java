@@ -33,11 +33,10 @@ public final class Constants {
             100000000 : // 100 MB
             1000000000; // 1 GB
 
-    public static final double PRE_SCORE_TIME_S = 0.5;
+    public static final double GYRO_IS_FLAT_FOR_PICKUP_THRESHOLD_DEGREES = 5;
+    public static final double PRE_SCORE_TIME_S = 1;
     public static final double SCORE_TIME_S = 0.0;
-    public static final double SCORE_POSITION_ERROR_SQUARED = 0.04 * 0.04; // 4 cm
-
-
+    public static final double SCORE_POSITION_ERROR_SQUARED = 0.08 * 0.8; // 4 cm
     // Drive Constants
     public static final double SWERVE_MOTOR_POSITION_CONVERSION_FACTOR = 1 / 12.8;
     public static final int DEFAULT_PERIODS_PER_LOG = 0;
@@ -270,7 +269,7 @@ public final class Constants {
      * The length of the end vector of the path. This has the effect of requiring the robot to move in a straight line before the
      * end of the path. (Longer to require more straightening out for the double substation pickups)
      */
-    public static final double LONGER_END_VECTOR_LEN = 0.75;
+    public static final double LONGER_END_VECTOR_LEN = 2;
 
     public static final double VELOCITY_VECTOR_LEN_SCALE = 0.3;
     public static final double MAX_VELOCITY_ERROR_NEW_PATH = 0.05;

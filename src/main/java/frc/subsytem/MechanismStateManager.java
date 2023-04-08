@@ -14,7 +14,7 @@ public class MechanismStateManager extends AbstractSubsystem {
 
     public static final double SCORING_KEEPOUT_Y = 0.92;
     public static final double SCORING_KEEPOUT_X = 0.21;
-    public static final double PICKUP_KEEPOUT_ELEVATOR_DISTANCE = 1.17 - (!IS_PRACTICE ? Units.inchesToMeters(3) : 0);
+    public static final double PICKUP_KEEPOUT_ELEVATOR_DISTANCE = 1.06;
     public static final double KEEPOUT_HYSTERESIS = 0.02;
 
     boolean isAtFinalPosition = false;
@@ -94,7 +94,7 @@ public class MechanismStateManager extends AbstractSubsystem {
                 false
         ),
         CONE_MIDDLE_SCORING(
-                new MechanismStateCoordinates(Units.inchesToMeters(12), Units.inchesToMeters(44), 25),
+                new MechanismStateCoordinates(Units.inchesToMeters(15), Units.inchesToMeters(44), 25),
                 false
         ),
         FINAL_CONE_MIDDLE_SCORING(
@@ -130,7 +130,7 @@ public class MechanismStateManager extends AbstractSubsystem {
                 true
         ),
         PRE_SCORING(
-                new MechanismStateCoordinates(Units.inchesToMeters(17), Units.inchesToMeters(46), 0),
+                new MechanismStateCoordinates(Units.inchesToMeters(15), Units.inchesToMeters(46), 80),
                 false
         );
 
