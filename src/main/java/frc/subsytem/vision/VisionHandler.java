@@ -62,11 +62,13 @@ public class VisionHandler extends AbstractSubsystem {
             = new LoggedDashboardBoolean("Limelight Left Connected", false);
     private final LoggedDashboardBoolean isLimelightRightConnected
             = new LoggedDashboardBoolean("Limelight Right Connected", false);
+    private final LoggedDashboardBoolean forceDisableLimelightLEDs = new LoggedDashboardBoolean("Disable Limelight LEDs");
 
     {
         Logger.getInstance().registerDashboardInput(isRealsenseConnected);
         Logger.getInstance().registerDashboardInput(isLimelightLeftConnected);
         Logger.getInstance().registerDashboardInput(isLimelightRightConnected);
+        Logger.getInstance().registerDashboardInput(forceDisableLimelightLEDs);
     }
 
     private final ExecutorService asyncVisionUpdateSaver = Executors.newSingleThreadExecutor();
@@ -388,7 +390,7 @@ public class VisionHandler extends AbstractSubsystem {
         visionInputs.visionUpdates.clear();
 
         // Turn on the limelight LEDs if we are close to a tag
-        if (distanceToTag2 < LIMELIGHT_LED_ON_DISTANCE_THRESHOLD_SQUARED) {
+        if (distanceToTag2 < LIMELIGHT_LED_ON_DISTANCE_THRESHOLD_SQUARED && !forceDisableLimelightLEDs.get()) {
             for (String limelightName : limelightNames) {
                 LimelightHelpers.setLEDMode_PipelineControl(limelightName);
             }

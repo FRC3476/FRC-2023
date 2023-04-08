@@ -128,10 +128,12 @@ public class Robot extends LoggedRobot {
     // Autonomous
     private final LoggedDashboardChooser<String> autoChooser = new LoggedDashboardChooser<>("AutoChooser");
     public static final LoggedDashboardChooser<String> sideChooser = new LoggedDashboardChooser<>("SideChooser");
+    private final LoggedDashboardBoolean reverseControls = new LoggedDashboardBoolean("Reverse Controls");
 
     {
         Logger.getInstance().registerDashboardInput(autoChooser);
         Logger.getInstance().registerDashboardInput(sideChooser);
+        Logger.getInstance().registerDashboardInput(reverseControls);
     }
 
     private static Thread mainThread;
@@ -1010,7 +1012,13 @@ public class Robot extends LoggedRobot {
 
     private ControllerDriveInputs getControllerDriveInputs() {
         ControllerDriveInputs inputs;
-        if (isRed()) {
+        boolean isRed = isRed();
+        
+        if (reverseControls.get()) {
+            isRed = !isRed;
+        }
+
+        if (isRed) {
             inputs = new ControllerDriveInputs(-xbox.getRawAxis(1), -xbox.getRawAxis(0), -xbox.getRawAxis(4));
         } else {
             inputs = new ControllerDriveInputs(xbox.getRawAxis(1), xbox.getRawAxis(0), -xbox.getRawAxis(4));
@@ -1077,7 +1085,7 @@ public class Robot extends LoggedRobot {
     }
 
 
-    private static ConcurrentLinkedDeque<Runnable> toRunOnMainThread = new ConcurrentLinkedDeque<>();
+    private static final ConcurrentLinkedDeque<Runnable> toRunOnMainThread = new ConcurrentLinkedDeque<>();
 
     public static void runOnMainThread(Runnable runnable) {
         toRunOnMainThread.add(runnable);
