@@ -270,7 +270,7 @@ public final class Constants {
      * The length of the end vector of the path. This has the effect of requiring the robot to move in a straight line before the
      * end of the path. (Longer to require more straightening out for the double substation pickups)
      */
-    public static final double LONGER_END_VECTOR_LEN = 0.75;
+    public static final double LONGER_END_VECTOR_LEN = 2;
 
     public static final double VELOCITY_VECTOR_LEN_SCALE = 0.3;
     public static final double MAX_VELOCITY_ERROR_NEW_PATH = 0.05;
