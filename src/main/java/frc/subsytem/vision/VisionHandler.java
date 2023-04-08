@@ -129,7 +129,7 @@ public class VisionHandler extends AbstractSubsystem {
     private final Pose3d cameraPose = new Pose3d(new Translation3d(Units.inchesToMeters(3.44 + 11.4375),
             Units.inchesToMeters(-3.44 - 0.44),
             Units.inchesToMeters(52.425)),
-            new Rotation3d(VecBuilder.fill(0, 1, 0), Math.toRadians(-31)));
+            new Rotation3d(VecBuilder.fill(0, 1, 0), Math.toRadians(-28.6)));
 
     private final Pose3d negativeCameraPose = new Pose3d(
             cameraPose.getTranslation().unaryMinus(),
@@ -151,7 +151,7 @@ public class VisionHandler extends AbstractSubsystem {
         // Send out connection flag to april tags processor
         visionMiscTable.getEntry("Connection Flag").setBoolean(true);
 
-        configTable.getEntry("Exposure").setDouble(25);
+        configTable.getEntry("Exposure").setDouble(60);
         configTable.getEntry("Camera Type").setDouble(0);
         configTable.getEntry("X Resolution").setDouble(1280);
         configTable.getEntry("Y Resolution").setDouble(800);
@@ -160,7 +160,7 @@ public class VisionHandler extends AbstractSubsystem {
         configTable.getEntry("Do Stream").setBoolean(false);
         configTable.getEntry("Stream Port").setDouble(5810);
         configTable.getEntry("Stream Ip").setString("10.34.76.225");
-        configTable.getEntry("Decision Margin").setDouble(13);
+        configTable.getEntry("Decision Margin").setDouble(10);
         configTable.getEntry("Encode Quality").setDouble(50);
         configTable.getEntry("Record Video").setBoolean(false);
 
@@ -186,7 +186,10 @@ public class VisionHandler extends AbstractSubsystem {
                     }));
         }
 
-        for (String limelightName : limelightNames) {
+        for (int i = 0; i < 2; i++) {
+            var limelightName = limelightNames[i];
+
+            int finalI = i;
             NetworkTableInstance.getDefault().addListener(
                     getLimelightNTTableEntry(limelightName, "botpose_wpired").getTopic(),
                     EnumSet.of(Kind.kValueRemote),
@@ -204,7 +207,8 @@ public class VisionHandler extends AbstractSubsystem {
                         synchronized (this) {
                             visionInputs.limelightUpdates.add(new LimelightUpdate(
                                     adjustedPose,
-                                    Timer.getFPGATimestamp() - (botpose[6] / 1000.0)
+                                    Timer.getFPGATimestamp() - (botpose[6] / 1000.0),
+                                    finalI
                             ));
                         }
                     }));
@@ -402,25 +406,31 @@ public class VisionHandler extends AbstractSubsystem {
             for (var limelightUpdate : visionInputs.limelightUpdates) {
                 var defaultDevs = RobotTracker.LIMELIGHT_DEFAULT_VISION_DEVIATIONS;
 
-                var expectedPoseRotation = Robot.getRobotTracker().getLatestPose3d().getRotation();
+                var expectedPoseRotation = Robot.getRobotTracker().getGyroAngleAtTime(limelightUpdate.timestamp);
                 var pose = limelightUpdate.pose3d();
-
                 var poseRotation = pose.getRotation();
 
-                // Check if the expected pose has a similar rotation to the pose we got from the limelight
+                // Check if the expected angle has a similar rotation to what we got from the limelight
                 double maxAllowedLimelightAngleError = Robot.isOnAllianceSide() ? 5 : 20;
                 var rotDiff = poseRotation.minus(expectedPoseRotation);
-                if ((rotDiff.getX() > Math.toRadians(maxAllowedLimelightAngleError)
-                        || rotDiff.getY() > Math.toRadians(maxAllowedLimelightAngleError)
-                        || rotDiff.getZ() > Math.toRadians(maxAllowedLimelightAngleError))) {
+                if ((Math.abs(rotDiff.getX()) > Math.toRadians(maxAllowedLimelightAngleError)
+                        || Math.abs(rotDiff.getY()) > Math.toRadians(maxAllowedLimelightAngleError)
+                        || Math.abs(rotDiff.getZ()) > Math.toRadians(maxAllowedLimelightAngleError))) {
                     continue;
                 }
 
+                // Don't use the orientation from the limelight
+                var robotTranslationFromGyro = pose.getTranslation()
+                        .rotateBy(pose.getRotation().unaryMinus())
+                        .rotateBy(expectedPoseRotation);
+
+                // Throw out rotation from the limelight
+                var poseToFeedToRobotTracker = new Pose3d(robotTranslationFromGyro, expectedPoseRotation);
 
                 // Find the closest tag to this pose estimate
                 var distanceToTagLimelight2 = Double.MAX_VALUE;
                 for (var tags : fieldTags) {
-                    var dist2 = dist2(tags.getTranslation().minus(pose.getTranslation()));
+                    var dist2 = dist2(tags.getTranslation().minus(poseToFeedToRobotTracker.getTranslation()));
                     if (dist2 < distanceToTagLimelight2) {
                         distanceToTagLimelight2 = dist2;
                     }
@@ -434,6 +444,8 @@ public class VisionHandler extends AbstractSubsystem {
 
                 Robot.getRobotTracker().addVisionMeasurement(pose, limelightUpdate.timestamp(), devs);
                 limelightUpdatesSent++;
+                Logger.getInstance().recordOutput("VisionManager/Limelight Pose " + limelightUpdate.limelightIndex,
+                        fixCoords(pose));
             }
         }
 
@@ -471,5 +483,5 @@ public class VisionHandler extends AbstractSubsystem {
         }
     }
 
-    record LimelightUpdate(Pose3d pose3d, double timestamp) {}
+    record LimelightUpdate(Pose3d pose3d, double timestamp, int limelightIndex) {}
 }
