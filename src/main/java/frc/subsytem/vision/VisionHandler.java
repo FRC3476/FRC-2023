@@ -129,7 +129,7 @@ public class VisionHandler extends AbstractSubsystem {
     private final Pose3d cameraPose = new Pose3d(new Translation3d(Units.inchesToMeters(3.44 + 11.4375),
             Units.inchesToMeters(-3.44 - 0.44),
             Units.inchesToMeters(52.425)),
-            new Rotation3d(VecBuilder.fill(0, 1, 0), Math.toRadians(-31)));
+            new Rotation3d(VecBuilder.fill(0, 1, 0), Math.toRadians(-28.6)));
 
     private final Pose3d negativeCameraPose = new Pose3d(
             cameraPose.getTranslation().unaryMinus(),
@@ -151,7 +151,7 @@ public class VisionHandler extends AbstractSubsystem {
         // Send out connection flag to april tags processor
         visionMiscTable.getEntry("Connection Flag").setBoolean(true);
 
-        configTable.getEntry("Exposure").setDouble(25);
+        configTable.getEntry("Exposure").setDouble(60);
         configTable.getEntry("Camera Type").setDouble(0);
         configTable.getEntry("X Resolution").setDouble(1280);
         configTable.getEntry("Y Resolution").setDouble(800);
@@ -160,7 +160,7 @@ public class VisionHandler extends AbstractSubsystem {
         configTable.getEntry("Do Stream").setBoolean(false);
         configTable.getEntry("Stream Port").setDouble(5810);
         configTable.getEntry("Stream Ip").setString("10.34.76.225");
-        configTable.getEntry("Decision Margin").setDouble(13);
+        configTable.getEntry("Decision Margin").setDouble(10);
         configTable.getEntry("Encode Quality").setDouble(50);
         configTable.getEntry("Record Video").setBoolean(false);
 
