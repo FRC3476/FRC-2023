@@ -165,3 +165,4 @@ src/main/java/frc/robot/BuildConstants.java
 simgui.json
 simgui-ds.json
 networktables.json
+sonarlint
