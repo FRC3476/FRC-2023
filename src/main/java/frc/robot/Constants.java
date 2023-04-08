@@ -188,7 +188,6 @@ public final class Constants {
     public static final double ELEVATOR_NOMINAL_VOLTAGE = 9;
     public static final int ELEVATOR_SMART_CURRENT_LIMIT = 40;
 
-    // TODO: Figure out how much the elevator is angled at
     public static final double ELEVATOR_TILT_RADIANS = Math.toRadians(64.24203436);
     public static final double ELEVATOR_STALLING_CURRENT = 35;
     public static final double ELEVATOR_MIN_HOME_TIME = 0.2;
@@ -234,7 +233,7 @@ public final class Constants {
     public static final double GRABBER_CLOSE_THRESHOLD_DEGREES = 40;
     public static final double GRABBER_OPEN_THRESHOLD_DEGREES = 55;
     public static final boolean USE_GRABBER_ENCODER = !IS_PRACTICE;
-    public static boolean GRABBER_WHEELS_USED = false;
+    public static final boolean GRABBER_WHEELS_USED = false;
 
     public static final double GRABBER_LENGTH = .308;
 
@@ -316,7 +315,6 @@ public final class Constants {
 
 
     // Constraints
-    // TODO: FIND REAL CONSTRAINTS
     public static final double MAX_WRIST_ANGLE = 126;
     public static final double MIN_WRIST_ANGLE = -90;
     public static final double BASE_MIN_X = Units.inchesToMeters(1);
