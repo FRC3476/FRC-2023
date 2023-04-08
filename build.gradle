@@ -51,7 +51,8 @@ deploy {
                     jvmArgs.add("-XX:+ParallelRefProcEnabled") // Use multiple threads to clean up reference objects
                     // Causes GC to write to file system which can cause major latency if disk IO is high -- See https://www.evanjones.ca/jvm-mmap-pause.html
                     jvmArgs.add("-XX:+PerfDisableSharedMem")
-                    jvmArgs.add("-Xlog:gc*:logs/gc.log:time,uptime:filecount=5,filesize=1M") // Log GC events to a file
+                    jvmArgs.add("-Xlog:gc*:/home/lvuser/gclogs/gc.log:time,uptime:filecount=5,filesize=1M")
+                    // Log GC events to a file
                 }
 
                 // Static files artifact
