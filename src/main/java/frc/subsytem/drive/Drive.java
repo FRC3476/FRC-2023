@@ -300,6 +300,16 @@ public final class Drive extends AbstractSubsystem {
         return true;
     }
 
+    public synchronized double getRemainingAutoDriveTime() {
+        if (driveState == DriveState.RAMSETE
+                && trajectoryToDrive != null
+                && trajectoryToDrive.isDone()
+                && trajectoryToDrive.join().isPresent()) {
+            return trajectoryToDrive.join().get().getTotalTimeSeconds() - getAutoElapsedTime();
+        }
+        return Double.MAX_VALUE;
+    }
+
     public synchronized void alignToYAndYaw(double targetYaw, double targetY, ControllerDriveInputs inputs) {
 
         var currPos = Robot.getRobotTracker().getLatestPose().getTranslation();
