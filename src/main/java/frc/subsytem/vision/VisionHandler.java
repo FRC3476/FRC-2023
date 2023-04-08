@@ -126,8 +126,8 @@ public class VisionHandler extends AbstractSubsystem {
         }
     }
 
-    private final Pose3d cameraPose = new Pose3d(new Translation3d(Units.inchesToMeters(3.44 + 11.4375),
-            Units.inchesToMeters(-3.44 - 0.44),
+    private final Pose3d cameraPose = new Pose3d(new Translation3d(Units.inchesToMeters(3.44 + 9),
+            Units.inchesToMeters(-3.44),
             Units.inchesToMeters(52.425)),
             new Rotation3d(VecBuilder.fill(0, 1, 0), Math.toRadians(-28.6)));
 
@@ -355,6 +355,17 @@ public class VisionHandler extends AbstractSubsystem {
 
     @Override
     public synchronized void update() {
+        int llPipelineIndex;
+        if (Robot.isRed()) {
+            llPipelineIndex = 0;
+        } else {
+            llPipelineIndex = 1;
+        }
+
+        for (String limelightName : limelightNames) {
+            LimelightHelpers.setPipelineIndex(limelightName, llPipelineIndex);
+        }
+
         Logger.getInstance().processInputs("VisionHandler", visionInputs);
 
         isRealsenseConnected.set(
