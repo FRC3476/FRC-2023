@@ -87,7 +87,7 @@ public class MechanismStateManager extends AbstractSubsystem {
     public static final MechanismStateAdjustment CONE_DUNK_MIDDLE_ADJUSTMENT
             = new MechanismStateAdjustment(Units.inchesToMeters(6), -Units.inchesToMeters(6), 0);
     public static final MechanismStateAdjustment CONE_DUNK_HIGH_ADJUSTMENT
-            = new MechanismStateAdjustment(0, 0, -30);
+            = new MechanismStateAdjustment(0, 0, -35);
 
 
     public enum MechanismStates {
@@ -112,7 +112,7 @@ public class MechanismStateManager extends AbstractSubsystem {
                 true
         ),
         CONE_HIGH_SCORING(
-                new MechanismStateCoordinates(Units.inchesToMeters(36), Units.inchesToMeters(57), 65),
+                new MechanismStateCoordinates(Units.inchesToMeters(36), Units.inchesToMeters(57), 90),
                 false
         ),
         FINAL_CONE_HIGH_SCORING(
@@ -132,7 +132,7 @@ public class MechanismStateManager extends AbstractSubsystem {
                 false
         ),
         FLOOR_PICKUP(
-                new MechanismStateCoordinates(0.08, 0.06, !IS_PRACTICE ? -10 : 0),
+                new MechanismStateCoordinates(0.08, 0.06, 15),
                 true
         ),
         SINGLE_SUBSTATION_PICKUP_CUBE(
