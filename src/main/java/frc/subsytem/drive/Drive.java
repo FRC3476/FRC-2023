@@ -376,6 +376,8 @@ public final class Drive extends AbstractSubsystem {
         }
 
         setSwerveModuleStates(newSwerveSetpoint);
+
+        Logger.getInstance().recordOutput("Drive/Expected Velocity", robot_pose_vel.getTranslation().getNorm());
     }
 
     private synchronized void setSwerveModuleStates(SwerveSetpoint setpoint) {
@@ -449,22 +451,30 @@ public final class Drive extends AbstractSubsystem {
         double ffv = DRIVE_FEEDFORWARD[module].calculate(velocity, 0);
         io.setDriveMotorVoltage(module, ffv, driveState != DriveState.TELEOP);
 
+        Logger.getInstance().recordOutput("Drive/Out Volts " + module, ffv);
         Logger.getInstance().recordOutput("Drive/Out Volts Ks" + module, DRIVE_FEEDFORWARD[module].ks * Math.signum(velocity));
         Logger.getInstance().recordOutput("Drive/Out Volts Kv" + module, DRIVE_FEEDFORWARD[module].kv * velocity);
         Logger.getInstance().recordOutput("Drive/Out Volts Ka" + module, DRIVE_FEEDFORWARD[module].ka * acceleration);
         Logger.getInstance().recordOutput("Drive/Voltage Contrib to Accel" + module,
                 ffv - DRIVE_FEEDFORWARD[module].calculate(getSwerveDriveVelocity(module)));
 
-        double time = Logger.getInstance().getRealTimestamp() * SECONDS_PER_MICROSECOND;
+        double time = inputs.driveIoTimestamp;
+        double realAccel = (getSwerveDriveVelocity(module) - lastModuleVelocities[module]) / (time - lastModuleTimes[module]);
 
-        Logger.getInstance().recordOutput("Drive/Acceleration" + module,
-                (lastModuleVelocities[module] - getSwerveDriveVelocity(module)) / (time - lastModuleTimes[module]));
+        Logger.getInstance().recordOutput("Drive/Acceleration" + module, realAccel);
+        Logger.getInstance().recordOutput("Drive/Expected Accel" + module,
+                (ffv - DRIVE_FEEDFORWARD[module].calculate(getSwerveDriveVelocity(module)) / DRIVE_FEEDFORWARD[module].ka));
 
         lastModuleVelocities[module] = getSwerveDriveVelocity(module);
         lastModuleTimes[module] = Logger.getInstance().getRealTimestamp() * SECONDS_PER_MICROSECOND;
 
-        Logger.getInstance().recordOutput("Drive/Out Volts " + module, ffv);
-        //swerveDriveMotors[module].setVoltage(10 * velocity/Constants.SWERVE_METER_PER_ROTATION);
+
+        if (PERIODIC_DRIVE_PRINT && DriverStation.isTeleopEnabled() && (Timer.getFPGATimestamp() > nextPeriodicDrivePrint)) {
+            nextPeriodicDrivePrint = Timer.getFPGATimestamp() + 0.1;
+            if (Math.abs(realAccel) < 8.1 && Math.abs(lastModuleVelocities[module]) > 0.1) {
+                System.out.printf("%.5f, %.5f, %.5f%n", ffv, lastModuleVelocities[module], realAccel);
+            }
+        }
     }
 
     /**
@@ -622,6 +632,8 @@ public final class Drive extends AbstractSubsystem {
     public synchronized double getAutoElapsedTime() {
         return Timer.getFPGATimestamp() - autoStartTime;
     }
+
+    private double nextPeriodicDrivePrint = 15;
 
     @Override
     public synchronized void update() {

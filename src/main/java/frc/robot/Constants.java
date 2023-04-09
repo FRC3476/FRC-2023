@@ -71,6 +71,7 @@ public final class Constants {
     public static final double SWERVE_DRIVE_INTEGRAL_ZONE = 0.00;
     public static final double AUTO_BALANCE_COMPLETE_THRESHOLD_DEGREES = 7;
     public static final double MAX_ERROR_PRINT_TIME = 0.5;
+    public static final boolean PERIODIC_DRIVE_PRINT = false;
     /**
      * Feed forward constants for the drivetrain.
      * <p>
@@ -84,10 +85,10 @@ public final class Constants {
      */
     public static final SimpleMotorFeedforward[] DRIVE_FEEDFORWARD = {
             //ka = 0.55
-            new SimpleMotorFeedforward(0.256163, 2.48626, 0.2),
-            new SimpleMotorFeedforward(0.256163, 2.48626, 0.2),
-            new SimpleMotorFeedforward(0.256163, 2.48626, 0.2),
-            new SimpleMotorFeedforward(0.256163, 2.48626, 0.2)};
+            new SimpleMotorFeedforward(0.288582, 2.26484, 0.55),
+            new SimpleMotorFeedforward(0.288582, 2.26484, 0.55),
+            new SimpleMotorFeedforward(0.288582, 2.26484, 0.55),
+            new SimpleMotorFeedforward(0.288582, 2.26484, 0.55)};
 
 
     /**
@@ -125,19 +126,19 @@ public final class Constants {
             SWERVE_MODULE_LOCATIONS
     );
 
-    public static final double DRIVE_HIGH_SPEED_M = 5;
+    public static final double DRIVE_HIGH_SPEED_M = DRIVE_FEEDFORWARD[0].maxAchievableVelocity(12, 0);
     /**
      * Allowed Turn Error in degrees.
      */
     public static final double MAX_TURN_ERROR = 30;
 
     public static final int SWERVE_MOTOR_CURRENT_LIMIT = 20;
-    public static final int SWERVE_DRIVE_MOTOR_CURRENT_LIMIT = 30;
+    public static final int SWERVE_DRIVE_MOTOR_CURRENT_LIMIT = 35;
     public static final int SWERVE_DRIVE_VOLTAGE_LIMIT_AUTO = 12;
     public static final int SWERVE_DRIVE_VOLTAGE_LIMIT_TELEOP = 15;
 
 
-    public static final double SWERVE_DRIVE_MOTOR_REDUCTION = 1 / 6.75; // L2 gear ratio
+    public static final double SWERVE_DRIVE_MOTOR_REDUCTION = 1 / 5.9; // L3.1 gear ratio
     public static final double ALLOWED_XY_ERROR_RAMSETE = 0.04;
     public static final double PID_CONTROL_RANGE_AUTO_DRIVE_METERS = 0.1;
     public static final double AUTO_DRIVE_PATH_EARLY_END_SECONDS = 0.1;
