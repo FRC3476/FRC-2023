@@ -85,10 +85,10 @@ public final class Constants {
      */
     public static final SimpleMotorFeedforward[] DRIVE_FEEDFORWARD = {
             //ka = 0.55
-            new SimpleMotorFeedforward(0.288582, 2.26484, 0.55),
-            new SimpleMotorFeedforward(0.288582, 2.26484, 0.55),
-            new SimpleMotorFeedforward(0.288582, 2.26484, 0.55),
-            new SimpleMotorFeedforward(0.288582, 2.26484, 0.55)};
+            new SimpleMotorFeedforward(0.288582, 2.26484, 0.45),
+            new SimpleMotorFeedforward(0.288582, 2.26484, 0.45),
+            new SimpleMotorFeedforward(0.288582, 2.26484, 0.45),
+            new SimpleMotorFeedforward(0.288582, 2.26484, 0.45)};
 
 
     /**
@@ -249,7 +249,7 @@ public final class Constants {
         /**
          * Normal acceleration limit while driving. This ensures that the driver can't tip the robot.
          */
-        NORMAL_DRIVING(new KinematicLimit(7, 5000, Math.PI * 2 * 10));
+        NORMAL_DRIVING(new KinematicLimit(7, 5000, Math.PI * 2 * 2));
         public final KinematicLimit kinematicLimit;
 
         KinematicLimits(KinematicLimit kinematicLimit) {

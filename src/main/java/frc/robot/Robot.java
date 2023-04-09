@@ -405,6 +405,7 @@ public class Robot extends LoggedRobot {
             setFutureGrabberClose = true;
             wasAuto = false;
         }
+        visionHandler.setVisionEnabled(true);
     }
 
 

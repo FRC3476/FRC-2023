@@ -85,7 +85,7 @@ public class VisionHandler extends AbstractSubsystem {
 
     private static final @NotNull Pose3d[] fieldTags;
 
-    private static List<Integer> redTags = List.of(1, 2, 3, 4);
+    private static final List<Integer> redTags = List.of(1, 2, 3, 4);
 
     static {
         try {
@@ -138,6 +138,12 @@ public class VisionHandler extends AbstractSubsystem {
 
 
     VisionInputs visionInputs = new VisionInputs();
+
+    private boolean isVisionEnabled = true;
+
+    public synchronized void setVisionEnabled(boolean visionEnabled) {
+        isVisionEnabled = visionEnabled;
+    }
 
     public VisionHandler() {
         super();
@@ -452,7 +458,6 @@ public class VisionHandler extends AbstractSubsystem {
                         defaultDevs.get(1, 0) * distanceToTagLimelight2,
                         defaultDevs.get(2, 0) * distanceToTagLimelight2,
                         Math.atan(tan(defaultDevs.get(3, 0)) * distanceToTagLimelight2 * distanceToTagLimelight2));
-
                 Robot.getRobotTracker().addVisionMeasurement(pose, limelightUpdate.timestamp(), devs);
                 limelightUpdatesSent++;
                 Logger.getInstance().recordOutput("VisionManager/Limelight Pose " + limelightUpdate.limelightIndex,

@@ -63,7 +63,8 @@ public final class Drive extends AbstractSubsystem {
 
     private final LiveEditableValue<Double> autoD = new LiveEditableValue<>(DEFAULT_AUTO_D, SmartDashboard.getEntry("AutoD"));
 
-    private final LiveEditableValue<Double> driveKa = new LiveEditableValue<>(0.3, SmartDashboard.getEntry("DriveKa"));
+    private final LiveEditableValue<Double> driveKa = new LiveEditableValue<>(DRIVE_FEEDFORWARD[0].ka, SmartDashboard.getEntry(
+            "DriveKa"));
     private double autoStartTime;
     private boolean swerveAutoControllerInitialized = false;
     private Trajectory currentAutoTrajectory;
