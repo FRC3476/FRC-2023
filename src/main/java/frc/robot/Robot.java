@@ -64,8 +64,8 @@ import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Field;
 import java.nio.file.Files;
-import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentLinkedDeque;
@@ -457,13 +457,19 @@ public class Robot extends LoggedRobot {
         Logger.getInstance().registerDashboardInput(autoGrabDashboard);
     }
 
-    private final ArrayList<MechanismStates> halfSpeedMechanismStates = new ArrayList<>() {{
-        add(MechanismStates.CONE_MIDDLE_SCORING);
-        add(MechanismStates.CUBE_MIDDLE_SCORING);
-        add(MechanismStates.CONE_HIGH_SCORING);
-        add(MechanismStates.CUBE_HIGH_SCORING);
-        add(MechanismStates.FINAL_CONE_MIDDLE_SCORING);
-    }};
+    private final List<MechanismStates> halfSpeedMechanismStates = List.of(
+            MechanismStates.CONE_MIDDLE_SCORING,
+            MechanismStates.CUBE_MIDDLE_SCORING,
+            MechanismStates.CONE_HIGH_SCORING,
+            MechanismStates.CUBE_HIGH_SCORING,
+            MechanismStates.FINAL_CONE_MIDDLE_SCORING,
+            MechanismStates.FINAL_CONE_HIGH_SCORING
+    );
+
+    private final List<MechanismStates> autoReleaseWhenAtPosition = List.of(
+            MechanismStates.FINAL_CONE_MIDDLE_SCORING,
+            MechanismStates.FINAL_CONE_HIGH_SCORING
+    );
 
 
     private boolean hasGoneToPreScore = false;
@@ -803,12 +809,19 @@ public class Robot extends LoggedRobot {
                         && scoringPositionManager.getWantedPositionType() == PositionType.CONE) {
                     // We're in the scoring in the middle level with a cone. Instead of opening the grabber, we want to
                     // shove the cone down onto the pole
+                    var stateToSet = mechanismStateManager.getCurrentWantedState()
+                            .adjust(MechanismStateManager.CONE_DUNK_MIDDLE_ADJUSTMENT);
 
                     // Update the last state so we can open the grabber later, and disable the keepouts
                     mechanismStateManager.setState(MechanismStates.FINAL_CONE_MIDDLE_SCORING);
-                    mechanismStateManager.setState(mechanismStateManager.getCurrentWantedState()
-                            .adjust(MechanismStateManager.CONE_DUNK_EXTEND_METERS,
-                                    -MechanismStateManager.CONE_DUNK_LOWER_METERS, 0));
+                    mechanismStateManager.setState(stateToSet);
+                } else if (wantedMechanismState == WantedMechanismState.SCORING
+                        && scoringPositionManager.getSelectedPosition().getLevel() == 2
+                        && scoringPositionManager.getWantedPositionType() == PositionType.CONE) {
+                    var stateToSet = mechanismStateManager.getCurrentWantedState()
+                            .adjust(MechanismStateManager.CONE_DUNK_HIGH_ADJUSTMENT);
+                    mechanismStateManager.setState(MechanismStates.FINAL_CONE_HIGH_SCORING);
+                    mechanismStateManager.setState(stateToSet);
                 } else {
                     if (wantedMechanismState != WantedMechanismState.STOWED) {
                         isGrabberOpen = !isGrabberOpen;
@@ -830,7 +843,7 @@ public class Robot extends LoggedRobot {
         }
 
         if (mechanismStateManager.isMechAtFinalPos()
-                && mechanismStateManager.getLastState() == MechanismStates.FINAL_CONE_MIDDLE_SCORING) {
+                && autoReleaseWhenAtPosition.contains(mechanismStateManager.getLastState())) {
             // We've finished shoving the cone down onto the pole. Now we want to open the grabber
             isGrabberOpen = true;
         }

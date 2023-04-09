@@ -12,7 +12,8 @@ import static frc.robot.Constants.*;
 
 public class MechanismStateManager extends AbstractSubsystem {
 
-    public static final double SCORING_KEEPOUT_Y = 0.92;
+    public static final double SCORING_KEEPOUT_Y_CONE = 0.92;
+    public static final double SCORING_KEEPOUT_Y_CUBE = 0.92 - Units.inchesToMeters(2);
     public static final double SCORING_KEEPOUT_X = 0.21;
     public static final double PICKUP_KEEPOUT_ELEVATOR_DISTANCE = 1.06;
     public static final double KEEPOUT_HYSTERESIS = 0.02;
@@ -74,10 +75,19 @@ public class MechanismStateManager extends AbstractSubsystem {
         public MechanismStateCoordinates adjust(double x, double y, double angle) {
             return new MechanismStateCoordinates(xMeters + x, yMeters + y, grabberAngleDegrees + angle);
         }
+
+        public MechanismStateCoordinates adjust(MechanismStateAdjustment mechanismStateAdjustment) {
+            return adjust(mechanismStateAdjustment.xMetersChange, mechanismStateAdjustment.yMetersChange,
+                    mechanismStateAdjustment.angleDegreesChange);
+        }
     }
 
-    public static final double CONE_DUNK_LOWER_METERS = Units.inchesToMeters(3);
-    public static final double CONE_DUNK_EXTEND_METERS = Units.inchesToMeters(3);
+    record MechanismStateAdjustment(double xMetersChange, double yMetersChange, double angleDegreesChange) {}
+
+    public static final MechanismStateAdjustment CONE_DUNK_MIDDLE_ADJUSTMENT
+            = new MechanismStateAdjustment(Units.inchesToMeters(3), Units.inchesToMeters(3), 0);
+    public static final MechanismStateAdjustment CONE_DUNK_HIGH_ADJUSTMENT
+            = new MechanismStateAdjustment(0, 0, -30);
 
 
     public enum MechanismStates {
@@ -90,7 +100,7 @@ public class MechanismStateManager extends AbstractSubsystem {
                 true
         ),
         CUBE_MIDDLE_SCORING(
-                new MechanismStateCoordinates(Units.inchesToMeters(17), Units.inchesToMeters(44), 0),
+                new MechanismStateCoordinates(Units.inchesToMeters(17), Units.inchesToMeters(42), 0),
                 false
         ),
         CONE_MIDDLE_SCORING(
@@ -98,11 +108,15 @@ public class MechanismStateManager extends AbstractSubsystem {
                 false
         ),
         FINAL_CONE_MIDDLE_SCORING(
-                CONE_MIDDLE_SCORING.state.adjust(CONE_DUNK_EXTEND_METERS, -CONE_DUNK_LOWER_METERS, 0),
+                CONE_MIDDLE_SCORING.state.adjust(CONE_DUNK_MIDDLE_ADJUSTMENT),
                 true
         ),
         CONE_HIGH_SCORING(
                 new MechanismStateCoordinates(Units.inchesToMeters(36), Units.inchesToMeters(57), 65),
+                false
+        ),
+        FINAL_CONE_HIGH_SCORING(
+                CONE_MIDDLE_SCORING.state.adjust(CONE_DUNK_HIGH_ADJUSTMENT),
                 false
         ),
         CUBE_HIGH_SCORING(
@@ -325,14 +339,17 @@ public class MechanismStateManager extends AbstractSubsystem {
                 double realArmEndX = currentCoordinates.xMeters() - currentCoordinates.grabberX();
                 double realArmEndY = currentCoordinates.yMeters() - currentCoordinates.grabberY();
 
+                double keepoutY = lastState == MechanismStates.CUBE_MIDDLE_SCORING ? SCORING_KEEPOUT_Y_CUBE :
+                        SCORING_KEEPOUT_Y_CONE;
+
                 if (realArmEndX > SCORING_KEEPOUT_X) {
-                    armEndY = Math.max(armEndY, SCORING_KEEPOUT_Y + KEEPOUT_HYSTERESIS);
+                    armEndY = Math.max(armEndY, keepoutY + KEEPOUT_HYSTERESIS);
                 }
-                if (realArmEndY < SCORING_KEEPOUT_Y) {
+                if (realArmEndY < keepoutY) {
                     armEndX = Math.min(armEndX, SCORING_KEEPOUT_X - KEEPOUT_HYSTERESIS);
 
                     double remainingX = Math.max(0, SCORING_KEEPOUT_X - realArmEndX - 0.25);
-                    double remainingY = SCORING_KEEPOUT_Y - realArmEndY + KEEPOUT_HYSTERESIS * 3;
+                    double remainingY = keepoutY - realArmEndY + KEEPOUT_HYSTERESIS * 3;
                     assert remainingY >= 0;
                     assert remainingX >= 0;
 
