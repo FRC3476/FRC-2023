@@ -5,13 +5,11 @@ import edu.wpi.first.math.controller.ElevatorFeedforward;
 import edu.wpi.first.math.controller.SimpleMotorFeedforward;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
-import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
 import edu.wpi.first.math.trajectory.TrapezoidProfile;
 import edu.wpi.first.math.util.Units;
 import frc.utility.swerve.SwerveSetpointGenerator.KinematicLimit;
-import frc.utility.swerve.SwerveSetpointGenerator.SwerveSetpoint;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
@@ -102,12 +100,12 @@ public final class Constants {
      * <p>
      * 3 -> Right Back
      */
-    public static final SwerveSetpoint HOLD_MODULE_STATES = new SwerveSetpoint(new ChassisSpeeds(), new SwerveModuleState[]{
+    public static final SwerveModuleState[] HOLD_MODULE_STATES = new SwerveModuleState[]{
             new SwerveModuleState(0, Rotation2d.fromDegrees(45)),
             new SwerveModuleState(0, Rotation2d.fromDegrees(-45)),
             new SwerveModuleState(0, Rotation2d.fromDegrees(-45)),
             new SwerveModuleState(0, Rotation2d.fromDegrees(45))
-    }, new double[]{0, 0, 0, 0});
+    };
 
     // 0.307975 is 12.125 in inches
     public static final @NotNull Translation2d SWERVE_LEFT_FRONT_LOCATION = new Translation2d(0.26352, 0.26352);

@@ -9,7 +9,6 @@ import edu.wpi.first.math.controller.ProfiledPIDController;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
-import edu.wpi.first.math.geometry.Twist2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
 import edu.wpi.first.math.kinematics.SwerveModulePosition;
@@ -337,79 +336,47 @@ public final class Drive extends AbstractSubsystem {
 
     private synchronized void swerveDrive(@NotNull ChassisSpeeds desiredRobotRelativeSpeeds, KinematicLimit kinematicLimit,
                                           double dt) {
-        Pose2d robot_pose_vel = new Pose2d(desiredRobotRelativeSpeeds.vxMetersPerSecond * dt,
-                desiredRobotRelativeSpeeds.vyMetersPerSecond * dt,
-                Rotation2d.fromRadians(desiredRobotRelativeSpeeds.omegaRadiansPerSecond * dt));
-        Twist2d twist_vel = IDENTITY_POSE.log(robot_pose_vel);
+        var moduleStates = SWERVE_DRIVE_KINEMATICS.toSwerveModuleStates(desiredRobotRelativeSpeeds);
 
-//        try {
-//            SwerveModuleState[] prevStates = (SwerveModuleState[]) m_moduleStates.get(SWERVE_DRIVE_KINEMATICS);
-//            for (int i = 0; i < 4; i++) {
-//                if (prevStates[i] == null) {
-//                    prevStates[i] = new SwerveModuleState();
-//                }
-//            }
-//            m_moduleStates.set(SWERVE_DRIVE_KINEMATICS, prevStates);
-//        } catch (IllegalAccessException e) {
-//            throw new RuntimeException(e);
-//        }
+        boolean rotate = desiredRobotRelativeSpeeds.omegaRadiansPerSecond != 0
+                || desiredRobotRelativeSpeeds.vxMetersPerSecond != 0
+                || desiredRobotRelativeSpeeds.vyMetersPerSecond != 0;
 
-
-//        kinematicLimit = new KinematicLimit(
-//                kinematicLimit.maxDriveVelocity(),
-//                Math.min(DRIVE_FEEDFORWARD[0].maxAchievableAcceleration(Robot.getPowerDistribution().getVoltage(),
-//                        Robot.getRobotTracker().getVelocity().getNorm()), kinematicLimit.maxDriveAcceleration()),
-//                kinematicLimit.maxSteeringVelocity()
-//        );
-        ChassisSpeeds updated_chassis_speeds = new ChassisSpeeds(
-                twist_vel.dx / dt, twist_vel.dy / dt, twist_vel.dtheta / dt);
-        var newSwerveSetpoint =
-                setpointGenerator.generateSetpoint(kinematicLimit, lastSwerveSetpoint, updated_chassis_speeds, dt);
-
-//        double[] accels = new double[]{0, 0, 0, 0};
-//
-//
-//        var newSwerveSetpoint = new SwerveSetpoint(new ChassisSpeeds(),
-//                SWERVE_DRIVE_KINEMATICS.toSwerveModuleStates(updated_chassis_speeds), accels);
-
-        synchronized (this) {
-            lastSwerveSetpoint = newSwerveSetpoint;
-        }
-
-        setSwerveModuleStates(newSwerveSetpoint);
-
-        Logger.getInstance().recordOutput("Drive/Expected Velocity", robot_pose_vel.getTranslation().getNorm());
-    }
-
-    private synchronized void setSwerveModuleStates(SwerveSetpoint setpoint) {
-        Logger.getInstance().recordOutput("Drive/Wanted Swerve Module States", setpoint.moduleStates());
-        var moduleStates = setpoint.moduleStates();
-        SwerveDriveKinematics.desaturateWheelSpeeds(setpoint.moduleStates(),
+        SwerveDriveKinematics.desaturateWheelSpeeds(moduleStates,
                 DRIVE_FEEDFORWARD[0].maxAchievableVelocity(SWERVE_DRIVE_VOLTAGE_LIMIT_AUTO, 0));
 
+
+        setSwerveModuleStates(moduleStates, rotate);
+    }
+
+    private synchronized void setSwerveModuleStates(SwerveModuleState[] swerveModuleStates, boolean rotate) {
+        Logger.getInstance().recordOutput("Drive/Wanted Swerve Module States", swerveModuleStates);
+
         for (int i = 0; i < 4; i++) {
-            var moduleState = setpoint.moduleStates()[i];
+            var moduleState = swerveModuleStates[i];
+            moduleState = SwerveModuleState.optimize(moduleState, Rotation2d.fromDegrees(getWheelRotation(i)));
             double currentAngle = getWheelRotation(i);
 
             double angleDiff = getAngleDiff(moduleState.angle.getDegrees(), currentAngle);
 
-            if (Math.abs(angleDiff) > ALLOWED_SWERVE_ANGLE_ERROR) {
-                if (USE_CANCODERS) {
-                    io.setSwerveMotorPosition(i, inputs.swerveMotorRelativePositions[i] + angleDiff);
+            if (rotate) {
+                if (Math.abs(angleDiff) > ALLOWED_SWERVE_ANGLE_ERROR) {
+                    if (USE_CANCODERS) {
+                        io.setSwerveMotorPosition(i, inputs.swerveMotorRelativePositions[i] + angleDiff);
+                    } else {
+                        io.setSwerveMotorPosition(i, moduleState.angle.getDegrees());
+                    }
                 } else {
-                    io.setSwerveMotorPosition(i, moduleState.angle.getDegrees());
+                    io.setSwerveMotorPosition(i, inputs.swerveMotorRelativePositions[i]);
                 }
-            } else {
-                io.setSwerveMotorPosition(i, inputs.swerveMotorRelativePositions[i]);
             }
 
-            setMotorSpeed(i, moduleState.speedMetersPerSecond, setpoint.wheelAccelerations()[i]);
+            setMotorSpeed(i, moduleState.speedMetersPerSecond, 0);
             //setMotorSpeed(i, 0, 0);
 
             Logger.getInstance().recordOutput("Drive/SwerveModule " + i + " Wanted Angle", moduleState.angle.getDegrees());
             Logger.getInstance().recordOutput("Drive/SwerveModule " + i + " Wanted Speed", moduleState.speedMetersPerSecond);
-            Logger.getInstance().recordOutput("Drive/SwerveModule " + i + " Wanted Acceleration",
-                    setpoint.wheelAccelerations()[i]);
+            Logger.getInstance().recordOutput("Drive/SwerveModule " + i + " Wanted Acceleration", 0);
             Logger.getInstance().recordOutput("Drive/SwerveModule " + i + " Angle Error", angleDiff);
             Logger.getInstance().recordOutput("Drive/SwerveModule " + i + " Wanted State", moduleState);
             Logger.getInstance().recordOutput("Drive/SwerveModule " + i + " Wanted Relative Angle",
@@ -654,7 +621,7 @@ public final class Drive extends AbstractSubsystem {
             case AUTO_BALANCE -> autoBalance(ControllerDriveInputs.ZERO);
         }
         if (isHold) {
-            setSwerveModuleStates(Constants.HOLD_MODULE_STATES);
+            setSwerveModuleStates(Constants.HOLD_MODULE_STATES, true);
         } else if (!DriverStation.isTest() && DriverStation.isEnabled()) {
             var dt = inputs.driveIoTimestamp - lastTimeStep;
             swerveDrive(nextChassisSpeeds, kinematicLimit, dt);
