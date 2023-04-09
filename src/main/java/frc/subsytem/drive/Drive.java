@@ -4,7 +4,6 @@ package frc.subsytem.drive;
 
 import com.dacubeking.AutoBuilder.robot.sender.pathpreview.RobotPositionSender;
 import com.dacubeking.AutoBuilder.robot.sender.pathpreview.RobotState;
-import edu.wpi.first.math.controller.HolonomicDriveController;
 import edu.wpi.first.math.controller.ProfiledPIDController;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
@@ -29,6 +28,7 @@ import frc.utility.net.editing.LiveEditableValue;
 import frc.utility.swerve.SwerveSetpointGenerator;
 import frc.utility.swerve.SwerveSetpointGenerator.KinematicLimit;
 import frc.utility.swerve.SwerveSetpointGenerator.SwerveSetpoint;
+import frc.utility.wpimodified.HolonomicDriveController;
 import frc.utility.wpimodified.PIDController;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -172,10 +172,18 @@ public final class Drive extends AbstractSubsystem {
         kinematicLimit = KinematicLimits.NORMAL_DRIVING.kinematicLimit;
     }
 
+    private static final LoggedDashboardNumber rotationPredictionSeconds =
+            new LoggedDashboardNumber("Rotation Prediction Seconds", 0.08);
+
+    static {
+        Logger.getInstance().registerDashboardInput(rotationPredictionSeconds);
+    }
+
     private static Rotation2d getPredictedRobotAngleInLoopCenter() {
+        double predictionSeconds = rotationPredictionSeconds.get();
         return Robot.getRobotTracker().getGyroAngleAtTime(Timer.getFPGATimestamp()).toRotation2d()
                 .plus(Rotation2d.fromDegrees(
-                        Robot.getRobotTracker().getAngularVelocity() * (EXPECTED_TELEOP_DRIVE_DT * 4)));
+                        Robot.getRobotTracker().getAngularVelocity() * predictionSeconds));
     }
 
     PIDController drivePositionPidX = new PIDController(4.1, 0, 0.0);
@@ -264,7 +272,6 @@ public final class Drive extends AbstractSubsystem {
                             DriverStation.reportError("Trajectory Generation was late by: "
                                     + (Timer.getFPGATimestamp() - realtimeTrajectoryStartTime) + "s", false);
 
-                            var currPos = Robot.getRobotTracker().getLatestPose().getTranslation();
 
                             realtimeTrajectoryStartTime =
                                     (Timer.getFPGATimestamp() - realtimeTrajectoryStartTime) / 3 + Timer.getFPGATimestamp();
@@ -336,11 +343,13 @@ public final class Drive extends AbstractSubsystem {
 
     private synchronized void swerveDrive(@NotNull ChassisSpeeds desiredRobotRelativeSpeeds, KinematicLimit kinematicLimit,
                                           double dt) {
+
         var moduleStates = SWERVE_DRIVE_KINEMATICS.toSwerveModuleStates(desiredRobotRelativeSpeeds);
 
         boolean rotate = desiredRobotRelativeSpeeds.omegaRadiansPerSecond != 0
                 || desiredRobotRelativeSpeeds.vxMetersPerSecond != 0
                 || desiredRobotRelativeSpeeds.vyMetersPerSecond != 0;
+
 
         SwerveDriveKinematics.desaturateWheelSpeeds(moduleStates,
                 DRIVE_FEEDFORWARD[0].maxAchievableVelocity(SWERVE_DRIVE_VOLTAGE_LIMIT_AUTO, 0));
@@ -531,7 +540,8 @@ public final class Drive extends AbstractSubsystem {
             var autoWantedState = swerveAutoController.calculate(
                     currentPose,
                     modifiedGoal,
-                    targetHeading);
+                    targetHeading,
+                    getPredictedRobotAngleInLoopCenter());
 
             if (Timer.getFPGATimestamp() - autoStartTime < currentAutoTrajectory.getTotalTimeSeconds()) {
                 var currVel = new Translation2d(
@@ -692,7 +702,7 @@ public final class Drive extends AbstractSubsystem {
                 TurnInputs.controllerDriveInputs.getX() * DRIVE_HIGH_SPEED_M,
                 TurnInputs.controllerDriveInputs.getY() * DRIVE_HIGH_SPEED_M,
                 pidDeltaSpeed,
-                Robot.getRobotTracker().getGyroAngle());
+                getPredictedRobotAngleInLoopCenter());
 
 
         double curSpeed = Robot.getRobotTracker().getAngularVelocity();
@@ -820,7 +830,7 @@ public final class Drive extends AbstractSubsystem {
                     xVelocity,
                     DRIVE_HIGH_SPEED_M * inputs.getY(),
                     inputs.getRotation() * MAX_TELEOP_TURN_SPEED,
-                    Robot.getRobotTracker().getGyroAngle());
+                    getPredictedRobotAngleInLoopCenter());
         }
     }
 
