@@ -476,6 +476,14 @@ public class Robot extends LoggedRobot {
     private boolean hasGoneToPreScore = false;
     private boolean hasGoneToScore = false;
 
+
+    private final LoggedDashboardNumber doubleSubstationMaxAccel =
+            new LoggedDashboardNumber("maxAccelDoubleSubstation", MAX_ACCEL_DOUBLE_SUBSTATION_PICKUP);
+
+    {
+        Logger.getInstance().registerDashboardInput(doubleSubstationMaxAccel);
+    }
+
     /**
      * This method is called periodically during operator control.
      */
@@ -522,7 +530,7 @@ public class Robot extends LoggedRobot {
             }
 
             double maxAutoDriveAccel = autoDrivePosition == AutoDrivePosition.PICKUP_DOUBLE_SUBSTATION ?
-                    MAX_ACCEL_SINGLE_SUBSTATION_PICKUP : MAX_ACCEL_AUTO_DRIVE;
+                    doubleSubstationMaxAccel.get() : MAX_ACCEL_AUTO_DRIVE;
 
             if (hasReachedAutoAlignPosition) {
                 drive.alignToYAndYaw(teleopDrivingAutoAlignPosition.getRotation().getRadians(),

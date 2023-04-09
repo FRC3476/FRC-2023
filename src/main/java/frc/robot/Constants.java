@@ -144,7 +144,7 @@ public final class Constants {
     public static final double ALLOWED_AUTO_DRIVE_ANGLE_ERROR_RADIANS = Math.toRadians(1);
     public static final double MAX_VELOCITY_END_PATH = 0.02;
 
-    public static final double MAX_ACCEL_SINGLE_SUBSTATION_PICKUP = 2.6;
+    public static final double MAX_ACCEL_DOUBLE_SUBSTATION_PICKUP = 3.2;
     public static final double MAX_ACCEL_AUTO_DRIVE = 2.9;
 
 
