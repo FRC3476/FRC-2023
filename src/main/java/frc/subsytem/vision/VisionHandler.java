@@ -17,6 +17,8 @@ import edu.wpi.first.math.numbers.N1;
 import edu.wpi.first.math.numbers.N3;
 import edu.wpi.first.math.numbers.N4;
 import edu.wpi.first.math.util.Units;
+import edu.wpi.first.networktables.DoubleArrayPublisher;
+import edu.wpi.first.networktables.DoubleArrayTopic;
 import edu.wpi.first.networktables.NetworkTable;
 import edu.wpi.first.networktables.NetworkTableEvent.Kind;
 import edu.wpi.first.networktables.NetworkTableInstance;
@@ -83,6 +85,8 @@ public class VisionHandler extends AbstractSubsystem {
 
     private static String[] limelightNames = new String[]{"limelight-left", "limelight-right"};
 
+    private final DoubleArrayPublisher linesPublisher;
+
     private static final @NotNull Pose3d[] fieldTags;
 
     private static final List<Integer> redTags = List.of(1, 2, 3, 4);
@@ -136,7 +140,6 @@ public class VisionHandler extends AbstractSubsystem {
             cameraPose.getRotation().unaryMinus()
     );
 
-
     VisionInputs visionInputs = new VisionInputs();
 
     private boolean isVisionEnabled = true;
@@ -153,6 +156,9 @@ public class VisionHandler extends AbstractSubsystem {
         @NotNull NetworkTable visionTable = networkTableInstance.getTable("Vision");
         @NotNull var visionMiscTable = networkTableInstance.getTable("Vision Misc");
         @NotNull var configTable = networkTableInstance.getTable("Vision Config");
+
+
+        linesPublisher = new DoubleArrayTopic(visionMiscTable.getEntry("Lines").getTopic()).publish();
 
         // Send out connection flag to april tags processor
         visionMiscTable.getEntry("Connection Flag").setBoolean(true);
@@ -350,6 +356,19 @@ public class VisionHandler extends AbstractSubsystem {
     }
 
 
+    private Translation3d transformToCameraSpace(Translation3d translation) {
+        var latestPose = Robot.getRobotTracker().getLatestPose3d();
+        return translation
+                // move the origin to the center of the robot
+                .minus(latestPose.getTranslation())
+                // make it relative to the robot's rotation
+                .rotateBy(Robot.getRobotTracker().getGyroAngleAtTime(Timer.getFPGATimestamp()))
+                // move the origin to the center of the camera
+                .minus(cameraPose.getTranslation())
+                // make it relative to the camera's rotation
+                .rotateBy(negativeCameraPose.getRotation());
+    }
+
     private boolean recordingWanted = false;
 
     public void forceRecord(boolean record) {
@@ -468,6 +487,19 @@ public class VisionHandler extends AbstractSubsystem {
         Logger.getInstance().recordOutput("VisionManager/Limelight Updates Sent", limelightUpdatesSent);
 
         visionInputs.limelightUpdates.clear();
+
+        var nodeLinePoints = Robot.isRed() ? ScoringPositionManager.redNodeLinePoints : ScoringPositionManager.blueNodeLinePoints;
+
+        double[] nodeLinePointsToSend = new double[nodeLinePoints.size() * 3];
+
+        for (int i = 0; i < nodeLinePoints.size(); i++) {
+            var point = transformToCameraSpace(nodeLinePoints.get(i));
+            nodeLinePointsToSend[i * 3] = point.getX();
+            nodeLinePointsToSend[i * 3 + 1] = point.getY();
+            nodeLinePointsToSend[i * 3 + 2] = point.getZ();
+        }
+
+        linesPublisher.set(nodeLinePointsToSend);
     }
 
     record VisionUpdate(double posX, double posY, double posZ, double rotX, double rotY, double rotZ, double rotW,

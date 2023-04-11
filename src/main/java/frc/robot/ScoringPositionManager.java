@@ -1,6 +1,7 @@
 package frc.robot;
 
 import edu.wpi.first.math.geometry.Translation2d;
+import edu.wpi.first.math.geometry.Translation3d;
 import edu.wpi.first.math.util.Units;
 import frc.utility.Controller;
 import org.jetbrains.annotations.Contract;
@@ -8,10 +9,9 @@ import org.jetbrains.annotations.NotNull;
 import org.littletonrobotics.junction.networktables.LoggedDashboardBoolean;
 import org.littletonrobotics.junction.networktables.LoggedDashboardString;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
-import static frc.robot.Constants.IS_PRACTICE;
+import static frc.robot.Constants.*;
 
 public class ScoringPositionManager {
 
@@ -337,7 +337,12 @@ public class ScoringPositionManager {
 
 
         for (int i = 0; i < 3; i++) {
-            possibleYs[i] = y + CUBE_SCORING_Y_CENTER[i];
+            possibleYs[i] = CUBE_SCORING_Y_CENTER[i] +
+                    y +
+                    yScoringOffsets
+                            .get(isRedAlliance ? AllianceSide.RED : AllianceSide.BLUE)
+                            .get(i)
+                            .get(selectedPosition.getScoringDirection());
         }
         return possibleYs;
     }
@@ -382,14 +387,60 @@ public class ScoringPositionManager {
             }
         }
 
-        bestY = bestY
-                + getGridRelativeY(selectedPosition, isRedAlliance)
-                + yScoringOffsets
-                .get(isRedAlliance ? AllianceSide.RED : AllianceSide.BLUE)
-                .get(chosenGridIndex)
-                .get(selectedPosition.getScoringDirection());
+        bestY = bestY +
+                getGridRelativeY(selectedPosition, isRedAlliance) +
+                yScoringOffsets
+                        .get(isRedAlliance ? AllianceSide.RED : AllianceSide.BLUE)
+                        .get(chosenGridIndex)
+                        .get(selectedPosition.getScoringDirection());
 
 
         return new BestFieldY(bestY, chosenGridIndex);
+    }
+
+    private static final List<SelectedPosition> selectedPositionsToGenerateLinesFor = List.of(
+            SelectedPosition.MIDDLE_LEFT,
+            SelectedPosition.MIDDLE_RIGHT
+    );
+
+    public static final List<Translation3d> redNodeLinePoints;
+    public static final List<Translation3d> blueNodeLinePoints;
+
+    static {
+        List<Translation3d> redNodeLines = new ArrayList<>();
+        getYs(AllianceSide.RED).forEach(y -> {
+            redNodeLines.add(new Translation3d(CONE_MID_NODE_X_OFFSET_FROM_WALL, y, 0));
+            redNodeLines.add(new Translation3d(CONE_MID_NODE_X_OFFSET_FROM_WALL, y, CONE_MID_NODE_HEIGHT));
+
+            redNodeLines.add(new Translation3d(CONE_HIGH_NODE_X_OFFSET_FROM_WALL, y, 0));
+            redNodeLines.add(new Translation3d(CONE_HIGH_NODE_X_OFFSET_FROM_WALL, y, CONE_HIGH_NODE_HEIGHT));
+        });
+
+        List<Translation3d> blueNodeLines = new ArrayList<>();
+        getYs(AllianceSide.BLUE).forEach(y -> {
+            blueNodeLines.add(
+                    new Translation3d(FIELD_WIDTH_METERS - CONE_MID_NODE_X_OFFSET_FROM_WALL, y, 0));
+            blueNodeLines.add(
+                    new Translation3d(FIELD_WIDTH_METERS - CONE_MID_NODE_X_OFFSET_FROM_WALL, y, CONE_MID_NODE_HEIGHT));
+
+            blueNodeLines.add(
+                    new Translation3d(FIELD_WIDTH_METERS - CONE_HIGH_NODE_X_OFFSET_FROM_WALL, y, 0));
+            blueNodeLines.add(
+                    new Translation3d(FIELD_WIDTH_METERS - CONE_HIGH_NODE_X_OFFSET_FROM_WALL, y, CONE_HIGH_NODE_HEIGHT));
+        });
+
+        redNodeLinePoints = Collections.unmodifiableList(redNodeLines);
+        blueNodeLinePoints = Collections.unmodifiableList(blueNodeLines);
+    }
+
+    private static List<Double> getYs(AllianceSide allianceSide) {
+        List<Double> redYs = new ArrayList<>();
+
+        for (SelectedPosition selectedPosition : selectedPositionsToGenerateLinesFor) {
+            Arrays.stream(getPossibleFieldYs(selectedPosition, allianceSide == AllianceSide.RED))
+                    .forEach(redYs::add);
+        }
+
+        return redYs;
     }
 }

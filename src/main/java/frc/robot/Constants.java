@@ -299,6 +299,26 @@ public final class Constants {
     public static final float ROBOT_LENGTH = 0.84f;
     public static final float HALF_ROBOT_LENGTH = ROBOT_LENGTH / 2;
 
+    /**
+     * meters
+     */
+    public static final double CONE_MID_NODE_X_OFFSET_FROM_WALL = 0.7959;
+
+    /**
+     * meters
+     */
+    public static final double CONE_HIGH_NODE_X_OFFSET_FROM_WALL = 0.3646;
+
+    /**
+     * meters
+     */
+    public static final double CONE_HIGH_NODE_HEIGHT = Units.inchesToMeters(46);
+
+    /**
+     * meters
+     */
+    public static final double CONE_MID_NODE_HEIGHT = Units.inchesToMeters(34);
+
 
     /**
      * How far away from the edge of the grids do we want to create a line for the intersection test to choose the best scoring

@@ -1035,9 +1035,6 @@ public class Robot extends LoggedRobot {
         } else {
             // We're on the opposite side as our alliance
             // Try to go to the pickup position
-            var predictedPoseForPickup = robotTracker.getLatestPose().getTranslation().plus(
-                    robotTracker.getVelocity().times(0));
-
             if ((isRed() && robotTracker.getLatestPose().getRotation()
                     .getDegrees() < SINGLE_SUBSTATION_PICKUP_ANGLE_CUTOFF_DEGREES)
                     || (!isRed()
