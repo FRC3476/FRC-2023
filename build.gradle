@@ -29,13 +29,13 @@ deploy {
 
                 frcJava(getArtifactTypeClass('FRCJavaArtifact')) {
                     gcType = 'other'
-                    jvmArgs.add("-Don.robot=true") // This won't be used in simulation
-                    jvmArgs.add("-Dcom.sun.management.jmxremote=true")
-                    jvmArgs.add("-Dcom.sun.management.jmxremote.port=1198")
-                    jvmArgs.add("-Dcom.sun.management.jmxremote.local.only=false")
-                    jvmArgs.add("-Dcom.sun.management.jmxremote.ssl=false")
-                    jvmArgs.add("-Dcom.sun.management.jmxremote.authenticate=false")
-                    jvmArgs.add("-Djava.rmi.server.hostname=10.34.76.2")
+//                    jvmArgs.add("-Don.robot=true") // This won't be used in simulation
+//                    jvmArgs.add("-Dcom.sun.management.jmxremote=true")
+//                    jvmArgs.add("-Dcom.sun.management.jmxremote.port=1198")
+//                    jvmArgs.add("-Dcom.sun.management.jmxremote.local.only=false")
+//                    jvmArgs.add("-Dcom.sun.management.jmxremote.ssl=false")
+//                    jvmArgs.add("-Dcom.sun.management.jmxremote.authenticate=false")
+//                    jvmArgs.add("-Djava.rmi.server.hostname=10.34.76.2")
 
                     jvmArgs.add("-XX:+UnlockExperimentalVMOptions")
                     jvmArgs.add("-Xmx" + MAX_JAVA_HEAP_SIZE_MB + "M")
@@ -102,7 +102,7 @@ dependencies {
     implementation 'org.apache.commons:commons-math3:3.6.1'
     implementation 'com.google.guava:guava:31.1-jre'
 
-    implementation "com.dacubeking:autobuilder-robot:2.2.6"
+    implementation "com.dacubeking:autobuilder-robot:2.2.7"
     implementation 'org.joml:joml:1.10.4'
 
 

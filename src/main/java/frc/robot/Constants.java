@@ -32,7 +32,8 @@ public final class Constants {
             1000000000; // 1 GB
 
     public static final double GYRO_IS_FLAT_FOR_PICKUP_THRESHOLD_DEGREES = 5;
-    public static final double PRE_SCORE_TIME_S = 1;
+    public static final double PRE_SCORE_TIME_S = 1.3;
+    public static final double PRE_SCORE_TIME_2_S = 0.4;
     public static final double SCORE_TIME_S = 0.0;
     public static final double SCORE_POSITION_ERROR_SQUARED = 0.08 * 0.8; // 4 cm
     // Drive Constants
@@ -107,7 +108,6 @@ public final class Constants {
             new SwerveModuleState(0, Rotation2d.fromDegrees(45))
     };
 
-    // 0.307975 is 12.125 in inches
     public static final @NotNull Translation2d SWERVE_LEFT_FRONT_LOCATION = new Translation2d(0.26352, 0.26352);
     public static final @NotNull Translation2d SWERVE_LEFT_BACK_LOCATION = new Translation2d(-0.26352, 0.26352);
     public static final @NotNull Translation2d SWERVE_RIGHT_FRONT_LOCATION = new Translation2d(0.26352, -0.26352);
@@ -233,7 +233,7 @@ public final class Constants {
 
     public static final double GRABBER_ROLLER_VOLTAGE = -6;
     public static final double GRABBER_ROLLER_IDLE = -0;
-    public static final double GRABBER_CLOSE_THRESHOLD_DEGREES = 40;
+    public static final double GRABBER_CLOSE_THRESHOLD_DEGREES = 48;
     public static final double GRABBER_OPEN_THRESHOLD_DEGREES = 55;
     public static final boolean USE_GRABBER_ENCODER = !IS_PRACTICE;
     public static final boolean GRABBER_WHEELS_USED = false;
@@ -317,7 +317,7 @@ public final class Constants {
     public static final double UPPER_PICKUP_POSITION_Y = -2.05892 + Units.inchesToMeters(2);
     public static final double PICKUP_POSITION_X_OFFSET_FROM_WALL = FIELD_WIDTH_METERS - 15.2 + Units.inchesToMeters(-1.5);
 
-    public static final double SCORING_POSITION_OFFSET_CONE_FROM_WALL = 0.05;
+    public static final double SCORING_POSITION_OFFSET_CONE_FROM_WALL = 0.05 + Units.inchesToMeters(1);
     public static final double SCORING_POSITION_OFFSET_CUBE_FROM_WALL = 0.05 + Units.inchesToMeters(3.5);
 
     public static final double SINGLE_STATION_RED_X = 14.39;

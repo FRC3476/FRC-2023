@@ -423,6 +423,8 @@ public class Robot extends LoggedRobot {
         STOWED(false),
         SCORING(false),
         PRE_SCORING(false),
+        PRE_SCORING_2(false),
+
         FLOOR_PICKUP(true),
         TIPPED_FLOOR_PICKUP(true),
         STATION_PICKUP_DOUBLE(true),
@@ -464,7 +466,9 @@ public class Robot extends LoggedRobot {
             MechanismStates.CONE_HIGH_SCORING,
             MechanismStates.CUBE_HIGH_SCORING,
             MechanismStates.FINAL_CONE_MIDDLE_SCORING,
-            MechanismStates.FINAL_CONE_HIGH_SCORING
+            MechanismStates.FINAL_CONE_HIGH_SCORING,
+            MechanismStates.PRE_SCORING_CONE_HIGH_2,
+            MechanismStates.PRE_SCORING
     );
 
     private final List<MechanismStates> autoReleaseWhenAtPosition = List.of(
@@ -472,8 +476,15 @@ public class Robot extends LoggedRobot {
             MechanismStates.FINAL_CONE_HIGH_SCORING
     );
 
+    private final List<WantedMechanismState> wantedStatesConsideredStowed = List.of(
+            WantedMechanismState.STOWED,
+            WantedMechanismState.PRE_SCORING,
+            WantedMechanismState.PRE_SCORING_2
+    );
+
 
     private boolean hasGoneToPreScore = false;
+    private boolean hasGoneToPreScore2 = false;
     private boolean hasGoneToScore = false;
 
 
@@ -509,6 +520,7 @@ public class Robot extends LoggedRobot {
                 hasReachedAutoAlignPosition = false;
                 assert teleopDrivingAutoAlignPosition != null;
                 hasGoneToPreScore = false;
+                hasGoneToPreScore2 = false;
                 hasGoneToScore = false;
             } else if (teleopDrivingAutoAlignPosition == null) {
                 // We're not recalculating the grid position b/c we only need to recalculate the path because the operator
@@ -555,6 +567,13 @@ public class Robot extends LoggedRobot {
                     // We're done driving let's score
                     wantedMechanismState = WantedMechanismState.SCORING;
                     hasGoneToScore = true;
+                    hasGoneToPreScore2 = true;
+                    hasGoneToPreScore = true;
+                } else if (drive.getRemainingAutoDriveTime() <= PRE_SCORE_TIME_2_S
+                        && scoringPositionManager.getSelectedPosition().getLevel() == 2
+                        && !hasGoneToPreScore2) {
+                    wantedMechanismState = WantedMechanismState.PRE_SCORING_2;
+                    hasGoneToPreScore2 = true;
                     hasGoneToPreScore = true;
                 } else if (drive.getRemainingAutoDriveTime() <= PRE_SCORE_TIME_S
                         && !hasGoneToPreScore) {
@@ -599,6 +618,15 @@ public class Robot extends LoggedRobot {
             wantedMechanismState = WantedMechanismState.STOWED;
         }
 
+        if (wantedMechanismState == WantedMechanismState.PRE_SCORING_2
+                && scoringPositionManager.getSelectedPosition().getLevel() != 2) {
+            if (scoringPositionManager.getSelectedPosition().getLevel() != 1) {
+                wantedMechanismState = WantedMechanismState.PRE_SCORING;
+            } else {
+                wantedMechanismState = WantedMechanismState.STOWED;
+            }
+        }
+
         if (xbox.getRisingEdge(XBOX_RESET_HEADING)) {
             if (isRed()) {
                 robotTracker.resetPose(new Pose2d(robotTracker.getLatestPose().getTranslation(), Rotation2d.fromDegrees(0)));
@@ -629,9 +657,10 @@ public class Robot extends LoggedRobot {
         }
 
         if (stick.getRisingEdge(STICK_TOGGLE_SCORING)) {
-            if (wantedMechanismState == WantedMechanismState.STOWED || wantedMechanismState == WantedMechanismState.PRE_SCORING) {
+            if (wantedStatesConsideredStowed.contains(wantedMechanismState)) {
                 wantedMechanismState = WantedMechanismState.SCORING;
                 hasGoneToPreScore = true;
+                hasGoneToPreScore2 = true;
                 hasGoneToScore = true;
             } else {
                 setStowed();
@@ -640,7 +669,7 @@ public class Robot extends LoggedRobot {
 
         if (stick.getRisingEdge(STICK_TOGGLE_FLOOR_PICKUP) ||
                 xbox.getRisingEdge(CONTROLLER_TOGGLE_FLOOR_PICKUP, 0.1)) {
-            if (wantedMechanismState == WantedMechanismState.STOWED) {
+            if (wantedStatesConsideredStowed.contains(wantedMechanismState)) {
                 wantedMechanismState = WantedMechanismState.FLOOR_PICKUP;
                 isGrabberOpen = true;
             } else {
@@ -649,7 +678,7 @@ public class Robot extends LoggedRobot {
         }
 
         if (xbox.getRisingEdge(CONTROLLER_TOGGLE_TIPPED_FLOOR_PICKUP, 0.1) && false) {
-            if (wantedMechanismState == WantedMechanismState.STOWED) {
+            if (wantedStatesConsideredStowed.contains(wantedMechanismState)) {
                 wantedMechanismState = WantedMechanismState.TIPPED_FLOOR_PICKUP;
                 isGrabberOpen = true;
             } else {
@@ -658,7 +687,7 @@ public class Robot extends LoggedRobot {
         }
 
         if (stick.getRisingEdge(STICK_TOGGLE_PICKUP_DOUBLE)) {
-            if (wantedMechanismState == WantedMechanismState.STOWED) {
+            if (wantedStatesConsideredStowed.contains(wantedMechanismState)) {
                 wantedMechanismState = WantedMechanismState.STATION_PICKUP_DOUBLE;
                 isGrabberOpen = true;
             } else {
@@ -667,7 +696,7 @@ public class Robot extends LoggedRobot {
         }
 
         if (stick.getRisingEdge(STICK_TOGGLE_PICKUP_SINGLE)) {
-            if (wantedMechanismState == WantedMechanismState.STOWED) {
+            if (wantedStatesConsideredStowed.contains(wantedMechanismState)) {
                 wantedMechanismState = WantedMechanismState.STATION_PICKUP_SINGLE;
                 isGrabberOpen = true;
             } else {
@@ -684,10 +713,11 @@ public class Robot extends LoggedRobot {
         }
 
         if (xbox.getRisingEdge(XBOX_TOGGLE_MECH)) {
-            if (wantedMechanismState == WantedMechanismState.STOWED || wantedMechanismState == WantedMechanismState.PRE_SCORING) {
+            if (wantedStatesConsideredStowed.contains(wantedMechanismState)) {
                 if (isOnAllianceSide()) {
                     wantedMechanismState = WantedMechanismState.SCORING;
                     hasGoneToPreScore = true;
+                    hasGoneToPreScore2 = true;
                     hasGoneToScore = true;
                 } else {
                     if ((isRed() && robotTracker.getLatestPose().getRotation()
@@ -736,6 +766,7 @@ public class Robot extends LoggedRobot {
                     }
                 }
                 case PRE_SCORING -> mechanismStateManager.setState(MechanismStates.PRE_SCORING);
+                case PRE_SCORING_2 -> mechanismStateManager.setState(MechanismStates.PRE_SCORING_CONE_HIGH_2);
                 case FLOOR_PICKUP -> mechanismStateManager.setState(MechanismStates.FLOOR_PICKUP);
                 case TIPPED_FLOOR_PICKUP -> mechanismStateManager.setState(MechanismStates.TIPPED_FLOOR_PICKUP);
                 case STATION_PICKUP_DOUBLE -> mechanismStateManager.setState(MechanismStates.DOUBLE_STATION_PICKUP);
@@ -860,16 +891,12 @@ public class Robot extends LoggedRobot {
         if (grabber.isAutoGrabEnabled()) {
 
             // Note: due to execution order, this is the gyro angle from the previous loop (~20ms ago)
-            double gyroAngle = robotTracker.getRawGyroAngle().getY();
 
             // We don't care if we tilt forward b/c that means we're picking up from the base. We only care if we're tilted
             // back (making it so that the grabber would pick up from the tip of the cone) which is why the tilt check is only
             // in one direction.
-            boolean isFlat = Math.abs(Math.toDegrees(gyroAngle)) < GYRO_IS_FLAT_FOR_PICKUP_THRESHOLD_DEGREES;
 
-            if ((grabber.isOpen() || !isGrabberOpen) && mechanismStateManager.isMechAtFinalPos() &&
-                    // Only care about the flatness if we're in doing a double substation pickup
-                    (wantedMechanismState != WantedMechanismState.STATION_PICKUP_DOUBLE || isFlat)) {
+            if ((grabber.isOpen() || !isGrabberOpen) && mechanismStateManager.isMechAtFinalPos()) {
                 closeGrabber();
                 isGrabberOpen = false;
                 // We're enabling auto grab mode. The limit switch will prevent the grabber from closing until it detects a game piece
