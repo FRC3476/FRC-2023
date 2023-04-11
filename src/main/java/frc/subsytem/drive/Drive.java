@@ -446,10 +446,13 @@ public final class Drive extends AbstractSubsystem {
         lastModuleTimes[module] = Logger.getInstance().getRealTimestamp() * SECONDS_PER_MICROSECOND;
 
 
-        if (PERIODIC_DRIVE_PRINT && DriverStation.isTeleopEnabled() && (Timer.getFPGATimestamp() > nextPeriodicDrivePrint)) {
+        if (PERIODIC_DRIVE_PRINT && (Timer.getFPGATimestamp() > nextPeriodicDrivePrint)) {
             nextPeriodicDrivePrint = Timer.getFPGATimestamp() + 0.1;
-            if (Math.abs(realAccel) < 8.1 && Math.abs(lastModuleVelocities[module]) > 0.1) {
-                System.out.printf("%.5f, %.5f, %.5f%n", ffv, lastModuleVelocities[module], realAccel);
+            for (int i = 0; i < 4; i++) {
+                double accelI = (getSwerveDriveVelocity(i) - lastModuleVelocities[i]) / (time - lastModuleTimes[i]);
+                if (Math.abs(accelI) < 8.1 && Math.abs(lastModuleVelocities[i]) > 0.01) {
+                    System.out.printf("%.5f, %.5f, %.5f%n", ffv, lastModuleVelocities[i], accelI);
+                }
             }
         }
     }
@@ -529,6 +532,10 @@ public final class Drive extends AbstractSubsystem {
                     pathTime - EXPECTED_TELEOP_DRIVE_DT
             );
 
+            Trajectory.State nextGoal = currentAutoTrajectory.sample(
+                    pathTime + EXPECTED_TELEOP_DRIVE_DT
+            );
+
             var modifiedGoal = new Trajectory.State(
                     goal.timeSeconds,
                     goal.velocityMetersPerSecond,
@@ -549,14 +556,14 @@ public final class Drive extends AbstractSubsystem {
                         goal.velocityMetersPerSecond * goal.poseMeters.getRotation().getSin()
                 );
 
-                var prevVel = new Translation2d(
-                        oldGoal.velocityMetersPerSecond * oldGoal.poseMeters.getRotation().getCos(),
-                        oldGoal.velocityMetersPerSecond * oldGoal.poseMeters.getRotation().getSin()
+                var nextVel = new Translation2d(
+                        nextGoal.velocityMetersPerSecond * nextGoal.poseMeters.getRotation().getCos(),
+                        nextGoal.velocityMetersPerSecond * nextGoal.poseMeters.getRotation().getSin()
                 );
 
-                var accel = currVel.minus(prevVel).div(EXPECTED_TELEOP_DRIVE_DT);
+                var accel = nextVel.minus(currVel).div(EXPECTED_TELEOP_DRIVE_DT);
                 var extraSpeed = accel.times(driveKa.get()).div(DRIVE_FEEDFORWARD[0].kv);
-                var extraSpeedRobotRelative = extraSpeed.rotateBy(currentPose.getRotation());
+                var extraSpeedRobotRelative = extraSpeed.rotateBy(currentPose.getRotation().unaryMinus());
 
                 autoWantedState.vxMetersPerSecond += extraSpeedRobotRelative.getX();
                 autoWantedState.vyMetersPerSecond += extraSpeedRobotRelative.getY();

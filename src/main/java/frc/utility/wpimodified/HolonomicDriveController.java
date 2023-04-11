@@ -105,7 +105,7 @@ public class HolonomicDriveController {
     m_rotationError = desiredHeading.minus(currentPose.getRotation());
 
     if (!m_enabled) {
-      return ChassisSpeeds.fromFieldRelativeSpeeds(xFF, yFF, thetaFF, currentPose.getRotation());
+      return ChassisSpeeds.fromFieldRelativeSpeeds(xFF, yFF, thetaFF, rotationToUseForFieldRelativeCalculations);
     }
 
     // Calculate feedback velocities (based on position error).
@@ -114,7 +114,7 @@ public class HolonomicDriveController {
 
     // Return next output.
     return ChassisSpeeds.fromFieldRelativeSpeeds(
-            xFF + xFeedback, yFF + yFeedback, thetaFF, currentPose.getRotation());
+            xFF + xFeedback, yFF + yFeedback, thetaFF, rotationToUseForFieldRelativeCalculations);
   }
 
   /**

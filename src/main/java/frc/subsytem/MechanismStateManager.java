@@ -13,7 +13,7 @@ import static frc.robot.Constants.*;
 public class MechanismStateManager extends AbstractSubsystem {
 
     public static final double SCORING_KEEPOUT_Y_CONE = 0.92;
-    public static final double SCORING_KEEPOUT_Y_CUBE = 0.92 - Units.inchesToMeters(2);
+    public static final double SCORING_KEEPOUT_Y_CUBE = 0.92 - Units.inchesToMeters(10);
     public static final double SCORING_KEEPOUT_X = 0.21;
     public static final double PICKUP_KEEPOUT_ELEVATOR_DISTANCE = 1.06;
     public static final double KEEPOUT_HYSTERESIS = 0.02;
@@ -100,7 +100,7 @@ public class MechanismStateManager extends AbstractSubsystem {
                 true
         ),
         CUBE_MIDDLE_SCORING(
-                new MechanismStateCoordinates(Units.inchesToMeters(17), Units.inchesToMeters(42), 0),
+                new MechanismStateCoordinates(Units.inchesToMeters(17), Units.inchesToMeters(35), 0),
                 false
         ),
         CONE_MIDDLE_SCORING(
@@ -116,7 +116,7 @@ public class MechanismStateManager extends AbstractSubsystem {
                 false
         ),
         FINAL_CONE_HIGH_SCORING(
-                CONE_MIDDLE_SCORING.state.adjust(CONE_DUNK_HIGH_ADJUSTMENT),
+                CONE_HIGH_SCORING.state.adjust(CONE_DUNK_HIGH_ADJUSTMENT),
                 false
         ),
         CUBE_HIGH_SCORING(
@@ -145,6 +145,11 @@ public class MechanismStateManager extends AbstractSubsystem {
         ),
         PRE_SCORING(
                 new MechanismStateCoordinates(Units.inchesToMeters(15), Units.inchesToMeters(46), 80),
+                false
+        ),
+
+        PRE_SCORING_CONE_HIGH_2(
+                new MechanismStateCoordinates(Units.inchesToMeters(30), Units.inchesToMeters(57), 90),
                 false
         );
 
