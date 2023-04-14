@@ -10,6 +10,8 @@ public abstract class ElevatorIO {
         double[] elevatorCurrent = {0.0, 0.0};
         double[] elevatorTemp = {0.0, 0.0};
         double[] elevatorVoltage = {0.0, 0.0};
+        double[] elevatorAppliedOutput = {0.0, 0.0};
+        double[] elevatorBusVoltage = {0.0, 0.0};
     }
 
     public void updateInputs(ElevatorInputsAutoLogged inputs) {}

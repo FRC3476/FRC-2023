@@ -24,11 +24,19 @@ public class ElevatorIOSparkMax extends ElevatorIO {
         pidController.setD(Constants.ELEVATOR_D);
         pidController.setIZone(Constants.ELEVATOR_IZONE);
         elevatorMain.getPIDController().setOutputRange(-1, 1);
+        elevatorFollower.getPIDController().setOutputRange(-1, 1);
+
 
         resetPosition(0);
 
+        elevatorFollower.enableVoltageCompensation(Constants.ELEVATOR_NOMINAL_VOLTAGE);
+        elevatorFollower.getEncoder().setPositionConversionFactor(ELEVATOR_REDUCTION / ELEVATOR_ROTATIONS_PER_METER);
+        elevatorFollower.getEncoder().setVelocityConversionFactor(
+                (ELEVATOR_REDUCTION / ELEVATOR_ROTATIONS_PER_METER) / SECONDS_PER_MINUTE);
+
         //initializeMotor(elevatorFollower);
         elevatorFollower.follow(elevatorMain);
+
         if (isReal()) {
             elevatorMain.burnFlash();
             elevatorFollower.burnFlash();
@@ -59,6 +67,8 @@ public class ElevatorIOSparkMax extends ElevatorIO {
         inputs.elevatorTemp = new double[]{elevatorMain.getMotorTemperature(), elevatorFollower.getMotorTemperature()};
         inputs.elevatorVoltage = new double[]{elevatorMain.getAppliedOutput() * elevatorMain.getBusVoltage(),
                 elevatorFollower.getAppliedOutput() * elevatorFollower.getBusVoltage()};
+        inputs.elevatorAppliedOutput = new double[]{elevatorMain.getAppliedOutput(), elevatorFollower.getAppliedOutput()};
+        inputs.elevatorBusVoltage = new double[]{elevatorMain.getBusVoltage(), elevatorFollower.getBusVoltage()};
     }
 
     @Override
