@@ -67,7 +67,7 @@ public class Grabber extends AbstractSubsystem {
         if (DriverStation.isTest()) {
             io.setPivotVoltage(Constants.GRABBER_FEEDFORWARD.calculate(Math.toRadians(inputs.pivotPosition), 0, 0));
         } else {
-            if (Math.abs(inputs.pivotPosition - state.position) > 1) {
+            if (Math.abs(inputs.pivotPosition - state.position) > 0) {
                 io.setPivotPosition(state.position, arbFFVoltage);
             } else {
                 io.setPivotVoltage(arbFFVoltage);

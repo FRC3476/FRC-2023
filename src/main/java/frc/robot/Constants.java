@@ -211,7 +211,7 @@ public final class Constants {
     public static final int TELESCOPING_ARM_SMART_CURRENT_LIMIT = 40;
     public static final double TELESCOPING_ARM_HOME_VOLTAGE = -1.5;
     public static final int TELESCOPING_ARM_CAN_ID = 60;
-    public static final double TELESCOPING_ARM_ALLOWED_ERROR = 0.0001;
+    public static final double TELESCOPING_ARM_ALLOWED_ERROR = 0.0000;
     public static final ArmFeedforward GRABBER_FEEDFORWARD = new ArmFeedforward(0.32, 0.34, 0, 0);
     public static final TrapezoidProfile.Constraints GRABBER_PIVOT_CONSTRAINTS
             = new TrapezoidProfile.Constraints(10, 10);
