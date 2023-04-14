@@ -180,7 +180,7 @@ public final class Constants {
 
     // 1 Meter divided by the circumference of the sprocket in meters
     public static final double ELEVATOR_ROTATIONS_PER_METER = 1 / ((2 * Math.PI) / 39.37);
-    public static final double ELEVATOR_REDUCTION = 1.0 / 3.0;
+    public static final double ELEVATOR_REDUCTION = 1.0 / 5.0;
     public static final double ELEVATOR_P = 6;
     public static final double ELEVATOR_I = .001;
     public static final int ELEVATOR_D = 20;
