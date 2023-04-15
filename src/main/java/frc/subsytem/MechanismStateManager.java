@@ -85,7 +85,7 @@ public class MechanismStateManager extends AbstractSubsystem {
     record MechanismStateAdjustment(double xMetersChange, double yMetersChange, double angleDegreesChange) {}
 
     public static final MechanismStateAdjustment CONE_DUNK_MIDDLE_ADJUSTMENT
-            = new MechanismStateAdjustment(Units.inchesToMeters(6), -Units.inchesToMeters(6), 0);
+            = new MechanismStateAdjustment(Units.inchesToMeters(3), -Units.inchesToMeters(6), 0);
     public static final MechanismStateAdjustment CONE_DUNK_HIGH_ADJUSTMENT
             = new MechanismStateAdjustment(0, 0, -35);
 
@@ -104,7 +104,7 @@ public class MechanismStateManager extends AbstractSubsystem {
                 false
         ),
         CONE_MIDDLE_SCORING(
-                new MechanismStateCoordinates(Units.inchesToMeters(15), Units.inchesToMeters(44), 25),
+                new MechanismStateCoordinates(Units.inchesToMeters(18), Units.inchesToMeters(44), 25),
                 false
         ),
         FINAL_CONE_MIDDLE_SCORING(
