@@ -113,7 +113,7 @@ public class MechanismStateManager extends AbstractSubsystem {
                 true
         ),
         CONE_HIGH_SCORING(
-                new MechanismStateCoordinates(Units.inchesToMeters(32), Units.inchesToMeters(57), 90),
+                new MechanismStateCoordinates(1 /* Supposed to be too far forward */, 1.3894290734504682, 90),
                 false
         ),
         FINAL_CONE_HIGH_SCORING(
@@ -150,7 +150,7 @@ public class MechanismStateManager extends AbstractSubsystem {
         ),
 
         PRE_SCORING_CONE_HIGH_2(
-                new MechanismStateCoordinates(Units.inchesToMeters(26), Units.inchesToMeters(57), 90),
+                new MechanismStateCoordinates(0.58, Units.inchesToMeters(57), 90),
                 false
         );
 
