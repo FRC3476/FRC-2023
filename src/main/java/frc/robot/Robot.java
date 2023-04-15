@@ -53,13 +53,15 @@ import org.jetbrains.annotations.Nullable;
 import org.littletonrobotics.junction.LogFileUtil;
 import org.littletonrobotics.junction.LoggedRobot;
 import org.littletonrobotics.junction.Logger;
+import org.littletonrobotics.junction.console.RIOConsoleSource;
 import org.littletonrobotics.junction.networktables.LoggedDashboardBoolean;
 import org.littletonrobotics.junction.networktables.LoggedDashboardChooser;
 import org.littletonrobotics.junction.networktables.LoggedDashboardNumber;
-import org.littletonrobotics.junction.networktables.NT4Publisher;
 import org.littletonrobotics.junction.wpilog.WPILOGReader;
 import org.littletonrobotics.junction.wpilog.WPILOGWriter;
 
+import java.io.BufferedReader;
+import java.io.CharArrayReader;
 import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Field;
@@ -198,7 +200,7 @@ public class Robot extends LoggedRobot {
             }
 
             Logger.getInstance().addDataReceiver(new WPILOGWriter(LOG_DIRECTORY));
-            Logger.getInstance().addDataReceiver(new NT4Publisher()); // Publish data to NetworkTables
+            //Logger.getInstance().addDataReceiver(new NT4Publisher()); // Publish data to NetworkTables
             powerDistribution = new PowerDistribution(1, ModuleType.kRev); // Enables power distribution logging
 
             drive = new Drive(new DriveIOFalcon());
@@ -222,6 +224,19 @@ public class Robot extends LoggedRobot {
         }
 
         Logger.getInstance().start(); // Start logging! No more data receivers, replay sources, or metadata values may be added
+        try {
+            var consoleField = Logger.class.getDeclaredField("console");
+            consoleField.setAccessible(true);
+            var console = consoleField.get(Logger.getInstance());
+            if (console instanceof RIOConsoleSource rioConsoleSource) {
+                var readerField = RIOConsoleSource.class.getDeclaredField("reader");
+                readerField.setAccessible(true);
+                readerField.set(rioConsoleSource,
+                        new BufferedReader(new CharArrayReader("Rio Logging is disabled".toCharArray())));
+            }
+        } catch (NoSuchFieldException | IllegalAccessException e) {
+            throw new RuntimeException(e);
+        }
 
         robotTracker = new RobotTracker();
         visionHandler = new VisionHandler();
