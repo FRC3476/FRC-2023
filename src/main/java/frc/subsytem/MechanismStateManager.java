@@ -78,17 +78,38 @@ public class MechanismStateManager extends AbstractSubsystem {
         }
 
         public MechanismStateCoordinates adjust(MechanismStateAdjustment mechanismStateAdjustment) {
-            return adjust(mechanismStateAdjustment.xMetersChange, mechanismStateAdjustment.yMetersChange,
-                    mechanismStateAdjustment.angleDegreesChange);
+            if (mechanismStateAdjustment.angleChangeOnly) {
+                return adjust(
+                        (Math.cos(grabberAngleDegrees) -
+                                Math.cos(grabberAngleDegrees + mechanismStateAdjustment.angleDegreesChange))
+                                * GRABBER_LENGTH
+                                + mechanismStateAdjustment.xMetersChange,
+
+                        (Math.sin(grabberAngleDegrees) -
+                                Math.sin(grabberAngleDegrees + mechanismStateAdjustment.angleDegreesChange))
+                                * GRABBER_LENGTH
+                                + mechanismStateAdjustment.yMetersChange,
+
+                        mechanismStateAdjustment.angleDegreesChange());
+            } else {
+                return adjust(mechanismStateAdjustment.xMetersChange, mechanismStateAdjustment.yMetersChange,
+                        mechanismStateAdjustment.angleDegreesChange);
+            }
         }
     }
 
-    record MechanismStateAdjustment(double xMetersChange, double yMetersChange, double angleDegreesChange) {}
+    record MechanismStateAdjustment(double xMetersChange, double yMetersChange, double angleDegreesChange,
+                                    boolean angleChangeOnly) {
+        public MechanismStateAdjustment(double xMetersChange, double yMetersChange, double angleDegreesChange) {
+            this(xMetersChange, yMetersChange, angleDegreesChange, false);
+        }
+    }
 
     public static final MechanismStateAdjustment CONE_DUNK_MIDDLE_ADJUSTMENT
             = new MechanismStateAdjustment(Units.inchesToMeters(3), -Units.inchesToMeters(6), 0);
-    public static final MechanismStateAdjustment CONE_DUNK_HIGH_ADJUSTMENT
-            = new MechanismStateAdjustment(0, 0, -35);
+
+    private static final double CONE_HIGH_DUNK_ANGLE_CHANGE = -35;
+    public static final MechanismStateAdjustment CONE_DUNK_HIGH_ADJUSTMENT = new MechanismStateAdjustment(0, 0, -35, true);
 
 
     public enum MechanismStates {
@@ -129,7 +150,7 @@ public class MechanismStateManager extends AbstractSubsystem {
                 true
         ), //Estimated values
         DOUBLE_STATION_PICKUP(
-                new MechanismStateCoordinates(0.52216767549278, 1.0936376970996242, 12),
+                new MechanismStateCoordinates(0.52216767549278, 1.0936376970996242 + Units.inchesToMeters(1), 12),
                 false
         ),
         FLOOR_PICKUP(
