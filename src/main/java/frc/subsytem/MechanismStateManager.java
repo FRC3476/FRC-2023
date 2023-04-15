@@ -8,7 +8,8 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.littletonrobotics.junction.Logger;
 
-import static frc.robot.Constants.*;
+import static frc.robot.Constants.GRABBER_LENGTH;
+import static frc.robot.Constants.MAX_WRIST_ANGLE;
 
 public class MechanismStateManager extends AbstractSubsystem {
 
@@ -104,7 +105,7 @@ public class MechanismStateManager extends AbstractSubsystem {
                 false
         ),
         CONE_MIDDLE_SCORING(
-                new MechanismStateCoordinates(Units.inchesToMeters(18), Units.inchesToMeters(44), 25),
+                new MechanismStateCoordinates(Units.inchesToMeters(19), Units.inchesToMeters(44), 25),
                 false
         ),
         FINAL_CONE_MIDDLE_SCORING(
@@ -112,7 +113,7 @@ public class MechanismStateManager extends AbstractSubsystem {
                 true
         ),
         CONE_HIGH_SCORING(
-                new MechanismStateCoordinates(Units.inchesToMeters(36), Units.inchesToMeters(57), 90),
+                new MechanismStateCoordinates(Units.inchesToMeters(32), Units.inchesToMeters(57), 90),
                 false
         ),
         FINAL_CONE_HIGH_SCORING(
@@ -128,7 +129,7 @@ public class MechanismStateManager extends AbstractSubsystem {
                 true
         ), //Estimated values
         DOUBLE_STATION_PICKUP(
-                new MechanismStateCoordinates(0.531, 2.3 - 0.015 - (!IS_PRACTICE ? Units.inchesToMeters(3.2) : 0), 12),
+                new MechanismStateCoordinates(0.52216767549278, 1.0936376970996242, 12),
                 false
         ),
         FLOOR_PICKUP(
@@ -149,7 +150,7 @@ public class MechanismStateManager extends AbstractSubsystem {
         ),
 
         PRE_SCORING_CONE_HIGH_2(
-                new MechanismStateCoordinates(Units.inchesToMeters(30), Units.inchesToMeters(57), 90),
+                new MechanismStateCoordinates(Units.inchesToMeters(26), Units.inchesToMeters(57), 90),
                 false
         );
 

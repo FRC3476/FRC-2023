@@ -649,7 +649,7 @@ public final class Drive extends AbstractSubsystem {
      * For auto use
      */
     public synchronized void setRotation(double angle, double allowedError) {
-        setTurn(new ControllerDriveInputs(), new State(Math.toRadians(angle), 0), allowedError);
+        setTurn(new ControllerDriveInputs(), new State(Math.toRadians(angle), 0), Math.toRadians(allowedError));
     }
 
     /**
