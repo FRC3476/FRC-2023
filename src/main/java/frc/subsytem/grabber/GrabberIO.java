@@ -19,6 +19,9 @@ public abstract class GrabberIO {
         double grabberCurrent = 0.0;
         double grabberTemp = 0.0;
         double grabberVoltage = 0.0;
+        double grabberAppliedOutput = 0.0;
+        double grabberBusVoltage = 0.0;
+
 
         double rollerMainPosition = 0.0;
         double rollerMainVelocity = 0.0;
