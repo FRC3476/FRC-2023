@@ -131,7 +131,7 @@ public final class Constants {
     public static final double MAX_TURN_ERROR = 30;
 
     public static final int SWERVE_MOTOR_CURRENT_LIMIT = 20;
-    public static final int SWERVE_DRIVE_MOTOR_CURRENT_LIMIT = 45;
+    public static final int SWERVE_DRIVE_MOTOR_CURRENT_LIMIT = 40;
     public static final int SWERVE_DRIVE_VOLTAGE_LIMIT_AUTO = 12;
     public static final int SWERVE_DRIVE_VOLTAGE_LIMIT_TELEOP = 15;
 
@@ -211,7 +211,7 @@ public final class Constants {
     public static final int TELESCOPING_ARM_SMART_CURRENT_LIMIT = 40;
     public static final double TELESCOPING_ARM_HOME_VOLTAGE = -1.5;
     public static final int TELESCOPING_ARM_CAN_ID = 60;
-    public static final double TELESCOPING_ARM_ALLOWED_ERROR = 0.0001;
+    public static final double TELESCOPING_ARM_ALLOWED_ERROR = 0.0000;
     public static final ArmFeedforward GRABBER_FEEDFORWARD = new ArmFeedforward(0.32, 0.34, 0, 0);
     public static final TrapezoidProfile.Constraints GRABBER_PIVOT_CONSTRAINTS
             = new TrapezoidProfile.Constraints(10, 10);
@@ -333,7 +333,7 @@ public final class Constants {
     public static final Rotation2d PICKUP_ANGLE_RED = Rotation2d.fromDegrees(0);
     public static final Rotation2d PICKUP_ANGLE_BLUE = Rotation2d.fromDegrees(180);
 
-    public static final double LOWER_PICKUP_POSITION_Y = -3.56 + Units.inchesToMeters(1);
+    public static final double LOWER_PICKUP_POSITION_Y = -3.56 + Units.inchesToMeters(2);
     public static final double UPPER_PICKUP_POSITION_Y = -2.05892 + Units.inchesToMeters(2);
     public static final double PICKUP_POSITION_X_OFFSET_FROM_WALL = FIELD_WIDTH_METERS - 15.2 + Units.inchesToMeters(-1.5);
 

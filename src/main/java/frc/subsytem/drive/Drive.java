@@ -130,7 +130,7 @@ public final class Drive extends AbstractSubsystem {
                 autoTurnPIDController);
         swerveAutoController.setEnabled(true);
         swerveAutoController.setTolerance(
-                new Pose2d(ALLOWED_XY_ERROR_RAMSETE, ALLOWED_XY_ERROR_RAMSETE, Rotation2d.fromDegrees(10))); //TODO: Tune
+                new Pose2d(ALLOWED_XY_ERROR_RAMSETE, ALLOWED_XY_ERROR_RAMSETE, Rotation2d.fromDegrees(5))); //TODO: Tune
     }
 
     /**
@@ -649,7 +649,7 @@ public final class Drive extends AbstractSubsystem {
      * For auto use
      */
     public synchronized void setRotation(double angle, double allowedError) {
-        setTurn(new ControllerDriveInputs(), new State(Math.toRadians(angle), 0), allowedError);
+        setTurn(new ControllerDriveInputs(), new State(Math.toRadians(angle), 0), Math.toRadians(allowedError));
     }
 
     /**
@@ -785,6 +785,12 @@ public final class Drive extends AbstractSubsystem {
 
     public void turnToAngle(double degrees, double allowedError) throws InterruptedException {
         System.out.println("Turning to " + degrees);
+        if (!Robot.isRed()) {
+            double rad = Math.toRadians(degrees);
+            double cos = Math.cos(rad);
+            double sin = Math.sin(rad);
+            degrees = Math.atan2(sin, -cos);
+        }
         setRotation(degrees, allowedError);
         while (!isFinished()) {
             //noinspection BusyWait

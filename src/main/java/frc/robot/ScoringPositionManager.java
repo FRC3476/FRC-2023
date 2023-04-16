@@ -279,7 +279,7 @@ public class ScoringPositionManager {
                     put(0, new HashMap<>() {{
                         put(ScoringDirection.LEFT, 0.0);
                         put(ScoringDirection.MIDDLE, 0.0);
-                        put(ScoringDirection.RIGHT, 0.0);
+                        put(ScoringDirection.RIGHT, Units.inchesToMeters(1));
                     }});
 
                                         /*
@@ -299,7 +299,7 @@ public class ScoringPositionManager {
                     put(1, new HashMap<>() {{
                         put(ScoringDirection.LEFT, 0.0);
                         put(ScoringDirection.MIDDLE, 0.0);
-                        put(ScoringDirection.RIGHT, 0.0);
+                        put(ScoringDirection.RIGHT, Units.inchesToMeters(-1));
                     }});
 
                                         /*

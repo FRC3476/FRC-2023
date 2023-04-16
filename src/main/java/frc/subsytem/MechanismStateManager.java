@@ -8,7 +8,8 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.littletonrobotics.junction.Logger;
 
-import static frc.robot.Constants.*;
+import static frc.robot.Constants.GRABBER_LENGTH;
+import static frc.robot.Constants.MAX_WRIST_ANGLE;
 
 public class MechanismStateManager extends AbstractSubsystem {
 
@@ -77,17 +78,43 @@ public class MechanismStateManager extends AbstractSubsystem {
         }
 
         public MechanismStateCoordinates adjust(MechanismStateAdjustment mechanismStateAdjustment) {
-            return adjust(mechanismStateAdjustment.xMetersChange, mechanismStateAdjustment.yMetersChange,
-                    mechanismStateAdjustment.angleDegreesChange);
+            if (mechanismStateAdjustment.angleChangeOnly) {
+                var currentWantedSubsystemPositions =
+                        MechanismStateManager.coordinatesToSubsystemPositions(
+                                new MechanismStateCoordinates(xMeters, yMeters, grabberAngleDegrees())
+                        );
+
+                // Adjust the grabber angle in the current wanted subsystem positions (so that adjusting the grabber angle doesn't
+                // move the mechanism)
+                currentWantedSubsystemPositions = new MechanismStateSubsystemPositions(
+                        currentWantedSubsystemPositions.elevatorPositionMeters(),
+                        currentWantedSubsystemPositions.telescopingArmPositionMeters(),
+                        currentWantedSubsystemPositions.grabberAngleDegrees() + mechanismStateAdjustment.angleDegreesChange()
+                );
+
+                var newWantedCoordinates = MechanismStateManager.subsystemPositionsToCoordinates(currentWantedSubsystemPositions);
+
+                return newWantedCoordinates.adjust(
+                        mechanismStateAdjustment.xMetersChange, mechanismStateAdjustment.yMetersChange, 0);
+            } else {
+                return adjust(mechanismStateAdjustment.xMetersChange, mechanismStateAdjustment.yMetersChange,
+                        mechanismStateAdjustment.angleDegreesChange);
+            }
         }
     }
 
-    record MechanismStateAdjustment(double xMetersChange, double yMetersChange, double angleDegreesChange) {}
+    record MechanismStateAdjustment(double xMetersChange, double yMetersChange, double angleDegreesChange,
+                                    boolean angleChangeOnly) {
+        public MechanismStateAdjustment(double xMetersChange, double yMetersChange, double angleDegreesChange) {
+            this(xMetersChange, yMetersChange, angleDegreesChange, false);
+        }
+    }
 
     public static final MechanismStateAdjustment CONE_DUNK_MIDDLE_ADJUSTMENT
-            = new MechanismStateAdjustment(Units.inchesToMeters(6), -Units.inchesToMeters(6), 0);
-    public static final MechanismStateAdjustment CONE_DUNK_HIGH_ADJUSTMENT
-            = new MechanismStateAdjustment(0, 0, -35);
+            = new MechanismStateAdjustment(Units.inchesToMeters(4), -Units.inchesToMeters(6), 0);
+
+    private static final double CONE_HIGH_DUNK_ANGLE_CHANGE = -35;
+    public static final MechanismStateAdjustment CONE_DUNK_HIGH_ADJUSTMENT = new MechanismStateAdjustment(0, 0, -35, true);
 
 
     public enum MechanismStates {
@@ -100,11 +127,11 @@ public class MechanismStateManager extends AbstractSubsystem {
                 true
         ),
         CUBE_MIDDLE_SCORING(
-                new MechanismStateCoordinates(Units.inchesToMeters(17), Units.inchesToMeters(35), 0),
+                new MechanismStateCoordinates(Units.inchesToMeters(15), Units.inchesToMeters(35), 0),
                 false
         ),
         CONE_MIDDLE_SCORING(
-                new MechanismStateCoordinates(Units.inchesToMeters(15), Units.inchesToMeters(44), 25),
+                new MechanismStateCoordinates(Units.inchesToMeters(19), Units.inchesToMeters(44), 25),
                 false
         ),
         FINAL_CONE_MIDDLE_SCORING(
@@ -112,7 +139,8 @@ public class MechanismStateManager extends AbstractSubsystem {
                 true
         ),
         CONE_HIGH_SCORING(
-                new MechanismStateCoordinates(Units.inchesToMeters(36), Units.inchesToMeters(57), 90),
+                new MechanismStateCoordinates(0.5 + Units.inchesToMeters(7) /* Supposed to be too far forward */,
+                        1.3894290734504682 - Units.inchesToMeters(1.5), 90),
                 false
         ),
         FINAL_CONE_HIGH_SCORING(
@@ -128,7 +156,7 @@ public class MechanismStateManager extends AbstractSubsystem {
                 true
         ), //Estimated values
         DOUBLE_STATION_PICKUP(
-                new MechanismStateCoordinates(0.531, 2.3 - 0.015 - (!IS_PRACTICE ? Units.inchesToMeters(3.2) : 0), 12),
+                new MechanismStateCoordinates(0.52216767549278, 1.0936376970996242 + Units.inchesToMeters(0.5), 12),
                 false
         ),
         FLOOR_PICKUP(
@@ -149,7 +177,7 @@ public class MechanismStateManager extends AbstractSubsystem {
         ),
 
         PRE_SCORING_CONE_HIGH_2(
-                new MechanismStateCoordinates(Units.inchesToMeters(30), Units.inchesToMeters(57), 90),
+                new MechanismStateCoordinates(0.58, CONE_HIGH_SCORING.state.yMeters, 90),
                 false
         );
 
