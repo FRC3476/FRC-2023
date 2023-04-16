@@ -79,18 +79,23 @@ public class MechanismStateManager extends AbstractSubsystem {
 
         public MechanismStateCoordinates adjust(MechanismStateAdjustment mechanismStateAdjustment) {
             if (mechanismStateAdjustment.angleChangeOnly) {
-                return adjust(
-                        (Math.cos(grabberAngleDegrees) -
-                                Math.cos(grabberAngleDegrees + mechanismStateAdjustment.angleDegreesChange))
-                                * GRABBER_LENGTH
-                                + mechanismStateAdjustment.xMetersChange,
+                var currentWantedSubsystemPositions =
+                        MechanismStateManager.coordinatesToSubsystemPositions(
+                                new MechanismStateCoordinates(xMeters, yMeters, grabberAngleDegrees())
+                        );
 
-                        (Math.sin(grabberAngleDegrees) -
-                                Math.sin(grabberAngleDegrees + mechanismStateAdjustment.angleDegreesChange))
-                                * GRABBER_LENGTH
-                                + mechanismStateAdjustment.yMetersChange,
+                // Adjust the grabber angle in the current wanted subsystem positions (so that adjusting the grabber angle doesn't
+                // move the mechanism)
+                currentWantedSubsystemPositions = new MechanismStateSubsystemPositions(
+                        currentWantedSubsystemPositions.elevatorPositionMeters(),
+                        currentWantedSubsystemPositions.telescopingArmPositionMeters(),
+                        currentWantedSubsystemPositions.grabberAngleDegrees() + mechanismStateAdjustment.angleDegreesChange()
+                );
 
-                        mechanismStateAdjustment.angleDegreesChange());
+                var newWantedCoordinates = MechanismStateManager.subsystemPositionsToCoordinates(currentWantedSubsystemPositions);
+
+                return newWantedCoordinates.adjust(
+                        mechanismStateAdjustment.xMetersChange, mechanismStateAdjustment.yMetersChange, 0);
             } else {
                 return adjust(mechanismStateAdjustment.xMetersChange, mechanismStateAdjustment.yMetersChange,
                         mechanismStateAdjustment.angleDegreesChange);
@@ -106,7 +111,7 @@ public class MechanismStateManager extends AbstractSubsystem {
     }
 
     public static final MechanismStateAdjustment CONE_DUNK_MIDDLE_ADJUSTMENT
-            = new MechanismStateAdjustment(Units.inchesToMeters(3), -Units.inchesToMeters(6), 0);
+            = new MechanismStateAdjustment(Units.inchesToMeters(4), -Units.inchesToMeters(6), 0);
 
     private static final double CONE_HIGH_DUNK_ANGLE_CHANGE = -35;
     public static final MechanismStateAdjustment CONE_DUNK_HIGH_ADJUSTMENT = new MechanismStateAdjustment(0, 0, -35, true);
@@ -122,7 +127,7 @@ public class MechanismStateManager extends AbstractSubsystem {
                 true
         ),
         CUBE_MIDDLE_SCORING(
-                new MechanismStateCoordinates(Units.inchesToMeters(17), Units.inchesToMeters(35), 0),
+                new MechanismStateCoordinates(Units.inchesToMeters(15), Units.inchesToMeters(35), 0),
                 false
         ),
         CONE_MIDDLE_SCORING(
@@ -134,7 +139,8 @@ public class MechanismStateManager extends AbstractSubsystem {
                 true
         ),
         CONE_HIGH_SCORING(
-                new MechanismStateCoordinates(1 /* Supposed to be too far forward */, 1.3894290734504682, 90),
+                new MechanismStateCoordinates(0.5 + Units.inchesToMeters(7) /* Supposed to be too far forward */,
+                        1.3894290734504682 - Units.inchesToMeters(1.5), 90),
                 false
         ),
         FINAL_CONE_HIGH_SCORING(
@@ -150,7 +156,7 @@ public class MechanismStateManager extends AbstractSubsystem {
                 true
         ), //Estimated values
         DOUBLE_STATION_PICKUP(
-                new MechanismStateCoordinates(0.52216767549278, 1.0936376970996242 + Units.inchesToMeters(1), 12),
+                new MechanismStateCoordinates(0.52216767549278, 1.0936376970996242 + Units.inchesToMeters(0.5), 12),
                 false
         ),
         FLOOR_PICKUP(
@@ -171,7 +177,7 @@ public class MechanismStateManager extends AbstractSubsystem {
         ),
 
         PRE_SCORING_CONE_HIGH_2(
-                new MechanismStateCoordinates(0.58, Units.inchesToMeters(57), 90),
+                new MechanismStateCoordinates(0.58, CONE_HIGH_SCORING.state.yMeters, 90),
                 false
         );
 
