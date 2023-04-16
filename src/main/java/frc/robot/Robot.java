@@ -57,7 +57,6 @@ import org.littletonrobotics.junction.console.RIOConsoleSource;
 import org.littletonrobotics.junction.networktables.LoggedDashboardBoolean;
 import org.littletonrobotics.junction.networktables.LoggedDashboardChooser;
 import org.littletonrobotics.junction.networktables.LoggedDashboardNumber;
-import org.littletonrobotics.junction.networktables.NT4Publisher;
 import org.littletonrobotics.junction.wpilog.WPILOGReader;
 import org.littletonrobotics.junction.wpilog.WPILOGWriter;
 
@@ -201,7 +200,7 @@ public class Robot extends LoggedRobot {
             }
 
             Logger.getInstance().addDataReceiver(new WPILOGWriter(LOG_DIRECTORY));
-            Logger.getInstance().addDataReceiver(new NT4Publisher()); // Publish data to NetworkTables
+            //Logger.getInstance().addDataReceiver(new NT4Publisher()); // Publish data to NetworkTables
             powerDistribution = new PowerDistribution(1, ModuleType.kRev); // Enables power distribution logging
 
             drive = new Drive(new DriveIOFalcon());
@@ -361,7 +360,7 @@ public class Robot extends LoggedRobot {
         // Record video is FMS is attached
         visionHandler.forceRecord(true);
 
-        if (!(Objects.equals(lastSelectedAuto, autoChooser.get()) || Objects.equals(lastSelectedSide, sideChooser.get()))) {
+        if (!Objects.equals(lastSelectedAuto, autoChooser.get()) || !Objects.equals(lastSelectedSide, sideChooser.get())) {
             lastSelectedAuto = autoChooser.get();
             lastSelectedSide = sideChooser.get();
             System.out.println("Auto: " + autoChooser.get() + " Side: " + sideChooser.get());
