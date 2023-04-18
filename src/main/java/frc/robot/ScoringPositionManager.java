@@ -5,9 +5,11 @@ import frc.utility.Controller;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.littletonrobotics.junction.networktables.LoggedDashboardBoolean;
+import org.littletonrobotics.junction.networktables.LoggedDashboardNumber;
 import org.littletonrobotics.junction.networktables.LoggedDashboardString;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import static frc.robot.Constants.IS_PRACTICE;
@@ -105,6 +107,12 @@ public class ScoringPositionManager {
             new LoggedDashboardBoolean("Does Wanted Position Type Match Selected Position Type", true);
 
 
+    private final List<LoggedDashboardNumber> yPositionErrors = List.of(
+            new LoggedDashboardNumber("Y Position Error Grid 0", 0),
+            new LoggedDashboardNumber("Y Position Error Grid 1", 0),
+            new LoggedDashboardNumber("Y Position Error Grid 2", 0)
+    );
+
     public PositionType getWantedPositionType() {
         return wantedPositionType;
     }
@@ -145,6 +153,15 @@ public class ScoringPositionManager {
             selectedPositions[selectedPosition.ordinal()].set(true);
             doesWantedPositionTypeMatchSelectedPositionType.set(doesWantedPositionTypeMatchSelectedPositionType());
         }
+
+        double robotY = Robot.getRobotTracker().getLatestPose3d().getY();
+
+        double[] possibleFieldYs = getPossibleFieldYs(selectedPosition, Robot.isRed());
+        for (int i = 0; i < 3; i++) {
+            yPositionErrors.get(i).set(robotY - possibleFieldYs[i]);
+        }
+
+
         return oldSelectedPosition != selectedPosition;
     }
 
@@ -334,7 +351,12 @@ public class ScoringPositionManager {
 
 
         for (int i = 0; i < 3; i++) {
-            possibleYs[i] = y + CUBE_SCORING_Y_CENTER[i];
+            possibleYs[i] = CUBE_SCORING_Y_CENTER[i] +
+                    y +
+                    yScoringOffsets
+                            .get(isRedAlliance ? AllianceSide.RED : AllianceSide.BLUE)
+                            .get(i)
+                            .get(selectedPosition.getScoringDirection());
         }
         return possibleYs;
     }
@@ -379,12 +401,12 @@ public class ScoringPositionManager {
             }
         }
 
-        bestY = bestY
-                + getGridRelativeY(selectedPosition, isRedAlliance)
-                + yScoringOffsets
-                .get(isRedAlliance ? AllianceSide.RED : AllianceSide.BLUE)
-                .get(chosenGridIndex)
-                .get(selectedPosition.getScoringDirection());
+        bestY = bestY +
+                getGridRelativeY(selectedPosition, isRedAlliance) +
+                yScoringOffsets
+                        .get(isRedAlliance ? AllianceSide.RED : AllianceSide.BLUE)
+                        .get(chosenGridIndex)
+                        .get(selectedPosition.getScoringDirection());
 
 
         return new BestFieldY(bestY, chosenGridIndex);

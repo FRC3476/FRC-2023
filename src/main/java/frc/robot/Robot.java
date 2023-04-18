@@ -14,12 +14,9 @@ import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.trajectory.TrapezoidProfile.State;
+import edu.wpi.first.wpilibj.*;
 import edu.wpi.first.wpilibj.GenericHID.RumbleType;
-import edu.wpi.first.wpilibj.IterativeRobotBase;
-import edu.wpi.first.wpilibj.PowerDistribution;
 import edu.wpi.first.wpilibj.PowerDistribution.ModuleType;
-import edu.wpi.first.wpilibj.Timer;
-import edu.wpi.first.wpilibj.Watchdog;
 import frc.robot.ScoringPositionManager.PositionType;
 import frc.robot.ScoringPositionManager.SelectedPosition;
 import frc.subsytem.AbstractSubsystem;
@@ -354,6 +351,20 @@ public class Robot extends LoggedRobot {
      */
     @Override
     public void robotPeriodic() {
+        if (DriverStation.isDisabled()) {
+            // Update the scoring position here when we're disabled so that we can change it when the robot is disabled
+            buttonPanel.update();
+            ScoringPositionManager.getInstance().updateSelectedPosition(buttonPanel);
+        }
+
+        if (xbox.getRisingEdge(XBOX_RESET_HEADING)) {
+            if (isRed()) {
+                robotTracker.resetPose(new Pose2d(robotTracker.getLatestPose().getTranslation(), Rotation2d.fromDegrees(0)));
+            } else {
+                robotTracker.resetPose(new Pose2d(robotTracker.getLatestPose().getTranslation(), Rotation2d.fromDegrees(180)));
+            }
+        }
+
         runAsyncScheduledTasks();
         AbstractSubsystem.tick();
 
@@ -639,14 +650,6 @@ public class Robot extends LoggedRobot {
                 wantedMechanismState = WantedMechanismState.PRE_SCORING;
             } else {
                 wantedMechanismState = WantedMechanismState.STOWED;
-            }
-        }
-
-        if (xbox.getRisingEdge(XBOX_RESET_HEADING)) {
-            if (isRed()) {
-                robotTracker.resetPose(new Pose2d(robotTracker.getLatestPose().getTranslation(), Rotation2d.fromDegrees(0)));
-            } else {
-                robotTracker.resetPose(new Pose2d(robotTracker.getLatestPose().getTranslation(), Rotation2d.fromDegrees(180)));
             }
         }
 
