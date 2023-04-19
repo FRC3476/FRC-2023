@@ -157,7 +157,7 @@ public class VisionHandler extends AbstractSubsystem {
         // Send out connection flag to april tags processor
         visionMiscTable.getEntry("Connection Flag").setBoolean(true);
 
-        configTable.getEntry("Exposure").setDouble(60);
+        configTable.getEntry("Exposure").setDouble(25);
         configTable.getEntry("Camera Type").setDouble(0);
         configTable.getEntry("X Resolution").setDouble(1280);
         configTable.getEntry("Y Resolution").setDouble(800);

@@ -230,7 +230,7 @@ public class ScoringPositionManager {
                     L                                    -
                     */
                     put(0, new HashMap<>() {{
-                        put(ScoringDirection.LEFT, 0.0);
+                        put(ScoringDirection.LEFT, -0.018);
                         put(ScoringDirection.MIDDLE, 0.0);
                         put(ScoringDirection.RIGHT, 0.0);
                     }});
@@ -273,7 +273,7 @@ public class ScoringPositionManager {
                     put(2, new HashMap<>() {{
                         put(ScoringDirection.LEFT, 0.0);
                         put(ScoringDirection.MIDDLE, 0.0);
-                        put(ScoringDirection.RIGHT, 0.0);
+                        put(ScoringDirection.RIGHT, 0.05);
                     }});
                 }},
 
@@ -314,7 +314,7 @@ public class ScoringPositionManager {
                     put(1, new HashMap<>() {{
                         put(ScoringDirection.LEFT, 0.0);
                         put(ScoringDirection.MIDDLE, 0.0);
-                        put(ScoringDirection.RIGHT, 0.0);
+                        put(ScoringDirection.RIGHT, -0.058);
                     }});
                     /*
                     RED          SCORING TABLE           BLUE
