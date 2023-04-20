@@ -332,7 +332,7 @@ public class ScoringPositionManager {
                     -                                    -
                     */
                     put(2, new HashMap<>() {{
-                        put(ScoringDirection.LEFT, -0.03);
+                        put(ScoringDirection.LEFT, -0.04);
                         put(ScoringDirection.MIDDLE, 0.0);
                         put(ScoringDirection.RIGHT, 0.0);
                     }});
