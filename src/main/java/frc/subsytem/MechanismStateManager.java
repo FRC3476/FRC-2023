@@ -156,7 +156,7 @@ public class MechanismStateManager extends AbstractSubsystem {
                 true
         ), //Estimated values
         DOUBLE_STATION_PICKUP(
-                new MechanismStateCoordinates(0.52216767549278, 1.0936376970996242 + Units.inchesToMeters(0.5), 12),
+                new MechanismStateCoordinates(0.52216767549278, 1.0936376970996242 + Units.inchesToMeters(1.5), 12),
                 false
         ),
         FLOOR_PICKUP(
