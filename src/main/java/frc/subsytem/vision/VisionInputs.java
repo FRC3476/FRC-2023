@@ -19,6 +19,7 @@ public class VisionInputs implements LoggableInputs {
     public double lastVisionUpdateRealsense = -10000;
     public double lastVisionUpdateLimelightLeft = -10000;
     public double lastVisionUpdateLimelightRight = -10000;
+    public String lastVisionStatus = "";
 
 
     @Override
@@ -53,6 +54,7 @@ public class VisionInputs implements LoggableInputs {
         table.put("LastVisionUpdateRealsense", lastVisionUpdateRealsense);
         table.put("LastVisionUpdateLimelightLeft", lastVisionUpdateLimelightLeft);
         table.put("LastVisionUpdateLimelightRight", lastVisionUpdateLimelightRight);
+        table.put("LastVisionStatus", lastVisionStatus);
     }
 
     private final double[] update = new double[9];
@@ -88,5 +90,6 @@ public class VisionInputs implements LoggableInputs {
         lastVisionUpdateRealsense = table.getDouble("LastVisionUpdateRealsense", -10000);
         lastVisionUpdateLimelightLeft = table.getDouble("LastVisionUpdateLimelightLeft", -10000);
         lastVisionUpdateLimelightRight = table.getDouble("LastVisionUpdateLimelightRight", -10000);
+        lastVisionStatus = table.getString("LastVisionStatus", "");
     }
 }

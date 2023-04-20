@@ -111,7 +111,7 @@ public class MechanismStateManager extends AbstractSubsystem {
     }
 
     public static final MechanismStateAdjustment CONE_DUNK_MIDDLE_ADJUSTMENT
-            = new MechanismStateAdjustment(Units.inchesToMeters(4), -Units.inchesToMeters(6), 0);
+            = new MechanismStateAdjustment(Units.inchesToMeters(3), -Units.inchesToMeters(6), 0);
 
     private static final double CONE_HIGH_DUNK_ANGLE_CHANGE = -35;
     public static final MechanismStateAdjustment CONE_DUNK_HIGH_ADJUSTMENT = new MechanismStateAdjustment(0, 0, -35, true);

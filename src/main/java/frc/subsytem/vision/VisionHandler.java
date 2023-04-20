@@ -145,6 +145,8 @@ public class VisionHandler extends AbstractSubsystem {
         isVisionEnabled = visionEnabled;
     }
 
+    private final NetworkTable visionMiscTable;
+
     public VisionHandler() {
         super();
         // Network table init
@@ -153,6 +155,8 @@ public class VisionHandler extends AbstractSubsystem {
         @NotNull NetworkTable visionTable = networkTableInstance.getTable("Vision");
         @NotNull var visionMiscTable = networkTableInstance.getTable("Vision Misc");
         @NotNull var configTable = networkTableInstance.getTable("Vision Config");
+
+        this.visionMiscTable = visionMiscTable;
 
         // Send out connection flag to april tags processor
         visionMiscTable.getEntry("Connection Flag").setBoolean(true);
@@ -372,6 +376,7 @@ public class VisionHandler extends AbstractSubsystem {
             LimelightHelpers.setPipelineIndex(limelightName, llPipelineIndex);
         }
 
+        visionInputs.lastVisionStatus = visionMiscTable.getEntry("Latest Status").getString("");
         Logger.getInstance().processInputs("VisionHandler", visionInputs);
 
         isRealsenseConnected.set(
