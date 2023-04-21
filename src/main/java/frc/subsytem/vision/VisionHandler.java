@@ -359,7 +359,7 @@ public class VisionHandler extends AbstractSubsystem {
     public void forceRecord(boolean record) {
         if (record != recordingWanted) {
             recordingWanted = record;
-            NetworkTableInstance.getDefault().getTable("Vision Config").getEntry("Record Video").setBoolean(record);
+            NetworkTableInstance.getDefault().getTable("Vision Config").getEntry("Record Video").setBoolean(false);
         }
     }
 
