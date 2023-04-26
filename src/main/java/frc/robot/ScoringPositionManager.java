@@ -366,10 +366,6 @@ public class ScoringPositionManager {
     /**
      * Returns the Y coordinate that the robot should be at in order to score in the selected position that the driver most likely
      * wants based on their current position and velocity.
-     * <p>
-     * The code uses the following algorithm: It generates a line from the robot's current position to the robot's current
-     * position + the robot's current velocity. It then finds the intersection of that line with the three possible Y coordinates
-     * of the scoring position. It then finds the closest of the three possible Y coordinates to the intersection.
      *
      * @param selectedPosition Currently selected position
      * @param isRedAlliance    Whether the robot is on the red alliance
@@ -391,7 +387,7 @@ public class ScoringPositionManager {
             bestY = possibleYs[forcedGridIndex];
             chosenGridIndex = forcedGridIndex;
         } else {
-            // Find the closest possible Y to the intersection that we found.
+            // Find the closest possible Y coordinate to the predicted robot Y coordinate
             for (int i = 0; i < 3; i++) {
                 double possibleY = possibleYs[i];
                 if (Math.abs(possibleY - predictedRobotY) < Math.abs(bestY - predictedRobotY)) {

@@ -221,6 +221,9 @@ public class Robot extends LoggedRobot {
         }
 
         Logger.getInstance().start(); // Start logging! No more data receivers, replay sources, or metadata values may be added
+
+        // Console logging was observed to occasionally cause the robot to freeze for a couple hundred milliseconds,
+        // so the reflection below is used to disable it
         try {
             var consoleField = Logger.class.getDeclaredField("console");
             consoleField.setAccessible(true);
@@ -247,7 +250,7 @@ public class Robot extends LoggedRobot {
         telescopingArm.start();
         grabber.start();
         drive.start();
-        ScoringPositionManager.getInstance();
+        ScoringPositionManager.getInstance(); // ensure that the scoring position manager is initialized
 
         xbox = new Controller(0);
         stick = new Controller(1);
@@ -294,6 +297,7 @@ public class Robot extends LoggedRobot {
         // initialized (and creates the thread to generate paths) before the robot starts
 
         // TODO: Remove this when we're done optimizing our code
+        // This code disables the watchdog timer to remove the printouts that it causes
         try {
             Field watchDog = IterativeRobotBase.class.getDeclaredField("m_watchdog");
             watchDog.setAccessible(true);
@@ -307,9 +311,14 @@ public class Robot extends LoggedRobot {
                 + " built on " + BuildConstants.BUILD_DATE);
 
         drive.resetPeriodicFrames();
+
+        // Run a warmup auto to improve performance of the first auto that runs
         System.out.println("Running Warm Up Auto");
         AutonomousContainer.getInstance().runAutonomous("warmup", "red", false);
         OrangeUtility.sleep(2000);
+
+
+        // Generate a bunch of paths to warm up the path generator (reduces the time it takes to generate paths from ~1s to <0.1s)
         for (int i = 0; i < 10; i++) {
             double pathGenStartTime = Timer.getFPGATimestamp();
             var path = PathGenerator.generateTrajectory(new Translation2d(2, 3), new Translation2d(0, 0),
@@ -354,6 +363,7 @@ public class Robot extends LoggedRobot {
         if (DriverStation.isDisabled()) {
             // Update the scoring position here when we're disabled so that we can change it when the robot is disabled
             buttonPanel.update();
+            xbox.update();
             ScoringPositionManager.getInstance().updateSelectedPosition(buttonPanel);
         }
 
@@ -368,9 +378,9 @@ public class Robot extends LoggedRobot {
         runAsyncScheduledTasks();
         AbstractSubsystem.tick();
 
-        // Record video is FMS is attached
         visionHandler.forceRecord(true);
 
+        // Update the auto if the selected auto has changed
         if (!Objects.equals(lastSelectedAuto, autoChooser.get()) || !Objects.equals(lastSelectedSide, sideChooser.get())) {
             lastSelectedAuto = autoChooser.get();
             lastSelectedSide = sideChooser.get();
@@ -378,6 +388,7 @@ public class Robot extends LoggedRobot {
             guiAuto = AutonomousContainer.getInstance().getAuto(autoChooser.get(), sideChooser.get(), true);
         }
 
+        // Log the error between the robot's current position and the position that the auto wants the robot to be in
         if (guiAuto != null && guiAuto.getInitialPose() != null) {
             var poseDiffFromWantedAutoPlacement = guiAuto.getInitialPose().minus(robotTracker.getLatestPose());
             autoPositionErrorX.set(poseDiffFromWantedAutoPlacement.getTranslation().getX());
@@ -413,7 +424,7 @@ public class Robot extends LoggedRobot {
      */
     @Override
     public void autonomousPeriodic() {
-
+        // Unused
     }
 
 
@@ -425,6 +436,7 @@ public class Robot extends LoggedRobot {
         drive.setBrakeMode(true);
         drive.setDriveVoltageCompLevel(SWERVE_DRIVE_VOLTAGE_LIMIT_TELEOP);
         mechanismStateManager.setKeepoutsEnabled(true);
+        // Ensure we reset the state after auto in case the auto didn't finish and was unable to do it
         if (wasAuto) {
             mechanismStateManager.setState(MechanismStates.STOWED);
             setCurrentWantedState(WantedMechanismState.STOWED);
@@ -477,7 +489,7 @@ public class Robot extends LoggedRobot {
     public boolean isTurnToTargetMode = false;
 
     private double grabberOpenTime = 0;
-    private boolean wantToClose = false;
+    private boolean wantToStow = false;
 
     private boolean useAutoGrab = true;
     LoggedDashboardBoolean autoGrabDashboard = new LoggedDashboardBoolean("Auto Grab", useAutoGrab);
@@ -486,7 +498,7 @@ public class Robot extends LoggedRobot {
         Logger.getInstance().registerDashboardInput(autoGrabDashboard);
     }
 
-    private final List<MechanismStates> halfSpeedMechanismStates = List.of(
+    private final List<MechanismStates> quarterSpeedMechanismStates = List.of(
             MechanismStates.CONE_MIDDLE_SCORING,
             MechanismStates.CUBE_MIDDLE_SCORING,
             MechanismStates.CONE_HIGH_SCORING,
@@ -536,21 +548,22 @@ public class Robot extends LoggedRobot {
 
         var scoringPositionManager = ScoringPositionManager.getInstance();
         if (scoringPositionManager.updateSelectedPosition(buttonPanel)) {
-            teleopDrivingAutoAlignPosition = null;
+            teleopDrivingAutoAlignPosition = null; // Force a recalculation of the path b/c the grid position changed
         }
 
-        if (xbox.getRawButton(XBOX_START_AUTO_DRIVE) ||
-                xbox.getRawButton(XBOX_AUTO_DRIVE_LOWER_SUBSTATION)) { //Should be remapped to one of the back buttons
+        if (xbox.getRawButton(XBOX_START_AUTO_DRIVE) || xbox.getRawButton(XBOX_AUTO_DRIVE_LOWER_SUBSTATION)) {
             if (xbox.getRisingEdge(XBOX_START_AUTO_DRIVE) || xbox.getRisingEdge(XBOX_AUTO_DRIVE_LOWER_SUBSTATION)) {
+                // Auto drive button just pressed, figure out where we're going
                 updateTeleopDrivingTarget(true);
                 hasReachedAutoAlignPosition = false;
                 assert teleopDrivingAutoAlignPosition != null;
+
                 hasGoneToPreScore = false;
                 hasGoneToPreScore2 = false;
                 hasGoneToScore = false;
             } else if (teleopDrivingAutoAlignPosition == null) {
                 // We're not recalculating the grid position b/c we only need to recalculate the path because the operator
-                // changed the grid position
+                // changed the grid position & we want to only do that when the driver presses the button
                 updateTeleopDrivingTarget(false);
                 hasReachedAutoAlignPosition = false;
                 assert teleopDrivingAutoAlignPosition != null;
@@ -571,6 +584,8 @@ public class Robot extends LoggedRobot {
                     doubleSubstationMaxAccel.get() : MAX_ACCEL_AUTO_DRIVE;
 
             if (hasReachedAutoAlignPosition) {
+                // We're at the position we want to be at, hand translation control back to the driver
+                // (Currently unused b/c we want the robot to be able to continue correcting while we receive new vision updates)
                 drive.alignToYAndYaw(teleopDrivingAutoAlignPosition.getRotation().getRadians(),
                         teleopDrivingAutoAlignPosition.getTranslation().getY(),
                         getControllerDriveInputs());
@@ -590,7 +605,7 @@ public class Robot extends LoggedRobot {
                 if (drive.getRemainingAutoDriveTime() <= SCORE_TIME_S
                         && dist2(autoDriveAlignError) <= SCORE_POSITION_ERROR_SQUARED
                         && !hasGoneToScore) {
-                    // We're done driving let's score
+                    // We're done driving go to scoring position
                     wantedMechanismState = WantedMechanismState.SCORING;
                     hasGoneToScore = true;
                     hasGoneToPreScore2 = true;
@@ -598,6 +613,8 @@ public class Robot extends LoggedRobot {
                 } else if (drive.getRemainingAutoDriveTime() <= PRE_SCORE_TIME_2_S
                         && scoringPositionManager.getSelectedPosition().getLevel() == 2
                         && !hasGoneToPreScore2) {
+                    // We're even closer to being done driving let's go to pre-scoring to move the arm partly into place
+                    // (Only for level 2)
                     wantedMechanismState = WantedMechanismState.PRE_SCORING_2;
                     hasGoneToPreScore2 = true;
                     hasGoneToPreScore = true;
@@ -627,17 +644,19 @@ public class Robot extends LoggedRobot {
                 }
 
                 if (Math.abs(controllerDriveInputs.getRotation()) > 0) {
+                    // disable auto align if the driver is trying to turn
                     isTurnToTargetMode = false;
                 }
             } else {
                 ControllerDriveInputs controllerDriveInputs = getControllerDriveInputs();
-                if (halfSpeedMechanismStates.contains(mechanismStateManager.getLastState())) {
+                if (quarterSpeedMechanismStates.contains(mechanismStateManager.getLastState())) {
                     controllerDriveInputs.scaleInputs(0.25);
                 }
                 drive.swerveDriveFieldRelative(controllerDriveInputs);
             }
         }
 
+        // Safety checks to make sure we're not in weird pre-scoring states when we shouldn't be
         if (wantedMechanismState == WantedMechanismState.PRE_SCORING
                 && scoringPositionManager.getSelectedPosition().getLevel() == 0) {
             // We're on the ground, and we're trying to pre-score, but we shouldn't pre-score on the ground, just go back to stowed
@@ -654,16 +673,20 @@ public class Robot extends LoggedRobot {
         }
 
         if (grabber.isGrabbed() && wantedMechanismState.shouldAutoGrab) {
+            // We've grabbed a piece, and we're allowed to auto-grab, so auto-stow
             setStowed();
         }
 
         if (isGrabberOpen
                 && (wantedMechanismState == WantedMechanismState.SCORING)
                 && xbox.getFallingEdge(XBOX_TOGGLE_GRABBER)) {
-            wantToClose = true;
+            // We've already opened the grabber, while we're scoring. When we're done scoring (signaled by the driver letting
+            // go of the button), stow the grabber
+            wantToStow = true;
         }
 
-        if (wantToClose) {
+        if (wantToStow) {
+            // We want to stow, so stow it if we're allowed to
             if (scoringPositionManager.getWantedPositionType() == PositionType.CUBE &&
                     Timer.getFPGATimestamp() - grabberOpenTime > 0.5) {
                 setStowed();
@@ -677,6 +700,8 @@ public class Robot extends LoggedRobot {
         if (stick.getRisingEdge(STICK_TOGGLE_SCORING)) {
             if (wantedStatesConsideredStowed.contains(wantedMechanismState)) {
                 wantedMechanismState = WantedMechanismState.SCORING;
+
+                // Make sure we don't go to pre-scoring again
                 hasGoneToPreScore = true;
                 hasGoneToPreScore2 = true;
                 hasGoneToScore = true;
@@ -731,18 +756,21 @@ public class Robot extends LoggedRobot {
         }
 
         if (xbox.getRisingEdge(XBOX_TOGGLE_MECH)) {
+            // Global toggle for the mechanism, infer the wanted state from the robot's current pose
             if (wantedStatesConsideredStowed.contains(wantedMechanismState)) {
                 if (isOnAllianceSide()) {
                     wantedMechanismState = WantedMechanismState.SCORING;
+
+                    // Make sure we don't go to pre-scoring again
                     hasGoneToPreScore = true;
                     hasGoneToPreScore2 = true;
                     hasGoneToScore = true;
                 } else {
                     if ((isRed() && robotTracker.getLatestPose().getRotation()
-                            .getDegrees() < SINGLE_SUBSTATION_PICKUP_ANGLE_CUTOFF_DEGREES)
-                            || (!isRed()
-                            && robotTracker.getLatestPose().getRotation().getDegrees() > -135
-                            && robotTracker.getLatestPose().getRotation().getDegrees() < 0)
+                            .getDegrees() < SINGLE_SUBSTATION_PICKUP_ANGLE_CUTOFF_DEGREES) ||
+                            (!isRed()
+                                    && robotTracker.getLatestPose().getRotation().getDegrees() > -135
+                                    && robotTracker.getLatestPose().getRotation().getDegrees() < 0)
 
                     ) {
                         wantedMechanismState = WantedMechanismState.STATION_PICKUP_SINGLE;
@@ -763,6 +791,7 @@ public class Robot extends LoggedRobot {
 
 
         if (wantedMechanismState != lastWantedMechanismState) {
+            // We've changed states, so set the appropriate arm position in the mechanism state manager
             switch (wantedMechanismState) {
                 case STOWED -> mechanismStateManager.setState(MechanismStates.STOWED);
                 case SCORING -> {
@@ -798,11 +827,14 @@ public class Robot extends LoggedRobot {
             }
 
             if (wantedMechanismState != lastWantedMechanismState && useAutoGrab) {
+                // Enable auto grab if the state we're now in should auto grab
                 Robot.getGrabber().setAutoGrab(wantedMechanismState.shouldAutoGrab);
             }
         }
         lastWantedMechanismState = wantedMechanismState;
 
+
+        // Manual control of the mechanism
         var limitedMechCoords = MechanismStateManager.limitCoordinates(mechanismStateManager.getCurrentWantedState());
 
         Logger.getInstance().recordOutput("Robot/Mechanism Wanted X", mechWantedX);
@@ -870,7 +902,7 @@ public class Robot extends LoggedRobot {
                     var stateToSet = mechanismStateManager.getCurrentWantedState()
                             .adjust(MechanismStateManager.CONE_DUNK_MIDDLE_ADJUSTMENT);
 
-                    // Update the last state so we can open the grabber later, and disable the keepouts
+                    // Update the last state, so we can open the grabber later, and disable the keepouts
                     mechanismStateManager.setState(MechanismStates.FINAL_CONE_MIDDLE_SCORING);
                     mechanismStateManager.setState(stateToSet);
                 } else if (wantedMechanismState == WantedMechanismState.SCORING
@@ -907,26 +939,21 @@ public class Robot extends LoggedRobot {
         }
 
         if (grabber.isAutoGrabEnabled()) {
-
-            // Note: due to execution order, this is the gyro angle from the previous loop (~20ms ago)
-
-            // We don't care if we tilt forward b/c that means we're picking up from the base. We only care if we're tilted
-            // back (making it so that the grabber would pick up from the tip of the cone) which is why the tilt check is only
-            // in one direction.
-
             if ((grabber.isOpen() || !isGrabberOpen) && mechanismStateManager.isMechAtFinalPos()) {
                 closeGrabber();
                 isGrabberOpen = false;
                 // We're enabling auto grab mode. The limit switch will prevent the grabber from closing until it detects a game piece
                 // Auto grab is automatically disabled detects a game piece, so we don't need to do anything else, the normal
-                // grabber will take over once the game piece is detected
+                // grabber code will take over once the game piece is detected
             } else {
                 grabber.setGrabState(GrabState.OPEN);
             }
         } else if (isGrabberOpen) {
             if (wantedMechanismState == WantedMechanismState.STOWED) {
-                grabber.setGrabState(GrabState.IDLE);
+                grabber.setGrabState(GrabState.IDLE); // Never allow us to command the grabber open when stowed
                 if (setFutureGrabberClose && telescopingArm.getPosition() < 0.2) {
+                    // We're stowing the mechanism and the telescoping arm is almost all the way in. Close the grabber
+                    // (For auto closing the grabber when stowing from placement)
                     isGrabberOpen = false;
                 }
             } else {
@@ -938,6 +965,7 @@ public class Robot extends LoggedRobot {
 
         Logger.getInstance().recordOutput("Robot/Is Grabber Open", isGrabberOpen);
 
+        // Rollers only existed on an early prototype of the grabber, this code does nothing now
         if ((wantedMechanismState == WantedMechanismState.FLOOR_PICKUP
                 || wantedMechanismState == WantedMechanismState.STATION_PICKUP_DOUBLE
                 || wantedMechanismState == WantedMechanismState.STATION_PICKUP_SINGLE)
@@ -969,6 +997,7 @@ public class Robot extends LoggedRobot {
     }
 
     private static void closeGrabber() {
+        // set the grabber to the correct state if we want to close it
         if (ScoringPositionManager.getInstance().getWantedPositionType() == PositionType.CONE) {
             grabber.setGrabState(GrabState.GRAB_CONE);
         } else {
@@ -982,7 +1011,7 @@ public class Robot extends LoggedRobot {
     private void setStowed() {
         wantedMechanismState = WantedMechanismState.STOWED;
         setFutureGrabberClose = true;
-        wantToClose = false;
+        wantToStow = false;
         grabber.setAutoGrab(false);
     }
 
@@ -998,6 +1027,7 @@ public class Robot extends LoggedRobot {
     private AutoDrivePosition autoDrivePosition = AutoDrivePosition.SCORING;
 
     private void updateTeleopDrivingTarget(boolean recalculateGridPosition) {
+        // Infer the wanted auto drive position based on the robot's position and velocity
         ScoringPositionManager scoringPositionManager = ScoringPositionManager.getInstance();
 
         double x, y;
@@ -1014,8 +1044,8 @@ public class Robot extends LoggedRobot {
                         isRed(),
                         robotTracker.getLatestPose().getTranslation(),
                         robotTracker.getVelocity(),
-                        false,
-                        0
+                        false, // recalculate the grid position
+                        0 // unused
                 );
                 y = bestY.y();
                 lastGridIndex = bestY.gridIndex();
@@ -1026,7 +1056,7 @@ public class Robot extends LoggedRobot {
                         robotTracker.getLatestPose().getTranslation(),
                         robotTracker.getVelocity(),
                         true,
-                        lastGridIndex
+                        lastGridIndex // use the last grid index
                 );
                 y = bestY.y();
             }
@@ -1034,7 +1064,8 @@ public class Robot extends LoggedRobot {
             Logger.getInstance().recordOutput("Robot/Wanted Y Auto Drive", y);
 
             double scoringPositionOffset;
-            if (scoringPositionManager.getSelectedPosition() == SelectedPosition.MIDDLE_LEFT || scoringPositionManager.getSelectedPosition() == SelectedPosition.MIDDLE_RIGHT) {
+            if (scoringPositionManager.getSelectedPosition() == SelectedPosition.MIDDLE_LEFT ||
+                    scoringPositionManager.getSelectedPosition() == SelectedPosition.MIDDLE_RIGHT) {
                 scoringPositionOffset = SCORING_POSITION_OFFSET_CUBE_FROM_WALL;
             } else if (scoringPositionManager.getWantedPositionType() == PositionType.CUBE) {
                 scoringPositionOffset = SCORING_POSITION_OFFSET_CUBE_FROM_WALL;
@@ -1053,8 +1084,6 @@ public class Robot extends LoggedRobot {
         } else {
             // We're on the opposite side as our alliance
             // Try to go to the pickup position
-            var predictedPoseForPickup = robotTracker.getLatestPose().getTranslation().plus(
-                    robotTracker.getVelocity().times(0));
 
             if ((isRed() && robotTracker.getLatestPose().getRotation()
                     .getDegrees() < SINGLE_SUBSTATION_PICKUP_ANGLE_CUTOFF_DEGREES)
@@ -1071,6 +1100,7 @@ public class Robot extends LoggedRobot {
                 rotation = SINGLE_STATION_ANGLE;
                 autoDrivePosition = AutoDrivePosition.PICKUP_SINGLE_SUBSTATION;
             } else {
+                // Which double substation we go to is based on the button pressed
                 if (xbox.getRawButton(XBOX_AUTO_DRIVE_LOWER_SUBSTATION)) {
                     y = LOWER_PICKUP_POSITION_Y;
                 } else {
@@ -1115,6 +1145,7 @@ public class Robot extends LoggedRobot {
     @Override
     public void disabledPeriodic() {
         if (Timer.getFPGATimestamp() - disabledTime > Constants.COAST_AFTER_DISABLE_TIME) {
+            // Put the drivebase in coast mode after disable to make it easier to push
             drive.setBrakeMode(false);
         }
     }
@@ -1140,6 +1171,8 @@ public class Robot extends LoggedRobot {
         xbox.update();
         if (xbox.getRawButton(XboxButtons.X) && xbox.getRawButton(XboxButtons.B)
                 && xbox.getRisingEdge(XboxButtons.X) && xbox.getRisingEdge(XboxButtons.B)) {
+            // We use something that is straight to align the wheels between themselves. In test mode we can then easily reset
+            // the zeros of the wheels to calibrate them
             drive.resetAbsoluteZeros();
         }
     }
@@ -1149,15 +1182,19 @@ public class Robot extends LoggedRobot {
         boolean isRed = isRed();
         
         if (reverseControls.get()) {
+            // Reverse the controls without changing the alliance (used for testing)
             isRed = !isRed;
         }
 
         if (isRed) {
+            // Flip the x-axis for red
             inputs = new ControllerDriveInputs(-xbox.getRawAxis(1), -xbox.getRawAxis(0), -xbox.getRawAxis(4));
         } else {
             inputs = new ControllerDriveInputs(xbox.getRawAxis(1), xbox.getRawAxis(0), -xbox.getRawAxis(4));
         }
+
         if (xbox.getRawButton(Controller.XboxButtons.X)) {
+            // Apply a larger deadzone when the button is pressed
             inputs.applyDeadZone(0.2, 0.2, 0.2, 0.2);
         } else {
             inputs.applyDeadZone(0.05, 0.05, 0.2, 0.2);
