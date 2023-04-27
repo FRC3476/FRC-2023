@@ -113,9 +113,7 @@ public class MechanismStateManager extends AbstractSubsystem {
     public static final MechanismStateAdjustment CONE_DUNK_MIDDLE_ADJUSTMENT
             = new MechanismStateAdjustment(Units.inchesToMeters(4), -Units.inchesToMeters(6), 0);
 
-    private static final double CONE_HIGH_DUNK_ANGLE_CHANGE = -35;
     public static final MechanismStateAdjustment CONE_DUNK_HIGH_ADJUSTMENT = new MechanismStateAdjustment(0, 0, -35, true);
-
 
     public enum MechanismStates {
         STOWED(
@@ -252,6 +250,11 @@ public class MechanismStateManager extends AbstractSubsystem {
         return new MechanismStateSubsystemPositions(elevatorRealMovement, telescopingArmMovement, Math.toDegrees(angleRad));
     }
 
+    /**
+     * Ensures that a coordinate is within the allowed range of the mechanism
+     *
+     * @return A new coordinate that is within the allowed range (or the same coordinate if it is already within the range)
+     */
     public static MechanismStateCoordinates limitCoordinates(MechanismStateCoordinates mechanismState) {
         //wanted states
         double mutableX = mechanismState.xMeters;
@@ -362,6 +365,8 @@ public class MechanismStateManager extends AbstractSubsystem {
 
 
         MechanismStateSubsystemPositions limitedStatePositions = coordinatesToSubsystemPositions(limitedStateCoordinates);
+
+        // Keepouts here are for ensuring that we don't hit field elements
         if (!lastNotStowState.isKeepoutExempt && areKeepoutsEnabled) {
             if (lastNotStowState != MechanismStates.DOUBLE_STATION_PICKUP) {
                 // Use scoring keepouts
@@ -432,10 +437,6 @@ public class MechanismStateManager extends AbstractSubsystem {
         Logger.getInstance().recordOutput("MechanismStateManager/Limited State Y", limitedStateCoordinates.yMeters);
         Logger.getInstance().recordOutput("MechanismStateManager/Limited State Angle",
                 limitedStateCoordinates.grabberAngleDegrees);
-
-
-        // Check for changes
-
 
         // Drive Subsystems
         Robot.getElevator().setPosition(limitedStatePositions.elevatorPositionMeters);
