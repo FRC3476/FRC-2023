@@ -27,7 +27,6 @@ import frc.utility.PathGenerator;
 import frc.utility.net.editing.LiveEditableValue;
 import frc.utility.swerve.SwerveSetpointGenerator;
 import frc.utility.swerve.SwerveSetpointGenerator.KinematicLimit;
-import frc.utility.swerve.SwerveSetpointGenerator.SwerveSetpoint;
 import frc.utility.wpimodified.HolonomicDriveController;
 import frc.utility.wpimodified.PIDController;
 import org.jetbrains.annotations.Contract;
@@ -36,7 +35,6 @@ import org.jetbrains.annotations.Nullable;
 import org.littletonrobotics.junction.Logger;
 import org.littletonrobotics.junction.networktables.LoggedDashboardNumber;
 
-import java.lang.reflect.Field;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 
@@ -56,7 +54,6 @@ public final class Drive extends AbstractSubsystem {
 
     private final DriveIO io;
     private final DriveInputsAutoLogged inputs = new DriveInputsAutoLogged();
-    private final Field m_moduleStates;
     private final LiveEditableValue<Double> autoP = new LiveEditableValue<>(DEFAULT_AUTO_P, SmartDashboard.getEntry("AutoP"));
     private final LiveEditableValue<Double> autoI = new LiveEditableValue<>(DEFAULT_AUTO_I, SmartDashboard.getEntry("AutoI"));
 
@@ -70,15 +67,6 @@ public final class Drive extends AbstractSubsystem {
     private Rotation2d autoTargetHeading;
     private double lastTurnUpdate = 0;
     private @NotNull DriveState driveState = DriveState.TELEOP;
-    private SwerveSetpoint lastSwerveSetpoint = new SwerveSetpoint(
-            new ChassisSpeeds(0, 0, 0),
-            new SwerveModuleState[]{
-                    new SwerveModuleState(0, new Rotation2d(0)),
-                    new SwerveModuleState(0, new Rotation2d(0)),
-                    new SwerveModuleState(0, new Rotation2d(0)),
-                    new SwerveModuleState(0, new Rotation2d(0))
-            },
-            new double[]{0, 0, 0, 0});
     private @Nullable HolonomicDriveController swerveAutoController;
     private double nextAllowedPrintError = 0;
     private @NotNull ChassisSpeeds nextChassisSpeeds = new ChassisSpeeds();
@@ -95,20 +83,9 @@ public final class Drive extends AbstractSubsystem {
     }
 
     {
-
         // Balance PID takes in degrees of rotation on the axis parallel to the wide edge of the charging station and returns a velocity in meters per second
         balancePID = new PIDController(Constants.BALANCE_P, Constants.BALANCE_I, Constants.BALANCE_D);
         balancePID.setSetpoint(0);
-    }
-
-
-    {
-        try {
-            m_moduleStates = SwerveDriveKinematics.class.getDeclaredField("m_moduleStates");
-            m_moduleStates.setAccessible(true);
-        } catch (NoSuchFieldException e) {
-            throw new RuntimeException(e);
-        }
     }
 
     public Drive(DriveIO driveIO) {
@@ -130,7 +107,7 @@ public final class Drive extends AbstractSubsystem {
                 autoTurnPIDController);
         swerveAutoController.setEnabled(true);
         swerveAutoController.setTolerance(
-                new Pose2d(ALLOWED_XY_ERROR_RAMSETE, ALLOWED_XY_ERROR_RAMSETE, Rotation2d.fromDegrees(5))); //TODO: Tune
+                new Pose2d(ALLOWED_XY_ERROR_RAMSETE, ALLOWED_XY_ERROR_RAMSETE, Rotation2d.fromDegrees(5)));
     }
 
     /**
@@ -179,6 +156,12 @@ public final class Drive extends AbstractSubsystem {
         Logger.getInstance().registerDashboardInput(rotationPredictionSeconds);
     }
 
+    /**
+     * Robot angle to use for swerve drive field relative calculations. Adds a fudge factor to the robot angle to correct for the
+     * robot drifting while turning.
+     *
+     * @return Robot angle to use for swerve drive field relative calculations
+     */
     private static Rotation2d getPredictedRobotAngleInLoopCenter() {
         double predictionSeconds = rotationPredictionSeconds.get();
         return Robot.getRobotTracker().getGyroAngleAtTime(Timer.getFPGATimestamp()).toRotation2d()
@@ -221,10 +204,13 @@ public final class Drive extends AbstractSubsystem {
                         trajectoryToDrive.join().get().getTotalTimeSeconds())) {
             if (Math.abs(positionError.getX()) < ALLOWED_AUTO_DRIVE_POSITION_ERROR_METERS
                     && Math.abs(positionError.getY()) < ALLOWED_AUTO_DRIVE_POSITION_ERROR_METERS) {
+
+                // We're within allowed error of the target position, only turn to the target angle
                 setTurn(new ControllerDriveInputs(),
                         new State(targetAngle.getRadians(), 0),
                         ALLOWED_AUTO_DRIVE_ANGLE_ERROR_RADIANS);
             } else {
+                // We're not within allowed error of the target position, try to pid to the target position
                 var currPos = Robot.getRobotTracker().getLatestPose().getTranslation();
                 setTurn(
                         new ControllerDriveInputs(
@@ -240,6 +226,7 @@ public final class Drive extends AbstractSubsystem {
             return true;
         }
         if (!(driveState == DriveState.WAITING_FOR_PATH || driveState == DriveState.RAMSETE)) {
+            // Path hasn't been generated yet, generate it
             var robotTracker = Robot.getRobotTracker();
             realtimeTrajectoryStartVelocity = robotTracker.getVelocity();
             trajectoryToDrive = PathGenerator.generateTrajectory(
@@ -259,7 +246,9 @@ public final class Drive extends AbstractSubsystem {
                     false);
             kinematicLimit = KinematicLimits.NORMAL_DRIVING.kinematicLimit;
         }
+
         if (driveState == DriveState.WAITING_FOR_PATH) {
+            // Path is being generated
             assert trajectoryToDrive != null;
             assert realtimeTrajectoryStartVelocity != null;
             if (trajectoryToDrive.isDone()) {
@@ -268,6 +257,7 @@ public final class Drive extends AbstractSubsystem {
                     var trajectory = trajectoryToDrive.join();
 
                     if (trajectory.isPresent()) {
+                        // Path was generated successfully, set the auto path
                         if (Timer.getFPGATimestamp() + EXPECTED_TELEOP_DRIVE_DT > realtimeTrajectoryStartTime) {
                             DriverStation.reportError("Trajectory Generation was late by: "
                                     + (Timer.getFPGATimestamp() - realtimeTrajectoryStartTime) + "s", false);
@@ -279,6 +269,8 @@ public final class Drive extends AbstractSubsystem {
                         setAutoPath(trajectory.get(), realtimeTrajectoryStartTime); // Sets the DriveState to RAMSETE
                         setAutoRotation(targetAngle);
                     } else {
+                        // Path finished generating before it's start time, just continue driving at the current velocity until
+                        // we reach the start time
                         setTurn(new ControllerDriveInputs(
                                         realtimeTrajectoryStartVelocity.getX() / DRIVE_HIGH_SPEED_M,
                                         realtimeTrajectoryStartVelocity.getY() / DRIVE_HIGH_SPEED_M,
@@ -292,6 +284,8 @@ public final class Drive extends AbstractSubsystem {
                     }
                 }
             } else {
+                // Path is still being generated, continue driving at the current velocity until it's done (also start turning
+                // to the correct angle)
                 assert realtimeTrajectoryStartVelocity != null;
                 setTurn(new ControllerDriveInputs(
                                 realtimeTrajectoryStartVelocity.getX() / DRIVE_HIGH_SPEED_M,
@@ -353,7 +347,6 @@ public final class Drive extends AbstractSubsystem {
 
         SwerveDriveKinematics.desaturateWheelSpeeds(moduleStates,
                 DRIVE_FEEDFORWARD[0].maxAchievableVelocity(SWERVE_DRIVE_VOLTAGE_LIMIT_AUTO, 0));
-
 
         setSwerveModuleStates(moduleStates, rotate);
     }
@@ -447,6 +440,7 @@ public final class Drive extends AbstractSubsystem {
 
 
         if (PERIODIC_DRIVE_PRINT && (Timer.getFPGATimestamp() > nextPeriodicDrivePrint)) {
+            // Used to collect data for characterizing the robot
             nextPeriodicDrivePrint = Timer.getFPGATimestamp() + 0.1;
             for (int i = 0; i < 4; i++) {
                 double accelI = (getSwerveDriveVelocity(i) - lastModuleVelocities[i]) / (time - lastModuleTimes[i]);
@@ -548,7 +542,9 @@ public final class Drive extends AbstractSubsystem {
                     currentPose,
                     modifiedGoal,
                     targetHeading,
-                    getPredictedRobotAngleInLoopCenter());
+                    getPredictedRobotAngleInLoopCenter() // Send the fudged angle to the controller for the swerve drive field
+                    // relative calculations
+            );
 
             if (Timer.getFPGATimestamp() - autoStartTime < currentAutoTrajectory.getTotalTimeSeconds()) {
                 var currVel = new Translation2d(
@@ -561,6 +557,7 @@ public final class Drive extends AbstractSubsystem {
                         nextGoal.velocityMetersPerSecond * nextGoal.poseMeters.getRotation().getSin()
                 );
 
+                // Fudge the acceleration we want into the commanded velocity
                 var accel = nextVel.minus(currVel).div(EXPECTED_TELEOP_DRIVE_DT);
                 var extraSpeed = accel.times(driveKa.get()).div(DRIVE_FEEDFORWARD[0].kv);
                 var extraSpeedRobotRelative = extraSpeed.rotateBy(currentPose.getRotation().unaryMinus());
@@ -725,7 +722,7 @@ public final class Drive extends AbstractSubsystem {
         setDriveState(DriveState.STOP);
     }
 
-    synchronized public boolean isFinished() {
+    public synchronized boolean isFinished() {
         return (driveState == DriveState.STOP || driveState == DriveState.DONE || driveState == DriveState.TELEOP);
     }
 
@@ -786,6 +783,7 @@ public final class Drive extends AbstractSubsystem {
     public void turnToAngle(double degrees, double allowedError) throws InterruptedException {
         System.out.println("Turning to " + degrees);
         if (!Robot.isRed()) {
+            // If we are blue, we need to flip the angle, so we don't need to change the scripts in the autobuilder
             double rad = Math.toRadians(degrees);
             double cos = Math.cos(rad);
             double sin = Math.sin(rad);
@@ -813,7 +811,7 @@ public final class Drive extends AbstractSubsystem {
     }
 
     public synchronized void autoBalance(@NotNull ControllerDriveInputs inputs) {
-        var angle = Robot.getRobotTracker().getGyroYAngle();
+        var angle = Robot.getRobotTracker().getGyroYAngle(); //TODO: Switch to using raw gyro angles
         var angleMeasure = Math.toDegrees(angle);
         double angularVelocity = Robot.getRobotTracker().getAngularRollVelocity();
 
