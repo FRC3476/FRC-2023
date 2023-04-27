@@ -67,7 +67,7 @@ tag. It's possible that the new camera calibration features would help significa
 ### Choosing where to go
 
 - The same button is used to line up to scoring nodes is also used to line up to pickup positions
-    - We first decide weather we want to go to a pickup position or scoring node based on which side of the field we're
+    - We first decide whether we want to go to a pickup position or scoring node based on which side of the field we're
       on + some velocity based lookahead.
         - Scoring
             - The grid that we want to go is predicted based on the robot's position + a velocity lookahead.
@@ -91,7 +91,7 @@ tag. It's possible that the new camera calibration features would help significa
 ### Driving the path
 
 - We use the same path following code that we have for driving during the autonomous period.
-- Once the path is complete we have an additional PID controller that continues running.
+- Once the path is complete we have an additional position PID controller that is continually running.
 - Vision is continually correcting the position of the robot as it drives the path.
 
 # Mechanism Toggling
@@ -100,3 +100,11 @@ tag. It's possible that the new camera calibration features would help significa
     - The robot's position on the field determines the which setpoint to go to
 - In scoring the selected position on the button panel is also determines the setpoint to use.
 - The selected position also determines which piece mode to use which changes the strength of the grabber.
+
+## Controlling the mechanism
+
+- Each of the mechanism's control their position independently with their own PID controllers and feedforward to
+  compensate for gravity.
+- Our MechanismStateManager class converts setpoints represented as 2D coordinates into the 1D setpoints that each
+  mechanism needs to go to.
+    - The MechanismStateManager also ensures we don't command the mechanism past their limits and into field elements.
