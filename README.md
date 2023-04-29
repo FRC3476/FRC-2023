@@ -1,6 +1,6 @@
 # The Brain of Baja
 
-Code Orange's robot code for the 2023 FRC season, Rapid React
+Code Orange's robot code for the 2023 FRC season, Charged Up
 
 # High Level Overview
 
