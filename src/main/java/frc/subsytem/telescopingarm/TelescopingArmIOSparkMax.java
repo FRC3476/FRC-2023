@@ -2,10 +2,12 @@ package frc.subsytem.telescopingarm;
 
 import com.revrobotics.CANSparkMax;
 import com.revrobotics.CANSparkMax.ControlType;
+import com.revrobotics.CANSparkMax.IdleMode;
 import com.revrobotics.CANSparkMaxLowLevel;
 import com.revrobotics.SparkMaxPIDController;
 import com.revrobotics.SparkMaxPIDController.ArbFFUnits;
 import frc.robot.Constants;
+import org.littletonrobotics.junction.Logger;
 
 import static edu.wpi.first.wpilibj.RobotBase.isReal;
 import static frc.robot.Constants.*;
@@ -23,6 +25,7 @@ public class TelescopingArmIOSparkMax extends TelescopingArmIO {
         telescopingArmSparkMax.setSmartCurrentLimit(Constants.TELESCOPING_ARM_SMART_CURRENT_LIMIT);
         telescopingArmSparkMax.setSecondaryCurrentLimit(80);
         telescopingArmSparkMax.setInverted(true);
+        telescopingArmSparkMax.setIdleMode(IdleMode.kCoast);
 
         telescopingArmSparkMax.getEncoder().setPositionConversionFactor(1.0 / TELESCOPING_ARM_ROTATIONS_PER_METER);
         telescopingArmSparkMax.getEncoder().setVelocityConversionFactor(
@@ -38,6 +41,7 @@ public class TelescopingArmIOSparkMax extends TelescopingArmIO {
     @Override
     public void updateInputs(TelescopingArmInputs inputs) {
         inputs.position = telescopingArmSparkMax.getEncoder().getPosition();
+        Logger.getInstance().recordOutput("Telescoping Arm/Actual Position", inputs.position);
         inputs.velocity = telescopingArmSparkMax.getEncoder().getVelocity();
         inputs.current = telescopingArmSparkMax.getOutputCurrent();
         inputs.voltage = telescopingArmSparkMax.getAppliedOutput() * Constants.GRABBER_NOMINAL_VOLTAGE;
