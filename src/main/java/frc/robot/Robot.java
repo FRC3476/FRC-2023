@@ -90,7 +90,7 @@ public class Robot extends LoggedRobot {
     public static final int CONTROLLER_TOGGLE_TIPPED_FLOOR_PICKUP = /* trolled */;
     public static final int XBOX_TOGGLE_GRABBER = /* good luck */;
     public static final int XBOX_BABY_BIRD = /* try to fix it ;) */;
-    public static final int XBOX_TOGGLE_SCORING = /* good luck :) */
+    public static final int XBOX_TOGGLE_SCORING = /* good luck :) */;
 
     public static final int STICK_TOGGLE_SCORING = 7;
     public static final int STICK_TOGGLE_FLOOR_PICKUP = 9;
