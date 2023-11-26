@@ -12,3 +12,7 @@ frc.utility.Controller.XboxButtons
 ```
 
 Feel free to refer to the `main` branch if you're confused.
+
+Note: If you use one of the Triggers from the `XboxAxes` class,
+you must add a threshold value (how far the button must be pushed in order to trigger the desired command).
+To do this, right click the variable name and click on "Find Usages", and in every instance of `xbox.getRisingEdge(XBOX_BUTTON_DO_THING)`, append your desired threshold value, like so: `xbox.getRisingEdge(XBOX_BUTTON_DO_THING, 0.1)`
