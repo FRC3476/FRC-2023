@@ -10,3 +10,5 @@ These classes will be helpful.
 frc.utility.Controller.XboxAxes
 frc.utility.Controller.XboxButtons
 ```
+
+Feel free to refer to the `main` branch if you're confused.
