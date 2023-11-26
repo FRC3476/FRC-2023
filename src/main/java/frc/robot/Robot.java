@@ -82,16 +82,16 @@ import static java.lang.Math.abs;
  */
 public class Robot extends LoggedRobot {
 
-    public static final int XBOX_START_AUTO_DRIVE = /* pranked */;
-    public static final int XBOX_TOGGLE_MECH = /* sorry :) */;
-    public static final int XBOX_AUTO_DRIVE_LOWER_SUBSTATION = /* not helping */;
-    public static final int XBOX_RESET_HEADING = /* bye bye buttons */;
-    public static final int CONTROLLER_TOGGLE_FLOOR_PICKUP = /* you're never gonna know */;
-    public static final int CONTROLLER_TOGGLE_TIPPED_FLOOR_PICKUP = /* trolled */;
-    public static final int XBOX_TOGGLE_GRABBER = /* good luck */;
-    public static final int XBOX_BABY_BIRD = /* try to fix it ;) */;
-    public static final int XBOX_TOGGLE_SCORING = /* good luck :) */;
-    public static final int XBOX_TOGGLE_PICKUP_DOUBLE = /* */;
+    public static final int XBOX_START_AUTO_DRIVE = 0; //good luck :)
+    public static final int XBOX_TOGGLE_MECH = 0;
+    public static final int XBOX_AUTO_DRIVE_LOWER_SUBSTATION = 0;
+    public static final int XBOX_RESET_HEADING = 0;
+    public static final int CONTROLLER_TOGGLE_FLOOR_PICKUP = 0;
+    public static final int CONTROLLER_TOGGLE_TIPPED_FLOOR_PICKUP = 0;
+    public static final int XBOX_TOGGLE_GRABBER = 0;
+    public static final int XBOX_BABY_BIRD = 0;
+    public static final int XBOX_TOGGLE_SCORING = 0;
+    public static final int XBOX_TOGGLE_PICKUP_DOUBLE = 0;
 
     public static final int STICK_TOGGLE_SCORING = 7;
     public static final int STICK_TOGGLE_FLOOR_PICKUP = 9;
