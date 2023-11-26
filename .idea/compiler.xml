@@ -8,7 +8,7 @@
           <entry name="$USER_HOME$/.gradle/caches/modules-2/files-2.1/org.littletonrobotics.akit.junction/junction-autolog/2.2.4/49b4dcc98676e1e18d08cfa3a3cfa5f1f6e52190/junction-autolog-2.2.4.jar" />
           <entry name="$USER_HOME$/.gradle/caches/modules-2/files-2.1/com.squareup/javapoet/1.13.0/d6562d385049f35eb50403fa86bb11cce76b866a/javapoet-1.13.0.jar" />
         </processorPath>
-        <module name="FRC2023.main" />
+        <module name="FRC-2023.main" />
       </profile>
     </annotationProcessing>
     <bytecodeTargetLevel target="17" />

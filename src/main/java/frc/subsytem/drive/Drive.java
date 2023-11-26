@@ -247,7 +247,7 @@ public final class Drive extends AbstractSubsystem {
             kinematicLimit = KinematicLimits.NORMAL_DRIVING.kinematicLimit;
         }
 
-        if (driveState == DriveState.WAITING_FOR_PATH) {
+        if (driveState == DriveState.WAITING_FOR_PATH) { // wow
             // Path is being generated
             assert trajectoryToDrive != null;
             assert realtimeTrajectoryStartVelocity != null;
