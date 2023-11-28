@@ -32,7 +32,12 @@ public class Controller extends Joystick {
         public static final int RIGHT_X = 4;
         public static final int RIGHT_Y = 5;
     }
-
+    public static final class DPadAngles {
+        public static final int DPAD_UP = 0;
+        public static final int DPAD_RIGHT = 90;
+        public static final int DPAD_DOWN = 180;
+        public static final int DPAD_LEFT = 270;
+    }
     /*
      * The Driver Station sends back an int(32 bits) for buttons Shifting 1 left
      * (button - 1) times and ANDing it with the int sent from the Driver
@@ -151,6 +156,10 @@ public class Controller extends Joystick {
         return 0;
     }
 
+    /*
+    grabs direction that a POV controller is currently outputting.
+    outputs -1 if nothing pressed, otherwise 0 for Up and moves clockwise in Deg, i.e Right = 90
+     */
     @Override
     @Contract(pure = true)
     public int getPOV(int pov) {
@@ -177,7 +186,7 @@ public class Controller extends Joystick {
         }
         return -1;
     }
-
+    // checks if set of active buttons contains desired button
     public boolean getButtonState(int button, int state) {
         return ((0x1 << (button - 1)) & state) != 0;
     }
